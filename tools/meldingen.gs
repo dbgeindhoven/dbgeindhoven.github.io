@@ -61,11 +61,12 @@ function doPost(e) {
       b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', 'Open', '', '', schoon_(d.oplossing), foto]);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto });
     }
-    if (d.actie === 'gereed') {
+    if (d.actie === 'gereed' || d.actie === 'verplaats') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
       for (let i = 1; i < ids.length; i++) {
         if (ids[i][0] === d.id) {
-          b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
+          if (d.actie === 'gereed') b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
+          else b.getRange(i + 1, 3).setValue(['S', 'Q', 'D'].includes(d.letter) ? d.letter : '');
           return uit_({ ok: true });
         }
       }

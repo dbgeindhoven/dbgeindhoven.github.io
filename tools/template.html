@@ -74,6 +74,7 @@ nav a[aria-current="page"] .i{color:var(--gold-ink)}
 .knop:hover{background:var(--hover)}
 .knop.hoofd{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 .knop.hoofd:hover{filter:brightness(.96)}
+.headknoppen{display:flex;gap:8px;flex:none}
 .deel{margin-top:28px}
 .deel h2{margin:0 0 10px;font-size:1rem;font-weight:700}
 .deelkop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -133,8 +134,6 @@ html.present .deelkop .knop{display:none}
 .cijfers dd{margin:0;font-weight:700}
 .punten{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
 .geenpunten{margin:0;color:var(--ink3)}
-.pijler .knop{align-self:flex-start;margin-top:auto}
-html.present .pijler .knop{display:none}
 .meldingen{display:flex;flex-direction:column;gap:6px}
 .melding{display:block;width:100%;padding:9px 11px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);text-align:left;cursor:pointer}
 .melding:hover{background:var(--hover)}
@@ -153,7 +152,9 @@ html.present .pijler .knop{display:none}
 .meldform .twee{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .meldform .vink{flex-direction:row;align-items:center;gap:8px;font-weight:400}
 .meldform .fout{margin:0;color:var(--crit-ink);font-size:.875rem}
-.melding-acties{padding:0 20px 24px}
+.melding-acties{display:flex;flex-direction:column;gap:12px;padding:0 20px 24px}
+.bordkeuze{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
+.bordkeuze .seg{margin:0;align-self:flex-start}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
 /* kengetallen en balken */
@@ -205,7 +206,7 @@ html.present .page{max-width:none}
   body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
   .topbar b{font:700 1rem/1.2 var(--kop)}
   .page{padding-block:16px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-  .head .knop{display:none}
+  .head [data-present]{display:none}
   .bord{grid-template-columns:minmax(0,1fr)}
   .pijler + .pijler{border-left:0;border-top:1px solid var(--line)}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -283,17 +284,18 @@ const ICON={
   vlag:'<path d="M5 21V4M5 4c5-2.5 8 2.5 14 0v10c-6 2.5-9-2.5-14 0"/>',
   lijst:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/>',
   sleutel:'<path d="M14.7 6.3a4.5 4.5 0 0 1 5.9-.9l-3.1 3.1 2 2 3.1-3.1a4.5 4.5 0 0 1-6.2 5.6L8 21.4a2 2 0 0 1-2.9-2.9l8.4-8.4a4.5 4.5 0 0 1 1.2-3.8Z"/>',
+  bel:'<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/>',
   zoek:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   sluit:'<path d="M6 6l12 12M18 6 6 18"/>',
   scherm:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>'
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
-const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
+const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"}];
 
 /* ---- kleine bouwstenen ---- */
-const STATUS={"Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
+const STATUS={"Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
 const st=s=>s?'<span class="st '+(STATUS[s]||"")+'"><i></i>'+esc(s)+"</span>":"";
 const prio=p=>p?'<span class="p p'+esc(p)+'">Prio '+esc(p)+"</span>":'<span class="zacht">–</span>';
 const leeg=v=>v==null||v==="";
@@ -311,8 +313,9 @@ function verlopen(d){
   const m=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(d||"");
   return m?new Date(+m[3],+m[2]-1,+m[1],m[4]!=null?+m[4]:23,m[5]!=null?+m[5]:59)<new Date():false;
 }
-function kop(titel,sub,dagstart){
-  return'<div class="head"><div><h1>'+esc(titel)+"</h1>"+(sub?"<p>"+esc(sub)+"</p>":"")+"</div>"+(dagstart?'<button class="knop hoofd" data-present>'+ico("scherm")+"Presenteren</button>":"")+"</div>";
+function kop(titel,sub,dagstart,extra){
+  const k=(extra||"")+(dagstart?'<button class="knop" data-present>'+ico("scherm")+"Presenteren</button>":"");
+  return'<div class="head"><div><h1>'+esc(titel)+"</h1>"+(sub?"<p>"+esc(sub)+"</p>":"")+"</div>"+(k?'<div class="headknoppen">'+k+"</div>":"")+"</div>";
 }
 
 /* ---- tabel met zoeken, filteren, sorteren en detail ---- */
@@ -330,7 +333,7 @@ function rij(r,cols,i,detail,extra){
 }
 function lijstScherm(cfg){
   const s=mem[cfg.key]||(mem[cfg.key]={q:"",seg:"",sel:{},alleen:cfg.alleen?cfg.alleen.standaard!==false:false,sort:null});
-  let html=kop(cfg.titel,cfg.sub,cfg.dagstart);
+  let html=kop(cfg.titel,cfg.sub,cfg.dagstart,cfg.extra);
   if(cfg.seg)html+='<div class="seg" id="seg" role="group" aria-label="Filter op status"></div>';
   html+='<div class="toolbar"><div class="zoek">'+ico("zoek")+'<input type="search" id="q" placeholder="Zoeken" aria-label="Zoeken" value="'+esc(s.q)+'"></div>';
   (cfg.selects||[]).forEach(f=>{html+='<select id="f_'+f.k+'" aria-label="'+esc(f.l)+'"><option value="">'+esc(f.l)+"</option>"+f.o.map(o=>'<option value="'+esc(o)+'"'+(o===s.sel[f.k]?" selected":"")+">"+esc(o)+"</option>").join("")+"</select>"});
@@ -369,9 +372,9 @@ function lijstScherm(cfg){
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
-    if(tr&&cfg.detail)openPaneel(cfg.detail(zicht[+tr.dataset.i]));
+    if(tr&&cfg.detail){const d=cfg.detail(zicht[+tr.dataset.i]);if(d)openPaneel(d)}
   });
-  tb.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-i]")){e.preventDefault();openPaneel(cfg.detail(zicht[+e.target.dataset.i]))}});
+  tb.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-i]")){e.preventDefault();const d=cfg.detail(zicht[+e.target.dataset.i]);if(d)openPaneel(d)}});
   teken();
 }
 function vasteTabel(cols,rijen,detail,klasse){
@@ -411,15 +414,19 @@ const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.statu
 
 /* ---- SQD-overzicht ---- */
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
-let MELDINGEN=null,MELDFOUT=false,klok=null;
-const LETTERS={S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
+let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="";
+const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
+const herteken=()=>{if($("#paneel").hidden&&(HUIDIG==="sqd"||HUIDIG==="meldingen"))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
   const m=MELD();if(!m)return;
-  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel));const j=await r.json();if(j.fout)throw 0;MELDINGEN=j.meldingen||[];MELDFOUT=false}
-  catch(_){MELDFOUT=true}
-  if(HUIDIG==="sqd"&&$("#paneel").hidden)vSqd();
+  const fout=MELDFOUT;
+  try{
+    const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
+    MELDFOUT=false;const t=JSON.stringify(j.meldingen||[]);
+    if(t!==laatste||fout){laatste=t;MELDINGEN=j.meldingen||[];herteken()}
+  }catch(_){MELDFOUT=true;if(!fout)herteken()}
 }
 async function stuur(d){
   const m=MELD();
@@ -440,7 +447,7 @@ function openMelding(l){
     '<label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="m_actie"></label><label>Opvolgen voor<input type="date" id="m_dat" value="'+n0()+'"></label></div>'+
     '<label>Foto<input type="file" id="m_foto" accept="image/*"></label><img class="voorbeeld" id="m_vb" alt="Gekozen foto" hidden>'+
-    '<label class="vink"><input type="checkbox" id="m_bon"'+(l==="S"?"":" checked")+'> Technische dienst nodig: maak een CM-bon</label>';
+    '<label class="vink"><input type="checkbox" id="m_bon"'+'> Technische dienst nodig: maak een CM-bon</label>';
   p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">'+(dir?"Actie toevoegen":"Melding maken")+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+velden+
     '<p class="fout" id="m_fout" hidden>Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.</p>'+
     '<button class="knop hoofd" id="m_knop" type="submit">'+(dir?"Actie toevoegen":"Melding versturen")+'</button></form>';
@@ -453,7 +460,7 @@ function openMelding(l){
     const bestand=$("#m_foto")&&$("#m_foto").files[0];let foto="";
     if(bestand){try{foto=await verklein(bestand)}catch(_){$("#m_fout").textContent="Deze foto kan niet worden gelezen. Kies een andere foto of verstuur zonder foto.";$("#m_fout").hidden=false;k.disabled=false;return}}
     const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),oplossing:w("#m_opl"),foto,lijn:w("#m_lijn"),machine:w("#m_mach"),melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-"),bon_nodig:!!($("#m_bon")&&$("#m_bon").checked)};
-    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder(dir?"Actie toegevoegd":"Melding verstuurd")}
+    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie toegevoegd":"Melding verstuurd")}
     catch(_){$("#m_fout").textContent="Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.";$("#m_fout").hidden=false;k.disabled=false}
   });
 }
@@ -474,12 +481,17 @@ function openDetailMelding(m){
   terug=document.activeElement;
   const v=[["Oplossing",m.oplossing],["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],[m.letter==="DIR"?"Datum":"Opvolgen voor",m.datum],["CM-bon",m.letter==="DIR"?null:m.bon_nodig]];
   const p=$("#paneel");
-  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl>'+(m.foto?'<div class="foto" id="m_fotovak">Foto laden</div>':"")+'<div class="melding-acties"><p class="fout" id="m_fout" hidden>Afmelden is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl>'+(m.foto?'<div class="foto" id="m_fotovak">Foto laden</div>':"")+'<div class="melding-acties">'+(m.letter==="DIR"?"":'<div class="bordkeuze"><span>Op het SQD-overzicht</span><div class="seg" id="m_bord" role="group" aria-label="Plaats op het SQD-overzicht">'+[["","Niet"],["S","Safety"],["Q","Quality"],["D","Delivery"]].map(b=>'<button data-l="'+b[0]+'" aria-pressed="'+((m.letter||"")===b[0])+'">'+b[1]+"</button>").join("")+"</div></div>")+'<p class="fout" id="m_fout" hidden>Dat is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   if(m.foto)laadFoto(m);
+  if($("#m_bord"))$("#m_bord").addEventListener("click",async e=>{
+    const b=e.target.closest("button");if(!b||b.dataset.l===(m.letter||""))return;
+    try{await stuur({actie:"verplaats",id:m.id,letter:b.dataset.l});m.letter=b.dataset.l;laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(m.letter?"Op het SQD-overzicht gezet":"Van het SQD-overzicht gehaald")}
+    catch(_){$("#m_fout").hidden=false}
+  });
   $("#m_klaar").addEventListener("click",async e=>{
     e.target.disabled=true;
-    try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();vSqd();melder(m.letter==="DIR"?"Actie afgehandeld":"Melding afgehandeld")}
+    try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();SCHERM[HUIDIG]();melder(m.letter==="DIR"?"Actie afgehandeld":"Melding afgehandeld")}
     catch(_){$("#m_fout").hidden=false;e.target.disabled=false}
   });
 }
@@ -494,8 +506,7 @@ function vSqd(){
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
     const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([x.lijn,x.machine].filter(Boolean).join(", "))+(x.actiehouder?". Actie: "+esc(x.actiehouder)+(x.datum?", "+esc(x.datum):""):". Nog geen actiehouder")+(x.foto?". Met foto":"")+"</small></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
-    const knop=m?'<button class="knop" data-meld="'+esc(v.letter)+'">Melding maken</button>':"";
-    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+knop+"</section>";
+    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+"</section>";
   }).join("");
   const cols=[
     {k:"a",l:"Actie",c:"m-main",x:"titel",r:a=>esc(a.actie)},
@@ -507,6 +518,25 @@ function vSqd(){
 }
 
 /* ---- dagstartlijsten ---- */
+function vMeldingen(){
+  const r=(MELDINGEN||[]).filter(x=>x.letter!=="DIR"),aan=MELD();
+  const soort=x=>x.letter?"Op SQD-bord":"Nieuw";
+  const tijd=x=>{const m=/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})/.exec(x.tijd||"");return m?m[3]+m[2]+m[1]+m[4]+m[5]:""};
+  lijstScherm({key:"meldingen",titel:"Meldingen",sub:"Maak hier een melding. Wat tijdens de dagstart besproken moet worden, zet je door naar het SQD-overzicht.",dagstart:true,
+    extra:aan?'<button class="knop hoofd" data-meld="">Melding maken</button>':"",rijen:r,eenheid:["melding","meldingen"],
+    geen:!aan?"Meldingen staan nog niet aan.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":MELDINGEN?"Geen open meldingen.":"Meldingen ophalen.",
+    seg:{get:soort,o:["Nieuw","Op SQD-bord"]},
+    selects:[{k:"lijn",l:"Alle lijnen",o:["Lijn 1","Lijn 2","Lijn 3","Overig"],get:x=>x.lijn}],
+    tekst:x=>[x.melding,x.oplossing,x.lijn,x.machine,x.melder,x.actiehouder].join(" "),
+    kolommen:[
+      {k:"t",l:"Gemeld",w:"136px",c:"m-nr",x:"nr",r:x=>esc(x.tijd),s:x=>tijd(x)},
+      {k:"p",l:"Probleem",c:"m-main",x:"titel",r:x=>esc(x.melding),s:x=>norm(x.melding)},
+      {k:"o",l:"Oplossing",w:"26%",c:"m-sub",ml:"Oplossing",r:x=>of(x.oplossing)},
+      {k:"m",l:"Machine",w:"17%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
+      {k:"w",l:"Melder",w:"120px",r:x=>of(x.melder),s:x=>norm(x.melder)},
+      {k:"s",l:"Status",w:"136px",c:"m-status",r:x=>st(soort(x)),s:x=>soort(x)}],
+    detail:x=>{openDetailMelding(x);return null}});
+}
 function vStoringen(){
   const r=D.storingen||[];
   lijstScherm({key:"storingen",titel:"Lopende storingen",sub:"Gereedgemelde storingen verdwijnen automatisch van deze lijst.",dagstart:true,rijen:r,eenheid:["storing","storingen"],
@@ -644,7 +674,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={sqd:vSqd,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
