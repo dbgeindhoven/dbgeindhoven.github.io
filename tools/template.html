@@ -202,6 +202,7 @@ html.present .deelkop .knop{display:none}
 .rvoet{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:center;margin-top:3px;color:var(--ink2);font-size:.8125rem}
 .rfoto{margin-top:6px}
 .rfoto img{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:8px;background:var(--sunken)}
+.bonknoppen{display:flex;gap:16px}
 .tekstknop{padding:0;border:0;background:none;color:var(--gold-ink);font-size:.8125rem;font-weight:500;cursor:pointer;text-decoration:underline}
 .melding-acties{display:flex;flex-direction:column;gap:12px;padding:0 20px 24px}
 .bordkeuze{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
@@ -373,7 +374,11 @@ const GESLOTEN=["Uitgevoerd","Gereed","Dubbel","Vervallen"];
 const isOpen=r=>!GESLOTEN.includes(r.status);
 const LIJNEN=["Lijn 1","Lijn 2","Lijn 3","Overig","Lijn onbekend"];
 const lijnGroep=r=>{const l=r.lijn;if(l==="Lijn 1"||l==="Lijn 2"||l==="Lijn 3")return l;if(!l||/n\.t\.b/.test(l))return"Lijn onbekend";return"Overig"};
-const nummer=s=>{const m=/\d+/.exec(s||"");return m?+m[0]:1e9};
+const nummer=s=>{const m=/\d+/.exec(s||"");return m?+m[0]+(/^SQDM/.test(s)?1e6:0):1e9};
+const bonnen=()=>(D.meta&&D.meta.bonnen)||{};
+const bonVan=id=>(bonnen().verwerkt||{})[id];
+const bonStand=m=>bonVan(m.id)?bonVan(m.id)+" gemaakt":m.bon_nodig==="Ja"?"Wordt gemaakt":"";
+const herkomst=r=>/^SQDM/.test(r.nr)?"Productiemelding":r.herkomst==="Monteur"?"Monteurmelding":"Eigen bon";
 const stand=k=>(D.meta&&D.meta.standen&&D.meta.standen[k])||"";
 const datum=s=>{const m=/^(\d{2})-(\d{2})-(\d{4})/.exec(s||"");return m?new Date(+m[3],+m[2]-1,+m[1]):null};
 const langeDatum=d=>d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -458,6 +463,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-uitlog]"))uitloggen();
   if(e.target.closest("[data-storing]"))openStoring();
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
+  const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
@@ -482,7 +488,29 @@ function openPaneel(d){
   $("#psl").addEventListener("click",sluitPaneel);
 }
 function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.status),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Bron",r.bron]]});
+const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.status),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]]});
+function bonKnop(r){
+  if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
+  return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
+}
+const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf"};
+async function haalBon(b){
+  const r=(D.cm||[]).find(x=>x.nr===b.dataset.nr),soort=b.dataset.bon,was=b.textContent;
+  b.disabled=true;b.textContent="Ophalen";
+  try{
+    const g=await fetch(r.bon[soort]);if(!g.ok)throw new Error("bon");
+    const inhoud=new Uint8Array(await g.arrayBuffer());
+    const k=await crypto.subtle.importKey("raw",b64(bonnen().sleutel),"AES-GCM",false,["decrypt"]);
+    const uit=await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12));
+    const f=new File([uit],r.bon.naam+"."+soort,{type:BONTYPE[soort]});
+    let gedeeld=false;
+    if(/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){
+      try{await navigator.share({files:[f],title:f.name});gedeeld=true}catch(e){gedeeld=e.name==="AbortError"}
+    }
+    if(!gedeeld){const u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+  }catch(_){melder("De bon kan nu niet worden opgehaald. Probeer het opnieuw.")}
+  b.disabled=false;b.textContent=was;
+}
 
 /* ---- SQD-overzicht ---- */
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
@@ -532,7 +560,7 @@ function openMelding(l){
   const velden=dir?'<label>Wat moet er gebeuren?<textarea id="m_tekst" required></textarea></label><label>Actiehouder<input type="text" id="m_actie" required></label><div class="twee"><label>Datum<input type="date" id="m_dat" required value="'+n0(1)+'"></label><label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label></div>':meldVelden();
   p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">'+(dir?"Actie toevoegen":"Melding maken")+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+velden+'<p class="fout" id="m_fout" hidden></p><button class="knop hoofd" id="m_knop" type="submit">'+(dir?"Actie toevoegen":"Melding versturen")+"</button></form>";
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
-  koppelMeld(l,(d,j)=>{MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,status:"Open",bon_nodig:"Nee"})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie toegevoegd":"Melding verstuurd")});
+  koppelMeld(l,(d,j)=>{MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:"Nee"})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie toegevoegd":j.code?"Melding verstuurd: "+j.code:"Melding verstuurd")});
 }
 function meldScherm(){
   $("#lock").hidden=true;$("#meldscherm").hidden=false;
@@ -540,7 +568,7 @@ function meldScherm(){
   if(!MELD()){vak.innerHTML='<p class="bevestigd">Melden staat nog niet aan.</p>';return}
   function formulier(){
     vak.innerHTML='<form class="meldform" id="meldform">'+meldVelden()+'<p class="fout" id="m_fout" hidden></p><button class="knop hoofd" id="m_knop" type="submit">Melding versturen</button></form>';
-    koppelMeld("",()=>{vak.innerHTML='<div class="bevestigd"><p><b>Melding verstuurd.</b></p><button class="knop hoofd" id="m_opnieuw">Nieuwe melding maken</button></div>';$("#m_opnieuw").addEventListener("click",formulier)});
+    koppelMeld("",(d,j)=>{vak.innerHTML='<div class="bevestigd"><p><b>Melding verstuurd.</b></p>'+(j.code?'<p>Het nummer van je melding is <b>'+esc(j.code)+"</b>.</p>":"")+'<button class="knop hoofd" id="m_opnieuw">Nieuwe melding maken</button></div>';$("#m_opnieuw").addEventListener("click",formulier)});
   }
   formulier();
 }
@@ -595,7 +623,7 @@ function rapportLijst(vak,toolbar){
     const dagen=[];r.forEach(x=>{const k=(x.tijd||"").slice(0,10);let d=dagen.find(y=>y.k===k);if(!d){d={k,r:[]};dagen.push(d)}d.r.push(x)});
     doel.innerHTML=dagen.map(d=>{const dt=datum(d.k);return'<section class="dag"><h2>'+esc(dt?hoofd(dt.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"})):d.k)+"<span>"+d.r.length+"</span></h2>"+d.r.map(x=>{
       const v=VERVOLG.find(y=>y[0]===x.vervolg);
-      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+'</p><p class="ropl"><span>Oplossing: </span>'+esc(x.oplossing)+'</p><div class="rvoet"><span>'+esc(x.melder)+"</span>"+(x.foto?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div></article>";
+      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+'</p><p class="ropl"><span>Oplossing: </span>'+esc(x.oplossing)+'</p><div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div></article>";
     }).join("")+"</section>"}).join("");
   }
   $("#rq").addEventListener("input",e=>{s.q=e.target.value;teken()});
@@ -646,7 +674,7 @@ function openDetailMelding(m){
   terug=document.activeElement;
   const dir=m.letter==="DIR",p=$("#paneel");
   const iso=(m.datum||"").split("-").reverse().join("-");
-  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum]]:[["Risico",m.risico],["Gemeld",m.tijd],["Melder",m.melder]];
+  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",m.tijd],["Melder",m.melder],["CM-bon",bonStand(m)]];
   const opvolging=dir?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Oplossing<textarea id="o_opl">'+esc(m.oplossing)+'</textarea></label>'+
     '<div class="twee"><label>Lijn<select id="o_lijn">'+["","Lijn 1","Lijn 2","Lijn 3","Overig"].map(x=>"<option"+(x===(m.lijn||"")?" selected":"")+">"+x+"</option>").join("")+'</select></label><label>Machine<input type="text" id="o_mach" value="'+esc(m.machine)+'"></label></div>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="o_actie" value="'+esc(m.actiehouder)+'"></label><label>Datum<input type="date" id="o_dat" value="'+esc(iso)+'"></label></div>'+
@@ -681,7 +709,7 @@ function vSqd(){
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const c=(auto[v.letter]||[]).map(a=>"<div><dt>"+esc(a.label)+"</dt><dd>"+esc(a.waarde)+"</dd></div>").join("");
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
+    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([x.code,[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
     return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+"</section>";
   }).join("");
@@ -704,9 +732,10 @@ function vMeldingen(){
     geen:!aan?"Meldingen staan nog niet aan.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":MELDINGEN?"Geen open meldingen.":"Meldingen ophalen.",
     seg:{get:soort,o:["Nieuw","Op SQD-bord"]},
     selects:[{k:"risico",l:"Alle risico's",o:["Safety","Quality","Delivery"],get:x=>x.risico}],
-    tekst:x=>[x.melding,x.risico,x.oplossing,x.lijn,x.machine,x.melder,x.actiehouder].join(" "),
+    tekst:x=>[x.code,x.melding,x.risico,x.oplossing,x.lijn,x.machine,x.melder,x.actiehouder].join(" "),
     kolommen:[
-      {k:"t",l:"Gemeld",w:"136px",c:"m-nr",x:"nr",r:x=>esc(x.tijd),s:x=>tijd(x)},
+      {k:"c",l:"Nummer",w:"96px",c:"m-nr",x:"nr",r:x=>of(x.code),s:x=>nummer(x.code)},
+      {k:"t",l:"Gemeld",w:"136px",c:"m-sub",ml:"Gemeld",r:x=>esc(x.tijd),s:x=>tijd(x)},
       {k:"p",l:"Probleem",c:"m-main",x:"titel",r:x=>esc(x.melding),s:x=>norm(x.melding)},
       {k:"r",l:"Risico",w:"100px",c:"m-sub",ml:"Risico",r:x=>of(x.risico),s:x=>x.risico||"z"},
       {k:"h",l:"Actiehouder",w:"150px",c:"m-sub",ml:"Actiehouder",r:x=>of(x.actiehouder,"Nog toewijzen"),s:x=>norm(x.actiehouder)||"zzz"},
@@ -721,7 +750,7 @@ function vStoringen(){
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep}],
     tekst:x=>[x.nr,x.storing,x.lijn,x.machine,x.actiehouder].join(" "),
     kolommen:[
-      {k:"nr",l:"Bon",w:"72px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
+      {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
       {k:"st",l:"Storing",c:"m-main",x:"titel",r:x=>esc(x.storing),s:x=>norm(x.storing)},
       {k:"mach",l:"Machine",w:"24%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
       {k:"pr",l:"Prio",w:"76px",r:x=>prio(x.prio),s:x=>x.prio||9},
@@ -745,7 +774,7 @@ function vOutput(){
 function vZaterdag(){
   const s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[],d=datum(s.datum);
   const cols=[
-    {k:"n",l:"Bon",w:"72px",c:"m-nr",x:"nr",r:r=>of(r.nr)},
+    {k:"n",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:r=>of(r.nr)},
     {k:"w",l:"Werkzaamheid",c:"m-main",x:"titel",r:r=>esc(r.werkzaamheid)},
     {k:"m",l:"Lijn en machine",w:"28%",c:"m-sub",r:r=>esc(r.lijn_machine)},
     {k:"p",l:"Prio",w:"76px",c:"m-status",r:r=>prio(r.prio)},
@@ -764,7 +793,7 @@ function vStart(){
   const max=Math.max(...groepen.map(g=>g.r.length));
   const balken=groepen.map(g=>'<div class="balk"><span>'+esc(g.l)+'</span><div class="spoor" style="width:'+(g.r.length/max*100)+'%">'+reeks.map(([s,k])=>{const n=g.r.filter(x=>x.status===s).length;return n?'<i style="flex:'+n+";background:"+k+'" title="'+esc(g.l)+", "+esc(s)+": "+n+'"></i>':""}).join("")+'</div><span class="tot">'+g.r.length+"</span></div>").join("");
   const cols=[
-    {k:"nr",l:"Bon",w:"72px",c:"m-nr",x:"nr",r:x=>esc(x.nr)},
+    {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr)},
     {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving)},
     {k:"m",l:"Machine",w:"30%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))},
     {k:"s",l:"Status",w:"150px",c:"m-status",r:x=>st(x.status)}];
@@ -776,11 +805,11 @@ function vCm(){
   const r=D.cm;
   lijstScherm({key:"cm",titel:"CM-bonnen",sub:stand("cm"),rijen:r,eenheid:["bon","bonnen"],
     seg:{get:x=>x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Besteld","Uitgevoerd","Gereed","Dubbel","Vervallen"]},
-    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}],
+    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Productiemelding","Monteurmelding","Eigen bon"],get:herkomst}]:[]),
     alleen:{l:"Alleen openstaand",test:isOpen},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.onderdelen,x.opmerking,x.monteur].join(" "),
     kolommen:[
-      {k:"nr",l:"Bon",w:"72px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
+      {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
       {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving),s:x=>norm(x.omschrijving)},
       {k:"m",l:"Machine",w:"24%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
       {k:"p",l:"Prio",w:"76px",r:x=>prio(x.prio),s:x=>x.prio||9},

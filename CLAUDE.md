@@ -6,7 +6,7 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 
 ## Waar de gegevens staan
 - **Leesbaar:** in de privépagina bij Claude: https://claude.ai/artifact/3JPNTaJyRYKhn2m64RygkB. Dit is de bron. Daarin staat ook de sleutel voor de versleuteling (`meta.publiek`).
-- **Versleuteld:** in `index.html` in deze repository.
+- **Versleuteld:** in `index.html` in deze repository, en de bonnen en het Word-template in `bonnen/`.
 - Deze repository is openbaar. Zet hier nooit leesbare gegevens neer: geen `site.json`, geen `dist/`, geen namen, geen CM-regels. Het wachtwoord hoort hier ook niet.
 
 ## Bijwerken vanuit een chat
@@ -19,12 +19,17 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
    - `storingen` niet met de hand aanpassen: `site.py build` maakt die lijst uit de open bonnen van het CM-overzicht. Gepland blijft Gepland, Besteld of een bestelregel op Besteld wordt In bestelling, de rest wordt Open. Gereed verdwijnt. Een veld `actiehouder` op een CM-regel gaat voor op `monteur`.
 4. `python3 tools/site.py build /tmp/site.json --stand DD-MM-JJJJ --plain /tmp/artifact.html --public index.html`
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
-6. Commit en push alleen `index.html` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
+6. Commit en push alleen `index.html` en `bonnen/` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
 Een nieuwe pagina maak je in `tools/template.html`: voeg een scherm toe aan `SCHERM` en aan `P_DAG` of `P_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
 
 ## Meldingen
 Een melding bestaat uit melder, foto, probleem en risico (Safety, Quality of Delivery). Op de pagina Meldingen vult de dagstart of TD de opvolging aan en zet een melding desgewenst door naar S, Q of D op het SQD-overzicht (kolom `letter`; leeg betekent nog niet doorgezet). De site is statisch, dus meldingen gaan via een Google Apps Script-webapp (`tools/meldingen.gs`) naar de privé Google Sheet "TD Hub meldingen". De webadres, de sleutel en het Sheet-ID staan in `meta.meldingen` in de privépagina, niet in deze repository. Zonder `url` blijven de knoppen verborgen. Een open melding kleurt de letter rood. Een melding met `bon_nodig` = Ja is bedoeld voor een CM-bon. De Sheet heeft per melding ook `oplossing` en `foto` (Drive-bestand in de privémap "TD Hub foto's"). Directie-acties staan in dezelfde Sheet met letter `DIR`.
+
+## Bonnen uit meldingen
+Een productiemelding krijgt bij binnenkomst de code `SQDM-n` (kolom `code` in de Sheet). Vinkt de dagstart of TD "Technische dienst nodig: maak een CM-bon" aan, dan wordt het een echte bon met datzelfde nummer. Een monteurstoring wordt altijd een bon, met het eerstvolgende CM-nummer. In het CM-overzicht staan deze bonnen met `herkomst` (Productie of Monteur) en met `bon`: de versleutelde Word- en PDF-bon, die TD op de site kan openen. Welke melding welke bon werd staat in `meta.bonnen.verwerkt`.
+
+De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. Staat `meta.meldingen.url` nog leeg, dan heeft de taak geen schema. Zet zodra het webadres is ingevuld het schema aan met `update_trigger`: `CRON_TZ=Europe/Amsterdam 37 6-16/2 * * 1-5`. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
 
 ## Vier toegangsniveaus
 - **Melden:** alleen het meldformulier. Dit deel bevat geen enkele lijst, en de meldsleutel kan alleen nieuwe meldingen versturen.

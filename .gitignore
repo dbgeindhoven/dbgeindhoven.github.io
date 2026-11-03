@@ -1,3 +1,6 @@
 site.json
 dist/
 *.tmp
+*.docx
+*.pdf
+werk.json

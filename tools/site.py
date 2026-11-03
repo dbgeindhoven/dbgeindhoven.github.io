@@ -137,7 +137,11 @@ def build(a):
     meld_sleutel = mld.pop("sleutel_melden", None)
     monteur_sleutel = mld.pop("sleutel_monteur", None)
     mld.pop("sheet", None)
-    dagstart = {"meta": {"stand": a.stand, "meldingen": mld}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
+    mld.pop("wachtrij", None)
+    # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
+    verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
+    monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}
+    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     boxes = [box(td, pub["sleutel"])]
     if pub.get("sleutel_dagstart"):
         boxes.append(box(dagstart, pub["sleutel_dagstart"]))
@@ -146,7 +150,7 @@ def build(a):
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     if pub.get("sleutel_monteur"):
         # Alleen de sleutel voor storing melden en het dienstrapport: geen enkele lijst.
-        boxes.append(box({"niveau": "monteur", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}}}, pub["sleutel_monteur"]))
+        boxes.append(box({"niveau": "monteur", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}, "bonnen": {"verwerkt": monteur_bonnen}}}, pub["sleutel_monteur"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})

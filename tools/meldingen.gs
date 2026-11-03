@@ -4,7 +4,8 @@ const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
-const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg'];
+const WACHTRIJ = '__WACHTRIJ__';
+const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
@@ -31,6 +32,45 @@ function object_(r) {
   const o = {};
   KOP.forEach((k, i) => { o[k] = r[i]; });
   return o;
+}
+
+// Productiemeldingen krijgen een eigen doorlopend nummer. Dit draait binnen de lock, dus nooit dubbel.
+function code_(b) {
+  const n = b.getLastRow();
+  let hoogste = 0;
+  if (n > 1) b.getRange(2, 18, n - 1, 1).getDisplayValues().forEach(r => {
+    const m = /^SQDM-(\d+)$/.exec(r[0]);
+    if (m) hoogste = Math.max(hoogste, Number(m[1]));
+  });
+  return 'SQDM-' + (hoogste + 1);
+}
+
+// Elke regel die een bon moet worden krijgt één tekstbestand in de wachtrijmap.
+// De geplande taak leest die map en gooit een bestand weg zodra de bon klaar is.
+function wachtrij_(b) {
+  const map = DriveApp.getFolderById(WACHTRIJ);
+  b.getDataRange().getDisplayValues().forEach((r, i) => {
+    if (i === 0 || r[18] || (r[2] !== 'TD' && r[9] !== 'Ja')) return;
+    map.createFile('bon-' + r[0] + '.txt', JSON.stringify(object_(r)), MimeType.PLAIN_TEXT);
+    b.getRange(i + 1, 19).setValue(nu_());
+  });
+}
+
+// Een melding kan zo vaak op de wachtrij als iemand het vinkje aan en uit zet; de taak slaat bestaande bonnen over.
+function uitWachtrij_(b, rij, id) {
+  if (!b.getRange(rij, 19).getDisplayValue()) return;
+  const f = DriveApp.getFolderById(WACHTRIJ).getFilesByName('bon-' + id + '.txt');
+  while (f.hasNext()) f.next().setTrashed(true);
+  b.getRange(rij, 19).setValue('');
+}
+
+// Een fout in Drive mag een melding nooit tegenhouden. De regel gaat dan mee bij de volgende melding.
+function naarWachtrij_(b) {
+  try {
+    wachtrij_(b);
+  } catch (f) {
+    console.error(f);
+  }
 }
 
 function doGet(e) {
@@ -64,13 +104,15 @@ function doPost(e) {
       const id = Utilities.getUuid().slice(0, 8);
       const tijd = nu_();
       b.getRange(1, 1, 1, KOP.length).setValues([KOP]);
+      const code = d.letter === '' ? code_(b) : '';
       let foto = '';
       if (d.foto) {
         if (d.foto.length > MAX_FOTO) return uit_({ fout: 'foto te groot' });
         foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'melding-' + id + '.jpg')).getId();
       }
-      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg)]);
-      return uit_({ ok: true, id: id, tijd: tijd, foto: foto });
+      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '']);
+      naarWachtrij_(b);
+      return uit_({ ok: true, id: id, tijd: tijd, foto: foto, code: code });
     }
     if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
@@ -82,6 +124,8 @@ function doPost(e) {
             b.getRange(i + 1, 5, 1, 2).setValues([[schoon_(d.lijn), schoon_(d.machine)]]);
             b.getRange(i + 1, 8, 1, 3).setValues([[schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee']]);
             b.getRange(i + 1, 14).setValue(schoon_(d.oplossing));
+            if (!d.bon_nodig) uitWachtrij_(b, i + 1, d.id);
+            naarWachtrij_(b);
           }
           return uit_({ ok: true });
         }
