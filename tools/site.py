@@ -90,6 +90,16 @@ def storingen(data):
     return uit
 
 
+def machines(data):
+    """Machines per lijn voor het storingsformulier: de opnamelijsten plus meta.machines_extra."""
+    uit = {}
+    for r in data.get("opnamelijsten", []):
+        uit.setdefault(r.get("lijn") or "Overig", []).append(r["machine"])
+    for lijn, namen in (data["meta"].get("machines_extra") or {}).items():
+        uit.setdefault(lijn, []).extend(n for n in namen if n not in uit.get(lijn, []))
+    return uit
+
+
 def box(tekst, sleutel):
     iv = secrets.token_bytes(12)
     ct = AESGCM(base64.b64decode(sleutel)).encrypt(iv, json.dumps(tekst, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), None)
@@ -104,6 +114,10 @@ def build(a):
             bestel_groep(r)
     data["storingen"] = storingen(data)
     data.setdefault("sqdc", {}).pop("auto", None)
+    data["machines"] = machines(data)
+    # Meldingen waarvan de bon is afgesloten, zodat ze uit "Nog open" in het dienstrapport verdwijnen.
+    gesloten = [r["melding"] for r in data.get("cm", []) if r.get("melding") and r.get("status") in GESLOTEN]
+    data["meta"].setdefault("bonnen", {})["gesloten"] = gesloten
     tpl = (TOOLS / "template.html").read_text("utf-8")
     Path(a.plain).write_text(fill(tpl, "plain", json.dumps(data, ensure_ascii=False, separators=(",", ":"))), "utf-8")
 
@@ -120,7 +134,7 @@ def build(a):
     dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
-    td["meta"]["bonnen"] = {"verwerkt": verwerkt}
+    td["meta"]["bonnen"] = {"verwerkt": verwerkt, "gesloten": gesloten}
     for r in td.get("cm", []):
         r.pop("bon", None)
     boxes = [box(td, pub["sleutel"])]
@@ -132,8 +146,8 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     if pub.get("sleutel_monteur"):
-        # Alleen de sleutel voor storing melden en het dienstrapport: geen enkele lijst.
-        boxes.append(box({"niveau": "monteur", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}, "bonnen": {"verwerkt": monteur_bonnen}}}, pub["sleutel_monteur"]))
+        # Alleen de sleutel voor storing melden en het dienstrapport, plus de machinenamen voor het formulier.
+        boxes.append(box({"niveau": "monteur", "machines": data["machines"], "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}, pub["sleutel_monteur"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})

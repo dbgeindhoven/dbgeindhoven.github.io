@@ -8,6 +8,7 @@ De geplande taak "TD Hub bonnen" maakt van meldingen echte CM-bonnen in het form
   - Vervolg Gereed: de bon komt direct op Uitgevoerd.
   - Vervolg Onderdeel bestellen: de bon blijft Open en krijgt een regel op de bestellijst.
   - Vervolg Plannen voor onderhoudstop: de bon blijft Open tot de werkvoorbereider hem inplant.
+  - Vervolg Overdragen aan volgende dienst: de bon blijft Open. `oplossing` is dan wat er al is gedaan en mag leeg zijn.
 
 Apps Script zet elke melding die een bon moet worden als tekstbestand `bon-<id>.txt` in de Drive-map "TD Hub wachtrij" (`meta.meldingen.wachtrij`). De taak draait elk uur. Een bestand verdwijnt pas uit die map als de bon helemaal klaar is. Mislukt een run, dan pakt de volgende run het opnieuw op.
 
@@ -38,7 +39,7 @@ Werk in een lege map `/tmp/bonwerk`. Stop bij een fout voordat je iets uit de wa
 | `kort` | Regel voor het CM-overzicht, zonder "Correctief" |
 | `omschrijving` | Hooguit 80 tekens. Monteurstoring: `Correctief – ` plus wat er moet gebeuren. Productiemelding: `SQD – ` plus wat er moet gebeuren |
 | `werkbon_nr` | Het nummer uit `werk.json` |
-| `uitvoeren_op` | De datum uit de melding, anders `In overleg`. Onderhoudstop: `Eerstvolgende onderhoudstop`. Gereed: `Uitgevoerd op DD-MM-JJJJ` |
+| `uitvoeren_op` | De datum uit de melding, anders `In overleg`. Onderhoudstop: `Eerstvolgende onderhoudstop`. Overdragen: `Volgende dienst`. Gereed: `Uitgevoerd op DD-MM-JJJJ` |
 | `lijn_machine` | `Lijn 2 / Koelbaan`. Onbekend: `n.t.b. – ` plus wat wel bekend is |
 | `melder` | `Naam (DD-MM-JJJJ)` |
 | `installatie` | Het machinedeel |

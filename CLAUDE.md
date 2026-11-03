@@ -32,7 +32,7 @@ De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/b
 
 ## Vijf toegangsniveaus
 - **Melden:** alleen het meldformulier. Dit deel bevat geen enkele lijst, en de meldsleutel kan alleen nieuwe meldingen versturen.
-- **Monteur:** storing melden en het gedeelde dienstrapport. Dit deel bevat geen lijsten; de monteursleutel leest alleen dienstrapportregels en voegt alleen storingen toe. Dienstrapportregels staan in de Sheet met letter `TD` en status `Rapport`, met `vervolg` Gereed, Onderdeel bestellen of Plannen voor onderhoudstop.
+- **Monteur:** storing melden en het gedeelde dienstrapport. Dit deel bevat alleen de machinenamen voor het formulier en geen andere lijsten; de monteursleutel leest alleen dienstrapportregels en voegt alleen storingen toe. Dienstrapportregels staan in de Sheet met letter `TD` en status `Rapport`, met `vervolg` Gereed, Overdragen aan volgende dienst, Onderdeel bestellen of Plannen voor onderhoudstop. De machinelijst komt uit `opnamelijsten`; aanvullen kan per lijn in `meta.machines_extra`. Zonder bereik blijft een storing op de telefoon staan en verstuurt hij zichzelf. `sw.js` zorgt dat de pagina dan ook opent.
 - **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn en Zaterdag.
 - **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten, PM-taken en Dienstrapport. Geen bonbestanden: dit deel bevat de sleutel van de bonnen niet.
 - **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn. Alleen dit deel bevat `meta.bonnen.sleutel` en `cm[].bon`.
