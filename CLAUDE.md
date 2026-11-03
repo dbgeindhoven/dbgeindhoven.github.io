@@ -1,6 +1,8 @@
-# TD-site Dbg-eindhoven
+# TD-site DBG Eindhoven
 
-View-only website voor de overzichten van de technische dienst. Publiek adres: https://sxpm90-alt.github.io/Dbg-eindhoven/
+View-only website voor de overzichten van de technische dienst. Publiek adres: https://dbgeindhoven.github.io/
+
+Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 
 ## Waar de gegevens staan
 - **Leesbaar:** in de privépagina bij Claude: https://claude.ai/artifact/3JPNTaJyRYKhn2m64RygkB. Dit is de bron. Daarin staat ook de sleutel voor de versleuteling (`meta.publiek`).
