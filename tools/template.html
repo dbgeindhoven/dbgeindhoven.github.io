@@ -199,6 +199,12 @@ html.present .deelkop .knop{display:none}
 .rfoto{margin-top:6px}
 .rfoto img{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:8px;background:var(--sunken)}
 .bonknoppen{display:flex;gap:16px}
+.bonvak{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;background:var(--sunken)}
+.bonbalk{display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
+.bonbalk b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.boninhoud{flex:1;min-height:0;overflow:auto;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.boninhoud img{display:block;width:100%;max-width:900px;max-height:none;margin:0 auto;background:#fff;box-shadow:0 1px 6px var(--shadow);cursor:zoom-in}
+.boninhoud img.groot{width:200%;max-width:none;cursor:zoom-out}
 .eerder{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border-radius:8px;background:var(--sunken);font-size:.8125rem}
 .eerder b{font-weight:500}
 .eerder p{margin:0;color:var(--ink2)}
@@ -328,6 +334,10 @@ html.present .page{max-width:none}
   </div>
   <div class="waas" id="paneelwaas" hidden></div>
   <aside class="paneel" id="paneel" role="dialog" aria-modal="true" aria-labelledby="ptitel" tabindex="-1" hidden></aside>
+  <div class="bonvak" id="bonvak" role="dialog" aria-modal="true" aria-labelledby="bonkop" tabindex="-1" hidden>
+    <div class="bonbalk"><b id="bonkop"></b><button class="knop hoofd" id="bondeel"></button><button class="icoonknop" id="bonsluit" aria-label="Sluiten"></button></div>
+    <div class="boninhoud" id="boninhoud"></div>
+  </div>
 </div>
 
 <script id="payload" type="application/json">__PAYLOAD__</script>
@@ -473,7 +483,7 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t],d=t.detail(t.rijen[+e.target.dataset.i]);if(d)openPaneel(d)}
-  if(e.key==="Escape"){if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
+  if(e.key==="Escape"){if(!$("#bonvak").hidden)sluitBon();else if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
   if(document.documentElement.classList.contains("present")&&$("#paneel").hidden){
     const l=P_DAG.map(p=>p.id),i=l.indexOf(HUIDIG);
     if(["ArrowRight","PageDown"," "].includes(e.key)&&!e.target.matches("button")){e.preventDefault();if(i<l.length-1)location.hash=l[i+1]}
@@ -497,22 +507,41 @@ function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
 }
-const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf"};
+const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf",beeld:"image/jpeg"};
+async function bonBestand(r,soort){
+  const g=await fetch(r.bon[soort]);if(!g.ok)throw new Error("bon");
+  const inhoud=new Uint8Array(await g.arrayBuffer());
+  const k=await crypto.subtle.importKey("raw",b64(bonnen().sleutel),"AES-GCM",false,["decrypt"]);
+  const uit=await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12));
+  return new File([uit],r.bon.naam+"."+soort,{type:BONTYPE[soort]});
+}
+const opTelefoon=f=>/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]});
+async function geefBestand(f){
+  if(opTelefoon(f)){
+    try{await navigator.share({files:[f],title:f.name});return}catch(e){if(e.name==="AbortError")return}
+  }
+  const u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+}
+/* De bon opent als afbeelding op de site zelf. Dat werkt op elke telefoon, de PDF is er om te delen. */
+let bonBeeld="";
+async function toonBon(r){
+  const [beeld,pdf]=await Promise.all([bonBestand(r,"beeld"),bonBestand(r,"pdf")]);
+  terug=document.activeElement;
+  bonBeeld=URL.createObjectURL(beeld);
+  const v=$("#bonvak"),k=$("#bondeel");
+  $("#bonkop").textContent=r.nr+" "+r.omschrijving;
+  k.textContent=opTelefoon(pdf)?"Delen":"PDF downloaden";
+  k.onclick=()=>geefBestand(pdf);
+  const i=new Image();i.alt="Bon "+r.nr;i.src=bonBeeld;i.addEventListener("click",()=>i.classList.toggle("groot"));
+  $("#boninhoud").replaceChildren(i);
+  v.hidden=false;v.focus();
+}
+function sluitBon(){$("#bonvak").hidden=true;$("#boninhoud").replaceChildren();URL.revokeObjectURL(bonBeeld);if(terug&&terug.focus)terug.focus()}
 async function haalBon(b){
   const r=(D.cm||[]).find(x=>x.nr===b.dataset.nr),soort=b.dataset.bon,was=b.textContent;
   b.disabled=true;b.textContent="Ophalen";
-  try{
-    const g=await fetch(r.bon[soort]);if(!g.ok)throw new Error("bon");
-    const inhoud=new Uint8Array(await g.arrayBuffer());
-    const k=await crypto.subtle.importKey("raw",b64(bonnen().sleutel),"AES-GCM",false,["decrypt"]);
-    const uit=await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12));
-    const f=new File([uit],r.bon.naam+"."+soort,{type:BONTYPE[soort]});
-    let gedeeld=false;
-    if(/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){
-      try{await navigator.share({files:[f],title:f.name});gedeeld=true}catch(e){gedeeld=e.name==="AbortError"}
-    }
-    if(!gedeeld){const u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
-  }catch(_){melder("De bon kan nu niet worden opgehaald. Probeer het opnieuw.")}
+  try{if(soort==="pdf"&&r.bon.beeld)await toonBon(r);else await geefBestand(await bonBestand(r,soort))}
+  catch(_){melder("De bon kan nu niet worden opgehaald. Probeer het opnieuw.")}
   b.disabled=false;b.textContent=was;
 }
 
@@ -1026,6 +1055,7 @@ function start(data){
   $("#menu").addEventListener("click",()=>menu(true));
   $("#menuwaas").addEventListener("click",()=>menu(false));
   $("#paneelwaas").addEventListener("click",sluitPaneel);
+  $("#bonsluit").innerHTML=ico("sluit");$("#bonsluit").addEventListener("click",sluitBon);
   $("#psluit").addEventListener("click",()=>presenteer(false));
   $("#stappen").addEventListener("click",e=>{const b=e.target.closest("button");if(b)location.hash=b.dataset.v});
   document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.documentElement.classList.contains("present"))presenteer(false)});

@@ -5,13 +5,14 @@
   bonnen.py nummer     <site.json> <werkmap> [--laatste-cm N]
   bonnen.py maak       <site.json> <werkmap>
   bonnen.py registreer <site.json> <werkmap>
+  bonnen.py beelden    <site.json>                  Maakt de afbeelding voor bonnen die er nog geen hebben.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
 met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er <nr>.docx en
-<nr>.pdf naast. De leesbare bonnen en het template komen nooit in deze repository, alleen
+<nr>.pdf en <nr>-bon.jpg (de afbeelding waarmee de bon op de site opent) naast. De leesbare bonnen en het template komen nooit in deze repository, alleen
 versleuteld in bonnen/.
 """
-import argparse, base64, json, re, secrets, subprocess, sys
+import argparse, base64, json, re, secrets, subprocess, sys, tempfile
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -49,6 +50,14 @@ def versleutel(inhoud, sleutel, naam=None):
     iv = secrets.token_bytes(12)
     (MAP / naam).write_bytes(iv + AESGCM(base64.b64decode(sleutel)).encrypt(iv, inhoud, None))
     return "bonnen/" + naam
+
+
+def afbeelding(pdf):
+    """Pagina 1 van de bon als afbeelding, die de site zelf toont. Geeft het pad naar de jpg terug."""
+    pdf = Path(pdf)
+    doel = pdf.with_name(pdf.stem + "-bon")
+    subprocess.run(["pdftoppm", "-r", "150", "-jpeg", "-jpegopt", "quality=80", "-singlefile", "-f", "1", "-l", "1", str(pdf), str(doel)], check=True, capture_output=True)
+    return doel.with_suffix(".jpg")
 
 
 def ontsleutel(naam, sleutel):
@@ -98,6 +107,7 @@ def maak(a):
         subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(wm), str(docx)], check=True, capture_output=True, timeout=180)
         info = subprocess.run(["pdfinfo", str(docx.with_suffix(".pdf"))], check=True, capture_output=True, text=True).stdout
         paginas = int(re.search(r"Pages:\s+(\d+)", info).group(1))
+        afbeelding(docx.with_suffix(".pdf"))
         print(w["nr"], "1 pagina" if paginas == 1 else "%d pagina's: maak de tekst korter" % paginas)
 
 
@@ -136,6 +146,7 @@ def registreer(a):
             "naam": spec["naam"],
             "docx": versleutel((wm / (w["nr"] + ".docx")).read_bytes(), b["sleutel"]),
             "pdf": versleutel((wm / (w["nr"] + ".pdf")).read_bytes(), b["sleutel"]),
+            "beeld": versleutel((wm / (w["nr"] + "-bon.jpg")).read_bytes(), b["sleutel"]),
         }
         data["cm"].append(rij)
         if w.get("vervolg") == "Onderdeel bestellen":
@@ -151,11 +162,25 @@ def registreer(a):
     bewaar(a.site, data)
 
 
+def beelden(a):
+    data = laad(a.site)
+    sleutel = stand(data)["sleutel"]
+    with tempfile.TemporaryDirectory() as t:
+        for r in data.get("cm", []):
+            if r.get("bon") and not r["bon"].get("beeld"):
+                pdf = Path(t) / (r["nr"] + ".pdf")
+                pdf.write_bytes(ontsleutel(Path(r["bon"]["pdf"]).name, sleutel))
+                r["bon"]["beeld"] = versleutel(afbeelding(pdf).read_bytes(), sleutel)
+                print(r["nr"], r["bon"]["beeld"])
+    bewaar(a.site, data)
+
+
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("template"); x.add_argument("site"); x.add_argument("docx"); x.set_defaults(fn=template)
 x = sub.add_parser("nummer"); x.add_argument("site"); x.add_argument("map"); x.add_argument("--laatste-cm", type=int, default=0); x.set_defaults(fn=nummer)
 x = sub.add_parser("maak"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=maak)
 x = sub.add_parser("registreer"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=registreer)
+x = sub.add_parser("beelden"); x.add_argument("site"); x.set_defaults(fn=beelden)
 a = ap.parse_args()
 a.fn(a)
