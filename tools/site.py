@@ -133,7 +133,7 @@ def build(a):
 
     td = copy.deepcopy(data)
     pub = td["meta"].pop("publiek")
-    dagstart = {"meta": {"stand": a.stand}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
+    dagstart = {"meta": {"stand": a.stand, "meldingen": td["meta"].get("meldingen")}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     boxes = [box(td, pub["sleutel"])]
     if pub.get("sleutel_dagstart"):
         boxes.append(box(dagstart, pub["sleutel_dagstart"]))

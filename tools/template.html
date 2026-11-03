@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@600;700&display=swap">
 <style>
-/* Applicatie met zijbalk. Grote S, Q en D zijn de stoplichten van de dagstart, met daaronder de maandkalender uit het SQDC-bord. Goud alleen voor actieve navigatie en de hoofdactie. */
+/* Applicatie met zijbalk. Grote S, Q en D zijn de stoplichten van de dagstart: rood zodra er een open melding staat. Goud alleen voor actieve navigatie en de hoofdactie. */
 :root{
   --bg:#FFFFFF;--side:#F6F6F3;--sunken:#F2F2EE;--hover:#F7F6F1;
   --ink:#1D2023;--ink2:#565B60;--ink3:#73787D;--line:#E8E8E3;--line2:#D8D8D2;
@@ -33,7 +33,7 @@ html{font-size:16px}
 html.present{font-size:clamp(17px,1.25vw,26px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 .9375rem/1.45 var(--font);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
 a{color:inherit}
-button,input,select{font:inherit;color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 .i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
@@ -70,7 +70,7 @@ nav a[aria-current="page"] .i{color:var(--gold-ink)}
 .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
 .head h1{margin:0;font:700 1.5rem/1.2 var(--kop);text-wrap:balance}
 .head p{margin:4px 0 0;color:var(--ink2);max-width:70ch}
-.knop{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--line2);border-radius:7px;background:var(--bg);font-weight:500;font-size:.875rem;cursor:pointer;white-space:nowrap}
+.knop{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:7px 12px;border:1px solid var(--line2);border-radius:7px;background:var(--bg);font-weight:500;font-size:.875rem;cursor:pointer;white-space:nowrap}
 .knop:hover{background:var(--hover)}
 .knop.hoofd{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 .knop.hoofd:hover{filter:brightness(.96)}
@@ -131,16 +131,24 @@ nav a[aria-current="page"] .i{color:var(--gold-ink)}
 .cijfers dd{margin:0;font-weight:700}
 .punten{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
 .geenpunten{margin:0;color:var(--ink3)}
-.kal{margin-top:auto;padding-top:4px}
-.kal b{display:block;margin-bottom:6px;font-size:.8125rem;font-weight:500;color:var(--ink2)}
-.kalgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
-.kalgrid span{display:block;padding:3px 0;border-radius:4px;background:var(--sunken);color:var(--ink2);font-size:.6875rem;line-height:1.3;text-align:center}
-.kalgrid .wd{background:none;color:var(--ink3)}
-.kalgrid .x{background:none}
-.kalgrid .groen{background:var(--ok);color:var(--white)}
-.kalgrid .rood{background:var(--crit);color:var(--white)}
-.kalgrid .nu{box-shadow:inset 0 0 0 1.5px var(--ink);font-weight:700;color:var(--ink)}
-.kalgrid .groen.nu,.kalgrid .rood.nu{color:var(--white)}
+.pijler .knop{align-self:flex-start;margin-top:auto}
+html.present .pijler .knop{display:none}
+.meldingen{display:flex;flex-direction:column;gap:6px}
+.melding{display:block;width:100%;padding:9px 11px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);text-align:left;cursor:pointer}
+.melding:hover{background:var(--hover)}
+.melding b{display:block;font-weight:500}
+.melding small{display:block;margin-top:2px;color:var(--ink2);font-size:.8125rem}
+
+/* meldformulier */
+.meldform{display:flex;flex-direction:column;gap:14px;padding:16px 20px 24px}
+.meldform label{display:flex;flex-direction:column;gap:5px;font-size:.875rem;font-weight:500}
+.meldform input[type=text],.meldform input[type=date],.meldform textarea,.meldform select{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
+.meldform textarea{min-height:96px;resize:vertical}
+.meldform .twee{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.meldform .vink{flex-direction:row;align-items:center;gap:8px;font-weight:400}
+.meldform .fout{margin:0;color:var(--crit-ink);font-size:.875rem}
+.melding-acties{padding:0 20px 24px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
 /* kengetallen en balken */
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:12px}
@@ -369,6 +377,8 @@ document.addEventListener("click",e=>{
   const w=e.target.closest("[data-t]"),tr=e.target.closest("tr[data-i]");
   if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail)openPaneel(t.detail(t.rijen[+tr.dataset.i]))}
   if(e.target.closest("[data-present]"))presenteer(true);
+  const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
+  const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
 document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t];openPaneel(t.detail(t.rijen[+e.target.dataset.i]))}
@@ -394,25 +404,68 @@ function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(
 const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.status),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Bron",r.bron]]});
 
 /* ---- SQD-overzicht ---- */
-function kalender(dagen){
-  const nu=new Date(),j=nu.getFullYear(),m=nu.getMonth(),eerste=(new Date(j,m,1).getDay()+6)%7,aantal=new Date(j,m+1,0).getDate();
-  const mnd=nu.toLocaleDateString("nl-NL",{month:"long"});
-  let c=["ma","di","wo","do","vr","za","zo"].map(d=>'<span class="wd">'+d+"</span>").join("");
-  for(let i=0;i<eerste;i++)c+='<span class="x"></span>';
-  for(let d=1;d<=aantal;d++){
-    const key=j+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"),k=dagen[key];
-    c+='<span class="'+(k==="groen"||k==="rood"?k:"")+(d===nu.getDate()?" nu":"")+'"'+(k?' title="'+d+" "+mnd+": "+k+'"':"")+">"+d+"</span>";
-  }
-  return'<div class="kal"><b>'+esc(hoofd(mnd))+'</b><div class="kalgrid">'+c+"</div></div>";
+const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
+let MELDINGEN=null,MELDFOUT=false,klok=null;
+const LETTERS={S:"Safety",Q:"Quality",D:"Delivery"};
+function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
+function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
+async function haalMeldingen(){
+  const m=MELD();if(!m)return;
+  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel));const j=await r.json();if(j.fout)throw 0;MELDINGEN=j.meldingen||[];MELDFOUT=false}
+  catch(_){MELDFOUT=true}
+  if(HUIDIG==="sqd"&&$("#paneel").hidden)vSqd();
+}
+async function stuur(d){
+  const m=MELD();
+  const r=await fetch(m.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({k:m.sleutel},d))});
+  const j=await r.json();if(!j.ok)throw new Error(j.fout||"mislukt");return j;
+}
+function n0(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function openMelding(l){
+  terug=document.activeElement;
+  const p=$("#paneel");
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">Melding maken</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+
+    '<label>Wat is er aan de hand?<textarea id="m_tekst" required></textarea></label>'+
+    '<div class="twee"><label>Lijn<select id="m_lijn"><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label><label>Machine<input type="text" id="m_mach"></label></div>'+
+    '<label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label>'+
+    '<div class="twee"><label>Actiehouder<input type="text" id="m_actie"></label><label>Opvolgen voor<input type="date" id="m_dat" value="'+n0()+'"></label></div>'+
+    '<label class="vink"><input type="checkbox" id="m_bon"'+(l==="S"?"":" checked")+'> Technische dienst nodig: maak een CM-bon</label>'+
+    '<p class="fout" id="m_fout" hidden>Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.</p>'+
+    '<button class="knop hoofd" id="m_knop" type="submit">Melding versturen</button></form>';
+  p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);$("#m_tekst").focus();
+  $("#meldform").addEventListener("submit",async e=>{
+    e.preventDefault();const k=$("#m_knop");k.disabled=true;$("#m_fout").hidden=true;
+    const wie=$("#m_naam").value.trim();naam(wie);
+    const dat=$("#m_dat").value.split("-").reverse().join("-");
+    const d={actie:"nieuw",letter:l,melding:$("#m_tekst").value.trim(),lijn:$("#m_lijn").value,machine:$("#m_mach").value.trim(),melder:wie,actiehouder:$("#m_actie").value.trim(),datum:dat,bon_nodig:$("#m_bon").checked};
+    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder("Melding verstuurd")}
+    catch(_){$("#m_fout").hidden=false;k.disabled=false}
+  });
+}
+function openDetailMelding(m){
+  terug=document.activeElement;
+  const v=[["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Opvolgen voor",m.datum],["CM-bon",m.bon_nodig]];
+  const p=$("#paneel");
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl><div class="melding-acties"><p class="fout" id="m_fout" hidden>Afmelden is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
+  p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
+  $("#m_klaar").addEventListener("click",async e=>{
+    e.target.disabled=true;
+    try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();vSqd();melder("Melding afgehandeld")}
+    catch(_){$("#m_fout").hidden=false;e.target.disabled=false}
+  });
 }
 function vSqd(){
-  const s=D.sqdc||{},acties=(s.directie_acties||[]).filter(a=>!a.gereed);
-  const auto=s.auto||{};
+  const s=D.sqdc||{},acties=(s.directie_acties||[]).filter(a=>!a.gereed),auto=s.auto||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
   const bord=(s.vakken||[]).map(v=>{
-    const lbl=v.kleur==="groen"?'<span class="st ok"><i></i>Groen</span>':v.kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>Nog niet gemeld</span>';
+    const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter);
+    const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
+    const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const c=(auto[v.letter]||[]).map(a=>"<div><dt>"+esc(a.label)+"</dt><dd>"+esc(a.waarde)+"</dd></div>").join("");
-    const p=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":'<p class="geenpunten">Geen bijzonderheden gemeld.</p>';
-    return'<section class="pijler '+esc(v.kleur||"")+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+p+kalender(v.dagen||{})+"</section>";
+    const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
+    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b><small>"+esc([x.lijn,x.machine].filter(Boolean).join(", "))+(x.actiehouder?". Actie: "+esc(x.actiehouder)+(x.datum?", "+esc(x.datum):""):". Nog geen actiehouder")+"</small></button>").join("")+"</div>":"";
+    const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
+    const knop=m?'<button class="knop" data-meld="'+esc(v.letter)+'">Melding maken</button>':"";
+    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+knop+"</section>";
   }).join("");
   const cols=[
     {k:"a",l:"Actie",c:"m-main",x:"titel",r:a=>esc(a.actie)},
@@ -601,6 +654,7 @@ function start(data){
   document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.documentElement.classList.contains("present"))presenteer(false)});
   $("#lock").hidden=true;$("#app").hidden=false;
   window.addEventListener("hashchange",route);route();
+  if(MELD()){haalMeldingen();klok=setInterval(()=>{if(!document.hidden)haalMeldingen()},60000)}
 }
 
 /* ---- wachtwoord ---- */

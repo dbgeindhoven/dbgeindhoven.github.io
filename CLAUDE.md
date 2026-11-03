@@ -13,7 +13,7 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 1. Lees de privépagina met de Artifact-tool (`action: read`). Het resultaat noemt het opgeslagen bestand met de volledige pagina.
 2. `python3 tools/site.py extract <dat bestand> /tmp/site.json`
 3. Pas `/tmp/site.json` aan met Python. Lijsten: `cm`, `zaterdag`, `bestellijst`, `priolijst`, `opnamelijsten`, `pm`. Toelichting per lijst en de stand per lijst staan in `meta.standen`.
-   - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten; `dagen` is de maandkalender, bijvoorbeeld `{"2026-11-03": "groen"}`; zet de kleur van vandaag ook daar neer) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
+   - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
    - `output`: `datum`, `eenheid`, `lijnen` (`lijn`, `plan`, `output`, `opmerking`).
    - `sqdc.auto` niet met de hand aanpassen: `site.py build` berekent de kengetallen in de vakken.
    - `storingen` niet met de hand aanpassen: `site.py build` maakt die lijst uit de open bonnen van het CM-overzicht. Gepland blijft Gepland, Besteld of een bestelregel op Besteld wordt In bestelling, de rest wordt Open. Gereed verdwijnt. Een veld `actiehouder` op een CM-regel gaat voor op `monteur`.
@@ -22,6 +22,9 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 6. Commit en push alleen `index.html` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
 Een nieuwe pagina maak je in `tools/template.html`: voeg een scherm toe aan `SCHERM` en aan `P_DAG` of `P_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
+
+## Meldingen
+Op het SQD-overzicht kunnen bezoekers per letter een melding maken. De site is statisch, dus meldingen gaan via een Google Apps Script-webapp (`tools/meldingen.gs`) naar de privé Google Sheet "TD Hub meldingen". De webadres, de sleutel en het Sheet-ID staan in `meta.meldingen` in de privépagina, niet in deze repository. Zonder `url` blijven de knoppen verborgen. Een open melding kleurt de letter rood. Een melding met `bon_nodig` = Ja is bedoeld voor een CM-bon.
 
 ## Twee toegangsniveaus
 - **Dagstart:** SQD, Lopende storingen, Output per lijn en Zaterdag.
