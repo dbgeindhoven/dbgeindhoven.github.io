@@ -2,7 +2,8 @@
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
 const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
-const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto'];
+const MELDSLEUTEL = '__MELDSLEUTEL__';
+const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
@@ -43,7 +44,8 @@ function doGet(e) {
 
 function doPost(e) {
   const d = JSON.parse(e.postData.contents);
-  if (d.k !== SLEUTEL) return uit_({ fout: 'geen toegang' });
+  // De meldinlog mag alleen nieuwe meldingen versturen, nooit iets lezen of wijzigen.
+  if (d.k !== SLEUTEL && !(d.k === MELDSLEUTEL && d.actie === 'nieuw' && d.letter === '')) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -58,15 +60,20 @@ function doPost(e) {
         if (d.foto.length > MAX_FOTO) return uit_({ fout: 'foto te groot' });
         foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'melding-' + id + '.jpg')).getId();
       }
-      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', 'Open', '', '', schoon_(d.oplossing), foto]);
+      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico)]);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto });
     }
-    if (d.actie === 'gereed' || d.actie === 'verplaats') {
+    if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
       for (let i = 1; i < ids.length; i++) {
         if (ids[i][0] === d.id) {
           if (d.actie === 'gereed') b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
-          else b.getRange(i + 1, 3).setValue(['S', 'Q', 'D'].includes(d.letter) ? d.letter : '');
+          else if (d.actie === 'verplaats') b.getRange(i + 1, 3).setValue(['S', 'Q', 'D'].includes(d.letter) ? d.letter : '');
+          else {
+            b.getRange(i + 1, 5, 1, 2).setValues([[schoon_(d.lijn), schoon_(d.machine)]]);
+            b.getRange(i + 1, 8, 1, 3).setValues([[schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee']]);
+            b.getRange(i + 1, 14).setValue(schoon_(d.oplossing));
+          }
           return uit_({ ok: true });
         }
       }

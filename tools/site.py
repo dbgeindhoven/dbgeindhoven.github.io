@@ -58,7 +58,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: td (alles) of dagstart (alleen de dagstartpagina's)."""
+    """Zet het wachtwoord voor een niveau: td (alles), dagstart (dagstartpagina's) of melden (alleen het meldformulier)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -67,7 +67,7 @@ def setkey(a):
     pub = data["meta"].setdefault("publiek", {"iter": ITER, "salt": b64(secrets.token_bytes(16))})
     salt = base64.b64decode(pub["salt"])
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
-    pub["sleutel" if a.niveau == "td" else "sleutel_dagstart"] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -133,10 +133,16 @@ def build(a):
 
     td = copy.deepcopy(data)
     pub = td["meta"].pop("publiek")
-    dagstart = {"meta": {"stand": a.stand, "meldingen": td["meta"].get("meldingen")}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
+    mld = td["meta"].get("meldingen") or {}
+    meld_sleutel = mld.pop("sleutel_melden", None)
+    mld.pop("sheet", None)
+    dagstart = {"meta": {"stand": a.stand, "meldingen": mld}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     boxes = [box(td, pub["sleutel"])]
     if pub.get("sleutel_dagstart"):
         boxes.append(box(dagstart, pub["sleutel_dagstart"]))
+    if pub.get("sleutel_melden"):
+        # Alleen het webadres en de meldsleutel: geen enkele lijst.
+        boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
@@ -145,7 +151,7 @@ def build(a):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart"], default="td"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden"], default="td"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)
