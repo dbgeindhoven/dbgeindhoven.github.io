@@ -578,21 +578,24 @@ let RAPPORT=null,RFOUT=false,rlaatste="",rteken=null;
 function storingVelden(){
   return'<label>Monteur<input type="text" id="r_naam" required value="'+esc(naam())+'"></label>'+
     '<div class="twee"><label>Lijn<select id="r_lijn" required><option value="">Kies</option><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label><label>Machinedeel<input type="text" id="r_deel" required></label></div>'+
-    '<label>Storing<textarea id="r_st" required></textarea></label><label>Oplossing<textarea id="r_opl" required></textarea></label>'+
+    '<label>Storing<textarea id="r_st" required></textarea></label>'+
+    '<label>Foto van de storing<input type="file" id="r_foto1" accept="image/*"></label><img class="voorbeeld" id="r_vb1" alt="Gekozen foto van de storing" hidden>'+
+    '<label>Oplossing<textarea id="r_opl" required></textarea></label>'+
+    '<label>Foto van de oplossing<input type="file" id="r_foto2" accept="image/*"></label><img class="voorbeeld" id="r_vb2" alt="Gekozen foto van de oplossing" hidden>'+
     '<fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="r_verv" value="'+v[0]+'" required><span>'+v[0]+"</span></label>").join("")+"</fieldset>"+
-    '<label id="r_fotoveld" hidden>Foto van het onderdeel<input type="file" id="r_foto" accept="image/*"></label><img class="voorbeeld" id="r_vb" alt="Gekozen foto" hidden>'+
     '<p class="fout" id="r_fout" hidden></p><button class="knop hoofd" id="r_knop" type="submit">Storing opslaan</button>';
 }
 function koppelStoring(klaar){
-  const fv=$("#r_foto"),veld=$("#r_fotoveld"),vb=$("#r_vb");
-  document.querySelectorAll('input[name="r_verv"]').forEach(r=>r.addEventListener("change",()=>{const n=r.value==="Onderdeel bestellen";veld.hidden=!n;fv.required=n;if(!n){fv.value="";vb.hidden=true}}));
-  fv.addEventListener("change",e=>{const f=e.target.files[0];if(f){vb.src=URL.createObjectURL(f);vb.hidden=false}else vb.hidden=true});
+  [1,2].forEach(n=>$("#r_foto"+n).addEventListener("change",e=>{const f=e.target.files[0],vb=$("#r_vb"+n);if(f){vb.src=URL.createObjectURL(f);vb.hidden=false}else vb.hidden=true}));
   $("#stform").addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#r_knop"),fout=$("#r_fout");k.disabled=true;fout.hidden=true;
     const w=id=>$(id).value.trim(),wie=w("#r_naam");naam(wie);
+    const vervolg=document.querySelector('input[name="r_verv"]:checked').value;
+    const delen=[[$("#r_foto1").files[0],"Storing"],[$("#r_foto2").files[0],"Oplossing"]].filter(x=>x[0]);
+    if(vervolg==="Onderdeel bestellen"&&!delen.length){fout.textContent="Voeg bij Onderdeel bestellen een foto toe.";fout.hidden=false;k.disabled=false;return}
     let foto="";
-    if(fv.files[0]){try{foto=await verklein(fv.files[0])}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
-    const d={actie:"nieuw",letter:"TD",melder:wie,lijn:w("#r_lijn"),machine:w("#r_deel"),melding:w("#r_st"),oplossing:w("#r_opl"),vervolg:document.querySelector('input[name="r_verv"]:checked').value,foto};
+    if(delen.length){try{foto=await fotoSamen(delen)}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
+    const d={actie:"nieuw",letter:"TD",melder:wie,lijn:w("#r_lijn"),machine:w("#r_deel"),melding:w("#r_st"),oplossing:w("#r_opl"),vervolg,foto};
     try{const j=await stuur(d);RAPPORT=(RAPPORT||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste="";klaar();melder("Storing opgeslagen")}
     catch(_){fout.textContent="Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.";fout.hidden=false;k.disabled=false}
   });
@@ -633,7 +636,7 @@ function rapportLijst(vak,toolbar){
 async function toonFoto(b){
   const m=MELD(),vak=document.createElement("div");vak.className="rfoto";vak.textContent="Foto laden";
   b.closest(".regel").appendChild(vak);b.remove();
-  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)+"&foto="+encodeURIComponent(b.dataset.rfoto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto van het onderdeel" src="data:image/jpeg;base64,'+j.foto+'">'}
+  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)+"&foto="+encodeURIComponent(b.dataset.rfoto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto bij de storing" src="data:image/jpeg;base64,'+j.foto+'">'}
   catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
 function vRapport(){
@@ -664,6 +667,31 @@ function verklein(f){
     i.onerror=()=>{URL.revokeObjectURL(u);nee(new Error("foto"))};
     i.src=u;
   });
+}
+function laadBeeld(f){
+  return new Promise((ok,nee)=>{
+    const u=URL.createObjectURL(f),i=new Image();
+    i.onload=()=>{URL.revokeObjectURL(u);ok(i)};
+    i.onerror=()=>{URL.revokeObjectURL(u);nee(new Error("foto"))};
+    i.src=u;
+  });
+}
+/* Eén of twee foto's op één afbeelding met een label, zodat ze samen op de bon passen. */
+async function fotoSamen(delen){
+  const b=await Promise.all(delen.map(d=>laadBeeld(d[0]))),a=b.map(i=>i.naturalWidth/i.naturalHeight);
+  const naast=a.reduce((s,x)=>s+x,0),onder=1/a.reduce((s,x)=>s+1/x,0);
+  const breed=Math.abs(Math.log(naast/1.3))<=Math.abs(Math.log(onder/1.3)),r=breed?naast:onder;
+  const W=Math.round(r>=1?1600:1600*r),H=Math.round(W/r),c=document.createElement("canvas"),x=c.getContext("2d");
+  c.width=W;c.height=H;x.fillStyle="#fff";x.fillRect(0,0,W,H);x.font="600 44px sans-serif";x.textBaseline="middle";
+  let px=0,py=0;
+  b.forEach((i,n)=>{
+    const w=breed?a[n]*H:W,h=breed?H:W/a[n];
+    x.drawImage(i,px,py,w,h);
+    const t=delen[n][1],tw=x.measureText(t).width;
+    x.fillStyle="rgba(0,0,0,.72)";x.fillRect(px,py,tw+36,68);x.fillStyle="#fff";x.fillText(t,px+18,py+36);
+    if(breed)px+=w;else py+=h;
+  });
+  return c.toDataURL("image/jpeg",.72).split(",")[1];
 }
 async function laadFoto(m){
   const vak=$("#m_fotovak");if(!vak)return;

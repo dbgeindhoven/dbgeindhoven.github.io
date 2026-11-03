@@ -45,7 +45,7 @@ Werk in een lege map `/tmp/bonwerk`. Stop bij een fout voordat je iets uit de wa
 | `let_op` | Eén regel over het specifieke risico. Weglaten als er geen is |
 | `opmerking` | Hooguit 4 regels. Eerste regel: de melding met naam en tijd. Daarna invulvelden met `☐` |
 | `foto` | Pad naar de foto in `/tmp/bonwerk` |
-| `foto_bijschrift` | Wat er op de foto staat |
+| `foto_bijschrift` | Wat er op de foto staat. Een monteur kan een foto van de storing en van de oplossing toevoegen; die staan met een label op één afbeelding |
 | `foto_tekst` | Alleen zonder foto: `Geen foto bij melding – foto vóór/na toevoegen.` |
 
 Regels voor de inhoud:
