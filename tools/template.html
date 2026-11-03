@@ -2,32 +2,33 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Roboto+Slab:wght@500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: zwarte kopbalken zoals op de werkbon F.95.602, daaronder lijsten per lijn. Samenvatting eerst, detail klapt open. */
+/* Layout: donkere kopbalken zoals op de werkbon F.95.602, goud en lettertypen volgens de huisstijl. Samenvatting eerst, detail klapt open. */
 :root{
-  --paper:#EDF0EE;--panel:#FFFFFF;--ink:#14181A;--muted:#55605F;--line:#D2D8D5;
-  --bar:#14181A;--bar-ink:#FFFFFF;--bar-muted:#AEB8B5;--tape:#F2C200;
+  --paper:#F4F4F2;--panel:#FFFFFF;--ink:#23272A;--muted:#5F666B;--line:#DADCDC;
+  --bar:#23272A;--bar-ink:#FFFFFF;--bar-muted:#B7BCBF;--tape:#E3A416;
   --red:#A9231B;--red-bg:#FBE3E0;--orange:#9C4A08;--orange-bg:#FCE7D4;--amber:#715400;--amber-bg:#FAEFC2;
   --blue:#0A5599;--blue-bg:#DEEAF7;--green:#196336;--green-bg:#DCEFE2;--grey:#55605F;--grey-bg:#E3E7E5;
-  --font:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --font:"Arimo",Arial,"Helvetica Neue",sans-serif;
+  --kop:"Roboto Slab",Georgia,"Times New Roman",serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#0F1214;--panel:#171B1E;--ink:#E8ECEA;--muted:#9AA5A3;--line:#2B3236;
-  --bar:#000000;--bar-ink:#FFFFFF;--bar-muted:#9AA5A3;--tape:#F2C200;
+  --bar:#000000;--bar-ink:#FFFFFF;--bar-muted:#9AA5A3;--tape:#E3A416;
   --red:#FF9C93;--red-bg:#3F1613;--orange:#FFB877;--orange-bg:#3C2410;--amber:#EFD36A;--amber-bg:#352B0A;
   --blue:#8FC3F5;--blue-bg:#12304D;--green:#8AD6A5;--green-bg:#13361F;--grey:#A9B3B1;--grey-bg:#262C2F;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0F1214;--panel:#171B1E;--ink:#E8ECEA;--muted:#9AA5A3;--line:#2B3236;
-  --bar:#000000;--bar-ink:#FFFFFF;--bar-muted:#9AA5A3;--tape:#F2C200;
+  --bar:#000000;--bar-ink:#FFFFFF;--bar-muted:#9AA5A3;--tape:#E3A416;
   --red:#FF9C93;--red-bg:#3F1613;--orange:#FFB877;--orange-bg:#3C2410;--amber:#EFD36A;--amber-bg:#352B0A;
   --blue:#8FC3F5;--blue-bg:#12304D;--green:#8AD6A5;--green-bg:#13361F;--grey:#A9B3B1;--grey-bg:#262C2F;
   color-scheme:dark}
 *{box-sizing:border-box}
 @media (min-width:1500px){html{font-size:20px}}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.35 var(--font);font-variant-numeric:tabular-nums}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.4 var(--font);font-variant-numeric:tabular-nums}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
 a{color:var(--blue)}
 :focus-visible{outline:3px solid var(--tape);outline-offset:1px}
@@ -36,7 +37,7 @@ a{color:var(--blue)}
 /* kop */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-ink)}
 .brand{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 12px;padding-block:10px 4px}
-.brand h1{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:.01em}
+.brand h1{margin:0;font-family:var(--kop);font-size:1.25rem;font-weight:700;letter-spacing:.01em}
 .brand .stand{color:var(--bar-muted);font-size:.9rem;white-space:nowrap}
 nav.tabs{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;padding-block:2px 0}
 nav.tabs::-webkit-scrollbar{display:none}
@@ -45,7 +46,7 @@ nav.tabs a[aria-current="page"]{color:var(--bar-ink);border-bottom-color:var(--t
 
 main{padding-block:16px 28px}
 main .stack{display:flex;flex-direction:column;gap:18px}
-h2.view{margin:0;font-size:1.5rem;font-weight:700;text-wrap:balance}
+h2.view{margin:0;font-family:var(--kop);font-size:1.5rem;font-weight:700;text-wrap:balance}
 p.lead{margin:2px 0 0;color:var(--muted)}
 
 /* kengetallen */
@@ -91,7 +92,8 @@ dl.facts dt{color:var(--muted)}
 dl.facts dd{margin:0;overflow-wrap:anywhere}
 .empty{padding:14px 12px;color:var(--muted)}
 .more{display:block;padding:8px 12px;border-top:1px solid var(--line);font-weight:600;text-decoration:none}
-footer.note{padding-block:0 28px;color:var(--muted);font-size:.93rem}
+footer.note{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;padding-block:0 28px;color:var(--muted);font-size:.9rem}
+.merk{font-size:.75rem;font-weight:600;letter-spacing:.04em;color:var(--muted);opacity:.75}
 
 @media (max-width:640px){
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -105,8 +107,8 @@ footer.note{padding-block:0 28px;color:var(--muted);font-size:.93rem}
 .sqdc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .vak{background:var(--panel);border:1px solid var(--line);min-width:0}
 .vak .kop{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bar);color:var(--bar-ink)}
-.vak .letter{font-size:1.9rem;font-weight:700;line-height:1}
-.vak h3{margin:0;font-size:1.1rem;font-weight:600;flex:1;min-width:0}
+.vak .letter{font-family:var(--kop);font-size:1.9rem;font-weight:700;line-height:1;color:var(--tape)}
+.vak h3{margin:0;font-family:var(--kop);font-size:1.1rem;font-weight:500;flex:1;min-width:0}
 .vak ul{margin:0;padding:10px 12px 12px 30px;display:flex;flex-direction:column;gap:6px}
 .vak p{margin:0;padding:12px;color:var(--muted)}
 table.lijst{width:100%;border-collapse:collapse}
@@ -128,7 +130,7 @@ table.lijst .getal{text-align:right}
 }
 
 /* wachtwoord */
-#lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#lock{min-height:100vh;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 #lock form{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line)}
 #lock .fields{display:flex;flex-direction:column;gap:10px;padding:14px 12px}
 #lock label{font-weight:600}
@@ -149,6 +151,7 @@ table.lijst .getal{text-align:right}
       <button type="submit" id="lockbtn">Openen</button>
     </div>
   </form>
+  <span class="merk">Muller Technical Solutions</span>
 </div>
 
 <div id="app" hidden>
@@ -157,7 +160,7 @@ table.lijst .getal{text-align:right}
     <nav class="tabs" id="tabs" aria-label="Overzichten"></nav>
   </div></header>
   <main class="wrap"><div class="stack" id="view"></div></main>
-  <footer class="note wrap">Alleen lezen. Klopt er iets niet? Meld het bij de werkvoorbereider.</footer>
+  <footer class="note wrap"><span>Alleen lezen. Klopt er iets niet? Meld het bij de werkvoorbereider.</span><span class="merk">Muller Technical Solutions</span></footer>
 </div>
 
 <script id="payload" type="application/json">__PAYLOAD__</script>
