@@ -63,8 +63,12 @@ nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7p
 nav a:hover{background:var(--sunken);color:var(--ink)}
 nav a[aria-current="page"]{background:var(--gold-soft);color:var(--ink)}
 nav a[aria-current="page"] .i{color:var(--gold-ink)}
-.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:2px;padding:0 10px;color:var(--ink2);font-size:.75rem}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0 10px;color:var(--ink2);font-size:.75rem}
 .topbar{display:none}
+.uitlog{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;margin:0 -10px 8px;border:0;border-radius:7px;background:none;color:var(--ink2);font-weight:500;font-size:.875rem;text-align:left;cursor:pointer}
+.uitlog:hover{background:var(--sunken);color:var(--ink)}
+.uitlog.bovenaan{width:auto;margin:0 -6px 0 auto;gap:7px;padding:6px 8px}
+.uitlog.onder{width:auto;margin:0;gap:7px;padding:6px 10px}
 .shell{min-width:0;display:flex;flex-direction:column}
 .page{width:100%;max-width:1320px;padding-block:24px 48px;padding-left:max(32px,env(safe-area-inset-left,0px));padding-right:max(32px,env(safe-area-inset-right,0px))}
 .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
@@ -268,6 +272,7 @@ html.present .page{max-width:none}
     <div class="meldkop"><span class="mark" aria-hidden="true">TD</span><div><h1>Melding maken</h1><small>Dutch Bakery Group Eindhoven</small></div></div>
     <div id="meldinhoud"></div>
   </div>
+  <button class="uitlog onder" data-uitlog hidden>Uitloggen</button>
   <span class="merk">Muller Technical Solutions</span>
 </div>
 
@@ -276,10 +281,10 @@ html.present .page{max-width:none}
   <aside class="side" id="side">
     <div class="brand"><span class="mark" aria-hidden="true">TD</span><span><b>TD Hub</b><small>Dutch Bakery Group Eindhoven</small></span></div>
     <nav id="nav" aria-label="Pagina's"></nav>
-    <div class="sidefoot"><span id="stand"></span><span class="merk">Muller Technical Solutions</span></div>
+    <div class="sidefoot"><button class="uitlog" data-uitlog hidden>Uitloggen</button><span id="stand"></span><span class="merk">Muller Technical Solutions</span></div>
   </aside>
   <div class="shell">
-    <div class="topbar"><button class="icoonknop" id="menu" aria-label="Menu openen"></button><b>TD Hub</b></div>
+    <div class="topbar"><button class="icoonknop" id="menu" aria-label="Menu openen"></button><b>TD Hub</b><button class="uitlog bovenaan" data-uitlog hidden>Uitloggen</button></div>
     <div class="pbalk" id="pbalk"><b id="pdatum"></b><div class="stappen" id="stappen"></div><button class="knop" id="psluit">Sluiten</button></div>
     <main class="page" id="view"></main>
   </div>
@@ -310,6 +315,7 @@ const ICON={
   lijst:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/>',
   sleutel:'<path d="M14.7 6.3a4.5 4.5 0 0 1 5.9-.9l-3.1 3.1 2 2 3.1-3.1a4.5 4.5 0 0 1-6.2 5.6L8 21.4a2 2 0 0 1-2.9-2.9l8.4-8.4a4.5 4.5 0 0 1 1.2-3.8Z"/>',
   bel:'<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/>',
+  uit:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
   zoek:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   sluit:'<path d="M6 6l12 12M18 6 6 18"/>',
@@ -411,6 +417,7 @@ document.addEventListener("click",e=>{
   const w=e.target.closest("[data-t]"),tr=e.target.closest("tr[data-i]");
   if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
   if(e.target.closest("[data-present]"))presenteer(true);
+  if(e.target.closest("[data-uitlog]"))uitloggen();
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
@@ -789,7 +796,12 @@ function slot(box){
     }catch(_){$("#lockerr").hidden=false;k.disabled=false;k.textContent="Openen"}
   });
 }
+function uitloggen(){
+  try{localStorage.removeItem(SLEUTEL)}catch(_){}
+  history.replaceState(null,"",location.pathname);location.reload();
+}
 async function boot(){
+  document.querySelectorAll("[data-uitlog]").forEach(b=>{b.hidden=MODE!=="enc";b.insertAdjacentHTML("afterbegin",ico("uit"))});
   const p=JSON.parse($("#payload").textContent);
   if(MODE!=="enc"){start(p);return}
   let s=null;try{s=localStorage.getItem(SLEUTEL)}catch(_){}
