@@ -13,11 +13,19 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 1. Lees de privépagina met de Artifact-tool (`action: read`). Het resultaat noemt het opgeslagen bestand met de volledige pagina.
 2. `python3 tools/site.py extract <dat bestand> /tmp/site.json`
 3. Pas `/tmp/site.json` aan met Python. Lijsten: `cm`, `zaterdag`, `bestellijst`, `priolijst`, `opnamelijsten`, `pm`. Toelichting per lijst en de stand per lijst staan in `meta.standen`.
+   - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
+   - `output`: `datum`, `eenheid`, `lijnen` (`lijn`, `plan`, `output`, `opmerking`).
+   - `storingen` niet met de hand aanpassen: `site.py build` maakt die lijst uit de open bonnen van het CM-overzicht. Gepland blijft Gepland, Besteld of een bestelregel op Besteld wordt In bestelling, de rest wordt Open. Gereed verdwijnt. Een veld `actiehouder` op een CM-regel gaat voor op `monteur`.
 4. `python3 tools/site.py build /tmp/site.json --stand DD-MM-JJJJ --plain /tmp/artifact.html --public index.html`
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
 6. Commit en push alleen `index.html` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
 Een nieuw tabblad maak je in `tools/template.html`: voeg een scherm toe aan `VIEWS` en `RENDER`.
 
+## Twee toegangsniveaus
+- **Dagstart:** SQD, Lopende storingen, Output per lijn en Zaterdag.
+- **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten en PM-taken.
+`index.html` bevat per niveau een eigen versleuteld deel. Het dagstart-wachtwoord kan de TD-gegevens niet openen.
+
 ## Wachtwoord wijzigen
-`python3 tools/site.py setkey /tmp/site.json --password "..."` en daarna stap 4 t/m 6.
+`python3 tools/site.py setkey /tmp/site.json --niveau td --password "..."` of `--niveau dagstart`, en daarna stap 4 t/m 6.

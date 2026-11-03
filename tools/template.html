@@ -26,11 +26,12 @@
   --blue:#8FC3F5;--blue-bg:#12304D;--green:#8AD6A5;--green-bg:#13361F;--grey:#A9B3B1;--grey-bg:#262C2F;
   color-scheme:dark}
 *{box-sizing:border-box}
+@media (min-width:1500px){html{font-size:20px}}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.35 var(--font);font-variant-numeric:tabular-nums}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
 a{color:var(--blue)}
 :focus-visible{outline:3px solid var(--tape);outline-offset:1px}
-.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:68rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 
 /* kop */
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bar);color:var(--bar-ink)}
@@ -100,6 +101,32 @@ footer.note{padding-block:0 28px;color:var(--muted);font-size:.93rem}
   dl.facts dt{margin-top:6px;font-size:.88rem}
 }
 
+/* dagstart */
+.sqdc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.vak{background:var(--panel);border:1px solid var(--line);min-width:0}
+.vak .kop{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bar);color:var(--bar-ink)}
+.vak .letter{font-size:1.9rem;font-weight:700;line-height:1}
+.vak h3{margin:0;font-size:1.1rem;font-weight:600;flex:1;min-width:0}
+.vak ul{margin:0;padding:10px 12px 12px 30px;display:flex;flex-direction:column;gap:6px}
+.vak p{margin:0;padding:12px;color:var(--muted)}
+table.lijst{width:100%;border-collapse:collapse}
+table.lijst th{background:var(--bar);color:var(--bar-ink);text-align:left;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;font-weight:600}
+table.lijst td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
+table.lijst .nr{display:inline-block;margin-right:8px;padding:0}
+table.lijst .getal{text-align:right}
+.muted{color:var(--muted)}
+.verlopen td{background:var(--red-bg)}
+@media (max-width:640px){
+  .sqdc{grid-template-columns:minmax(0,1fr)}
+  table.lijst thead{display:none}
+  table.lijst,table.lijst tbody,table.lijst tr,table.lijst td{display:block;width:100%}
+  table.lijst tr{border-top:1px solid var(--line);padding:7px 0}
+  table.lijst tr:first-child{border-top:0}
+  table.lijst td{border:0;padding:2px 12px}
+  table.lijst td[data-l]::before{content:attr(data-l) ": ";color:var(--muted)}
+  table.lijst .getal{text-align:left}
+}
+
 /* wachtwoord */
 #lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 #lock form{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line)}
@@ -145,7 +172,9 @@ function norm(s){return String(s==null?"":s).toLowerCase()}
 function join(){return [].slice.call(arguments).filter(function(x){return x!=null&&x!==""}).join(" · ")}
 function uniq(a){var o=[];a.forEach(function(x){if(x!=null&&x!==""&&o.indexOf(x)<0)o.push(x)});return o}
 
-var VIEWS=[["start","Overzicht"],["cm","CM-bonnen"],["zaterdag","Zaterdag"],["bestel","Bestellijst"],["prio","Priolijst"],["opname","Opnamelijsten"],["pm","PM-taken"]];
+var TABS_DAGSTART=[["sqd","SQD"],["storingen","Lopende storingen"],["output","Output per lijn"],["zaterdag","Zaterdag"]];
+var TABS_TD=[["start","TD-overzicht"],["cm","CM-bonnen"],["bestel","Bestellijst"],["prio","Priolijst"],["opname","Opnamelijsten"],["pm","PM-taken"]];
+var VIEWS=[],HOME="sqd";
 var CLOSED=["Uitgevoerd","Gereed","Dubbel","Vervallen"];
 function isOpen(r){return CLOSED.indexOf(r.status)<0}
 var STATUS={"Open":"","Gepland":"blue","Besteld":"orange","Deels uitgevoerd":"amber","On hold":"red","Uitgevoerd":"green","Gereed":"green","Dubbel":"","Vervallen":""};
@@ -256,11 +285,63 @@ function vCm(){
     text:function(r){return[r.nr,r.lijn,r.machine,r.omschrijving,r.melder,r.onderdelen,r.opmerking,r.monteur].join(" ")},
     groupBy:lijnGroep,groupOrder:LIJNEN,render:cmRow});
 }
+function tabel(kop,rijen){
+  return'<table class="lijst"><thead><tr>'+kop.map(function(k){return"<th>"+esc(k)+"</th>"}).join("")+"</tr></thead><tbody>"+rijen.join("")+"</tbody></table>";
+}
+function cel(label,html){return'<td data-l="'+esc(label)+'">'+html+"</td>"}
+function leeg(t){return'<div class="empty">'+esc(t)+"</div>"}
+function verlopen(d){
+  var m=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(d||"");
+  if(!m)return false;
+  return new Date(+m[3],+m[2]-1,+m[1],m[4]!=null?+m[4]:23,m[5]!=null?+m[5]:59)<new Date();
+}
+function vSqd(){
+  var s=D.sqdc||{},acties=(s.directie_acties||[]).filter(function(a){return!a.gereed});
+  var html='<div><h2 class="view">SQD-overzicht</h2>'+(s.datum?'<p class="lead">'+esc(s.datum)+"</p>":"")+"</div>";
+  html+='<div class="sqdc">'+(s.vakken||[]).map(function(v){
+    var k=v.kleur==="groen"?pill("Groen","green"):v.kleur==="rood"?pill("Rood","red"):pill("Niet ingevuld");
+    var b=(v.punten||[]).length?"<ul>"+v.punten.map(function(p){return"<li>"+esc(p)+"</li>"}).join("")+"</ul>":"<p>Nog niets ingevuld.</p>";
+    return'<section class="vak"><div class="kop"><span class="letter">'+esc(v.letter)+"</span><h3>"+esc(v.naam)+"</h3>"+k+"</div>"+b+"</section>";
+  }).join("")+"</div>";
+  var rijen=acties.map(function(a){
+    var laat=verlopen(a.datum);
+    return"<tr"+(laat?' class="verlopen"':"")+">"+cel("Actie",esc(a.actie))+cel("Actiehouder",esc(a.actiehouder||"")||'<span class="muted">Nog toewijzen</span>')+cel("Datum",esc(a.datum||"")+(laat?" "+pill("Verlopen","red"):""))+"</tr>";
+  });
+  html+=group("Directie-actie binnen 24 uur",String(acties.length),rijen.length?tabel(["Actie","Actiehouder","Datum"],rijen):leeg("Geen open directie-acties."));
+  $("#view").innerHTML=html;
+}
+var ST_KLEUR={"Open":"","In bestelling":"orange","Gepland":"blue"};
+function vStoringen(){
+  var r=D.storingen||[],st=mem.storingen||(mem.storingen={lijn:"",status:""});
+  var lijnen=uniq(r.map(function(x){return x.lijn}));
+  $("#view").innerHTML='<div><h2 class="view">Lopende storingen</h2><p class="lead">Gereedgemelde storingen verdwijnen automatisch van deze lijst.</p></div><div class="filters">'+select("f_lijn","Alle lijnen",lijnen,st.lijn)+select("f_status","Alle statussen",["Open","In bestelling","Gepland"],st.status)+'</div><div class="count" id="count" role="status"></div><div class="group" id="list"></div>';
+  function draw(){
+    var rows=r.filter(function(x){return(!st.lijn||x.lijn===st.lijn)&&(!st.status||x.status===st.status)});
+    $("#count").textContent=rows.length+" van "+r.length+" storingen";
+    $("#list").innerHTML=rows.length?tabel(["Storing","Machine","Status","Actiehouder"],rows.map(function(x){
+      return"<tr>"+cel("Storing",(x.nr?'<span class="nr">'+esc(x.nr)+"</span>":"")+esc(x.storing)+(x.prio?" "+prioChip(x.prio):""))+cel("Machine",esc(join(x.lijn,x.machine)))+cel("Status",pill(x.status,ST_KLEUR[x.status]))+cel("Actiehouder",esc(x.actiehouder||"")||'<span class="muted">Nog toewijzen</span>')+"</tr>";
+    })):leeg("Geen lopende storingen.");
+  }
+  $("#f_lijn").addEventListener("change",function(e){st.lijn=e.target.value;draw()});
+  $("#f_status").addEventListener("change",function(e){st.status=e.target.value;draw()});
+  draw();
+}
+function vOutput(){
+  var o=D.output||{},l=o.lijnen||[];
+  var heeft=l.some(function(x){return x.plan!=null||x.output!=null});
+  var rijen=l.map(function(x){
+    var v=x.plan!=null&&x.output!=null?x.output-x.plan:null,pct=v!=null&&x.plan?Math.round(x.output/x.plan*100):null;
+    return"<tr>"+cel("Lijn",esc(x.lijn))+cel("Plan",'<span class="getal">'+esc(x.plan==null?"–":x.plan)+"</span>")+cel("Output",esc(x.output==null?"–":x.output))+cel("Verschil",v==null?"–":esc((v>0?"+":"")+v)+(pct!=null?" ("+pct+"%)":""))+cel("Opmerking",esc(x.opmerking||""))+"</tr>";
+  });
+  $("#view").innerHTML='<div><h2 class="view">Productie-output per lijn</h2><p class="lead">'+esc(heeft?join(o.datum,o.eenheid):"Nog geen output ingevuld.")+"</p></div>"+'<div class="group">'+tabel(["Lijn","Plan","Output","Verschil","Opmerking"],rijen)+"</div>";
+}
 function vZaterdag(){
   var s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[];
-  var html='<div><h2 class="view">Zaterdagwerk '+esc(s.datum||"")+"</h2>"+(s.stand?'<p class="lead">'+esc(s.stand)+"</p>":"")+"</div>";
-  html+=group("Correctief",String(c.length),c.length?c.map(satRow).join(""):'<div class="empty">Geen correctief werk ingepland.</div>');
-  html+=group("Preventief",String(p.length),p.length?p.map(satRow).join(""):'<div class="empty">Geen preventief werk ingepland.</div>');
+  function deel(rows){return rows.length?tabel(["Nr.","Werkzaamheid","Lijn / machine","Prio","Uitvoerder"],rows.map(function(r){
+    return"<tr>"+cel("Nr.",'<span class="nr">'+esc(r.nr||"–")+"</span>")+cel("Werkzaamheid",esc(r.werkzaamheid))+cel("Lijn / machine",esc(r.lijn_machine))+cel("Prio",r.prio?prioChip(r.prio):"–")+cel("Uitvoerder",esc(r.uitvoerder||"")||'<span class="muted">Nog toewijzen</span>')+"</tr>";
+  })):leeg("Niets ingepland.")}
+  var html='<div><h2 class="view">Gepland onderhoud zaterdag '+esc(s.datum||"")+"</h2>"+(s.stand?'<p class="lead">'+esc(s.stand)+"</p>":"")+"</div>";
+  html+=group("Correctief",String(c.length),deel(c))+group("Preventief",String(p.length),deel(p));
   $("#view").innerHTML=html;
 }
 function vBestel(){
@@ -297,15 +378,15 @@ function vPm(){
     text:function(r){return[r.id,r.lijn,r.lijndeel,r.onderdeel,r.taak,r.benodigdheden,r.pm_code].join(" ")},
     groupBy:function(r){return join(r.lijn,r.lijndeel)},render:pmRow});
 }
-var RENDER={start:vStart,cm:vCm,zaterdag:vZaterdag,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+var RENDER={sqd:vSqd,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 function route(){
-  var h=location.hash.replace("#","");if(!RENDER[h])h="start";
+  var h=location.hash.replace("#","");if(!VIEWS.some(function(v){return v[0]===h}))h=HOME;
   document.querySelectorAll("#tabs a").forEach(function(a){if(a.dataset.v===h)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   RENDER[h]();window.scrollTo(0,0);
 }
 function start(data){
-  D=data;D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
+  D=data;var td=!!D.cm;VIEWS=TABS_DAGSTART.concat(td?TABS_TD:[]);HOME=td?"start":"sqd";D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   $("#stand").textContent="Stand "+(D.meta&&D.meta.stand||"");
   $("#tabs").innerHTML=VIEWS.map(function(v){return'<a href="#'+v[0]+'" data-v="'+v[0]+'">'+esc(v[1])+"</a>"}).join("");
   $("#lock").hidden=true;$("#app").hidden=false;
@@ -316,7 +397,7 @@ function start(data){
 var KEYNAME="td-overzichten-sleutel";
 function b64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
 function toB64(u){var s="";new Uint8Array(u).forEach(function(c){s+=String.fromCharCode(c)});return btoa(s)}
-function decrypt(key,box){return crypto.subtle.decrypt({name:"AES-GCM",iv:b64(box.iv)},key,b64(box.ct)).then(function(p){return JSON.parse(new TextDecoder().decode(p))})}
+function decrypt(key,box){var i=0;function volgende(){if(i>=box.boxes.length)return Promise.reject(new Error("wachtwoord"));var b=box.boxes[i++];return crypto.subtle.decrypt({name:"AES-GCM",iv:b64(b.iv)},key,b64(b.ct)).then(function(p){return JSON.parse(new TextDecoder().decode(p))}).catch(volgende)}return volgende()}
 function derive(pw,box){
   return crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]).then(function(base){
     return crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(box.salt),iterations:box.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},true,["decrypt"]);
