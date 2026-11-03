@@ -5,7 +5,7 @@ De gegevens staan NIET in deze repository. Ze staan leesbaar in de privépagina
 bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
 
   site.py extract <privepagina.html> <site.json>
-  site.py setkey  <site.json> --password "..." [--niveau td|dagstart]
+  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
 import argparse, base64, copy, json, re, secrets
@@ -58,7 +58,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier) of monteur (storing melden en dienstrapport)."""
+    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier) of monteur (storing melden en dienstrapport)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -67,7 +67,7 @@ def setkey(a):
     pub = data["meta"].setdefault("publiek", {"iter": ITER, "salt": b64(secrets.token_bytes(16))})
     salt = base64.b64decode(pub["salt"])
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -142,7 +142,14 @@ def build(a):
     verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
     monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}
     dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
+    # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
+    wv = copy.deepcopy(td)
+    td["meta"]["bonnen"] = {"verwerkt": verwerkt}
+    for r in td.get("cm", []):
+        r.pop("bon", None)
     boxes = [box(td, pub["sleutel"])]
+    if pub.get("sleutel_wv"):
+        boxes.append(box(wv, pub["sleutel_wv"]))
     if pub.get("sleutel_dagstart"):
         boxes.append(box(dagstart, pub["sleutel_dagstart"]))
     if pub.get("sleutel_melden"):
@@ -159,7 +166,7 @@ def build(a):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur"], default="td"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv"], default="td"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

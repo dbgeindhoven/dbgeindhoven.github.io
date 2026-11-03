@@ -354,6 +354,7 @@ const ICON={
   sleutel:'<path d="M14.7 6.3a4.5 4.5 0 0 1 5.9-.9l-3.1 3.1 2 2 3.1-3.1a4.5 4.5 0 0 1-6.2 5.6L8 21.4a2 2 0 0 1-2.9-2.9l8.4-8.4a4.5 4.5 0 0 1 1.2-3.8Z"/>',
   bel:'<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/>',
   uit:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+  download:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
   rapport:'<path d="M8 3h8l1 3H7Z"/><path d="M7 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/><path d="M8 12h8M8 16h5"/>',
   zoek:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
@@ -363,6 +364,7 @@ const ICON={
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
+const P_WV=[{id:"bonnen",t:"Bonnen",i:"download"}];
 
 /* ---- kleine bouwstenen ---- */
 const STATUS={"Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
@@ -443,6 +445,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
+    if(e.target.closest("[data-bon]"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -491,7 +494,7 @@ function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(
 const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.status),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]]});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
-  return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
+  return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
 }
 const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf"};
 async function haalBon(b){
@@ -845,6 +848,21 @@ function vCm(){
       {k:"u",l:"Uitvoeren op",w:"150px",r:x=>of(x.uitvoeren),s:x=>norm(x.uitvoeren)||"zzz"}],
     detail:cmDetail});
 }
+function vBonnen(){
+  const r=D.cm.filter(x=>x.bon).reverse();
+  lijstScherm({key:"bonnen",titel:"Bonnen",sub:"Alle bonnen die uit meldingen zijn gemaakt, de nieuwste bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
+    geen:r.length?"Niets gevonden. Pas de filters aan.":"Er zijn nog geen bonnen uit meldingen gemaakt.",
+    seg:{get:herkomst,o:["Productiemelding","Monteurmelding"]},
+    tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.opmerking].join(" "),
+    kolommen:[
+      {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
+      {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving),s:x=>norm(x.omschrijving)},
+      {k:"m",l:"Machine",w:"22%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
+      {k:"w",l:"Melder",w:"120px",r:x=>of(x.melder),s:x=>norm(x.melder)},
+      {k:"s",l:"Status",w:"130px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
+      {k:"b",l:"Downloaden",w:"120px",c:"m-sub",r:bonKnop}],
+    detail:cmDetail});
+}
 function vBestel(){
   const r=D.bestellijst,g=["Nog niet besteld","Eerst opmeten of checken","Opgevraagd","Besteld","Binnen"];
   lijstScherm({key:"bestel",titel:"Bestellijst",sub:stand("bestel"),rijen:r,eenheid:["regel","regels"],
@@ -908,7 +926,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={bonnen:vBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -933,11 +951,11 @@ function start(data){
   D=data;
   if(D.niveau==="melden"){meldScherm();return}
   if(D.niveau==="monteur"){monteurScherm();return}
-  const td=!!D.cm;
-  PAGINAS=P_DAG.concat(td?P_TD:[]);
+  const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
+  PAGINAS=P_DAG.concat(td?P_TD:[],wv?P_WV:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+P_WV.map(lnk).join("")+"</div>":"");
   $("#stappen").innerHTML=P_DAG.map(p=>'<button data-v="'+p.id+'">'+esc(p.kort)+"</button>").join("");
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
   $("#menu").innerHTML=ico("menu");
