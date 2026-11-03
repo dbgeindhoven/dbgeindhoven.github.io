@@ -58,7 +58,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: td (alles), dagstart (dagstartpagina's) of melden (alleen het meldformulier)."""
+    """Zet het wachtwoord voor een niveau: td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier) of monteur (storing melden en dienstrapport)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -67,7 +67,7 @@ def setkey(a):
     pub = data["meta"].setdefault("publiek", {"iter": ITER, "salt": b64(secrets.token_bytes(16))})
     salt = base64.b64decode(pub["salt"])
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -135,6 +135,7 @@ def build(a):
     pub = td["meta"].pop("publiek")
     mld = td["meta"].get("meldingen") or {}
     meld_sleutel = mld.pop("sleutel_melden", None)
+    monteur_sleutel = mld.pop("sleutel_monteur", None)
     mld.pop("sheet", None)
     dagstart = {"meta": {"stand": a.stand, "meldingen": mld}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     boxes = [box(td, pub["sleutel"])]
@@ -143,6 +144,9 @@ def build(a):
     if pub.get("sleutel_melden"):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
+    if pub.get("sleutel_monteur"):
+        # Alleen de sleutel voor storing melden en het dienstrapport: geen enkele lijst.
+        boxes.append(box({"niveau": "monteur", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}}}, pub["sleutel_monteur"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
@@ -151,7 +155,7 @@ def build(a):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden"], default="td"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur"], default="td"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

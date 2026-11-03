@@ -173,6 +173,36 @@ html.present .deelkop .knop{display:none}
 .meldkop small{display:block;color:var(--ink2);font-size:.75rem}
 .bevestigd{display:flex;flex-direction:column;gap:12px;align-items:flex-start;margin:0;padding:20px}
 .bevestigd p{margin:0}
+#monteurscherm{min-height:100vh;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mkop{display:flex;align-items:center;gap:12px}
+.mkop b{display:block;font:700 1.0625rem/1.25 var(--kop)}
+.mkop small{display:block;color:var(--ink2);font-size:.75rem}
+.seg.mtabs{display:flex;margin:0}
+.seg.mtabs button{flex:1;padding:9px 8px;font-size:.9375rem}
+#minhoud{flex:1;min-width:0}
+#minhoud .meldform{padding:0}
+#monteurscherm .merk{text-align:center}
+.keuzes{margin:0;padding:0;border:0;min-width:0;display:flex;flex-direction:column;gap:6px}
+.keuzes legend{padding:0;margin-bottom:5px;font-size:.875rem;font-weight:500}
+.meldform .keuzes label{position:relative;display:block;cursor:pointer}
+.keuzes input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.keuzes span{display:block;padding:10px 12px;border:1px solid var(--line2);border-radius:8px;font-weight:500}
+.keuzes input:checked + span{background:var(--gold-soft);border-color:var(--gold)}
+.keuzes input:focus-visible + span{outline:2px solid var(--gold);outline-offset:1px}
+.dag{margin-top:18px}
+.dag:first-child{margin-top:4px}
+.dag h2{margin:0 0 2px;padding-bottom:6px;border-bottom:1px solid var(--line2);font-size:.9375rem;font-weight:700}
+.dag h2 span{margin-left:6px;font-weight:400;color:var(--ink3)}
+.regel{display:flex;flex-direction:column;gap:3px;padding:11px 0;border-bottom:1px solid var(--line)}
+.rkop{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.rkop b{font-weight:500}
+.rkop time{color:var(--ink2);font-size:.8125rem;white-space:nowrap}
+.regel p{margin:0}
+.regel .ropl span{color:var(--ink2)}
+.rvoet{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:center;margin-top:3px;color:var(--ink2);font-size:.8125rem}
+.rfoto{margin-top:6px}
+.rfoto img{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:8px;background:var(--sunken)}
+.tekstknop{padding:0;border:0;background:none;color:var(--gold-ink);font-size:.8125rem;font-weight:500;cursor:pointer;text-decoration:underline}
 .melding-acties{display:flex;flex-direction:column;gap:12px;padding:0 20px 24px}
 .bordkeuze{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
 .bordkeuze .seg{margin:0;align-self:flex-start}
@@ -276,6 +306,13 @@ html.present .page{max-width:none}
   <span class="merk">Muller Technical Solutions</span>
 </div>
 
+<div id="monteurscherm" hidden>
+  <header class="mkop"><span class="mark" aria-hidden="true">TD</span><div><b>Technische dienst</b><small>Dutch Bakery Group Eindhoven</small></div><button class="uitlog bovenaan" data-uitlog hidden>Uitloggen</button></header>
+  <div class="seg mtabs" id="mtabs" role="group" aria-label="Schermen"><button data-m="melden" aria-pressed="true">Storing melden</button><button data-m="rapport" aria-pressed="false">Dienstrapport</button></div>
+  <main id="minhoud"></main>
+  <span class="merk">Muller Technical Solutions</span>
+</div>
+
 <div id="app" hidden>
   <div class="waas" id="menuwaas" hidden></div>
   <aside class="side" id="side">
@@ -316,6 +353,7 @@ const ICON={
   sleutel:'<path d="M14.7 6.3a4.5 4.5 0 0 1 5.9-.9l-3.1 3.1 2 2 3.1-3.1a4.5 4.5 0 0 1-6.2 5.6L8 21.4a2 2 0 0 1-2.9-2.9l8.4-8.4a4.5 4.5 0 0 1 1.2-3.8Z"/>',
   bel:'<path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9Z"/><path d="M10 20a2.2 2.2 0 0 0 4 0"/>',
   uit:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+  rapport:'<path d="M8 3h8l1 3H7Z"/><path d="M7 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1"/><path d="M8 12h8M8 16h5"/>',
   zoek:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   sluit:'<path d="M6 6l12 12M18 6 6 18"/>',
@@ -323,10 +361,10 @@ const ICON={
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
-const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"}];
+const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
 
 /* ---- kleine bouwstenen ---- */
-const STATUS={"Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
+const STATUS={"Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
 const st=s=>s?'<span class="st '+(STATUS[s]||"")+'"><i></i>'+esc(s)+"</span>":"";
 const prio=p=>p?'<span class="p p'+esc(p)+'">Prio '+esc(p)+"</span>":'<span class="zacht">–</span>';
 const leeg=v=>v==null||v==="";
@@ -418,6 +456,8 @@ document.addEventListener("click",e=>{
   if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
   if(e.target.closest("[data-present]"))presenteer(true);
   if(e.target.closest("[data-uitlog]"))uitloggen();
+  if(e.target.closest("[data-storing]"))openStoring();
+  const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
@@ -503,6 +543,91 @@ function meldScherm(){
     koppelMeld("",()=>{vak.innerHTML='<div class="bevestigd"><p><b>Melding verstuurd.</b></p><button class="knop hoofd" id="m_opnieuw">Nieuwe melding maken</button></div>';$("#m_opnieuw").addEventListener("click",formulier)});
   }
   formulier();
+}
+/* ---- storing melden en dienstrapport ---- */
+const VERVOLG=[["Gereed","ok"],["Onderdeel bestellen","warn"],["Plannen voor onderhoudstop","info"]];
+let RAPPORT=null,RFOUT=false,rlaatste="",rteken=null;
+function storingVelden(){
+  return'<label>Monteur<input type="text" id="r_naam" required value="'+esc(naam())+'"></label>'+
+    '<div class="twee"><label>Lijn<select id="r_lijn" required><option value="">Kies</option><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label><label>Machinedeel<input type="text" id="r_deel" required></label></div>'+
+    '<label>Storing<textarea id="r_st" required></textarea></label><label>Oplossing<textarea id="r_opl" required></textarea></label>'+
+    '<fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="r_verv" value="'+v[0]+'" required><span>'+v[0]+"</span></label>").join("")+"</fieldset>"+
+    '<label id="r_fotoveld" hidden>Foto van het onderdeel<input type="file" id="r_foto" accept="image/*"></label><img class="voorbeeld" id="r_vb" alt="Gekozen foto" hidden>'+
+    '<p class="fout" id="r_fout" hidden></p><button class="knop hoofd" id="r_knop" type="submit">Storing opslaan</button>';
+}
+function koppelStoring(klaar){
+  const fv=$("#r_foto"),veld=$("#r_fotoveld"),vb=$("#r_vb");
+  document.querySelectorAll('input[name="r_verv"]').forEach(r=>r.addEventListener("change",()=>{const n=r.value==="Onderdeel bestellen";veld.hidden=!n;fv.required=n;if(!n){fv.value="";vb.hidden=true}}));
+  fv.addEventListener("change",e=>{const f=e.target.files[0];if(f){vb.src=URL.createObjectURL(f);vb.hidden=false}else vb.hidden=true});
+  $("#stform").addEventListener("submit",async e=>{
+    e.preventDefault();const k=$("#r_knop"),fout=$("#r_fout");k.disabled=true;fout.hidden=true;
+    const w=id=>$(id).value.trim(),wie=w("#r_naam");naam(wie);
+    let foto="";
+    if(fv.files[0]){try{foto=await verklein(fv.files[0])}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
+    const d={actie:"nieuw",letter:"TD",melder:wie,lijn:w("#r_lijn"),machine:w("#r_deel"),melding:w("#r_st"),oplossing:w("#r_opl"),vervolg:document.querySelector('input[name="r_verv"]:checked').value,foto};
+    try{const j=await stuur(d);RAPPORT=(RAPPORT||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste="";klaar();melder("Storing opgeslagen")}
+    catch(_){fout.textContent="Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.";fout.hidden=false;k.disabled=false}
+  });
+}
+function openStoring(){
+  terug=document.activeElement;
+  const p=$("#paneel");
+  p.innerHTML='<div class="pkopbalk"><div><small>Dienstrapport</small><h2 id="ptitel">Storing melden</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="stform">'+storingVelden()+"</form>";
+  p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
+  koppelStoring(()=>{sluitPaneel();SCHERM[HUIDIG]()});
+}
+async function haalRapport(){
+  const m=MELD();if(!m)return;
+  try{
+    const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)+"&rapport=1"),j=await r.json();if(j.fout)throw 0;
+    RFOUT=false;const t=JSON.stringify(j.rapport||[]);
+    if(t!==rlaatste||RAPPORT===null){rlaatste=t;RAPPORT=j.rapport||[];if(rteken)rteken()}
+  }catch(_){RFOUT=true;if(rteken)rteken()}
+}
+function rapportLijst(vak,toolbar){
+  const s=mem.rapport||(mem.rapport={q:"",lijn:""});
+  vak.innerHTML=(toolbar||"")+'<div class="toolbar"><div class="zoek">'+ico("zoek")+'<input type="search" id="rq" placeholder="Zoeken" aria-label="Zoeken" value="'+esc(s.q)+'"></div><select id="rl" aria-label="Alle lijnen"><option value="">Alle lijnen</option>'+["Lijn 1","Lijn 2","Lijn 3","Overig"].map(l=>"<option"+(l===s.lijn?" selected":"")+">"+l+"</option>").join("")+'</select></div><div id="rlijst"></div>';
+  function teken(){
+    const doel=$("#rlijst");if(!doel)return;
+    const w=norm(s.q).split(/\s+/).filter(Boolean);
+    const r=(RAPPORT||[]).filter(x=>(!s.lijn||x.lijn===s.lijn)&&(!w.length||w.every(y=>norm([x.melder,x.lijn,x.machine,x.melding,x.oplossing,x.vervolg].join(" ")).includes(y)))).slice().reverse();
+    if(!r.length){doel.innerHTML='<div class="leegmelding">'+(!MELD()?"Het dienstrapport staat nog niet aan.":RFOUT?"Het dienstrapport is nu niet bereikbaar.":RAPPORT===null?"Dienstrapport ophalen.":"Nog geen storingen in het dienstrapport.")+"</div>";return}
+    const dagen=[];r.forEach(x=>{const k=(x.tijd||"").slice(0,10);let d=dagen.find(y=>y.k===k);if(!d){d={k,r:[]};dagen.push(d)}d.r.push(x)});
+    doel.innerHTML=dagen.map(d=>{const dt=datum(d.k);return'<section class="dag"><h2>'+esc(dt?hoofd(dt.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"})):d.k)+"<span>"+d.r.length+"</span></h2>"+d.r.map(x=>{
+      const v=VERVOLG.find(y=>y[0]===x.vervolg);
+      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+'</p><p class="ropl"><span>Oplossing: </span>'+esc(x.oplossing)+'</p><div class="rvoet"><span>'+esc(x.melder)+"</span>"+(x.foto?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div></article>";
+    }).join("")+"</section>"}).join("");
+  }
+  $("#rq").addEventListener("input",e=>{s.q=e.target.value;teken()});
+  $("#rl").addEventListener("change",e=>{s.lijn=e.target.value;teken()});
+  rteken=teken;teken();
+}
+async function toonFoto(b){
+  const m=MELD(),vak=document.createElement("div");vak.className="rfoto";vak.textContent="Foto laden";
+  b.closest(".regel").appendChild(vak);b.remove();
+  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)+"&foto="+encodeURIComponent(b.dataset.rfoto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto van het onderdeel" src="data:image/jpeg;base64,'+j.foto+'">'}
+  catch(_){vak.textContent="De foto kan niet worden geladen."}
+}
+function vRapport(){
+  const v=$("#view");
+  v.innerHTML=kop("Dienstrapport","Alle storingen die monteurs hebben gemeld, de nieuwste bovenaan.",false,MELD()?'<button class="knop hoofd" data-storing>Storing melden</button>':"")+'<div id="rvak"></div>';
+  rapportLijst($("#rvak"));
+  if(RAPPORT===null)haalRapport();
+}
+function monteurScherm(){
+  $("#lock").hidden=true;$("#monteurscherm").hidden=false;
+  const vak=$("#minhoud");
+  function toon(t){
+    document.querySelectorAll("#mtabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===t)));
+    rteken=null;
+    if(t==="rapport"){rapportLijst(vak);return}
+    if(!MELD()){vak.innerHTML='<div class="leegmelding">Storing melden staat nog niet aan.</div>';return}
+    vak.innerHTML='<form class="meldform" id="stform">'+storingVelden()+"</form>";
+    koppelStoring(()=>toon("rapport"));
+  }
+  $("#mtabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)toon(b.dataset.m)});
+  toon("melden");
+  if(MELD()){haalRapport();setInterval(()=>{if(!document.hidden)haalRapport()},60000)}
 }
 function verklein(f){
   return new Promise((ok,nee)=>{
@@ -726,7 +851,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -750,6 +875,7 @@ function presenteer(aan){
 function start(data){
   D=data;
   if(D.niveau==="melden"){meldScherm();return}
+  if(D.niveau==="monteur"){monteurScherm();return}
   const td=!!D.cm;
   PAGINAS=P_DAG.concat(td?P_TD:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];

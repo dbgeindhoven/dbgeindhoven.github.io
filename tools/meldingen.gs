@@ -3,7 +3,8 @@
 const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
-const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico'];
+const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
+const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
@@ -26,26 +27,34 @@ function map_() {
   return m.hasNext() ? m.next() : DriveApp.createFolder(MAP);
 }
 
+function object_(r) {
+  const o = {};
+  KOP.forEach((k, i) => { o[k] = r[i]; });
+  return o;
+}
+
 function doGet(e) {
-  if (!e.parameter || e.parameter.k !== SLEUTEL) return uit_({ fout: 'geen toegang' });
+  const p = e.parameter || {};
+  const monteur = p.k === MONTEURSLEUTEL;
+  if (p.k !== SLEUTEL && !monteur) return uit_({ fout: 'geen toegang' });
   const rijen = blad_().getDataRange().getDisplayValues().slice(1);
-  if (e.parameter.foto) {
-    // Alleen foto's die bij een melding horen, nooit andere bestanden uit Drive.
-    if (!rijen.some(r => r[14] === e.parameter.foto)) return uit_({ fout: 'foto niet gevonden' });
-    return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(e.parameter.foto).getBlob().getBytes()) });
+  if (p.foto) {
+    // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive.
+    if (!rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD'))) return uit_({ fout: 'foto niet gevonden' });
+    return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
-  const open = rijen.filter(r => r[10] === 'Open').map(r => {
-    const o = {};
-    KOP.forEach((k, i) => { o[k] = r[i]; });
-    return o;
-  });
-  return uit_({ meldingen: open });
+  if (monteur || p.rapport) {
+    return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
+  }
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_) });
 }
 
 function doPost(e) {
   const d = JSON.parse(e.postData.contents);
   // De meldinlog mag alleen nieuwe meldingen versturen, nooit iets lezen of wijzigen.
-  if (d.k !== SLEUTEL && !(d.k === MELDSLEUTEL && d.actie === 'nieuw' && d.letter === '')) return uit_({ fout: 'geen toegang' });
+  const melder = d.k === MELDSLEUTEL && d.actie === 'nieuw' && d.letter === '';
+  const monteur = d.k === MONTEURSLEUTEL && d.actie === 'nieuw' && d.letter === 'TD';
+  if (d.k !== SLEUTEL && !melder && !monteur) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -60,7 +69,7 @@ function doPost(e) {
         if (d.foto.length > MAX_FOTO) return uit_({ fout: 'foto te groot' });
         foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'melding-' + id + '.jpg')).getId();
       }
-      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico)]);
+      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg)]);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto });
     }
     if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
