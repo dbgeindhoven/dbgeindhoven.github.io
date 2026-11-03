@@ -117,7 +117,7 @@ def rij_voor(w, spec, datum):
         onderdelen=spec.get("onderdelen"), status="Uitgevoerd" if gereed else "Open", opmerking=" ".join(regels),
         uitgevoerd_op=datum if gereed else None, monteur=w.get("melder") if monteur else None,
         actiehouder=w.get("actiehouder") or None, bron="CM-overzicht, uit melding van " + datum,
-        herkomst="Monteur" if monteur else "Productie", melding=w["id"],
+        herkomst="Monteur" if monteur else "Productie", risico=w.get("risico") or None, melding=w["id"],
     )
 
 

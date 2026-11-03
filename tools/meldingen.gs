@@ -5,13 +5,10 @@ const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
-const START_URL = '__START_URL__';
-const START_TOKEN = '__START_TOKEN__';
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
-const START_RUST = 600000; // Hooguit één start van de bonnentaak per tien minuten.
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -52,40 +49,11 @@ function code_(b) {
 // De geplande taak leest die map en gooit een bestand weg zodra de bon klaar is.
 function wachtrij_(b) {
   const map = DriveApp.getFolderById(WACHTRIJ);
-  let nieuw = 0;
   b.getDataRange().getDisplayValues().forEach((r, i) => {
     if (i === 0 || r[18] || (r[2] !== 'TD' && r[9] !== 'Ja')) return;
     map.createFile('bon-' + r[0] + '.txt', JSON.stringify(object_(r)), MimeType.PLAIN_TEXT);
     b.getRange(i + 1, 19).setValue(nu_());
-    nieuw++;
   });
-  return nieuw;
-}
-
-// Start de bonnentaak meteen. Wat binnenkomt terwijl de taak loopt, pakt de taak zelf mee.
-function startBonnen_() {
-  const p = PropertiesService.getScriptProperties();
-  const nu = Date.now();
-  if (nu - Number(p.getProperty('gestart') || 0) < START_RUST) return;
-  p.setProperty('gestart', String(nu));
-  UrlFetchApp.fetch(START_URL, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: '{}',
-    muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + START_TOKEN, 'anthropic-beta': 'experimental-cc-routine-2026-04-01', 'anthropic-version': '2023-06-01' },
-  });
-}
-
-// Lijn en machine die bij de opvolging zijn ingevuld, gaan mee zolang de bon nog niet is gemaakt.
-function verversWachtrij_(b, rij, id) {
-  const r = b.getRange(rij, 1, 1, KOP.length).getDisplayValues()[0];
-  if (!r[18]) return;
-  const f = DriveApp.getFolderById(WACHTRIJ).getFilesByName('bon-' + id + '.txt');
-  while (f.hasNext()) {
-    const x = f.next();
-    if (!x.isTrashed()) x.setContent(JSON.stringify(object_(r)));
-  }
 }
 
 // Een melding kan zo vaak op de wachtrij als iemand het vinkje aan en uit zet; de taak slaat bestaande bonnen over.
@@ -99,7 +67,7 @@ function uitWachtrij_(b, rij, id) {
 // Een fout in Drive mag een melding nooit tegenhouden. De regel gaat dan mee bij de volgende melding.
 function naarWachtrij_(b) {
   try {
-    if (wachtrij_(b)) startBonnen_();
+    wachtrij_(b);
   } catch (f) {
     console.error(f);
   }
@@ -156,12 +124,7 @@ function doPost(e) {
             b.getRange(i + 1, 5, 1, 2).setValues([[schoon_(d.lijn), schoon_(d.machine)]]);
             b.getRange(i + 1, 8, 1, 3).setValues([[schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee']]);
             b.getRange(i + 1, 14).setValue(schoon_(d.oplossing));
-            try {
-              if (d.bon_nodig) verversWachtrij_(b, i + 1, d.id);
-              else uitWachtrij_(b, i + 1, d.id);
-            } catch (f) {
-              console.error(f);
-            }
+            if (!d.bon_nodig) uitWachtrij_(b, i + 1, d.id);
             naarWachtrij_(b);
           }
           return uit_({ ok: true });

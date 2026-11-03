@@ -364,7 +364,7 @@ const ICON={
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
-const P_WV=[{id:"bonnen",t:"Bonnen",i:"download"}];
+const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
 
 /* ---- kleine bouwstenen ---- */
 const STATUS={"Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
@@ -380,7 +380,8 @@ const nummer=s=>{const m=/\d+/.exec(s||"");return m?+m[0]+(/^SQDM/.test(s)?1e6:0
 const bonnen=()=>(D.meta&&D.meta.bonnen)||{};
 const bonVan=id=>(bonnen().verwerkt||{})[id];
 const bonStand=m=>bonVan(m.id)?bonVan(m.id)+" gemaakt":m.bon_nodig==="Ja"?"Wordt gemaakt":"";
-const herkomst=r=>/^SQDM/.test(r.nr)?"Productiemelding":r.herkomst==="Monteur"?"Monteurmelding":"Eigen bon";
+const isSqd=r=>/^SQDM/.test(r.nr);
+const herkomst=r=>isSqd(r)?"Productiemelding":r.herkomst==="Monteur"?"Monteurmelding":"Eigen bon";
 const stand=k=>(D.meta&&D.meta.standen&&D.meta.standen[k])||"";
 const datum=s=>{const m=/^(\d{2})-(\d{2})-(\d{4})/.exec(s||"");return m?new Date(+m[3],+m[2]-1,+m[1]):null};
 const langeDatum=d=>d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -834,10 +835,10 @@ function vStart(){
     '<section class="deel"><h2>Open met prio 1<span>'+p1.length+"</span></h2>"+vasteTabel(cols,p1,cmDetail)+"</section>";
 }
 function vCm(){
-  const r=D.cm;
+  const r=D.cm.filter(x=>!isSqd(x));
   lijstScherm({key:"cm",titel:"CM-bonnen",sub:stand("cm"),rijen:r,eenheid:["bon","bonnen"],
     seg:{get:x=>x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Besteld","Uitgevoerd","Gereed","Dubbel","Vervallen"]},
-    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Productiemelding","Monteurmelding","Eigen bon"],get:herkomst}]:[]),
+    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Monteurmelding","Eigen bon"],get:herkomst}]:[]),
     alleen:{l:"Alleen openstaand",test:isOpen},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.onderdelen,x.opmerking,x.monteur].join(" "),
     kolommen:[
@@ -849,21 +850,24 @@ function vCm(){
       {k:"u",l:"Uitvoeren op",w:"150px",r:x=>of(x.uitvoeren),s:x=>norm(x.uitvoeren)||"zzz"}],
     detail:cmDetail});
 }
-function vBonnen(){
-  const r=D.cm.filter(x=>x.bon).reverse();
-  lijstScherm({key:"bonnen",titel:"Bonnen",sub:"Alle bonnen die uit meldingen zijn gemaakt, de nieuwste bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
-    geen:r.length?"Niets gevonden. Pas de filters aan.":"Er zijn nog geen bonnen uit meldingen gemaakt.",
-    seg:{get:herkomst,o:["Productiemelding","Monteurmelding"]},
-    tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.opmerking].join(" "),
+function bonLijst(c){
+  const r=D.cm.filter(x=>x.bon&&c.test(x)).reverse();
+  lijstScherm({key:c.key,titel:c.titel,sub:c.sub+" De nieuwste staat bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
+    geen:r.length?"Niets gevonden. Pas de filters aan.":c.geen,
+    seg:{get:x=>x.status,o:["Open","Gepland","Deels uitgevoerd","Besteld","Uitgevoerd","Gereed","Vervallen"]},
+    tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.risico,x.opmerking].join(" "),
     kolommen:[
       {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
       {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving),s:x=>norm(x.omschrijving)},
-      {k:"m",l:"Machine",w:"22%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
-      {k:"w",l:"Melder",w:"120px",r:x=>of(x.melder),s:x=>norm(x.melder)},
+      {k:"m",l:"Machine",w:"20%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))||of(null),s:x=>norm(x.lijn)+norm(x.machine)}
+    ].concat(c.risico?[{k:"r",l:"Risico",w:"96px",c:"m-sub",ml:"Risico",r:x=>of(x.risico),s:x=>x.risico||"z"}]:[],[
+      {k:"w",l:"Melder",w:"110px",r:x=>of(x.melder),s:x=>norm(x.melder)},
       {k:"s",l:"Status",w:"130px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
-      {k:"b",l:"Downloaden",w:"120px",c:"m-sub",r:bonKnop}],
+      {k:"b",l:"Downloaden",w:"110px",c:"m-sub",r:bonKnop}]),
     detail:cmDetail});
 }
+const vSqdBonnen=()=>bonLijst({key:"sqdbonnen",titel:"SQD-bonnen",sub:"Bonnen uit meldingen van productie.",geen:"Er zijn nog geen SQD-bonnen.",test:isSqd,risico:true});
+const vCmBonnen=()=>bonLijst({key:"cmbonnen",titel:"Aangemaakte CM-bonnen",sub:"Bonnen uit storingen van monteurs.",geen:"Er zijn nog geen CM-bonnen aangemaakt.",test:x=>!isSqd(x)});
 function vBestel(){
   const r=D.bestellijst,g=["Nog niet besteld","Eerst opmeten of checken","Opgevraagd","Besteld","Binnen"];
   lijstScherm({key:"bestel",titel:"Bestellijst",sub:stand("bestel"),rijen:r,eenheid:["regel","regels"],
@@ -927,7 +931,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={bonnen:vBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
