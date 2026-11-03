@@ -125,9 +125,9 @@ def zet_foto(cel, spec, delen):
             p.append(run(spec["foto_tekst"], 16, i=True, kleur="808080"))
         return
     im = Image.open(spec["foto"]).convert("RGB")
-    im.thumbnail((1400, 1400))
+    im.thumbnail((1000, 1000))
     uit = io.BytesIO()
-    im.save(uit, "JPEG", quality=82)
+    im.save(uit, "JPEG", quality=78)
     delen["word/media/foto_bon.jpg"] = uit.getvalue()
     w, h = im.size
     schaal = min(MAX_B / w, spec.get("foto_maxh", MAX_H) / h)
