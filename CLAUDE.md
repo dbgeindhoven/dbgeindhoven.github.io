@@ -24,7 +24,7 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 Een nieuwe pagina maak je in `tools/template.html`: voeg een scherm toe aan `SCHERM` en aan `P_DAG` of `P_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
 
 ## Meldingen
-Op het SQD-overzicht kunnen bezoekers per letter een melding maken. De site is statisch, dus meldingen gaan via een Google Apps Script-webapp (`tools/meldingen.gs`) naar de privé Google Sheet "TD Hub meldingen". De webadres, de sleutel en het Sheet-ID staan in `meta.meldingen` in de privépagina, niet in deze repository. Zonder `url` blijven de knoppen verborgen. Een open melding kleurt de letter rood. Een melding met `bon_nodig` = Ja is bedoeld voor een CM-bon.
+Op het SQD-overzicht kunnen bezoekers per letter een melding maken. De site is statisch, dus meldingen gaan via een Google Apps Script-webapp (`tools/meldingen.gs`) naar de privé Google Sheet "TD Hub meldingen". De webadres, de sleutel en het Sheet-ID staan in `meta.meldingen` in de privépagina, niet in deze repository. Zonder `url` blijven de knoppen verborgen. Een open melding kleurt de letter rood. Een melding met `bon_nodig` = Ja is bedoeld voor een CM-bon. De Sheet heeft per melding ook `oplossing` en `foto` (Drive-bestand in de privémap "TD Hub foto's"). Directie-acties staan in dezelfde Sheet met letter `DIR`.
 
 ## Twee toegangsniveaus
 - **Dagstart:** SQD, Lopende storingen, Output per lijn en Zaterdag.

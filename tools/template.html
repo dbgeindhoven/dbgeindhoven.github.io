@@ -145,7 +145,11 @@ html.present .pijler .knop{display:none}
 .meldform{display:flex;flex-direction:column;gap:14px;padding:16px 20px 24px}
 .meldform label{display:flex;flex-direction:column;gap:5px;font-size:.875rem;font-weight:500}
 .meldform input[type=text],.meldform input[type=date],.meldform textarea,.meldform select{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
-.meldform textarea{min-height:96px;resize:vertical}
+.meldform textarea{min-height:72px;resize:vertical}
+.meldform input[type=file]{font-size:.875rem;font-weight:400}
+.voorbeeld,.foto img{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:8px}
+.foto{padding:0 20px 16px;color:var(--ink2);font-size:.875rem}
+.foto img{max-height:none;object-fit:contain}
 .meldform .twee{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .meldform .vink{flex-direction:row;align-items:center;gap:8px;font-weight:400}
 .meldform .fout{margin:0;color:var(--crit-ink);font-size:.875rem}
@@ -430,30 +434,49 @@ function openMelding(l){
     '<label>Wat moet er gebeuren?<textarea id="m_tekst" required></textarea></label>'+
     '<label>Actiehouder<input type="text" id="m_actie" required></label>'+
     '<div class="twee"><label>Datum<input type="date" id="m_dat" required value="'+n0(1)+'"></label><label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label></div>':
-    '<label>Wat is er aan de hand?<textarea id="m_tekst" required></textarea></label>'+
+    '<label>Probleem<textarea id="m_tekst" required></textarea></label>'+
+    '<label>Oplossing<textarea id="m_opl" required></textarea></label>'+
     '<div class="twee"><label>Lijn<select id="m_lijn"><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label><label>Machine<input type="text" id="m_mach"></label></div>'+
     '<label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="m_actie"></label><label>Opvolgen voor<input type="date" id="m_dat" value="'+n0()+'"></label></div>'+
+    '<label>Foto<input type="file" id="m_foto" accept="image/*"></label><img class="voorbeeld" id="m_vb" alt="Gekozen foto" hidden>'+
     '<label class="vink"><input type="checkbox" id="m_bon"'+(l==="S"?"":" checked")+'> Technische dienst nodig: maak een CM-bon</label>';
   p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">'+(dir?"Actie toevoegen":"Melding maken")+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+velden+
     '<p class="fout" id="m_fout" hidden>Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.</p>'+
     '<button class="knop hoofd" id="m_knop" type="submit">'+(dir?"Actie toevoegen":"Melding versturen")+'</button></form>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);$("#m_tekst").focus();
+  if($("#m_foto"))$("#m_foto").addEventListener("change",e=>{const f=e.target.files[0],v=$("#m_vb");if(f){v.src=URL.createObjectURL(f);v.hidden=false}else v.hidden=true});
   $("#meldform").addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#m_knop");k.disabled=true;$("#m_fout").hidden=true;
     const w=id=>{const x=$(id);return x?x.value.trim():""};
     const wie=w("#m_naam");naam(wie);
-    const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),lijn:w("#m_lijn"),machine:w("#m_mach"),melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-"),bon_nodig:!!($("#m_bon")&&$("#m_bon").checked)};
-    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder(dir?"Actie toegevoegd":"Melding verstuurd")}
-    catch(_){$("#m_fout").hidden=false;k.disabled=false}
+    const bestand=$("#m_foto")&&$("#m_foto").files[0];let foto="";
+    if(bestand){try{foto=await verklein(bestand)}catch(_){$("#m_fout").textContent="Deze foto kan niet worden gelezen. Kies een andere foto of verstuur zonder foto.";$("#m_fout").hidden=false;k.disabled=false;return}}
+    const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),oplossing:w("#m_opl"),foto,lijn:w("#m_lijn"),machine:w("#m_mach"),melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-"),bon_nodig:!!($("#m_bon")&&$("#m_bon").checked)};
+    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder(dir?"Actie toegevoegd":"Melding verstuurd")}
+    catch(_){$("#m_fout").textContent="Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.";$("#m_fout").hidden=false;k.disabled=false}
   });
+}
+function verklein(f){
+  return new Promise((ok,nee)=>{
+    const u=URL.createObjectURL(f),i=new Image();
+    i.onload=()=>{const s=Math.min(1,1600/Math.max(i.naturalWidth,i.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(i.naturalWidth*s);c.height=Math.round(i.naturalHeight*s);c.getContext("2d").drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL("image/jpeg",.72).split(",")[1])};
+    i.onerror=()=>{URL.revokeObjectURL(u);nee(new Error("foto"))};
+    i.src=u;
+  });
+}
+async function laadFoto(m){
+  const vak=$("#m_fotovak");if(!vak)return;
+  try{const c=MELD(),r=await fetch(c.url+"?k="+encodeURIComponent(c.sleutel)+"&foto="+encodeURIComponent(m.foto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto bij de melding" src="data:image/jpeg;base64,'+j.foto+'">'}
+  catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
 function openDetailMelding(m){
   terug=document.activeElement;
-  const v=[["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],[m.letter==="DIR"?"Datum":"Opvolgen voor",m.datum],["CM-bon",m.letter==="DIR"?null:m.bon_nodig]];
+  const v=[["Oplossing",m.oplossing],["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],[m.letter==="DIR"?"Datum":"Opvolgen voor",m.datum],["CM-bon",m.letter==="DIR"?null:m.bon_nodig]];
   const p=$("#paneel");
-  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl><div class="melding-acties"><p class="fout" id="m_fout" hidden>Afmelden is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl>'+(m.foto?'<div class="foto" id="m_fotovak">Foto laden</div>':"")+'<div class="melding-acties"><p class="fout" id="m_fout" hidden>Afmelden is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
+  if(m.foto)laadFoto(m);
   $("#m_klaar").addEventListener("click",async e=>{
     e.target.disabled=true;
     try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();vSqd();melder(m.letter==="DIR"?"Actie afgehandeld":"Melding afgehandeld")}
@@ -469,7 +492,7 @@ function vSqd(){
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const c=(auto[v.letter]||[]).map(a=>"<div><dt>"+esc(a.label)+"</dt><dd>"+esc(a.waarde)+"</dd></div>").join("");
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b><small>"+esc([x.lijn,x.machine].filter(Boolean).join(", "))+(x.actiehouder?". Actie: "+esc(x.actiehouder)+(x.datum?", "+esc(x.datum):""):". Nog geen actiehouder")+"</small></button>").join("")+"</div>":"";
+    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([x.lijn,x.machine].filter(Boolean).join(", "))+(x.actiehouder?". Actie: "+esc(x.actiehouder)+(x.datum?", "+esc(x.datum):""):". Nog geen actiehouder")+(x.foto?". Met foto":"")+"</small></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
     const knop=m?'<button class="knop" data-meld="'+esc(v.letter)+'">Melding maken</button>':"";
     return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+knop+"</section>";
