@@ -4,3 +4,4 @@ dist/
 *.docx
 *.pdf
 werk.json
+__pycache__/
