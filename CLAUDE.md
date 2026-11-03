@@ -29,7 +29,7 @@ Een melding bestaat uit melder, foto, probleem en risico (Safety, Quality of Del
 ## Bonnen uit meldingen
 Een productiemelding krijgt bij binnenkomst de code `SQDM-n` (kolom `code` in de Sheet). Vinkt de dagstart of TD "Technische dienst nodig: maak een CM-bon" aan, dan wordt het een echte bon met datzelfde nummer. Een monteurstoring wordt altijd een bon, met het eerstvolgende CM-nummer. In het CM-overzicht staan deze bonnen met `herkomst` (Productie of Monteur) en met `bon`: de versleutelde Word- en PDF-bon, die TD op de site kan openen. Welke melding welke bon werd staat in `meta.bonnen.verwerkt`.
 
-De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. Staat `meta.meldingen.url` nog leeg, dan heeft de taak geen schema. Zet zodra het webadres is ingevuld het schema aan met `update_trigger`: `CRON_TZ=Europe/Amsterdam 37 6-16/2 * * 1-5`. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
+De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. Staat `meta.meldingen.url` nog leeg, dan heeft de taak geen schema. Zet zodra het webadres is ingevuld het schema aan met `update_trigger`: `CRON_TZ=Europe/Amsterdam 48 6-14/2 * * 1-5`. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
 
 ## Vier toegangsniveaus
 - **Melden:** alleen het meldformulier. Dit deel bevat geen enkele lijst, en de meldsleutel kan alleen nieuwe meldingen versturen.
