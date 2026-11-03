@@ -132,10 +132,6 @@ html.present .deelkop .knop{display:none}
 .pijler.rood .letter{color:var(--crit)}
 .pkop h2{margin:0;font-size:1.0625rem;font-weight:700}
 .pkop .st{font-size:.8125rem;color:var(--ink2)}
-.cijfers{margin:0;display:flex;flex-direction:column;gap:4px;font-size:.875rem}
-.cijfers div{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-.cijfers dt{color:var(--ink2);min-width:0}
-.cijfers dd{margin:0;font-weight:700}
 .punten{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
 .geenpunten{margin:0;color:var(--ink3)}
 .meldingen{display:flex;flex-direction:column;gap:6px}
@@ -734,17 +730,16 @@ function openDetailMelding(m){
   });
 }
 function vSqd(){
-  const s=D.sqdc||{},auto=s.auto||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
+  const s=D.sqdc||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
   const acties=(s.directie_acties||[]).filter(a=>!a.gereed).concat((MELDINGEN||[]).filter(x=>x.letter==="DIR").map(x=>({actie:x.melding,actiehouder:x.actiehouder,datum:x.datum,_m:x})));
   const bord=(s.vakken||[]).map(v=>{
     const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter);
     const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
-    const c=(auto[v.letter]||[]).map(a=>"<div><dt>"+esc(a.label)+"</dt><dd>"+esc(a.waarde)+"</dd></div>").join("");
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
     const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([x.code,[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
-    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+(c?'<dl class="cijfers">'+c+"</dl>":"")+pt+lijst+geen+"</section>";
+    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+pt+lijst+geen+"</section>";
   }).join("");
   const cols=[
     {k:"a",l:"Actie",c:"m-main",x:"titel",r:a=>esc(a.actie)},

@@ -90,30 +90,6 @@ def storingen(data):
     return uit
 
 
-def sqd_auto(data):
-    """Kengetallen in de S-, Q- en D-vakken, berekend uit de bestaande lijsten."""
-    open_nrs = {r["nr"] for r in data.get("cm", []) if r.get("status") not in GESLOTEN}
-
-    def tel(veld):
-        nrs = set()
-        for m in data.get("priolijst", []):
-            if m.get(veld) == 3:
-                nrs |= set(m.get("open_cm") or [])
-        return len(nrs & open_nrs)
-
-    st = data.get("storingen", [])
-    z = data.get("zaterdag", {})
-    return {
-        "S": [{"label": "Open bonnen op machines met hoog veiligheidsrisico", "waarde": tel("score_veiligheid")}],
-        "Q": [{"label": "Open bonnen op machines met hoog voedselveiligheidsrisico", "waarde": tel("score_voedselveiligheid")}],
-        "D": [
-            {"label": "Lopende storingen", "waarde": len(st)},
-            {"label": "Daarvan prio 1", "waarde": sum(1 for x in st if x.get("prio") == 1)},
-            {"label": "Ingepland komende zaterdag", "waarde": len(z.get("correctief", [])) + len(z.get("preventief", []))},
-        ],
-    }
-
-
 def box(tekst, sleutel):
     iv = secrets.token_bytes(12)
     ct = AESGCM(base64.b64decode(sleutel)).encrypt(iv, json.dumps(tekst, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), None)
@@ -127,7 +103,7 @@ def build(a):
         if not r.get("groep"):
             bestel_groep(r)
     data["storingen"] = storingen(data)
-    data.setdefault("sqdc", {})["auto"] = sqd_auto(data)
+    data.setdefault("sqdc", {}).pop("auto", None)
     tpl = (TOOLS / "template.html").read_text("utf-8")
     Path(a.plain).write_text(fill(tpl, "plain", json.dumps(data, ensure_ascii=False, separators=(",", ":"))), "utf-8")
 
