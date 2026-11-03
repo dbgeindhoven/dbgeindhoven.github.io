@@ -75,8 +75,10 @@ nav a[aria-current="page"] .i{color:var(--gold-ink)}
 .knop.hoofd{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 .knop.hoofd:hover{filter:brightness(.96)}
 .deel{margin-top:28px}
-.deel > h2{margin:0 0 10px;font-size:1rem;font-weight:700}
-.deel > h2 span{margin-left:6px;font-weight:400;color:var(--ink3)}
+.deel h2{margin:0 0 10px;font-size:1rem;font-weight:700}
+.deelkop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+html.present .deelkop .knop{display:none}
+.deel h2 span{margin-left:6px;font-weight:400;color:var(--ink3)}
 
 /* werkbalk */
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
@@ -375,13 +377,13 @@ function vasteTabel(cols,rijen,detail,klasse){
 }
 document.addEventListener("click",e=>{
   const w=e.target.closest("[data-t]"),tr=e.target.closest("tr[data-i]");
-  if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail)openPaneel(t.detail(t.rijen[+tr.dataset.i]))}
+  if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
   if(e.target.closest("[data-present]"))presenteer(true);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
 document.addEventListener("keydown",e=>{
-  if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t];openPaneel(t.detail(t.rijen[+e.target.dataset.i]))}
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t],d=t.detail(t.rijen[+e.target.dataset.i]);if(d)openPaneel(d)}
   if(e.key==="Escape"){if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
   if(document.documentElement.classList.contains("present")&&$("#paneel").hidden){
     const l=P_DAG.map(p=>p.id),i=l.indexOf(HUIDIG);
@@ -406,7 +408,7 @@ const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.statu
 /* ---- SQD-overzicht ---- */
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
 let MELDINGEN=null,MELDFOUT=false,klok=null;
-const LETTERS={S:"Safety",Q:"Quality",D:"Delivery"};
+const LETTERS={S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -420,42 +422,47 @@ async function stuur(d){
   const r=await fetch(m.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({k:m.sleutel},d))});
   const j=await r.json();if(!j.ok)throw new Error(j.fout||"mislukt");return j;
 }
-function n0(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+function n0(plus){const d=new Date();d.setDate(d.getDate()+(plus||0));d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
 function openMelding(l){
   terug=document.activeElement;
-  const p=$("#paneel");
-  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">Melding maken</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+
+  const dir=l==="DIR",p=$("#paneel");
+  const velden=dir?
+    '<label>Wat moet er gebeuren?<textarea id="m_tekst" required></textarea></label>'+
+    '<label>Actiehouder<input type="text" id="m_actie" required></label>'+
+    '<div class="twee"><label>Datum<input type="date" id="m_dat" required value="'+n0(1)+'"></label><label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label></div>':
     '<label>Wat is er aan de hand?<textarea id="m_tekst" required></textarea></label>'+
     '<div class="twee"><label>Lijn<select id="m_lijn"><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label><label>Machine<input type="text" id="m_mach"></label></div>'+
     '<label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="m_actie"></label><label>Opvolgen voor<input type="date" id="m_dat" value="'+n0()+'"></label></div>'+
-    '<label class="vink"><input type="checkbox" id="m_bon"'+(l==="S"?"":" checked")+'> Technische dienst nodig: maak een CM-bon</label>'+
+    '<label class="vink"><input type="checkbox" id="m_bon"'+(l==="S"?"":" checked")+'> Technische dienst nodig: maak een CM-bon</label>';
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">'+(dir?"Actie toevoegen":"Melding maken")+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+velden+
     '<p class="fout" id="m_fout" hidden>Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.</p>'+
-    '<button class="knop hoofd" id="m_knop" type="submit">Melding versturen</button></form>';
+    '<button class="knop hoofd" id="m_knop" type="submit">'+(dir?"Actie toevoegen":"Melding versturen")+'</button></form>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);$("#m_tekst").focus();
   $("#meldform").addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#m_knop");k.disabled=true;$("#m_fout").hidden=true;
-    const wie=$("#m_naam").value.trim();naam(wie);
-    const dat=$("#m_dat").value.split("-").reverse().join("-");
-    const d={actie:"nieuw",letter:l,melding:$("#m_tekst").value.trim(),lijn:$("#m_lijn").value,machine:$("#m_mach").value.trim(),melder:wie,actiehouder:$("#m_actie").value.trim(),datum:dat,bon_nodig:$("#m_bon").checked};
-    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder("Melding verstuurd")}
+    const w=id=>{const x=$(id);return x?x.value.trim():""};
+    const wie=w("#m_naam");naam(wie);
+    const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),lijn:w("#m_lijn"),machine:w("#m_mach"),melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-"),bon_nodig:!!($("#m_bon")&&$("#m_bon").checked)};
+    try{const j=await stuur(d);MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{id:j.id,tijd:j.tijd,status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee"})]);sluitPaneel();vSqd();melder(dir?"Actie toegevoegd":"Melding verstuurd")}
     catch(_){$("#m_fout").hidden=false;k.disabled=false}
   });
 }
 function openDetailMelding(m){
   terug=document.activeElement;
-  const v=[["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Opvolgen voor",m.datum],["CM-bon",m.bon_nodig]];
+  const v=[["Gemeld",m.tijd],["Door",m.melder],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],[m.letter==="DIR"?"Datum":"Opvolgen voor",m.datum],["CM-bon",m.letter==="DIR"?null:m.bon_nodig]];
   const p=$("#paneel");
   p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+'</dl><div class="melding-acties"><p class="fout" id="m_fout" hidden>Afmelden is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   $("#m_klaar").addEventListener("click",async e=>{
     e.target.disabled=true;
-    try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();vSqd();melder("Melding afgehandeld")}
+    try{await stuur({actie:"gereed",id:m.id,door:naam()});MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);sluitPaneel();vSqd();melder(m.letter==="DIR"?"Actie afgehandeld":"Melding afgehandeld")}
     catch(_){$("#m_fout").hidden=false;e.target.disabled=false}
   });
 }
 function vSqd(){
-  const s=D.sqdc||{},acties=(s.directie_acties||[]).filter(a=>!a.gereed),auto=s.auto||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
+  const s=D.sqdc||{},auto=s.auto||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
+  const acties=(s.directie_acties||[]).filter(a=>!a.gereed).concat((MELDINGEN||[]).filter(x=>x.letter==="DIR").map(x=>({actie:x.melding,actiehouder:x.actiehouder,datum:x.datum,_m:x})));
   const bord=(s.vakken||[]).map(v=>{
     const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter);
     const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
@@ -472,7 +479,7 @@ function vSqd(){
     {k:"h",l:"Actiehouder",w:"200px",c:"m-sub",ml:"Actiehouder",r:a=>of(a.actiehouder,"Nog toewijzen")},
     {k:"d",l:"Datum",w:"190px",c:"m-sub",ml:"Datum",x:"nowrap",r:a=>of(a.datum)+(verlopen(a.datum)?' <span class="st crit"><i></i>Verlopen</span>':"")}];
   let html=kop("SQD-overzicht",hoofd(langeDatum(new Date())),true)+'<div class="bord">'+bord+"</div>";
-  html+='<section class="deel"><h2>Directie-actie binnen 24 uur<span>'+acties.length+"</span></h2>"+(acties.length?vasteTabel(cols,acties,null,a=>verlopen(a.datum)?" laat":""):'<div class="leegmelding">Geen open acties voor de directie.</div>')+"</section>";
+  html+='<section class="deel"><div class="deelkop"><h2>Directie-actie binnen 24 uur<span>'+acties.length+"</span></h2>"+(m?'<button class="knop" data-meld="DIR">Actie toevoegen</button>':"")+"</div>"+(acties.length?vasteTabel(cols,acties,a=>{if(a._m)openDetailMelding(a._m);return null},a=>verlopen(a.datum)?" laat":""):'<div class="leegmelding">Geen open acties voor de directie.</div>')+"</section>";
   $("#view").innerHTML=html;
 }
 
