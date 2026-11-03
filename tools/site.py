@@ -138,6 +138,8 @@ def build(a):
     monteur_sleutel = mld.pop("sleutel_monteur", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
+    mld.pop("start_url", None)
+    mld.pop("start_token", None)
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
     verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
     monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}

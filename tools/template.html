@@ -554,6 +554,7 @@ function koppelMeld(l,klaar){
     if(fv&&fv.files[0]){try{foto=await verklein(fv.files[0])}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto of verstuur zonder foto.";fout.hidden=false;k.disabled=false;return}}
     const r=document.querySelector('input[name="m_risico"]:checked');
     const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),risico:r?r.value:"",foto,melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-")};
+    if(l==="")d.bon_nodig=true;
     try{klaar(d,await stuur(d))}catch(_){fout.textContent="Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.";fout.hidden=false;k.disabled=false}
   });
 }
@@ -563,7 +564,7 @@ function openMelding(l){
   const velden=dir?'<label>Wat moet er gebeuren?<textarea id="m_tekst" required></textarea></label><label>Actiehouder<input type="text" id="m_actie" required></label><div class="twee"><label>Datum<input type="date" id="m_dat" required value="'+n0(1)+'"></label><label>Jouw naam<input type="text" id="m_naam" required value="'+esc(naam())+'"></label></div>':meldVelden();
   p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[l])+'</small><h2 id="ptitel">'+(dir?"Actie toevoegen":"Melding maken")+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="meldform">'+velden+'<p class="fout" id="m_fout" hidden></p><button class="knop hoofd" id="m_knop" type="submit">'+(dir?"Actie toevoegen":"Melding versturen")+"</button></form>";
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
-  koppelMeld(l,(d,j)=>{MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:"Nee"})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie toegevoegd":j.code?"Melding verstuurd: "+j.code:"Melding verstuurd")});
+  koppelMeld(l,(d,j)=>{MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:l===""?"Ja":"Nee"})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie toegevoegd":j.code?"Melding verstuurd: "+j.code:"Melding verstuurd")});
 }
 function meldScherm(){
   $("#lock").hidden=true;$("#meldscherm").hidden=false;
