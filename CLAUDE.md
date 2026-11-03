@@ -13,14 +13,15 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 1. Lees de privépagina met de Artifact-tool (`action: read`). Het resultaat noemt het opgeslagen bestand met de volledige pagina.
 2. `python3 tools/site.py extract <dat bestand> /tmp/site.json`
 3. Pas `/tmp/site.json` aan met Python. Lijsten: `cm`, `zaterdag`, `bestellijst`, `priolijst`, `opnamelijsten`, `pm`. Toelichting per lijst en de stand per lijst staan in `meta.standen`.
-   - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
+   - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten; `dagen` is de maandkalender, bijvoorbeeld `{"2026-11-03": "groen"}`; zet de kleur van vandaag ook daar neer) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
    - `output`: `datum`, `eenheid`, `lijnen` (`lijn`, `plan`, `output`, `opmerking`).
+   - `sqdc.auto` niet met de hand aanpassen: `site.py build` berekent de kengetallen in de vakken.
    - `storingen` niet met de hand aanpassen: `site.py build` maakt die lijst uit de open bonnen van het CM-overzicht. Gepland blijft Gepland, Besteld of een bestelregel op Besteld wordt In bestelling, de rest wordt Open. Gereed verdwijnt. Een veld `actiehouder` op een CM-regel gaat voor op `monteur`.
 4. `python3 tools/site.py build /tmp/site.json --stand DD-MM-JJJJ --plain /tmp/artifact.html --public index.html`
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
 6. Commit en push alleen `index.html` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
-Een nieuw tabblad maak je in `tools/template.html`: voeg een scherm toe aan `RENDER` en aan `TABS_DAGSTART` of `TABS_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
+Een nieuwe pagina maak je in `tools/template.html`: voeg een scherm toe aan `SCHERM` en aan `P_DAG` of `P_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
 
 ## Twee toegangsniveaus
 - **Dagstart:** SQD, Lopende storingen, Output per lijn en Zaterdag.
