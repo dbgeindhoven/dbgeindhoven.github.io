@@ -20,7 +20,7 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
 6. Commit en push alleen `index.html` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
-Een nieuw tabblad maak je in `tools/template.html`: voeg een scherm toe aan `VIEWS` en `RENDER`.
+Een nieuw tabblad maak je in `tools/template.html`: voeg een scherm toe aan `RENDER` en aan `TABS_DAGSTART` of `TABS_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
 
 ## Twee toegangsniveaus
 - **Dagstart:** SQD, Lopende storingen, Output per lijn en Zaterdag.
