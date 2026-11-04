@@ -18,6 +18,8 @@ Er loopt altijd maar één run tegelijk. Daarvoor staat tijdens een run het best
 ## Status en verwijderen vanaf de site
 De werkvoorbereider kan op de site de status van een bon aanpassen en een melding met de bon verwijderen. Apps Script zet dat als `status-<nr>.txt` in dezelfde map, met `nr`, `status`, `rij`, `tijd` en `door`. Status `Verwijderd` betekent: de bon moet helemaal weg. De site toont zo'n bestand meteen aan iedereen. Daarom blijft het staan tot de wijziging in het overzicht zit en gepubliceerd is.
 
+Op de pagina Zaterdagwerk past de werkvoorbereider de prio en uitvoerder aan en haalt hij regels van de lijst. Dat komt in hetzelfde bestand, in `rij.zat`: `datum`, `prio`, `uitvoerder` en eventueel `weg: true`. `bonnen.py wijzig` zet dit in `zaterdag` en de prio op de bon. Bij `weg` blijft de bon bestaan: alleen `uitvoeren` wordt leeg en Gepland wordt Open.
+
 ## Stappen
 Werk in een lege map `/tmp/bonwerk`. Stop bij een fout voordat je iets uit de wachtrij haalt, gooi `bezig.txt` weg en meld wat er misging.
 

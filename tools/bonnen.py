@@ -163,12 +163,41 @@ def registreer(a):
     bewaar(a.site, data)
 
 
+def zat_weg(data, nr):
+    z = data.get("zaterdag") or {}
+    for k in ("correctief", "preventief"):
+        z[k] = [r for r in z.get(k) or [] if r.get("nr") != nr]
+
+
+def zat_wijzig(data, nr, rij, zat):
+    """Prio, uitvoerder of weghalen vanaf de pagina Zaterdagwerk. De prio hoort bij de bon, de uitvoerder bij deze zaterdag."""
+    z = data.get("zaterdag") or {}
+    if zat.get("datum") != z.get("datum"):
+        print(nr, "wijziging hoort bij een andere zaterdag, overgeslagen")
+    elif zat.get("weg"):
+        zat_weg(data, nr)
+        if rij is not None:
+            rij["uitvoeren"] = None
+        print(nr, "van de zaterdaglijst gehaald")
+    else:
+        for r in (z.get("correctief") or []) + (z.get("preventief") or []):
+            if r.get("nr") == nr:
+                r["prio"], r["uitvoerder"] = zat.get("prio"), zat.get("uitvoerder") or None
+        if rij is not None:
+            rij["prio"] = zat.get("prio")
+        print(nr, "zaterdag: prio", zat.get("prio"), "uitvoerder", zat.get("uitvoerder"))
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
     for w in laad(Path(a.map) / "wijzig.json"):
         nr, status = w["nr"], w["status"]
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+        if status == "Verwijderd":
+            zat_weg(data, nr)
+        elif (w.get("rij") or {}).get("zat"):
+            zat_wijzig(data, nr, rij, w["rij"]["zat"])
         if rij is None:
             print(nr, "staat niet in het overzicht")
         elif status == "Verwijderd":

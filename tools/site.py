@@ -90,6 +90,15 @@ def storingen(data):
     return uit
 
 
+def zaterdag(data):
+    """Regels zonder eigen prio krijgen die van de bon. De dagstart heeft geen CM-overzicht."""
+    cm = {r.get("nr"): r for r in data.get("cm", [])}
+    z = data.get("zaterdag") or {}
+    for r in (z.get("correctief") or []) + (z.get("preventief") or []):
+        if not r.get("prio") and (cm.get(r.get("nr")) or {}).get("prio"):
+            r["prio"] = cm[r["nr"]]["prio"]
+
+
 def machines(data):
     """Machines per lijn voor het storingsformulier: de opnamelijsten plus meta.machines_extra."""
     uit = {}
@@ -113,6 +122,7 @@ def build(a):
         if not r.get("groep"):
             bestel_groep(r)
     data["storingen"] = storingen(data)
+    zaterdag(data)
     data.setdefault("sqdc", {}).pop("auto", None)
     data["machines"] = machines(data)
     # Meldingen waarvan de bon is afgesloten, zodat ze uit "Nog open" in het dienstrapport verdwijnen.

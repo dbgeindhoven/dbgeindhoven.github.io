@@ -280,6 +280,11 @@ html.present .gvlak{height:min(46vh,460px)}
 .gtip i{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:2px}
 @media (max-width:640px){.gvlak{height:220px;margin:0 4px 0 46px}.gstapel i{font-size:0}}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
+.zatinvoer{width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
+.zatinvoer::placeholder{color:var(--ink3)}
+.zatweg{display:inline-flex;gap:10px;white-space:nowrap}
+.tbl td.m-zat{padding-top:7px;padding-bottom:7px}
+@media (min-width:761px){.tbl .statuskeuze,.zatinvoer{font-size:.875rem}.tbl td:has(>.statuskeuze){padding-top:7px;padding-bottom:7px}}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
 /* kengetallen en balken */
@@ -547,12 +552,13 @@ function vasteTabel(cols,rijen,detail,klasse){
 }
 document.addEventListener("click",e=>{
   const w=e.target.closest("[data-t]"),tr=e.target.closest("tr[data-i]");
-  if(w&&tr){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
+  if(w&&tr&&!e.target.closest("input,select,button,label,a")){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
   if(e.target.closest("[data-present]"))presenteer(true);
   if(e.target.closest("[data-uitlog]"))uitloggen();
   if(e.target.closest("[data-storing]"))openStoring();
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
+  const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const klap=e.target.closest("[data-klap]");if(klap){UITGEKLAPT[klap.dataset.klap]=!UITGEKLAPT[klap.dataset.klap];vSqd();return}
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
@@ -638,11 +644,12 @@ function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"];
   if(c&&c.melding&&b){b.gesloten=(b.gesloten||[]).filter(x=>x!==c.melding);if(GESLOTEN.includes(w.status))b.gesloten.push(c.melding)}
   if(c&&w.status==="Verwijderd")D.cm.splice(D.cm.indexOf(c),1);else if(c)c.status=w.status;
-  D.storingen=(D.storingen||[]).filter(x=>x.nr!==w.nr).concat(w.rij?[w.rij]:[]).sort((x,y)=>(x.prio||9)-(y.prio||9)||volg.indexOf(x.status)-volg.indexOf(y.status)||nummer(x.nr)-nummer(y.nr));
+  if(w.status==="Verwijderd")zatWeg(w.nr);else if(w.rij&&w.rij.zat)pasZatToe(w.nr,w.rij.zat);
+  D.storingen=(D.storingen||[]).filter(x=>x.nr!==w.nr).concat(w.rij&&w.rij.nr?[w.rij]:[]).sort((x,y)=>(x.prio||9)-(y.prio||9)||volg.indexOf(x.status)-volg.indexOf(y.status)||nummer(x.nr)-nummer(y.nr));
 }
 async function zetBonStatus(sel){
   const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status;
-  const w={nr:c.nr,status:sel.value,rij:storingRij(Object.assign({},c,{status:sel.value}))};
+  const w={nr:c.nr,status:sel.value,rij:metZat(c.nr,storingRij(Object.assign({},c,{status:sel.value})))};
   sel.disabled=true;
   try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";if(rteken)rteken();SCHERM[HUIDIG]();melder(w.nr+" staat nu op "+w.status)}
   catch(_){sel.value=oud;melder("Status aanpassen is niet gelukt. Probeer het opnieuw.")}
@@ -670,7 +677,7 @@ function wegVak(vak,x,tekst,klaar,bonNr){
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
 let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[];
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag"]).includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -1123,16 +1130,78 @@ function outputScherm(){
   }
   formulier();
 }
+/* ---- Zaterdagwerk ---- */
+/* Een wijziging staat tot de geplande taak hem verwerkt in de wachtrij, net als een bonstatus. Alles voor één bon staat in één bestand. */
+const zatRijen=()=>{const s=D.zaterdag||{};return(s.correctief||[]).concat(s.preventief||[])};
+const zatMelding=nr=>(MELDINGEN||[]).find(x=>x.code===nr);
+/* Bij een melding gaat de prio uit de Sheet voor: die kleurt ook het SQD-bord. */
+const zatPrio=r=>{const m=zatMelding(r.nr);return m&&m.prio?Number(m.prio):r.prio||null};
+const ZATOPEN={};
+let zatKeten=Promise.resolve();
+const metZat=(nr,rij)=>ZATOPEN[nr]?Object.assign({},rij,{zat:ZATOPEN[nr]}):rij;
+function zatWeg(nr){
+  const s=D.zaterdag;if(!s)return;
+  s.correctief=(s.correctief||[]).filter(r=>r.nr!==nr);s.preventief=(s.preventief||[]).filter(r=>r.nr!==nr);
+}
+function pasZatToe(nr,z){
+  const s=D.zaterdag;if(!s||z.datum!==s.datum)return;
+  ZATOPEN[nr]=z;
+  const c=(D.cm||[]).find(x=>x.nr===nr),r=zatRijen().find(x=>x.nr===nr);
+  if(z.weg){zatWeg(nr);if(c)c.uitvoeren=null;return}
+  if(r){r.prio=z.prio;r.uitvoerder=z.uitvoerder||null}
+  if(c)c.prio=z.prio;
+}
+/* Op volgorde versturen: een latere wijziging aan dezelfde bon vervangt de eerdere. */
+function zatStuur(r,z){
+  const c=(D.cm||[]).find(x=>x.nr===r.nr),status=c?(z.weg&&c.status==="Gepland"?"Open":c.status):"Gepland";
+  const w={nr:r.nr,status,rij:Object.assign({},c?storingRij(Object.assign({},c,{status,prio:z.prio})):null,{zat:z})};
+  const stap=zatKeten.then(()=>stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w)));
+  zatKeten=stap.catch(()=>{});
+  return stap.then(()=>w);
+}
+function zatPrioNaarMelding(nr,p){
+  const m=zatMelding(nr);if(!m||String(m.prio||"")===String(p||""))return;
+  m.prio=p?String(p):"";laatste="";
+  zatKeten=zatKeten.then(()=>stuur({actie:"prio",lijst:[{id:m.id,prio:p||""}]})).catch(()=>{melder("De prio op het SQD-bord is niet aangepast. Probeer het opnieuw.")});
+}
+function zatVeld(veld){
+  const nr=veld.dataset.nr,r=zatRijen().find(x=>x.nr===nr);if(!r)return;
+  const oud={prio:zatPrio(r),uitvoerder:r.uitvoerder||""},z={datum:D.zaterdag.datum,prio:oud.prio,uitvoerder:oud.uitvoerder};
+  if(veld.dataset.zat==="prio")z.prio=veld.value?Number(veld.value):null;else z.uitvoerder=veld.value.trim();
+  if(z.prio===oud.prio&&z.uitvoerder===oud.uitvoerder)return;
+  const tekst=nr+": "+(veld.dataset.zat==="prio"?(z.prio?"prio "+z.prio:"geen prio"):z.uitvoerder||"geen uitvoerder");
+  const terugzetten=()=>{pasZatToe(nr,Object.assign({},z,oud));if(veld.isConnected)veld.value=veld.dataset.zat==="prio"?oud.prio||"":oud.uitvoerder;melder(nr+" is niet opgeslagen. Probeer het opnieuw.")};
+  pasZatToe(nr,z);
+  zatStuur(r,z).then(w=>{pasBonToe(w);laatste="";melder(tekst)}).catch(terugzetten);
+  if(veld.dataset.zat==="prio")zatPrioNaarMelding(nr,z.prio);
+}
+document.addEventListener("change",e=>{if(e.target.matches("[data-zat]"))zatVeld(e.target)});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("input[data-zat]"))e.target.blur()});
+const zatWegKnop=r=>'<span class="zatweg"><button type="button" class="tekstknop gevaar" data-zatweg="'+esc(r.nr)+'" aria-label="'+esc(r.nr)+' verwijderen">Verwijderen</button></span>';
+async function zatKlik(k){
+  const vak=k.closest(".zatweg"),nr=k.dataset.zatweg||k.dataset.zatja||k.dataset.zatnee;
+  const r=zatRijen().find(x=>x.nr===nr);if(!r)return;
+  if(k.dataset.zatweg){vak.innerHTML='<button type="button" class="tekstknop gevaar" data-zatja="'+esc(nr)+'">Van de lijst</button><button type="button" class="tekstknop" data-zatnee="'+esc(nr)+'">Annuleren</button>';vak.lastChild.focus();return}
+  if(k.dataset.zatnee){vak.outerHTML=zatWegKnop(r);return}
+  vak.querySelectorAll("button").forEach(b=>{b.disabled=true});k.textContent="Bezig";
+  try{const w=await zatStuur(r,{datum:D.zaterdag.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",weg:true});pasBonToe(w);laatste="";SCHERM[HUIDIG]();melder(nr+" staat niet meer op de lijst. De bon blijft bestaan.")}
+  catch(_){vak.outerHTML=zatWegKnop(r);melder(nr+" is niet verwijderd. Probeer het opnieuw.")}
+}
 function vZaterdag(){
-  const s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[],d=datum(s.datum);
+  const s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[],d=datum(s.datum),wv=wvMag();
+  const prioVeld=r=>{const q=zatPrio(r);return wv?'<select class="statuskeuze" data-zat="prio" data-nr="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen</option>'+[1,2,3].map(n=>'<option value="'+n+'"'+(n===q?" selected":"")+">Prio "+n+"</option>").join("")+"</select>":prio(q)};
+  const uitVeld=r=>wv?'<input class="zatinvoer" data-zat="uitvoerder" data-nr="'+esc(r.nr)+'" list="zatnamen" value="'+esc(r.uitvoerder||"")+'" placeholder="Nog toewijzen" autocomplete="off" aria-label="Uitvoerder van '+esc(r.nr)+'">':of(r.uitvoerder,"Nog toewijzen");
   const cols=[
     {k:"n",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:r=>of(r.nr)},
     {k:"w",l:"Werkzaamheid",c:"m-main",x:"titel",r:r=>esc(r.werkzaamheid)},
-    {k:"m",l:"Lijn en machine",w:"28%",c:"m-sub",r:r=>esc(r.lijn_machine)},
-    {k:"p",l:"Prio",w:"76px",c:"m-status",r:r=>prio(r.prio)},
-    {k:"u",l:"Uitvoerder",w:"150px",c:"m-sub",ml:"Uitvoerder",r:r=>of(r.uitvoerder,"Nog toewijzen")}];
-  const dl=(t,r)=>'<section class="deel"><h2>'+t+"<span>"+r.length+"</span></h2>"+(r.length?vasteTabel(cols,r):'<div class="leegmelding">Niets ingepland.</div>')+"</section>";
-  $("#view").innerHTML=kop(d?hoofd(langeDatum(d)):"Zaterdagwerk",s.stand,true)+dl("Correctief",c)+dl("Preventief",p);
+    {k:"m",l:"Lijn en machine",w:wv?"20%":"28%",c:"m-sub",r:r=>esc(r.lijn_machine)},
+    {k:"p",l:"Prio",w:wv?"104px":"76px",c:"m-status",r:prioVeld},
+    {k:"u",l:"Uitvoerder",w:wv?"170px":"150px",c:wv?"m-sub m-zat":"m-sub",ml:"Uitvoerder",r:uitVeld}
+  ].concat(wv?[{k:"x",l:"",w:"132px",c:"m-sub",r:zatWegKnop}]:[]);
+  const bon=(D.cm||[]).length?r=>{const x=D.cm.find(y=>y.nr===r.nr);return x?cmDetail(x):null}:null;
+  const dl=(t,r)=>'<section class="deel"><h2>'+t+"<span>"+r.length+"</span></h2>"+(r.length?vasteTabel(cols,r,bon):'<div class="leegmelding">Niets ingepland.</div>')+"</section>";
+  const namen=wv?[...new Set((D.cm||[]).map(x=>x.monteur).concat(zatRijen().map(x=>x.uitvoerder)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"nl")):[];
+  $("#view").innerHTML=kop(d?hoofd(langeDatum(d)):"Zaterdagwerk",s.stand,true)+dl("Correctief",c)+dl("Preventief",p)+(wv?'<datalist id="zatnamen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>":"");
 }
 
 /* ---- TD-pagina's ---- */
