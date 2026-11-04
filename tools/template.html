@@ -140,6 +140,7 @@ html.present .deelkop .knop{display:none}
 .meldingen{display:flex;flex-direction:column;gap:6px}
 .melding{display:block;width:100%;padding:9px 11px;border:1px solid var(--line2);border-left-width:5px;border-radius:8px;background:var(--bg);text-align:left;cursor:pointer}
 .melding:hover{background:var(--hover)}
+.klapknop{align-self:flex-start;padding:4px 0;font-size:.875rem}
 .melding b{display:block;font-weight:500}
 .melding.prio1,.prioregel .prio1{border-left-color:var(--crit)}
 .melding.prio2,.prioregel .prio2{border-left-color:var(--warn)}
@@ -552,6 +553,7 @@ document.addEventListener("click",e=>{
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
+  const klap=e.target.closest("[data-klap]");if(klap){UITGEKLAPT[klap.dataset.klap]=!UITGEKLAPT[klap.dataset.klap];vSqd();return}
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
 document.addEventListener("keydown",e=>{
@@ -986,6 +988,8 @@ function openDetailMelding(m){
 }
 // Meldingen van deze actiehouders staan bij de directie-acties in plaats van in S, Q of D. De namen staan in sqdc.directie_actiehouders.
 const isDirectie=x=>["S","Q","D"].includes(x.letter)&&((D.sqdc||{}).directie_actiehouders||[]).some(n=>n.toLowerCase()===String(x.actiehouder||"").trim().toLowerCase());
+// Per letter staan de eerste meldingen op prio direct in beeld; de rest klapt uit.
+const MAX_BORD=5;let UITGEKLAPT={};
 function vSqd(){
   const s=D.sqdc||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
   const acties=(s.directie_acties||[]).filter(a=>!a.gereed).concat((MELDINGEN||[]).filter(x=>x.letter==="DIR"||isDirectie(x)).map(x=>({actie:x.melding,actiehouder:x.actiehouder,datum:x.datum,_m:x})));
@@ -994,7 +998,8 @@ function vSqd(){
     const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding'+(x.prio?" prio"+esc(x.prio):"")+'" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+'</b><span class="mvoet"><span>'+(x.actiehouder?"Actiehouder: "+esc(x.actiehouder):"Nog geen actiehouder")+"</span><span>Gemeld: "+esc(meldTijd(x).slice(0,10))+"</span></span></button>").join("")+"</div>":"";
+    const zicht=UITGEKLAPT[v.letter]?open:open.slice(0,MAX_BORD),meer=open.length-MAX_BORD;
+    const lijst=open.length?'<div class="meldingen">'+zicht.map(x=>'<button class="melding'+(x.prio?" prio"+esc(x.prio):"")+'" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+'</b><span class="mvoet"><span>'+(x.actiehouder?"Actiehouder: "+esc(x.actiehouder):"Nog geen actiehouder")+"</span><span>Gemeld: "+esc(meldTijd(x).slice(0,10))+"</span></span></button>").join("")+"</div>"+(meer>0?'<button class="tekstknop klapknop" data-klap="'+esc(v.letter)+'" aria-expanded="'+!!UITGEKLAPT[v.letter]+'">'+(UITGEKLAPT[v.letter]?"Minder tonen":"Nog "+meer+" tonen")+"</button>":""):"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
     return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+pt+lijst+geen+"</section>";
   }).join("");
