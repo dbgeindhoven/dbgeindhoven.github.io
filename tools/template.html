@@ -1442,7 +1442,7 @@ async function zatDownload(k){
 function vZaterdag(){
   const s=D.zaterdag||{},c=(s.correctief||[]).filter(zatTest),p=(s.preventief||[]).filter(zatTest),d=datum(s.datum),wv=wvMag(),td=(D.cm||[]).length>0;
   const prioVeld=r=>{const q=zatPrio(r);return wv?'<select class="statuskeuze" data-zat="prio" data-nr="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen</option>'+[1,2,3].map(n=>'<option value="'+n+'"'+(n===q?" selected":"")+">Prio "+n+"</option>").join("")+"</select>":prio(q)};
-  const uitVeld=r=>wv?'<input class="zatinvoer" data-zat="uitvoerder" data-nr="'+esc(r.nr)+'" list="zatnamen" value="'+esc(r.uitvoerder||"")+'" placeholder="Nog toewijzen" autocomplete="off" aria-label="Uitvoerder van '+esc(r.nr)+'">':of(r.uitvoerder,"Nog toewijzen");
+  const uitVeld=r=>wv?'<input class="zatinvoer" data-zat="uitvoerder" data-nr="'+esc(r.nr)+'" list="zatnamen" value="'+esc(r.uitvoerder||"")+'" placeholder="Toewijzen" autocomplete="off" aria-label="Uitvoerder van '+esc(r.nr)+'">':of(r.uitvoerder,"Nog toewijzen");
   const cols=[
     {k:"n",l:"Bon",w:wv?"104px":"96px",c:"m-nr",x:"nr",r:r=>wv?'<label class="zatkies"><input type="checkbox" data-zatkies="'+esc(r.nr)+'"'+(ZATKIES.has(r.nr)?" checked":"")+' aria-label="'+esc(r.nr)+' kiezen">'+of(r.nr)+"</label>":of(r.nr)},
     {k:"w",l:"Werkzaamheid",c:"m-main",x:"titel",r:r=>{const o=zatOnderdelen(r.nr),b=zatBon(r.nr);return esc(r.werkzaamheid)+(o.length?'<span class="zatlet st warn" title="'+esc(o.map(x=>x.onderdeel+": "+x.groep).join(", "))+'"><i></i>'+o.length+(o.length===1?" onderdeel":" onderdelen")+" niet binnen</span>":"")+(wv&&!(b&&b.bon)?'<span class="zatlet">Bon volgt bij de run</span>':"")}},
