@@ -444,7 +444,8 @@ const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"<
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
 const LIJNEN_OUTPUT=["Lijn 1","Lijn 2","Lijn 3"];
 const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l}));
-const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:[p]);
+const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"};
+const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
 const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
 
@@ -863,9 +864,9 @@ async function toonFoto(b){
 }
 function vRapport(){
   const v=$("#view");
-  v.innerHTML=kop("Dienstrapport","Alle storingen die monteurs hebben gemeld, de nieuwste bovenaan.",false,MELD()?'<button class="knop hoofd" data-storing>Storing melden</button>':"")+'<div id="rvak"></div>';
+  v.innerHTML=kop("Dienstrapport","Alle storingen die monteurs hebben gemeld, de nieuwste bovenaan.",false,MELD()&&PAGINAS.some(p=>p.id==="cm")?'<button class="knop hoofd" data-storing>Storing melden</button>':"")+'<div id="rvak"></div>';
   rapportLijst($("#rvak"));
-  if(RAPPORT===null)haalRapport();
+  haalRapport();
 }
 function monteurScherm(){
   $("#lock").hidden=true;$("#monteurscherm").hidden=false;
@@ -1338,10 +1339,10 @@ function start(data){
   if(D.niveau==="output"){outputScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   const pWv=P_WV.concat(alRegels().length?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
-  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[],wv?pWv:[]);
+  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[P_RAPPORT],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+pWv.map(lnk).join("")+"</div>":"");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+pWv.map(lnk).join("")+"</div>":"");
   $("#stappen").innerHTML=P_PRES.map(p=>'<button data-v="'+p.id+'">'+esc(p.kort)+"</button>").join("");
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
   $("#menu").innerHTML=ico("menu");
