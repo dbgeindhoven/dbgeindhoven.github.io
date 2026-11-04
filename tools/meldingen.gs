@@ -6,6 +6,7 @@ const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
 const WVSLEUTEL = '__WVSLEUTEL__';
 const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
+const PMSLEUTEL = '__PMSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio'];
 const ZONE = 'Europe/Amsterdam';
@@ -16,6 +17,8 @@ const BONSTATUS = ['Open', 'Gepland', 'Besteld', 'Deels uitgevoerd', 'On hold', 
 const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];
 const LIJNEN = ['Lijn 1', 'Lijn 2', 'Lijn 3'];
 const OUTKOP = ['datum', 'ploeg', 'lijn', 'output', 'opmerking', 'door', 'tijd'];
+const PMKOP = ['nr', 'datum', 'status', 'taken', 'opmerking', 'door', 'tijd'];
+const PMSTATUS = ['Uitgevoerd', 'Deels uitgevoerd'];
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -148,10 +151,37 @@ function zetOutput_(d) {
   return i >= 0;
 }
 
+// Afgemelde PM-bonnen staan op een eigen tabblad, per bon één regel. Opnieuw afmelden vervangt die regel.
+function pmRijen_() {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('PM');
+  if (!b || b.getLastRow() < 2) return [];
+  return b.getRange(2, 1, b.getLastRow() - 1, PMKOP.length).getValues().slice(-3000).map(r => {
+    const o = {};
+    PMKOP.forEach((k, i) => { o[k] = String(r[i]); });
+    return o;
+  });
+}
+
+function zetPm_(d) {
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const b = s.getSheetByName('PM') || s.insertSheet('PM', s.getNumSheets());
+  b.getRange('A:G').setNumberFormat('@');
+  b.getRange(1, 1, 1, PMKOP.length).setValues([PMKOP]);
+  const n = b.getLastRow();
+  const nrs = n > 1 ? b.getRange(2, 1, n - 1, 1).getValues().map(r => r[0]) : [];
+  const i = nrs.indexOf(d.nr);
+  const tijd = nu_();
+  const rij = [d.nr, d.datum, d.status, d.taken, schoon_(d.opmerking), schoon_(d.door), tijd];
+  if (i >= 0) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
+  else b.appendRow(rij);
+  return tijd;
+}
+
 function doGet(e) {
   const p = e.parameter || {};
   const monteur = p.k === MONTEURSLEUTEL;
   if (p.k === OUTPUTSLEUTEL) return uit_({ output: outputRijen_() });
+  if (p.k === PMSLEUTEL) return uit_({ pm: pmRijen_() });
   if (p.k !== SLEUTEL && !monteur) return uit_({ fout: 'geen toegang' });
   const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
@@ -162,7 +192,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_() });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_() });
 }
 
 function doPost(e) {
@@ -174,7 +204,9 @@ function doPost(e) {
   const wvActie = d.actie === 'verwijder' || d.actie === 'bonstatus';
   // De ploegen kunnen alleen hun output invullen.
   const ploeg = d.k === OUTPUTSLEUTEL && d.actie === 'output';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg) return uit_({ fout: 'geen toegang' });
+  // De PM-inlog kan alleen PM-bonnen afmelden.
+  const pm = d.k === PMSLEUTEL && d.actie === 'pm';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -198,6 +230,10 @@ function doPost(e) {
       const kg = Number(d.output);
       if (!/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PLOEGEN.includes(d.ploeg) || !LIJNEN.includes(d.lijn) || d.output === '' || !(kg >= 0 && kg < 10000000)) return uit_({ fout: 'onjuiste invoer' });
       return uit_({ ok: true, vervangen: zetOutput_(d) });
+    }
+    if (d.actie === 'pm') {
+      if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PMSTATUS.includes(d.status) || !/^PM-\d+(,PM-\d+)*$/.test(d.taken)) return uit_({ fout: 'onjuiste invoer' });
+      return uit_({ ok: true, tijd: zetPm_(d) });
     }
     if (d.actie === 'verwijder') {
       if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });

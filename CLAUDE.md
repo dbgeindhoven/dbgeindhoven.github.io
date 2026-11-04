@@ -35,6 +35,15 @@ Nieuwe zaterdag vanuit een chat: elke regel moet een bon met bestanden hebben in
 ## Onderhoudsstop
 `stops` is een lijst met dezelfde opbouw als `zaterdag`, plus `id` (`S…`), `lijn` en `naam` (de toelichting). Een bon staat op één plan: de zaterdag of één stop. Op de pagina Onderhoudsstop maakt de werkvoorbereider een stop aan en voegt hij bonnen toe. Op Zaterdagwerk en Onderhoudsstop verplaatst hij aangevinkte bonnen naar een ander plan met Verplaatsen: prio, uren en uitvoerder gaan mee. Bon toevoegen zet bonnen van de lijn die stilstaat en bonnen met `onderhoudstop` in `uitvoeren` bovenaan. Bonnen in Word en de Stoplijst maakt de browser, op het format van de zaterdaglijst met andere koppen. De PDF staat in `meta.bonnen.stops[<id>]` en maakt de geplande taak. Een stop verwijderen laat de bonnen bestaan: Gepland wordt Open. Dagstart en TD kunnen een stop alleen bekijken. In de presentatie staat de eerstvolgende stop, zolang er een stop gepland is.
 
+## PM-bonnen
+`pmplan` is de planning van de preventieve taken: `start` (maandag waarop de cyclus begon), `vast_tot`, `vak` (per lijndeel een vaste `week` 1 t/m 4 en `dag` 1 t/m 5), `bonnen` (`nr` als `PM-JJMMDD-n`, `datum`, `lijn`, `lijndeel`, `taken`) en `taken` (de tekst per taak-id). `tools/pm.py` werkt dit bij bij elke bouw: bonnen tot en met vandaag liggen vast, latere worden opnieuw berekend. Niet met de hand aanpassen. Wekelijkse taken komen elke week op de dag van het lijndeel, maandelijkse elke 4 weken in de week van het lijndeel. Zo staat er elke werkdag een set klaar zonder geplande taak.
+
+Voorlopig staan alleen taken in bedrijf in de planning (wekelijks, 2-wekelijks en maandelijks). Operatortaken staan er bewust bij om te inventariseren. Uit bedrijf volgt later.
+
+De monteur meldt een bon af in de eigen inlog: taken aanvinken, eventueel een opmerking. Niet alles gedaan betekent Deels uitgevoerd, met een verplichte opmerking; zo'n bon blijft bij Te doen staan. Zonder bereik wacht de afmelding op de telefoon. Afmeldingen staan op het tabblad `PM` in de Sheet (`nr`, `datum`, `status`, `taken`, `opmerking`, `door`, `tijd`), per bon één regel. De pagina PM-bonnen toont aan TD en werkvoorbereider wat is afgemeld, deels gedaan of achterstallig. Bij een PM-taak staat in het detailpaneel wanneer hij voor het laatst is uitgevoerd.
+
+`python3 tools/bonnen.py pmdag /tmp/site.json <werkmap> --datum DD-MM-JJJJ` maakt de bonnen van een dag in F.95.602 en zet ze in 1 PDF. Op bonnen in bedrijf staat stap 1 aangepast (machine blijft draaien, LMRA) en vervalt de stap LOTOTO opheffen. Dit draait nog niet dagelijks: dat kan als de test met de monteurinlog bevalt.
+
 ## Bestellijst
 Elke regel in `bestellijst` heeft een vast `id` (`B<n>`), dat `site.py build` uitdeelt. De werkvoorbereider zet op de pagina Bestellijst de `groep` per regel. Dat gaat via de wachtrij als `status-B<n>.txt`.
 
@@ -55,9 +64,10 @@ Een statuswijziging of een verwijderde bon staat als `status-<nr>.txt` in de wac
 
 De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. De taak draait elk uur, dag en nacht. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
 
-## Zes toegangsniveaus
+## Zeven toegangsniveaus
 - **Melden:** alleen het meldformulier. Dit deel bevat geen enkele lijst, en de meldsleutel kan alleen nieuwe meldingen versturen.
 - **Monteur:** storing melden en het gedeelde dienstrapport. Dit deel bevat alleen de machinenamen voor het formulier en geen andere lijsten; de monteursleutel leest alleen dienstrapportregels en voegt alleen storingen toe. Dienstrapportregels staan in de Sheet met letter `TD` en status `Rapport`, met `vervolg` Gereed, Overdragen aan volgende dienst, Onderdeel bestellen of Plannen voor onderhoudstop. De machinelijst komt uit `opnamelijsten`; aanvullen kan per lijn in `meta.machines_extra`. Zonder bereik blijft een storing op de telefoon staan en verstuurt hij zichzelf. `sw.js` zorgt dat de pagina dan ook opent.
+- **PM:** testinlog voor een monteur, naam in `meta.pm_monteur`. Alleen de PM-bonnen tot twee weken vooruit. Dit deel bevat geen andere lijsten; de PM-sleutel leest en schrijft alleen het tabblad `PM`.
 - **Output:** één gezamenlijke inlog voor de ploegen. Alleen het formulier met naam, datum, ploeg, lijn, output in kilo en opmerking. Dit deel bevat geen enkele lijst; de outputsleutel leest en schrijft alleen het tabblad `Output`. Opnieuw invullen voor dezelfde datum, ploeg en lijn vervangt de regel.
 - **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn, Zaterdag en Onderhoudsstop. In de presentatie staat Meldingen niet, en heeft Output per lijn een eigen stap per lijn met tabel en grafiek. Lopende storingen toont alleen prio 1: bonnen en meldingen, omdat die SQD direct in gevaar brengen. Bij een melding zonder bon staat een vinkje of er een bon gemaakt moet worden.
 - **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten, PM-taken en Dienstrapport. Geen bonbestanden: dit deel bevat de sleutel van de bonnen niet.
@@ -65,4 +75,4 @@ De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/b
 `index.html` bevat per niveau een eigen versleuteld deel. Het dagstart-wachtwoord kan de TD-gegevens niet openen.
 
 ## Wachtwoord wijzigen
-`python3 tools/site.py setkey /tmp/site.json --niveau td --password "..."` `--niveau dagstart`, `--niveau melden`, `--niveau monteur`, `--niveau output` of `--niveau wv`, en daarna stap 4 t/m 6.
+`python3 tools/site.py setkey /tmp/site.json --niveau td --password "..."` `--niveau dagstart`, `--niveau melden`, `--niveau monteur`, `--niveau output`, `--niveau pm` of `--niveau wv`, en daarna stap 4 t/m 6.

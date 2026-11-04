@@ -148,6 +148,16 @@ def zet_foto(cel, spec, delen):
     delen["[Content_Types].xml"] = ct.encode("utf-8")
 
 
+def in_bedrijf(root):
+    """Bij een taak in bedrijf blijft de machine draaien: de vaste stappen over stoppen en LOTOTO vervallen. LMRA blijft."""
+    ts = list(alinea(root, "Stop de machine").iter(q("t")))
+    ts[0].text = "Taak in bedrijf: de machine blijft draaien. Denk aan LMRA voordat je aan het werk begint."
+    for t in ts[1:]:
+        t.text = ""
+    p = alinea(root, "Hef je LOTOTO")
+    p.getparent().remove(p)
+
+
 def maak(spec, template, uit):
     with zipfile.ZipFile(template) as z:
         namen = z.namelist()
@@ -156,6 +166,8 @@ def maak(spec, template, uit):
     vul_velden(root, spec)
     alinea(root, "Omschrijving:").append(run(" " + spec["omschrijving"], 18, b=True, kleur="FFFFFF"))
     cel = vul_stappen(root, spec["stappen"])
+    if spec.get("in_bedrijf"):
+        in_bedrijf(root)
     if spec.get("let_op"):
         alinea(root, "⚠ Let op").append(run(" " + spec["let_op"]))
     vul_opmerkingen(root, spec.get("opmerking", []))

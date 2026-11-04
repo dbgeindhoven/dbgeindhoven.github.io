@@ -5,13 +5,15 @@ De gegevens staan NIET in deze repository. Ze staan leesbaar in de privépagina
 bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
 
   site.py extract <privepagina.html> <site.json>
-  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv]
+  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|output|pm]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
 import argparse, base64, copy, json, re, secrets
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+import pm
 
 TOOLS = Path(__file__).resolve().parent
 ITER = 600_000
@@ -58,7 +60,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport) of output (alleen het outputformulier)."""
+    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen) of output (alleen het outputformulier)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -67,7 +69,7 @@ def setkey(a):
     pub = data["meta"].setdefault("publiek", {"iter": ITER, "salt": b64(secrets.token_bytes(16))})
     salt = base64.b64decode(pub["salt"])
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "output": "sleutel_output"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "output": "sleutel_output", "pm": "sleutel_pm"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -134,6 +136,7 @@ def build(a):
     bestel_ids(data)
     data["storingen"] = storingen(data)
     zaterdag(data)
+    pm.bijwerken(data, a.stand)
     data.setdefault("sqdc", {}).pop("auto", None)
     data["machines"] = machines(data)
     # Meldingen waarvan de bon is afgesloten, zodat ze uit "Nog open" in het dienstrapport verdwijnen.
@@ -148,6 +151,7 @@ def build(a):
     meld_sleutel = mld.pop("sleutel_melden", None)
     monteur_sleutel = mld.pop("sleutel_monteur", None)
     output_sleutel = mld.pop("sleutel_output", None)
+    pm_sleutel = mld.pop("sleutel_pm", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
@@ -175,6 +179,9 @@ def build(a):
     if pub.get("sleutel_output"):
         # Alleen het webadres en de outputsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "output", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": output_sleutel}}}, pub["sleutel_output"]))
+    if pub.get("sleutel_pm"):
+        # Alleen de PM-bonnen en een sleutel die niets anders kan dan die bonnen afmelden.
+        boxes.append(box({"niveau": "pm", "naam": data["meta"].get("pm_monteur") or "Monteur", "pmplan": pm.monteur_deel(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": pm_sleutel}}}, pub["sleutel_pm"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
@@ -183,7 +190,7 @@ def build(a):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "output"], default="td"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "output", "pm"], default="td"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

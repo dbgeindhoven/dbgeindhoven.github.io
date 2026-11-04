@@ -9,6 +9,7 @@
   bonnen.py wijzig     <site.json> <werkmap>        Verwerkt statuswijzigingen en verwijderde bonnen uit wijzig.json.
   bonnen.py lijst      <site.json> <leeg.docx>      Versleutelt het lege Word-format van de zaterdaglijst naar bonnen/.
   bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst en de onderhoudsstops bij en maakt per plan de PDF om te printen.
+  bonnen.py pmdag      <site.json> <werkmap> --datum DD-MM-JJJJ   Maakt de PM-bonnen van die dag en zet ze samen in 1 PDF.
   bonnen.py zatbon     <site.json> <werkmap> <nr>   Maakt de Word- en PDF-bon voor een bestaande bon zonder bestanden, uit <nr>.json.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
@@ -23,6 +24,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fill_bon
+import pm
 
 REPO = Path(__file__).resolve().parent.parent
 MAP = REPO / "bonnen"
@@ -427,6 +429,70 @@ def zaterdag(a):
     bewaar(a.site, data)
 
 
+def pm_spec(b, rijen):
+    """De tekst van een PM-bon. Alles komt uit de PM-lijst, er wordt niets bij verzonnen."""
+    taken = [rijen[t] for t in b["taken"]]
+    freq = " en ".join(f.lower() for f in pm.FREQ if any(r["frequentie"] == f for r in taken))
+    nodig = []
+    for r in taken:
+        if r.get("benodigdheden") and r["benodigdheden"] not in nodig:
+            nodig.append(r["benodigdheden"])
+    delen = []
+    for r in taken:
+        if r.get("onderdeel") and r["onderdeel"] not in delen:
+            delen.append(r["onderdeel"])
+    naam = re.sub(r"[^A-Za-z0-9]+", "_", b["lijn"] + " " + b["lijndeel"]).strip("_")
+    return {
+        "naam": b["nr"] + "_" + naam, "werkbon_nr": b["nr"], "in_bedrijf": True,
+        "omschrijving": "Preventief %s – %s %s" % (freq, b["lijndeel"], b["lijn"].lower()),
+        "uitvoeren_op": WEEKDAGEN[pm.dat(b["datum"]).weekday()] + " " + b["datum"],
+        "lijn_machine": b["lijn"] + " / " + b["lijndeel"], "melder": "PM-planning", "installatie": delen[0] if len(delen) == 1 else b["lijndeel"],
+        "afdeling": "TD", "onderdelen": ", ".join(nodig)[:120] or None,
+        "stappen": [pm.stap(r) for r in taken],
+        "opmerking": ["Taken in bedrijf uit de PM-planning. Aftekenen in de TD Hub, tabblad PM-bonnen."],
+        "foto_tekst": "Geen foto – foto bij bevindingen toevoegen",
+    }
+
+
+def pmdag(a):
+    """Maakt de PM-bonnen van een dag en zet ze samen in 1 PDF. Oude sets gaan na een week weg, wat is afgetekend staat in de Sheet."""
+    data = laad(a.site)
+    b = stand(data)
+    pm.bijwerken(data, a.datum)
+    wm = Path(a.map)
+    wm.mkdir(parents=True, exist_ok=True)
+    sets = b.setdefault("pm", {})
+    for dag in [k for k in sets if pm.dat(k) < pm.dat(a.datum) - datetime.timedelta(days=7)]:
+        (REPO / sets.pop(dag)["pdf"]).unlink(missing_ok=True)
+    bonnen = [x for x in data["pmplan"]["bonnen"] if x["datum"] == a.datum]
+    rijen = {r["id"]: r for r in data.get("pm", [])}
+    if bonnen:
+        sjabloon = wm / "template.docx"
+        sjabloon.write_bytes(ontsleutel(TEMPLATE, b["sleutel"]))
+        docx = []
+        for x in bonnen:
+            spec = pm_spec(x, rijen)
+            pad = wm / (spec["naam"] + ".docx")
+            fill_bon.maak(spec, sjabloon, pad)
+            docx.append(pad)
+        naar_pdf(docx, wm)
+        stukken = [p.with_suffix(".pdf") for p in docx]
+        for p in stukken:
+            paginas = int(re.search(r"Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(p)], check=True, capture_output=True, text=True).stdout).group(1))
+            if paginas != 1:
+                print(p.stem, "%d pagina's" % paginas)
+        alles = wm / "pm-set.pdf"
+        if len(stukken) > 1:
+            subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
+        else:
+            alles.write_bytes(stukken[0].read_bytes())
+        if a.datum in sets:
+            (REPO / sets[a.datum]["pdf"]).unlink(missing_ok=True)
+        sets[a.datum] = {"pdf": versleutel(alles.read_bytes(), b["sleutel"]), "bonnen": len(bonnen)}
+    print(a.datum + ":", len(bonnen), "PM-bonnen")
+    bewaar(a.site, data)
+
+
 def zatbon(a):
     """Maakt de bestanden voor een bon die al in het overzicht staat maar nog geen Word-bon op de site heeft."""
     data = laad(a.site)
@@ -469,6 +535,7 @@ x = sub.add_parser("beelden"); x.add_argument("site"); x.set_defaults(fn=beelden
 x = sub.add_parser("wijzig"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=wijzig)
 x = sub.add_parser("lijst"); x.add_argument("site"); x.add_argument("docx"); x.set_defaults(fn=lijst)
 x = sub.add_parser("zaterdag"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=zaterdag)
+x = sub.add_parser("pmdag"); x.add_argument("site"); x.add_argument("map"); x.add_argument("--datum", required=True); x.set_defaults(fn=pmdag)
 x = sub.add_parser("zatbon"); x.add_argument("site"); x.add_argument("map"); x.add_argument("nr"); x.set_defaults(fn=zatbon)
 a = ap.parse_args()
 a.fn(a)
