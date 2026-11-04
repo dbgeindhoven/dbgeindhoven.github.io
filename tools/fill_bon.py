@@ -181,8 +181,16 @@ def zet_veld(root, label, waarde):
 
 
 def zet_prio(root, prio):
-    t = next(x for x in root.iter(q("t")) if (x.text or "").startswith("Prio:"))
-    t.text = re.sub(r"[☐☒]\s*([123])", lambda m: ("☒ " if str(prio) == m.group(1) else "☐ ") + m.group(1), t.text)
+    """De tekst kan over meer runs verdeeld zijn, dus de vakjes worden per teken gezet. De site doet hetzelfde in wPrio."""
+    eerste = next(x for x in root.iter(q("t")) if (x.text or "").startswith("Prio:"))
+    alle = list(next(eerste.iterancestors(q("p"))).iter(q("t")))
+    ts = alle[alle.index(eerste):]
+    heel = re.sub(r"[☐☒](?=\s*([123]))", lambda m: "☒" if str(prio) == m.group(1) else "☐", "".join(x.text or "" for x in ts))
+    i = 0
+    for x in ts:
+        n = len(x.text or "")
+        x.text = heel[i:i + n]
+        i += n
 
 
 def lees_zip(inhoud):
@@ -209,14 +217,23 @@ def zet_zaterdag(inhoud, prio, uitvoerder, uitvoeren):
     return schrijf_zip(delen)
 
 
-def zaterdaglijst(inhoud, datum, lijsten, kop=None):
-    """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed). De site doet hetzelfde in de browser."""
+def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None):
+    """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed).
+    Een onderhoudsstop gebruikt hetzelfde format: vervang zet er andere koppen in. De site doet hetzelfde in de browser."""
     delen = lees_zip(inhoud)
     root = etree.fromstring(delen["word/document.xml"])
-    kop = kop or {}
+    kop, vervang = kop or {}, vervang or {}
     for t in root.iter(q("t")):
         if t.text == "__DATUM__":
             t.text = datum
+        elif t.text in vervang:
+            t.text = vervang[t.text]
+    for n in [x for x in delen if vervang and re.fullmatch(r"word/footer\d*\.xml", x)]:
+        voet = etree.fromstring(delen[n])
+        for t in voet.iter(q("t")):
+            if t.text in vervang:
+                t.text = vervang[t.text]
+        delen[n] = etree.tostring(voet, xml_declaration=True, encoding="UTF-8", standalone=True)
     for label, veld in (("Teamleider", "teamleider"), ("Monteurs", "monteurs")):
         if kop.get(veld):
             for tc in [x for x in root.iter(q("tc")) if tekst(x) == label]:

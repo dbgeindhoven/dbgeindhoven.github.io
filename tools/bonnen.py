@@ -8,7 +8,7 @@
   bonnen.py beelden    <site.json>                  Maakt de afbeelding voor bonnen die er nog geen hebben.
   bonnen.py wijzig     <site.json> <werkmap>        Verwerkt statuswijzigingen en verwijderde bonnen uit wijzig.json.
   bonnen.py lijst      <site.json> <leeg.docx>      Versleutelt het lege Word-format van de zaterdaglijst naar bonnen/.
-  bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst bij en maakt de PDF om te printen.
+  bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst en de onderhoudsstops bij en maakt per plan de PDF om te printen.
   bonnen.py zatbon     <site.json> <werkmap> <nr>   Maakt de Word- en PDF-bon voor een bestaande bon zonder bestanden, uit <nr>.json.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
@@ -16,7 +16,7 @@ met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er 
 <nr>.pdf en <nr>-bon.jpg (de afbeelding waarmee de bon op de site opent) naast. De leesbare bonnen en het template komen nooit in deze repository, alleen
 versleuteld in bonnen/.
 """
-import argparse, base64, json, re, secrets, subprocess, sys, tempfile
+import argparse, base64, datetime, json, re, secrets, subprocess, sys, tempfile
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -28,6 +28,7 @@ REPO = Path(__file__).resolve().parent.parent
 MAP = REPO / "bonnen"
 TEMPLATE = "template.bin"
 LIJST = "zaterdaglijst.bin"
+WEEKDAGEN = ("Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag")
 KLAAR = ("Uitgevoerd", "Gereed")
 LEEG = {"melder": None, "uitvoeren": None, "onderdelen": None, "opmerking": None, "uitgevoerd_op": None, "monteur": None, "afgetekend": None, "prio": None}
 
@@ -131,7 +132,7 @@ def rij_voor(w, spec, datum):
     return dict(
         LEEG, nr=w["nr"], lijn=w.get("lijn") or None, machine=w.get("machine") or None,
         omschrijving=spec["kort"], melder=w.get("melder") or None, uitvoeren=spec.get("uitvoeren_op"),
-        onderdelen=spec.get("onderdelen"), status="Uitgevoerd" if gereed else "Gepland" if w.get("vervolg") == "Zaterdag" else "Open", opmerking=" ".join(regels),
+        onderdelen=spec.get("onderdelen"), status="Uitgevoerd" if gereed else "Open", opmerking=" ".join(regels),
         prio=int(w["prio"]) if str(w.get("prio") or "") in ("1", "2", "3") else None,
         uitgevoerd_op=datum if gereed else None, monteur=w.get("melder") if monteur else None,
         actiehouder=w.get("actiehouder") or None, bron="CM-overzicht, uit melding van " + datum,
@@ -144,6 +145,10 @@ def registreer(a):
     data = laad(a.site)
     b = stand(data)
     wm = Path(a.map)
+    # Een bon kan al op een stop staan die in dezelfde run wordt aangemaakt.
+    for w in laad(wm / "wijzig.json") if (wm / "wijzig.json").exists() else []:
+        if (w.get("rij") or {}).get("stop"):
+            stop_nieuw(data, w["rij"]["stop"])
     for w in laad(wm / "werk.json"):
         if w.get("overslaan"):
             continue
@@ -157,10 +162,12 @@ def registreer(a):
             "beeld": versleutel((wm / (w["nr"] + "-bon.jpg")).read_bytes(), b["sleutel"]),
         }
         data["cm"].append(rij)
-        z = data.get("zaterdag") or {}
-        if w.get("vervolg") == "Zaterdag" and w.get("datum") == z.get("datum"):
+        v = str(w.get("vervolg") or "")
+        z = plan_van(data, v[5:]) if v.startswith("Stop:") else data.get("zaterdag") if v == "Zaterdag" else None
+        if z and w.get("datum") == z.get("datum"):
             z.setdefault("preventief" if str(spec.get("omschrijving")).lower().startswith("preventief") else "correctief", []).append(
                 {"nr": w["nr"], "werkzaamheid": spec["kort"], "lijn_machine": spec.get("lijn_machine"), "prio": rij["prio"], "uitvoerder": None, "gereed": None})
+            rij["status"], rij["uitvoeren"] = "Gepland", plan_dag(z)
         if w.get("vervolg") == "Onderdeel bestellen":
             data["bestellijst"].append({
                 "cm": w["nr"], "onderdeel": spec.get("onderdelen") or "Zie bon", "specificatie": None, "aantal": None,
@@ -174,49 +181,105 @@ def registreer(a):
     bewaar(a.site, data)
 
 
-def zat_rijen(data):
-    z = data.get("zaterdag") or {}
+def plannen(data):
+    """De zaterdaglijst en de onderhoudsstops. Een bon staat op één plan."""
+    z = data.get("zaterdag")
+    return ([z] if z else []) + list(data.get("stops") or [])
+
+
+def plan_van(data, k):
+    """Zonder id is het de zaterdaglijst, zo blijven oudere wachtrijbestanden geldig."""
+    return next((s for s in data.get("stops") or [] if s.get("id") == k), None) if k else data.get("zaterdag")
+
+
+def plan_dag(p):
+    if not p.get("id"):
+        return "Zaterdag " + str(p.get("datum"))
+    d, m, j = map(int, str(p["datum"]).split("-"))
+    return "%s %s" % (WEEKDAGEN[datetime.date(j, m, d).weekday()], p["datum"])
+
+
+def plan_naam(p):
+    return plan_dag(p) + (", " + str(p.get("lijn")) if p.get("id") else "")
+
+
+def plan_tekst(p):
+    """Een stop gebruikt het Word-format van de zaterdaglijst, met andere koppen. De site doet hetzelfde in STOPTEKST."""
+    if not p.get("id"):
+        return None
+    return {
+        "WERKBON TD – ZATERDAGWERK": "WERKBON TD – ONDERHOUDSSTOP",
+        "Overzicht zaterdagwerkzaamheden": "Overzicht onderhoudsstop",
+        "Zaterdag ": plan_dag(p).split()[0] + " ",
+        "Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ": "Overzicht onderhoudsstop – F.95.602 Werkbon TD – pagina ",
+    }
+
+
+def zat_rijen(z):
     return (z.get("correctief") or []) + (z.get("preventief") or [])
 
 
-def zat_weg(data, nr):
-    z = data.get("zaterdag") or {}
-    for k in ("correctief", "preventief"):
-        z[k] = [r for r in z.get(k) or [] if r.get("nr") != nr]
+def zat_weg(data, nr, alleen=None):
+    for z in [alleen] if alleen else plannen(data):
+        for k in ("correctief", "preventief"):
+            z[k] = [r for r in z.get(k) or [] if r.get("nr") != nr]
 
 
 def zat_wijzig(data, nr, rij, zat):
-    """Prio, uitvoerder of weghalen vanaf de pagina Zaterdagwerk. De prio hoort bij de bon, de uitvoerder bij deze zaterdag."""
-    z = data.get("zaterdag") or {}
-    if zat.get("datum") != z.get("datum"):
-        print(nr, "wijziging hoort bij een andere zaterdag, overgeslagen")
+    """Prio, uitvoerder, verplaatsen of weghalen vanaf Zaterdagwerk of Onderhoudsstop. De prio hoort bij de bon, de uitvoerder bij dit plan."""
+    z = plan_van(data, zat.get("plan"))
+    if not z or zat.get("datum") != z.get("datum"):
+        print(nr, "wijziging hoort bij een ander plan, overgeslagen")
         return
     nieuw = zat.get("nieuw")
-    if nieuw and nr not in [r.get("nr") for r in zat_rijen(data)]:
+    if nieuw and nr not in [r.get("nr") for r in zat_rijen(z)]:
+        zat_weg(data, nr)
         z.setdefault("preventief" if nieuw.get("lijst") == "preventief" else "correctief", []).append(
             {"nr": nr, "werkzaamheid": nieuw.get("werkzaamheid"), "lijn_machine": nieuw.get("lijn_machine"), "prio": zat.get("prio"), "uitvoerder": None, "gereed": None})
     if zat.get("weg"):
-        zat_weg(data, nr)
+        zat_weg(data, nr, z)
         if rij is not None:
             rij["uitvoeren"] = None
-        print(nr, "van de zaterdaglijst gehaald")
+        print(nr, "van", plan_naam(z), "gehaald")
         return
-    for r in zat_rijen(data):
+    for r in zat_rijen(z):
         if r.get("nr") == nr:
             r["prio"], r["uitvoerder"], r["uren"] = zat.get("prio"), zat.get("uitvoerder") or None, zat.get("uren")
     if rij is not None:
         rij["prio"] = zat.get("prio")
         if nieuw:
-            rij["uitvoeren"] = "Zaterdag " + str(z.get("datum"))
-    print(nr, "zaterdag: prio", zat.get("prio"), "uitvoerder", zat.get("uitvoerder"), "uren", zat.get("uren"))
+            rij["uitvoeren"] = plan_dag(z)
+    print(nr, plan_naam(z), "prio", zat.get("prio"), "uitvoerder", zat.get("uitvoerder"), "uren", zat.get("uren"))
 
 
 def zat_kop(data, kop):
-    """Teamleider, monteurs, LET OP en beschikbare manuren van de zaterdag."""
-    z = data.get("zaterdag") or {}
-    if kop.get("datum") == z.get("datum"):
+    """Teamleider, monteurs, LET OP en beschikbare manuren van een plan."""
+    z = plan_van(data, kop.get("plan"))
+    if z and kop.get("datum") == z.get("datum"):
         z.update({k: kop.get(k) for k in ("teamleider", "monteurs", "letop", "capaciteit")})
-        print("zaterdag: kop bijgewerkt")
+        print(plan_naam(z), "kop bijgewerkt")
+
+
+def stop_nieuw(data, s):
+    if not plan_van(data, s.get("id")):
+        data.setdefault("stops", []).append({**s, "teamleider": None, "monteurs": None, "letop": None, "capaciteit": None, "correctief": [], "preventief": []})
+        print("Stop aangemaakt:", plan_naam(s))
+
+
+def stop_weg(data, k):
+    """De bonnen blijven bestaan. Wat nog niet klaar is staat daarna nergens meer op."""
+    s = plan_van(data, k)
+    if not k or not s:
+        return
+    cm = {r.get("nr"): r for r in data.get("cm", [])}
+    for r in zat_rijen(s):
+        c = cm.get(r.get("nr"))
+        if c and c.get("status") not in KLAAR:
+            c["uitvoeren"] = None
+            if c.get("status") == "Gepland":
+                c["status"] = "Open"
+    data["stops"].remove(s)
+    print("Stop verwijderd:", plan_naam(s))
 
 
 BESTELSTATUS = {"Nog niet besteld": "Nee", "Eerst opmeten of checken": "Eerst opmeten", "Opgevraagd": "Opgevraagd", "Besteld": "Besteld", "Binnen": "Binnen"}
@@ -234,9 +297,16 @@ def bestel_wijzig(data, b):
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
-    for w in laad(Path(a.map) / "wijzig.json"):
+    # Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn.
+    for w in sorted(laad(Path(a.map) / "wijzig.json"), key=lambda x: not (x.get("rij") or {}).get("stop")):
         nr, status = w["nr"], w["status"]
         extra = w.get("rij") or {}
+        if extra.get("stop"):
+            stop_nieuw(data, extra["stop"])
+            continue
+        if extra.get("stopweg"):
+            stop_weg(data, extra["stopweg"])
+            continue
         if extra.get("bestel"):
             bestel_wijzig(data, extra["bestel"])
             continue
@@ -274,10 +344,9 @@ def zat_regel(r, c):
     return (r.get("prio") or c.get("prio") or "", r.get("uitvoerder") or "", "1" if c.get("status") in KLAAR else "")
 
 
-def zat_stempel(data):
+def zat_stempel(data, z):
     cm = {x.get("nr"): x for x in data.get("cm", [])}
-    z = data.get("zaterdag") or {}
-    return ";".join("|".join([r["nr"], *map(str, zat_regel(r, cm.get(r["nr"])))]) for r in zat_rijen(data)) + "#" + "|".join(z.get(k) or "" for k in ("teamleider", "monteurs", "letop"))
+    return ";".join("|".join([r["nr"], *map(str, zat_regel(r, cm.get(r["nr"])))]) for r in zat_rijen(z)) + "#" + "|".join(z.get(k) or "" for k in ("teamleider", "monteurs", "letop"))
 
 
 def lijst(a):
@@ -290,17 +359,14 @@ def naar_pdf(bestanden, map_):
     subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(map_)] + [str(x) for x in bestanden], check=True, capture_output=True, timeout=280)
 
 
-def zaterdag(a):
-    """Zet prio, uitvoerder en datum op de bonnen van de lijst en maakt de PDF om te printen. Wat niet veranderde blijft staan."""
-    data = laad(a.site)
+def plan_print(data, z, wm, oud):
+    """Zet prio, uitvoerder en datum op de bonnen van een plan en maakt de PDF om te printen. Wat niet veranderde blijft staan."""
     b = stand(data)
-    z = data.get("zaterdag") or {}
-    wm = Path(a.map)
     wm.mkdir(parents=True, exist_ok=True)
     cm = {r.get("nr"): r for r in data.get("cm", [])}
-    dag = "Zaterdag " + str(z.get("datum"))
+    dag = plan_dag(z)
     nieuw, zonder = [], []
-    for r in zat_rijen(data):
+    for r in zat_rijen(z):
         c = cm.get(r["nr"])
         bon = (c or {}).get("bon")
         if not (bon and bon.get("docx")):
@@ -322,28 +388,42 @@ def zaterdag(a):
         bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]), stempel=merk)
     if zonder:
         print("Geen bonbestand:", ", ".join(zonder))
-    oud = b.get("zaterdag") or {}
-    stempel = zat_stempel(data)
+    stempel = zat_stempel(data, z)
     if not nieuw and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel:
-        print("Printversie is actueel.")
-    else:
-        regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
-        docx = wm / "zaterdaglijst.docx"
-        docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), str(z.get("datum")), [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")], z))
-        naar_pdf([docx], wm)
-        stukken = [docx.with_suffix(".pdf")]
-        for i, r in enumerate(zat_rijen(data)):
-            bon = (cm.get(r["nr"]) or {}).get("bon")
-            if bon and bon.get("pdf"):
-                p = wm / ("stuk-%03d.pdf" % i)
-                p.write_bytes(ontsleutel(Path(bon["pdf"]).name, b["sleutel"]))
-                stukken.append(p)
-        alles = wm / "zaterdagwerk.pdf"
-        subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
-        if oud.get("pdf"):
-            (REPO / oud["pdf"]).unlink(missing_ok=True)
-        b["zaterdag"] = {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "stempel": stempel}
-        print("Printversie gemaakt:", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
+        print(plan_naam(z) + ": printversie is actueel.")
+        return oud
+    regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
+    docx = wm / "zaterdaglijst.docx"
+    datum = str(z.get("datum")) + (" – " + str(z.get("lijn")) if z.get("id") else "")
+    docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), datum, [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")], z, plan_tekst(z)))
+    naar_pdf([docx], wm)
+    stukken = [docx.with_suffix(".pdf")]
+    for i, r in enumerate(zat_rijen(z)):
+        bon = (cm.get(r["nr"]) or {}).get("bon")
+        if bon and bon.get("pdf"):
+            p = wm / ("stuk-%03d.pdf" % i)
+            p.write_bytes(ontsleutel(Path(bon["pdf"]).name, b["sleutel"]))
+            stukken.append(p)
+    alles = wm / "zaterdagwerk.pdf"
+    subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
+    if oud.get("pdf"):
+        (REPO / oud["pdf"]).unlink(missing_ok=True)
+    print(plan_naam(z) + ": printversie gemaakt,", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
+    return {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "stempel": stempel}
+
+
+def zaterdag(a):
+    """Doet dit voor de zaterdaglijst en elke onderhoudsstop. De PDF van een weggehaalde stop verdwijnt."""
+    data = laad(a.site)
+    b = stand(data)
+    wm = Path(a.map)
+    if data.get("zaterdag"):
+        b["zaterdag"] = plan_print(data, data["zaterdag"], wm / "zaterdag", b.get("zaterdag") or {})
+    klaar = b.setdefault("stops", {})
+    for s in data.get("stops") or []:
+        klaar[s["id"]] = plan_print(data, s, wm / s["id"], klaar.get(s["id"]) or {})
+    for k in [k for k in klaar if not plan_van(data, k)]:
+        (REPO / klaar.pop(k)["pdf"]).unlink(missing_ok=True)
     bewaar(a.site, data)
 
 
