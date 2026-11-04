@@ -153,7 +153,14 @@ html.present .deelkop .knop{display:none}
 .meldform label{display:flex;flex-direction:column;gap:5px;font-size:.875rem;font-weight:500}
 .meldform input[type=text],.meldform input[type=date],.meldform textarea,.meldform select{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .meldform textarea{min-height:72px;resize:vertical}
-.opvolging #o_opl{min-height:170px}
+.actieveld{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
+#o_acties{display:flex;flex-direction:column;gap:6px}
+.actieregel{display:flex;gap:8px;align-items:flex-start}
+.actieregel input[type=checkbox]{flex:none;width:20px;height:20px;margin:9px 0 0}
+.actieregel.info{padding-left:28px}
+.meldform .actieregel textarea{min-height:0;resize:none;overflow:hidden}
+.actieregel.klaar textarea{color:var(--ink2);text-decoration:line-through}
+.actieveld .tekstknop{align-self:flex-start}
 .fotoveld{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
 .fotoknoppen{display:flex;gap:8px}
 .meldform .fotoknoppen .knop{flex:1 1 0;flex-direction:row;gap:7px;position:relative;min-height:44px}
@@ -916,12 +923,38 @@ async function laadFoto(m){
   try{const c=MELD(),r=await fetch(c.url+"?k="+encodeURIComponent(c.sleutel)+"&foto="+encodeURIComponent(m.foto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto bij de melding" src="data:image/jpeg;base64,'+j.foto+'">'}
   catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
+// Acties staan regel voor regel in de kolom oplossing; "[x] " vooraan betekent gedaan.
+const ACTIE_VAST=/^Uit de actielijst, ingevoerd/,ACTIE_INFO=/^(Stand|Afwijking|Zie)\b/,MAX_ACTIE=1000;
+function actieRij(tekst,klaar){
+  const rij=document.createElement("div"),info=ACTIE_INFO.test(tekst);
+  rij.className="actieregel"+(info?" info":"")+(klaar?" klaar":"");
+  rij.innerHTML=(info?"":'<input type="checkbox" aria-label="Actie gedaan"'+(klaar?" checked":"")+">")+'<textarea rows="1" aria-label="Actie">'+esc(tekst)+"</textarea>";
+  const v=rij.querySelector("textarea"),k=rij.querySelector("input"),hoogte=()=>{v.style.height="auto";v.style.height=v.scrollHeight+2+"px"};
+  v.addEventListener("input",hoogte);
+  if(k)k.addEventListener("change",()=>rij.classList.toggle("klaar",k.checked));
+  $("#o_acties").append(rij);hoogte();return v;
+}
+function vulActies(tekst){
+  const regels=String(tekst||"").split("\n").map(s=>s.trim()).filter(Boolean),vast=regels.filter(s=>ACTIE_VAST.test(s));
+  regels.filter(s=>!ACTIE_VAST.test(s)).forEach(s=>actieRij(s.replace(/^\[x\]\s*/i,""),/^\[x\]/i.test(s)));
+  if(!$("#o_acties").children.length)actieRij("",false);
+  $("#o_actieplus").addEventListener("click",()=>actieRij("",false).focus());
+  return vast;
+}
+function leesActies(vast){
+  const uit=[];
+  document.querySelectorAll("#o_acties .actieregel").forEach(r=>{
+    const k=r.querySelector("input");
+    r.querySelector("textarea").value.split("\n").map(s=>s.trim()).filter(Boolean).forEach(s=>uit.push((k&&k.checked?"[x] ":"")+s));
+  });
+  return uit.concat(vast).join("\n");
+}
 function openDetailMelding(m){
   terug=document.activeElement;
   const dir=m.letter==="DIR",p=$("#paneel");
   const iso=(m.datum||"").split("-").reverse().join("-");
   const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",meldTijd(m)],["Melder",m.melder],["CM-bon",bonStand(m)]];
-  const opvolging=dir?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Prio<select id="o_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(x=>'<option value="'+x[0]+'"'+(x[0]===String(m.prio||"")?" selected":"")+">"+x[1]+"</option>").join("")+'</select></label><label>Oplossing<textarea id="o_opl">'+esc(m.oplossing)+'</textarea></label>'+
+  const opvolging=dir?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Prio<select id="o_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(x=>'<option value="'+x[0]+'"'+(x[0]===String(m.prio||"")?" selected":"")+">"+x[1]+"</option>").join("")+'</select></label><div class="actieveld"><span>Actie</span><div id="o_acties"></div><button type="button" class="tekstknop" id="o_actieplus">Actie toevoegen</button></div>'+
     '<div class="twee"><label>Lijn<select id="o_lijn">'+["","Lijn 1","Lijn 2","Lijn 3","Overig"].map(x=>"<option"+(x===(m.lijn||"")?" selected":"")+">"+x+"</option>").join("")+'</select></label><label>Machine<input type="text" id="o_mach" value="'+esc(m.machine)+'"></label></div>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="o_actie" value="'+esc(m.actiehouder)+'"></label><label>Datum<input type="date" id="o_dat" value="'+esc(iso)+'"></label></div>'+
     '<label class="vink"><input type="checkbox" id="o_bon"'+(m.bon_nodig==="Ja"?" checked":"")+'> Technische dienst nodig: maak een CM-bon</label><button class="knop" type="submit">Opvolging opslaan</button></form>';
@@ -930,9 +963,13 @@ function openDetailMelding(m){
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   if(m.foto)laadFoto(m);
   if(wvMag())wegVak($("#m_weg"),m,dir?"Actie verwijderen":"Melding verwijderen",()=>{MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie verwijderd":"Melding verwijderd")});
+  const vasteRegels=$("#m_opv")?vulActies(m.oplossing):[];
   if($("#m_opv"))$("#m_opv").addEventListener("submit",async e=>{
-    e.preventDefault();const k=e.target.querySelector("button");k.disabled=true;
-    const d={id:m.id,prio:$("#o_prio").value,oplossing:$("#o_opl").value.trim(),lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};
+    e.preventDefault();const k=e.target.querySelector('button[type="submit"]'),opl=leesActies(vasteRegels),f=$("#m_fout");
+    f.hidden=true;f.textContent="Dat is niet gelukt. Probeer het opnieuw.";
+    if(opl.length>MAX_ACTIE){f.textContent="De acties zijn te lang om op te slaan. Maak de tekst korter.";f.hidden=false;return}
+    k.disabled=true;
+    const d={id:m.id,prio:$("#o_prio").value,oplossing:opl,lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};
     try{await stuur(Object.assign({actie:"bijwerken"},d));Object.assign(m,d,{bon_nodig:d.bon_nodig?"Ja":"Nee"});laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Opvolging opgeslagen")}
     catch(_){$("#m_fout").hidden=false;k.disabled=false}
   });
