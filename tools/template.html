@@ -135,17 +135,22 @@ html.present .deelkop .knop{display:none}
 .punten{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
 .geenpunten{margin:0;color:var(--ink3)}
 .meldingen{display:flex;flex-direction:column;gap:6px}
-.melding{display:block;width:100%;padding:9px 11px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);text-align:left;cursor:pointer}
+.melding{display:block;width:100%;padding:9px 11px;border:1px solid var(--line2);border-left-width:5px;border-radius:8px;background:var(--bg);text-align:left;cursor:pointer}
 .melding:hover{background:var(--hover)}
 .melding b{display:block;font-weight:500}
-.melding small{display:block;margin-top:2px;color:var(--ink2);font-size:.8125rem}
-.melding small.kort{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.melding.prio1,.prioregel .prio1{border-left-color:var(--crit)}
+.melding.prio2,.prioregel .prio2{border-left-color:var(--warn)}
+.melding.prio3,.prioregel .prio3{border-left-color:var(--ok)}
+.mvoet{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1px 12px;margin-top:4px;color:var(--ink2);font-size:.8125rem}
+.prioregel{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 10px;color:var(--ink2);font-size:.8125rem}
+.prioregel span{padding-left:7px;border-left:5px solid var(--line2);line-height:1.1}
 
 /* meldformulier */
 .meldform{display:flex;flex-direction:column;gap:14px;padding:16px 20px 24px}
 .meldform label{display:flex;flex-direction:column;gap:5px;font-size:.875rem;font-weight:500}
 .meldform input[type=text],.meldform input[type=date],.meldform textarea,.meldform select{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .meldform textarea{min-height:72px;resize:vertical}
+.opvolging #o_opl{min-height:170px}
 .fotoveld{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
 .fotoknoppen{display:flex;gap:8px}
 .meldform .fotoknoppen .knop{flex:1 1 0;flex-direction:row;gap:7px;position:relative;min-height:44px}
@@ -411,6 +416,8 @@ const bonnen=()=>(D.meta&&D.meta.bonnen)||{};
 const bonVan=id=>(bonnen().verwerkt||{})[id];
 const bonStand=m=>bonVan(m.id)?bonVan(m.id)+" gemaakt":m.bon_nodig==="Ja"?"Wordt gemaakt":"";
 const isSqd=r=>/^SQDM/.test(r.nr);
+/* Bij een actie uit het ochtendoverleg is de melddatum de invoerdatum in de actielijst, niet het moment van plaatsen. */
+const meldTijd=x=>{const m=x.melder==="Ochtendoverleg"&&/ingevoerd (\d{2}-\d{2}-\d{4})/.exec(x.oplossing||"");return m?m[1]:x.tijd||""};
 const herkomst=r=>isSqd(r)?"Productiemelding":r.herkomst==="Monteur"?"Monteurmelding":"Eigen bon";
 const stand=k=>(D.meta&&D.meta.standen&&D.meta.standen[k])||"";
 const datum=s=>{const m=/^(\d{2})-(\d{2})-(\d{4})/.exec(s||"");return m?new Date(+m[3],+m[2]-1,+m[1]):null};
@@ -874,8 +881,8 @@ function openDetailMelding(m){
   terug=document.activeElement;
   const dir=m.letter==="DIR",p=$("#paneel");
   const iso=(m.datum||"").split("-").reverse().join("-");
-  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",m.tijd],["Melder",m.melder],["CM-bon",bonStand(m)]];
-  const opvolging=dir?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Oplossing<textarea id="o_opl">'+esc(m.oplossing)+'</textarea></label>'+
+  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",meldTijd(m)],["Melder",m.melder],["CM-bon",bonStand(m)]];
+  const opvolging=dir?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Prio<select id="o_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(x=>'<option value="'+x[0]+'"'+(x[0]===String(m.prio||"")?" selected":"")+">"+x[1]+"</option>").join("")+'</select></label><label>Oplossing<textarea id="o_opl">'+esc(m.oplossing)+'</textarea></label>'+
     '<div class="twee"><label>Lijn<select id="o_lijn">'+["","Lijn 1","Lijn 2","Lijn 3","Overig"].map(x=>"<option"+(x===(m.lijn||"")?" selected":"")+">"+x+"</option>").join("")+'</select></label><label>Machine<input type="text" id="o_mach" value="'+esc(m.machine)+'"></label></div>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="o_actie" value="'+esc(m.actiehouder)+'"></label><label>Datum<input type="date" id="o_dat" value="'+esc(iso)+'"></label></div>'+
     '<label class="vink"><input type="checkbox" id="o_bon"'+(m.bon_nodig==="Ja"?" checked":"")+'> Technische dienst nodig: maak een CM-bon</label><button class="knop" type="submit">Opvolging opslaan</button></form>';
@@ -886,7 +893,7 @@ function openDetailMelding(m){
   if(wvMag())wegVak($("#m_weg"),m,dir?"Actie verwijderen":"Melding verwijderen",()=>{MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie verwijderd":"Melding verwijderd")});
   if($("#m_opv"))$("#m_opv").addEventListener("submit",async e=>{
     e.preventDefault();const k=e.target.querySelector("button");k.disabled=true;
-    const d={id:m.id,oplossing:$("#o_opl").value.trim(),lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};
+    const d={id:m.id,prio:$("#o_prio").value,oplossing:$("#o_opl").value.trim(),lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};
     try{await stuur(Object.assign({actie:"bijwerken"},d));Object.assign(m,d,{bon_nodig:d.bon_nodig?"Ja":"Nee"});laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Opvolging opgeslagen")}
     catch(_){$("#m_fout").hidden=false;k.disabled=false}
   });
@@ -905,11 +912,11 @@ function vSqd(){
   const s=D.sqdc||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT;
   const acties=(s.directie_acties||[]).filter(a=>!a.gereed).concat((MELDINGEN||[]).filter(x=>x.letter==="DIR").map(x=>({actie:x.melding,actiehouder:x.actiehouder,datum:x.datum,_m:x})));
   const bord=(s.vakken||[]).map(v=>{
-    const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter);
+    const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter).sort((a,b)=>(+a.prio||9)-(+b.prio||9));
     const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?'<small class="kort">Oplossing: '+esc(x.oplossing.split("\n")[0])+"</small>":"")+"<small>"+esc([x.code,[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
+    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding'+(x.prio?" prio"+esc(x.prio):"")+'" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+'</b><span class="mvoet"><span>'+(x.actiehouder?"Actiehouder: "+esc(x.actiehouder):"Nog geen actiehouder")+"</span><span>Gemeld: "+esc(meldTijd(x).slice(0,10))+"</span></span></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
     return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+pt+lijst+geen+"</section>";
   }).join("");
@@ -917,7 +924,7 @@ function vSqd(){
     {k:"a",l:"Actie",c:"m-main",x:"titel",r:a=>esc(a.actie)},
     {k:"h",l:"Actiehouder",w:"200px",c:"m-sub",ml:"Actiehouder",r:a=>of(a.actiehouder,"Nog toewijzen")},
     {k:"d",l:"Datum",w:"190px",c:"m-sub",ml:"Datum",x:"nowrap",r:a=>of(a.datum)+(verlopen(a.datum)?' <span class="st crit"><i></i>Verlopen</span>':"")}];
-  let html=kop("SQD-overzicht",hoofd(langeDatum(new Date())),true)+'<div class="bord">'+bord+"</div>";
+  let html=kop("SQD-overzicht",hoofd(langeDatum(new Date())),true)+'<p class="prioregel"><span class="prio1">Prio 1</span><span class="prio2">Prio 2</span><span class="prio3">Prio 3</span><span>Geen prio</span></p><div class="bord">'+bord+"</div>";
   html+='<section class="deel"><div class="deelkop"><h2>Directie-actie binnen 24 uur<span>'+acties.length+"</span></h2>"+(m?'<button class="knop" data-meld="DIR">Actie toevoegen</button>':"")+"</div>"+(acties.length?vasteTabel(cols,acties,a=>{if(a._m)openDetailMelding(a._m);return null},a=>verlopen(a.datum)?" laat":""):'<div class="leegmelding">Geen open acties voor de directie.</div>')+"</section>";
   $("#view").innerHTML=html;
 }
@@ -926,7 +933,7 @@ function vSqd(){
 function vMeldingen(){
   const r=(MELDINGEN||[]).filter(x=>x.letter!=="DIR"),aan=MELD();
   const soort=x=>x.letter?"Op SQD-bord":"Nieuw";
-  const tijd=x=>{const m=/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})/.exec(x.tijd||"");return m?m[3]+m[2]+m[1]+m[4]+m[5]:""};
+  const tijd=x=>{const m=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/.exec(meldTijd(x));return m?m[3]+m[2]+m[1]+(m[4]||"0").padStart(2,"0")+(m[5]||"00"):""};
   lijstScherm({key:"meldingen",titel:"Meldingen",sub:"Maak hier een melding. Wat tijdens de dagstart besproken moet worden, zet je door naar het SQD-overzicht.",dagstart:true,
     extra:aan?'<button class="knop hoofd" data-meld="">Melding maken</button>':"",rijen:r,eenheid:["melding","meldingen"],
     geen:!aan?"Meldingen staan nog niet aan.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":MELDINGEN?"Geen open meldingen.":"Meldingen ophalen.",
@@ -935,7 +942,8 @@ function vMeldingen(){
     tekst:x=>[x.code,x.melding,x.risico,x.oplossing,x.lijn,x.machine,x.melder,x.actiehouder].join(" "),
     kolommen:[
       {k:"c",l:"Nummer",w:"96px",c:"m-nr",x:"nr",r:x=>of(x.code),s:x=>nummer(x.code)},
-      {k:"t",l:"Gemeld",w:"136px",c:"m-sub",ml:"Gemeld",r:x=>esc(x.tijd),s:x=>tijd(x)},
+      {k:"t",l:"Gemeld",w:"136px",c:"m-sub",ml:"Gemeld",r:x=>esc(meldTijd(x)),s:x=>tijd(x)},
+      {k:"pr",l:"Prio",w:"76px",r:x=>prio(x.prio),s:x=>x.prio||9},
       {k:"p",l:"Probleem",c:"m-main",x:"titel",r:x=>esc(x.melding),s:x=>norm(x.melding)},
       {k:"r",l:"Risico",w:"100px",c:"m-sub",ml:"Risico",r:x=>of(x.risico),s:x=>x.risico||"z"},
       {k:"h",l:"Actiehouder",w:"150px",c:"m-sub",ml:"Actiehouder",r:x=>of(x.actiehouder,"Nog toewijzen"),s:x=>norm(x.actiehouder)||"zzz"},
@@ -1022,21 +1030,38 @@ const RISICO={S:"Safety",Q:"Quality",D:"Delivery"};
 const alRegels=()=>((D.meta&&D.meta.actielijst)||{}).regels||[];
 const alMelding=x=>(MELDINGEN||[]).find(m=>m.melder==="Ochtendoverleg"&&m.melding===x.melding);
 const alKlaar=x=>{const m=alMelding(x);return!!(m&&m.letter)};
+const alPrio=(x,m)=>x.eigen?x.prio||"":String((m&&m.prio)||x.prio||"");
 let alBezig=false,alTekst="";
 function vActielijst(){
-  const r=alRegels(),a=D.meta.actielijst,open=r.filter(x=>!alKlaar(x)),bonnenNodig=open.filter(x=>x.bon).length,klaar=!open.length;
-  const knop=klaar?"":'<button class="knop hoofd" id="al_knop"'+(alBezig||!MELDINGEN||MELDFOUT?" disabled":"")+">"+open.length+(open.length===1?" melding":" meldingen")+" plaatsen</button>";
+  const r=alRegels(),a=D.meta.actielijst,open=a.geplaatst?[]:r.filter(x=>!alKlaar(x)),bonnenNodig=open.filter(x=>x.bon).length,klaar=!open.length;
+  const nieuwePrio=klaar?r.filter(x=>{const m=alMelding(x);return m&&String(m.prio||"")!==alPrio(x,m)}):[];
+  const uit=alBezig||!MELDINGEN||MELDFOUT?" disabled":"";
+  const knop=nieuwePrio.length?'<button class="knop hoofd" id="al_prio"'+uit+">Prio's opslaan</button>":klaar?"":'<button class="knop hoofd" id="al_knop"'+uit+">"+open.length+(open.length===1?" melding":" meldingen")+" plaatsen</button>";
   const regel=x=>{
-    const i=r.indexOf(x),m=alMelding(x),af=alKlaar(x);
-    const keuze=af?st(m.code||"Geplaatst"):'<div class="alkeuze"><label>Bord <select data-alletter="'+i+'" aria-label="Plaats op het bord">'+["S","Q","D"].map(l=>"<option"+(l===x.letter?" selected":"")+' value="'+l+'">'+RISICO[l]+"</option>").join("")+'</select></label><label><input type="checkbox" data-albon="'+i+'"'+(x.bon?" checked":"")+"> Bon maken</label></div>";
-    return'<article class="regel"><div class="rkop"><b>'+esc(x.melding)+"</b><time>"+esc(x.datum||"Geen datum")+'</time></div><p class="ropl"><span>Actie: </span>'+esc(x.actie)+'</p><div class="rvoet"><span>'+esc([x.actiehouder,x.zie?"Zie "+x.zie:""].filter(Boolean).join(", "))+"</span>"+keuze+"</div></article>";
+    const i=r.indexOf(x),m=alMelding(x),af=klaar||alKlaar(x);
+    const keuze=!af?null:m?'<div class="alkeuze">'+st(m.code||"Geplaatst")+'<label>Prio <select data-alprio="'+i+'" aria-label="Prio">'+[["","Geen"],["1","1"],["2","2"],["3","3"]].map(p=>'<option value="'+p[0]+'"'+(p[0]===alPrio(x,m)?" selected":"")+">"+p[1]+"</option>").join("")+"</select></label></div>":st("Afgehandeld");
+    const zet=keuze||'<div class="alkeuze"><label>Bord <select data-alletter="'+i+'" aria-label="Plaats op het bord">'+["S","Q","D"].map(l=>"<option"+(l===x.letter?" selected":"")+' value="'+l+'">'+RISICO[l]+"</option>").join("")+'</select></label><label><input type="checkbox" data-albon="'+i+'"'+(x.bon?" checked":"")+"> Bon maken</label></div>";
+    return'<article class="regel"><div class="rkop"><b>'+esc(x.melding)+"</b><time>"+esc(x.datum||"Geen datum")+'</time></div><p class="ropl"><span>Actie: </span>'+esc(x.actie)+'</p><div class="rvoet"><span>'+esc([x.actiehouder,x.zie?"Zie "+x.zie:""].filter(Boolean).join(", "))+"</span>"+zet+"</div></article>";
   };
   const delen=["S","Q","D"].map(l=>{const g=r.filter(x=>x.letter===l);return g.length?'<section class="dag"><h2>'+RISICO[l]+"<span>"+g.length+"</span></h2>"+g.map(regel).join("")+"</section>":""}).join("");
-  const uitleg=klaar?"Alle acties staan op het SQD-bord.":alTekst||(!MELDINGEN?"Open meldingen ophalen.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":bonnenNodig+(bonnenNodig===1?" actie krijgt":" acties krijgen")+" een SQDM-bon. Die maakt de geplande taak bij de eerstvolgende run.");
-  $("#view").innerHTML=kop("Actielijst",esc(a.bron)+". Controleer de indeling en zet de acties in één keer op het SQD-bord.",false,knop)+'<p class="alstand" id="al_stand">'+esc(uitleg)+"</p>"+delen;
+  const uitleg=alTekst||(nieuwePrio.length?"Alle acties staan op het SQD-bord. Controleer de prio's en sla ze op.":klaar?"Alle acties staan op het SQD-bord.":"")||(!MELDINGEN?"Open meldingen ophalen.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":bonnenNodig+(bonnenNodig===1?" actie krijgt":" acties krijgen")+" een SQDM-bon. Die maakt de geplande taak bij de eerstvolgende run.");
+  $("#view").innerHTML=kop("Actielijst",esc(a.bron)+(klaar?".":". Controleer de indeling en zet de acties in één keer op het SQD-bord."),false,knop)+'<p class="alstand" id="al_stand">'+esc(uitleg)+"</p>"+delen;
   if($("#al_knop"))$("#al_knop").addEventListener("click",plaatsActielijst);
+  if($("#al_prio"))$("#al_prio").addEventListener("click",bewaarPrio);
+  document.querySelectorAll("[data-alprio]").forEach(k=>k.addEventListener("change",()=>{const x=r[+k.dataset.alprio];x.prio=k.value;x.eigen=true;vActielijst()}));
   document.querySelectorAll("[data-alletter]").forEach(k=>k.addEventListener("change",()=>{r[+k.dataset.alletter].letter=k.value;vActielijst()}));
   document.querySelectorAll("[data-albon]").forEach(k=>k.addEventListener("change",()=>{r[+k.dataset.albon].bon=k.checked;vActielijst()}));
+}
+async function bewaarPrio(){
+  if(alBezig)return;
+  const l=alRegels().map(x=>({x,m:alMelding(x)})).filter(y=>y.m&&String(y.m.prio||"")!==alPrio(y.x,y.m));
+  alBezig=true;alTekst="Prio's opslaan.";vActielijst();
+  try{
+    await stuur({actie:"prio",lijst:l.map(y=>({id:y.m.id,prio:alPrio(y.x,y.m)}))});
+    l.forEach(y=>{y.m.prio=alPrio(y.x,y.m)});
+    alTekst="";melder("Prio's opgeslagen");
+  }catch(_){alTekst="Prio's opslaan is niet gelukt. Staat het nieuwe script er al? Probeer het daarna opnieuw."}
+  alBezig=false;laatste="";if(HUIDIG==="actielijst"&&$("#paneel").hidden)vActielijst();
 }
 async function plaatsActielijst(){
   if(alBezig||!MELDINGEN)return;
@@ -1048,7 +1073,7 @@ async function plaatsActielijst(){
       n++;alTekst="Bezig met "+n+" van "+t.length+". Laat deze pagina open.";toon();
       let m=alMelding(x);
       if(!m){
-        const d={actie:"nieuw",letter:"",melding:x.melding,oplossing:x.oplossing,lijn:x.lijn||"",machine:x.machine||"",melder:"Ochtendoverleg",actiehouder:x.actiehouder,datum:x.datum||"",risico:RISICO[x.letter],bon_nodig:!!x.bon};
+        const d={actie:"nieuw",letter:"",melding:x.melding,oplossing:x.oplossing,lijn:x.lijn||"",machine:x.machine||"",melder:"Ochtendoverleg",actiehouder:x.actiehouder,datum:x.datum||"",risico:RISICO[x.letter],bon_nodig:!!x.bon,prio:x.prio||""};
         const j=await stuur(d);
         m=Object.assign({},d,{foto:"",id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:x.bon?"Ja":"Nee"});
         MELDINGEN=MELDINGEN.concat([m]);

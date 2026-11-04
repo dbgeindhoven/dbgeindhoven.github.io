@@ -6,7 +6,7 @@ const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
 const WVSLEUTEL = '__WVSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
-const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij'];
+const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
@@ -28,6 +28,10 @@ function nu_() {
 function map_() {
   const m = DriveApp.getFoldersByName(MAP);
   return m.hasNext() ? m.next() : DriveApp.createFolder(MAP);
+}
+
+function prio_(p) {
+  return ['1', '2', '3'].includes(String(p)) ? String(p) : '';
 }
 
 function object_(r) {
@@ -152,7 +156,7 @@ function doPost(e) {
         if (d.foto.length > MAX_FOTO) return uit_({ fout: 'foto te groot' });
         foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'melding-' + id + '.jpg')).getId();
       }
-      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '']);
+      b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '', prio_(d.prio)]);
       naarWachtrij_(b);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto, code: code });
     }
@@ -169,6 +173,15 @@ function doPost(e) {
       zetBonstatus_(d.nr, d.status, d.rij, d.door);
       return uit_({ ok: true });
     }
+    if (d.actie === 'prio') {
+      b.getRange(1, 1, 1, KOP.length).setValues([KOP]);
+      const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues().map(r => r[0]);
+      (d.lijst || []).forEach(x => {
+        const i = ids.indexOf(x.id);
+        if (i > 0) b.getRange(i + 1, 20).setValue(prio_(x.prio));
+      });
+      return uit_({ ok: true });
+    }
     if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
       for (let i = 1; i < ids.length; i++) {
@@ -179,6 +192,7 @@ function doPost(e) {
             b.getRange(i + 1, 5, 1, 2).setValues([[schoon_(d.lijn), schoon_(d.machine)]]);
             b.getRange(i + 1, 8, 1, 3).setValues([[schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee']]);
             b.getRange(i + 1, 14).setValue(schoon_(d.oplossing));
+            if (d.prio !== undefined) b.getRange(i + 1, 20).setValue(prio_(d.prio));
             if (!d.bon_nodig) uitWachtrij_(b, i + 1, d.id);
             naarWachtrij_(b);
           }
