@@ -218,6 +218,14 @@ html.present .deelkop .knop{display:none}
 .melding-acties{display:flex;flex-direction:column;gap:12px;padding:0 20px 24px}
 .bordkeuze{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
 .bordkeuze .seg{margin:0;align-self:flex-start}
+.weg{display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-size:.875rem}
+.weg p{margin:0}
+.wegknoppen{display:flex;flex-wrap:wrap;gap:8px}
+.weg .fout{color:var(--crit-ink)}
+.regel .weg{margin-top:6px}
+.knop.gevaar{color:var(--crit-ink);border-color:var(--crit)}
+.tekstknop.gevaar{color:var(--crit-ink)}
+.statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
 /* kengetallen en balken */
@@ -509,7 +517,7 @@ function openPaneel(d){
   $("#psl").addEventListener("click",sluitPaneel);
 }
 function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",st(r.status),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]]});
+const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]]});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
@@ -552,11 +560,55 @@ async function haalBon(b){
   b.disabled=false;b.textContent=was;
 }
 
+/* ---- alleen de werkvoorbereider: bonstatus aanpassen en verwijderen ---- */
+const BONSTATUS=["Open","Gepland","Besteld","Deels uitgevoerd","On hold","Uitgevoerd","Gereed","Dubbel","Vervallen"];
+const wvMag=()=>MODE==="enc"&&!!MELD()&&!!MELD().sleutel_wv;
+const wvDoor=()=>naam()||"Werkvoorbereider";
+const statusVeld=r=>wvMag()?'<select class="statuskeuze" data-bonstatus="'+esc(r.nr)+'" aria-label="Status van '+esc(r.nr)+'">'+BONSTATUS.map(s=>"<option"+(s===r.status?" selected":"")+">"+s+"</option>").join("")+"</select>":st(r.status);
+/* Dezelfde regels als storingen() in site.py. De dagstart heeft geen CM-overzicht en krijgt de regel daarom mee. */
+function storingRij(c){
+  if(GESLOTEN.includes(c.status)||!String(c.bron||"").startsWith("CM-overzicht"))return null;
+  const besteld=(D.bestellijst||[]).some(r=>r.cm===c.nr&&r.groep==="Besteld");
+  return{nr:c.nr,storing:c.omschrijving,lijn:c.lijn,machine:c.machine,status:c.status==="Gepland"?"Gepland":c.status==="Besteld"||besteld?"In bestelling":"Open",actiehouder:c.actiehouder||c.monteur,prio:c.prio};
+}
+/* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
+function pasBonToe(w){
+  const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"];
+  if(c&&c.melding&&b){b.gesloten=(b.gesloten||[]).filter(x=>x!==c.melding);if(GESLOTEN.includes(w.status))b.gesloten.push(c.melding)}
+  if(c&&w.status==="Verwijderd")D.cm.splice(D.cm.indexOf(c),1);else if(c)c.status=w.status;
+  D.storingen=(D.storingen||[]).filter(x=>x.nr!==w.nr).concat(w.rij?[w.rij]:[]).sort((x,y)=>(x.prio||9)-(y.prio||9)||volg.indexOf(x.status)-volg.indexOf(y.status)||nummer(x.nr)-nummer(y.nr));
+}
+async function zetBonStatus(sel){
+  const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status;
+  const w={nr:c.nr,status:sel.value,rij:storingRij(Object.assign({},c,{status:sel.value}))};
+  sel.disabled=true;
+  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";if(rteken)rteken();SCHERM[HUIDIG]();melder(w.nr+" staat nu op "+w.status)}
+  catch(_){sel.value=oud;melder("Status aanpassen is niet gelukt. Probeer het opnieuw.")}
+  sel.disabled=false;
+}
+document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))zetBonStatus(e.target)});
+/* Verwijderknop met bevestiging in vak. Hoort er een bon bij, dan kiest de werkvoorbereider of die ook weg moet. */
+function wegVak(vak,x,tekst,klaar){
+  const dicht=()=>{vak.innerHTML='<button class="tekstknop gevaar" type="button">'+tekst+"</button>";vak.firstChild.addEventListener("click",vraag)};
+  const vraag=()=>{
+    const bon=bonVan(x.id);
+    vak.innerHTML="<p>"+(bon?"Bon "+esc(bon)+" hoort hierbij. Wil je die ook verwijderen?":"Weet je zeker dat je dit wilt verwijderen?")+'</p><div class="wegknoppen">'+(bon?'<button class="knop gevaar" type="button" data-weg="bon">Melding en bon verwijderen</button><button class="knop" type="button" data-weg="melding">Alleen melding</button>':'<button class="knop gevaar" type="button" data-weg="melding">Verwijderen</button>')+'<button class="knop" type="button" data-weg="">Annuleren</button></div><p class="fout" hidden>Verwijderen is niet gelukt. Probeer het opnieuw.</p>';
+    vak.querySelectorAll("[data-weg]").forEach(b=>b.addEventListener("click",async()=>{
+      if(!b.dataset.weg){dicht();return}
+      const metBon=b.dataset.weg==="bon"?bon:"",knoppen=vak.querySelectorAll("button");
+      knoppen.forEach(k=>{k.disabled=true});
+      try{await stuur({actie:"verwijder",k:MELD().sleutel_wv,id:x.id,bon:metBon,door:wvDoor()});if(metBon)pasBonToe({nr:metBon,status:"Verwijderd"});klaar()}
+      catch(_){vak.querySelector(".fout").hidden=false;knoppen.forEach(k=>{k.disabled=false})}
+    }));
+  };
+  dicht();
+}
+
 /* ---- SQD-overzicht ---- */
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
 let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="";
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
-const herteken=()=>{if($("#paneel").hidden&&(HUIDIG==="sqd"||HUIDIG==="meldingen"))SCHERM[HUIDIG]()};
+const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","start","cm","sqdbonnen","cmbonnen"].includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -564,8 +616,8 @@ async function haalMeldingen(){
   const fout=MELDFOUT;
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
-    MELDFOUT=false;const t=JSON.stringify(j.meldingen||[]);
-    if(t!==laatste||fout){laatste=t;MELDINGEN=j.meldingen||[];herteken()}
+    MELDFOUT=false;const t=JSON.stringify([j.meldingen||[],j.bonstatus||[]]);
+    if(t!==laatste||fout){laatste=t;MELDINGEN=j.meldingen||[];(j.bonstatus||[]).forEach(pasBonToe);if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;if(!fout)herteken()}
 }
 async function stuur(d){
@@ -733,8 +785,9 @@ function rapportLijst(vak,toolbar){
     const dagen=[];r.forEach(x=>{const k=(x.tijd||"").slice(0,10);let d=dagen.find(y=>y.k===k);if(!d){d={k,r:[]};dagen.push(d)}d.r.push(x)});
     doel.innerHTML=dagen.map(d=>{const dt=datum(d.k);return'<section class="dag"><h2>'+esc(dt?hoofd(dt.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"})):d.k)+"<span>"+d.r.length+"</span></h2>"+d.r.map(x=>{
       const v=VERVOLG.find(y=>y[0]===x.vervolg);
-      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div></article>";
+      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div>"+(wvMag()&&!x.wacht?'<div class="weg" data-rweg="'+esc(x.id)+'"></div>':"")+"</article>";
     }).join("")+"</section>"}).join("");
+    doel.querySelectorAll("[data-rweg]").forEach(v=>{const x=r.find(y=>y.id===v.dataset.rweg);wegVak(v,x,"Melding verwijderen",()=>{RAPPORT=RAPPORT.filter(y=>y.id!==x.id);rlaatste="";teken();melder("Melding verwijderd")})});
   }
   $("#rq").addEventListener("input",e=>{s.q=e.target.value;teken()});
   $("#rl").addEventListener("change",e=>{s.lijn=e.target.value;teken()});
@@ -821,9 +874,10 @@ function openDetailMelding(m){
     '<div class="twee"><label>Actiehouder<input type="text" id="o_actie" value="'+esc(m.actiehouder)+'"></label><label>Datum<input type="date" id="o_dat" value="'+esc(iso)+'"></label></div>'+
     '<label class="vink"><input type="checkbox" id="o_bon"'+(m.bon_nodig==="Ja"?" checked":"")+'> Technische dienst nodig: maak een CM-bon</label><button class="knop" type="submit">Opvolging opslaan</button></form>';
   const bord=dir?"":'<div class="bordkeuze"><span>Op het SQD-overzicht</span><div class="seg" id="m_bord" role="group" aria-label="Plaats op het SQD-overzicht">'+[["","Niet"],["S","Safety"],["Q","Quality"],["D","Delivery"]].map(b=>'<button data-l="'+b[0]+'" aria-pressed="'+((m.letter||"")===b[0])+'">'+b[1]+"</button>").join("")+"</div></div>";
-  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"Meldingen")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+"</dl>"+(m.foto?'<div class="foto" id="m_fotovak">Foto laden</div>':"")+opvolging+'<div class="melding-acties">'+bord+'<p class="fout" id="m_fout" hidden>Dat is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button></div>';
+  p.innerHTML='<div class="pkopbalk"><div><small>'+esc(LETTERS[m.letter]||"Meldingen")+'</small><h2 id="ptitel">'+esc(m.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(x=>!leeg(x[1])).map(x=>"<dt>"+esc(x[0])+"</dt><dd>"+esc(x[1])+"</dd>").join("")+"</dl>"+(m.foto?'<div class="foto" id="m_fotovak">Foto laden</div>':"")+opvolging+'<div class="melding-acties">'+bord+'<p class="fout" id="m_fout" hidden>Dat is niet gelukt. Probeer het opnieuw.</p><button class="knop hoofd" id="m_klaar">Markeer als afgehandeld</button>'+(wvMag()?'<div class="weg" id="m_weg"></div>':"")+"</div>";
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   if(m.foto)laadFoto(m);
+  if(wvMag())wegVak($("#m_weg"),m,dir?"Actie verwijderen":"Melding verwijderen",()=>{MELDINGEN=MELDINGEN.filter(x=>x.id!==m.id);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder(dir?"Actie verwijderd":"Melding verwijderd")});
   if($("#m_opv"))$("#m_opv").addEventListener("submit",async e=>{
     e.preventDefault();const k=e.target.querySelector("button");k.disabled=true;
     const d={id:m.id,oplossing:$("#o_opl").value.trim(),lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};

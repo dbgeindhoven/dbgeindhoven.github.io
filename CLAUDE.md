@@ -28,6 +28,8 @@ Een melding bestaat uit melder, foto, probleem en risico (Safety, Quality of Del
 ## Bonnen uit meldingen
 Een productiemelding krijgt bij binnenkomst de code `SQDM-n` (kolom `code` in de Sheet) en wordt meteen een echte bon met datzelfde nummer. De dagstart of TD kan dat voorkomen door het vinkje "Technische dienst nodig: maak een CM-bon" weg te halen voordat de taak draait. Een monteurstoring wordt altijd een bon, met het eerstvolgende CM-nummer. Alle bonnen staan in de lijst `cm`, met `herkomst` (Productie of Monteur) en `bon`: de versleutelde Word- en PDF-bon, plus een afbeelding (`beeld`) waarmee de bon op de site zelf opent. Op de site staan SQD-bonnen (`SQDM-n`) apart van de CM-bonnen: de pagina CM-bonnen toont ze niet, Lopende storingen wel. De bestanden zijn alleen te openen op de pagina's SQD-bonnen en Aangemaakte CM-bonnen, met het eigen wachtwoord van de werkvoorbereider. Welke melding welke bon werd staat in `meta.bonnen.verwerkt`.
 
+Een statuswijziging of een verwijderde bon staat als `status-<nr>.txt` in de wachtrijmap. De site past die meteen toe voor iedereen en de geplande taak zet hem daarna in `cm`. Een verwijderde melding blijft in de Sheet staan met status `Verwijderd`, zodat een SQDM-nummer nooit dubbel uitkomt; de foto gaat naar de prullenbak.
+
 De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. De taak draait elk uur, dag en nacht. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
 
 ## Vijf toegangsniveaus
@@ -35,7 +37,7 @@ De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/b
 - **Monteur:** storing melden en het gedeelde dienstrapport. Dit deel bevat alleen de machinenamen voor het formulier en geen andere lijsten; de monteursleutel leest alleen dienstrapportregels en voegt alleen storingen toe. Dienstrapportregels staan in de Sheet met letter `TD` en status `Rapport`, met `vervolg` Gereed, Overdragen aan volgende dienst, Onderdeel bestellen of Plannen voor onderhoudstop. De machinelijst komt uit `opnamelijsten`; aanvullen kan per lijn in `meta.machines_extra`. Zonder bereik blijft een storing op de telefoon staan en verstuurt hij zichzelf. `sw.js` zorgt dat de pagina dan ook opent.
 - **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn en Zaterdag.
 - **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten, PM-taken en Dienstrapport. Geen bonbestanden: dit deel bevat de sleutel van de bonnen niet.
-- **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn. Alleen dit deel bevat `meta.bonnen.sleutel` en `cm[].bon`.
+- **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn. Alleen dit deel bevat `meta.bonnen.sleutel`, `cm[].bon` en `meta.meldingen.sleutel_wv`. Met die sleutel past de werkvoorbereider de status van een bon aan en verwijdert hij meldingen, storingen en directie-acties.
 `index.html` bevat per niveau een eigen versleuteld deel. Het dagstart-wachtwoord kan de TD-gegevens niet openen.
 
 ## Wachtwoord wijzigen

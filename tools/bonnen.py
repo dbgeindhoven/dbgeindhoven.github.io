@@ -6,6 +6,7 @@
   bonnen.py maak       <site.json> <werkmap>
   bonnen.py registreer <site.json> <werkmap>
   bonnen.py beelden    <site.json>                  Maakt de afbeelding voor bonnen die er nog geen hebben.
+  bonnen.py wijzig     <site.json> <werkmap>        Verwerkt statuswijzigingen en verwijderde bonnen uit wijzig.json.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
 met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er <nr>.docx en
@@ -162,6 +163,32 @@ def registreer(a):
     bewaar(a.site, data)
 
 
+def wijzig(a):
+    """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
+    data = laad(a.site)
+    for w in laad(Path(a.map) / "wijzig.json"):
+        nr, status = w["nr"], w["status"]
+        rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+        if rij is None:
+            print(nr, "staat niet in het overzicht")
+        elif status == "Verwijderd":
+            for pad in (rij.get("bon") or {}).values():
+                if str(pad).startswith("bonnen/"):
+                    (REPO / pad).unlink(missing_ok=True)
+            data["cm"].remove(rij)
+            data["bestellijst"] = [r for r in data["bestellijst"] if r.get("cm") != nr]
+            print(nr, "verwijderd")
+        else:
+            klaar = ("Uitgevoerd", "Gereed")
+            if status in klaar and not rij.get("uitgevoerd_op"):
+                rij["uitgevoerd_op"] = str(w.get("tijd"))[:10]
+            elif rij.get("status") in klaar and status not in klaar:
+                rij["uitgevoerd_op"] = None
+            rij["status"] = status
+            print(nr, status)
+    bewaar(a.site, data)
+
+
 def beelden(a):
     data = laad(a.site)
     sleutel = stand(data)["sleutel"]
@@ -182,5 +209,6 @@ x = sub.add_parser("nummer"); x.add_argument("site"); x.add_argument("map"); x.a
 x = sub.add_parser("maak"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=maak)
 x = sub.add_parser("registreer"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=registreer)
 x = sub.add_parser("beelden"); x.add_argument("site"); x.set_defaults(fn=beelden)
+x = sub.add_parser("wijzig"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=wijzig)
 a = ap.parse_args()
 a.fn(a)

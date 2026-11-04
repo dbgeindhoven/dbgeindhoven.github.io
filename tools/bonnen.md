@@ -14,21 +14,24 @@ Apps Script zet elke melding die een bon moet worden als tekstbestand `bon-<id>.
 
 Er loopt altijd maar één run tegelijk. Daarvoor staat tijdens een run het bestand `bezig.txt` in dezelfde map.
 
+## Status en verwijderen vanaf de site
+De werkvoorbereider kan op de site de status van een bon aanpassen en een melding met de bon verwijderen. Apps Script zet dat als `status-<nr>.txt` in dezelfde map, met `nr`, `status`, `rij`, `tijd` en `door`. Status `Verwijderd` betekent: de bon moet helemaal weg. De site toont zo'n bestand meteen aan iedereen. Daarom blijft het staan tot de wijziging in het overzicht zit en gepubliceerd is.
+
 ## Stappen
 Werk in een lege map `/tmp/bonwerk`. Stop bij een fout voordat je iets uit de wachtrij haalt, gooi `bezig.txt` weg en meld wat er misging.
 
 0. **Slot.** Staat `bezig.txt` in de wachtrijmap en is dat bestand jonger dan 30 minuten, stop dan meteen. Een oudere gooi je weg. Maak daarna zelf `bezig.txt` in de wachtrijmap met `create_file`.
 
 1. **Gegevens.** Doe stap 1 en 2 uit `CLAUDE.md`, zodat `/tmp/site.json` er staat.
-2. **Wachtrij.** Zoek met `search_files` op `parentId = '<wachtrij>' and trashed = false`. Lees elk bestand dat met `bon-` begint met `read_file_content`. Zet de inhoud als lijst in `/tmp/bonwerk/werk.json`, per regel aangevuld met `"drive_id"` (het id van het wachtrijbestand). Neem de tekst letterlijk over, zonder de backslashes die `read_file_content` voor tekens als `_` zet.
+2. **Wachtrij.** Zoek met `search_files` op `parentId = '<wachtrij>' and trashed = false`. Lees elk bestand dat met `bon-` begint met `read_file_content`. Zet de inhoud als lijst in `/tmp/bonwerk/werk.json`, per regel aangevuld met `"drive_id"` (het id van het wachtrijbestand). Neem de tekst letterlijk over, zonder de backslashes die `read_file_content` voor tekens als `_` zet. Doe hetzelfde met elk bestand dat met `status-` begint, maar dan in `/tmp/bonwerk/wijzig.json`. Staan er geen `bon-`-bestanden, sla dan stap 3 tot en met 6 en 8 over.
 3. **Template.** Bestaat `bonnen/template.bin` niet, zoek dan in Drive naar Word-bestanden met `F.95.602`, `F_95_602` of `Werkbon` in de titel. Het juiste bestand is leeg, heeft versiedatum 28-09-2026 en bevat de stap "Stop de machine". `Werkbon_TD_zaterdagwerk.docx` is een oude versie en telt niet. Vind je het niet, stop dan en vraag erom. Laat de wachtrij staan. Vind je het wel, download het met `download_file_content`. Dat resultaat wordt op schijf bewaard als JSON: decodeer `content` met Python naar `/tmp/bonwerk/template.docx` en draai `python3 tools/bonnen.py template /tmp/site.json /tmp/bonwerk/template.docx`.
 4. **Nummers.** Lees `/preferences.md` uit het geheugen en zoek het hoogste CM-nummer dat daar staat. Handmatig gemaakte bonnen staan daar eerder dan in het overzicht. Draai `python3 tools/bonnen.py nummer /tmp/site.json /tmp/bonwerk --laatste-cm <dat nummer>`.
 5. **Tekst.** Schrijf voor elke regel zonder `overslaan` het bestand `/tmp/bonwerk/<nr>.json` (zie hieronder). Staat er een `foto` in de melding, download die dan met `download_file_content`, decodeer `content` naar `/tmp/bonwerk/<nr>.jpg` en bekijk hem met Read. Komt het resultaat niet als bestand maar in het gesprek terug, sla de foto dan over en vermeld dat in `foto_tekst`.
 6. **Bonnen maken.** `python3 tools/bonnen.py maak /tmp/site.json /tmp/bonwerk`. Elke bon moet op 1 pagina passen. Bekijk elke PDF als afbeelding (`pdftoppm -r 70 -png`). Maak de tekst korter als het niet past.
-7. **Vastleggen.** `python3 tools/bonnen.py registreer /tmp/site.json /tmp/bonwerk`. Bouw daarna met stap 4 uit `CLAUDE.md`. Commit en push `index.html` en `bonnen/`. Publiceer dan pas `/tmp/artifact.html` (stap 5). Is de push geweigerd, doe dan `git pull --rebase`, bouw opnieuw en push nog een keer.
+7. **Vastleggen.** Zijn er bonnen gemaakt, draai dan `python3 tools/bonnen.py registreer /tmp/site.json /tmp/bonwerk`. Bestaat `wijzig.json`, draai dan `python3 tools/bonnen.py wijzig /tmp/site.json /tmp/bonwerk`. Bouw daarna met stap 4 uit `CLAUDE.md`. Commit en push `index.html` en `bonnen/`, ook de bestanden die `wijzig` heeft weggehaald. Publiceer dan pas `/tmp/artifact.html` (stap 5). Is de push geweigerd, doe dan `git pull --rebase`, bouw opnieuw en push nog een keer.
 8. **Nummers bijhouden.** Zijn er CM-nummers uitgegeven, werk dan de regel Werkbonnummering in `/preferences.md` bij op dezelfde manier als de andere nummers, zodat andere chats doortellen.
-9. **Wachtrij leegmaken.** Gooi elk verwerkt wachtrijbestand weg met `trash_file`, ook de regels met `overslaan`. Zoek daarna opnieuw in de wachtrijmap. Zijn er nieuwe `bon-`-bestanden binnengekomen, ga dan verder vanaf stap 2 met dezelfde `/tmp/site.json` en een lege `/tmp/bonwerk`. Gooi `bezig.txt` pas weg als er geen `bon-`-bestanden meer zijn.
-10. **Melden.** Stuur de Word-bestanden en PDF's met `SendUserFile` (status proactive). Noem per bon het nummer, de machine en wat de werkvoorbereider moet nakijken.
+9. **Wachtrij leegmaken.** Gooi elk verwerkt wachtrijbestand weg met `trash_file`, ook de regels met `overslaan` en de `status-`-bestanden. Zoek daarna opnieuw in de wachtrijmap. Zijn er nieuwe `bon-`- of `status-`-bestanden binnengekomen, ga dan verder vanaf stap 2 met dezelfde `/tmp/site.json` en een lege `/tmp/bonwerk`. Gooi `bezig.txt` pas weg als die er niet meer zijn.
+10. **Melden.** Stuur de Word-bestanden en PDF's met `SendUserFile` (status proactive). Noem per bon het nummer, de machine en wat de werkvoorbereider moet nakijken. Alleen statuswijzigingen of verwijderde bonnen hoef je niet te melden.
 
 ## Tekst van een bon
 `<nr>.json` heeft deze velden. Alles in het Nederlands, kort en feitelijk.
@@ -62,4 +65,4 @@ Regels voor de inhoud:
 - Een automatische bon is een concept. De werkvoorbereider kijkt hem na voordat hij wordt uitgevoerd.
 
 ## Aan en uit
-De taak draait alleen zinvol als het webadres in `meta.meldingen.url` staat. Zonder `bon-`-bestanden in de wachtrij stopt een run direct.
+De taak draait alleen zinvol als het webadres in `meta.meldingen.url` staat. Zonder `bon-`- of `status-`-bestanden in de wachtrij stopt een run direct.

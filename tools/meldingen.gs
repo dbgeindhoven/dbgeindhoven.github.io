@@ -4,11 +4,13 @@ const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
+const WVSLEUTEL = '__WVSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
+const BONSTATUS = ['Open', 'Gepland', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -50,7 +52,7 @@ function code_(b) {
 function wachtrij_(b) {
   const map = DriveApp.getFolderById(WACHTRIJ);
   b.getDataRange().getDisplayValues().forEach((r, i) => {
-    if (i === 0 || r[18] || (r[2] !== 'TD' && r[9] !== 'Ja')) return;
+    if (i === 0 || r[18] || r[10] === 'Verwijderd' || (r[2] !== 'TD' && r[9] !== 'Ja')) return;
     map.createFile('bon-' + r[0] + '.txt', JSON.stringify(object_(r)), MimeType.PLAIN_TEXT);
     b.getRange(i + 1, 19).setValue(nu_());
   });
@@ -73,11 +75,49 @@ function naarWachtrij_(b) {
   }
 }
 
+// Een bonstatus staat tot de geplande taak hem verwerkt als status-<nr>.txt in de wachtrijmap.
+// Een nieuwere wijziging voor dezelfde bon vervangt de oude.
+function zetBonstatus_(nr, status, rij, door) {
+  const map = DriveApp.getFolderById(WACHTRIJ);
+  const naam = 'status-' + nr + '.txt';
+  const oud = map.getFilesByName(naam);
+  while (oud.hasNext()) oud.next().setTrashed(true);
+  map.createFile(naam, JSON.stringify({ nr: nr, status: status, rij: rij || null, tijd: nu_(), door: schoon_(door) }), MimeType.PLAIN_TEXT);
+}
+
+// Wijzigingen die nog niet in het overzicht staan. Zo ziet iedereen een nieuwe status meteen.
+function bonstatus_() {
+  const uit = [];
+  try {
+    const f = DriveApp.getFolderById(WACHTRIJ).searchFiles('trashed = false');
+    while (f.hasNext()) {
+      const x = f.next();
+      if (x.getName().startsWith('status-')) uit.push(JSON.parse(x.getBlob().getDataAsString()));
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return uit;
+}
+
+// De regel blijft als Verwijderd in de Sheet staan. Zo komt een SQDM-nummer nooit dubbel uit en blijft zichtbaar wie hem weghaalde.
+function verwijder_(b, rij, r, d) {
+  if (d.bon) zetBonstatus_(d.bon, 'Verwijderd', null, d.door);
+  uitWachtrij_(b, rij, r[0]);
+  b.getRange(rij, 11, 1, 3).setValues([['Verwijderd', nu_(), schoon_(d.door)]]);
+  if (!r[14]) return;
+  try {
+    DriveApp.getFileById(r[14]).setTrashed(true);
+  } catch (f) {
+    console.error(f);
+  }
+}
+
 function doGet(e) {
   const p = e.parameter || {};
   const monteur = p.k === MONTEURSLEUTEL;
   if (p.k !== SLEUTEL && !monteur) return uit_({ fout: 'geen toegang' });
-  const rijen = blad_().getDataRange().getDisplayValues().slice(1);
+  const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
     // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive.
     if (!rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD'))) return uit_({ fout: 'foto niet gevonden' });
@@ -86,7 +126,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_) });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_() });
 }
 
 function doPost(e) {
@@ -94,7 +134,9 @@ function doPost(e) {
   // De meldinlog mag alleen nieuwe meldingen versturen, nooit iets lezen of wijzigen.
   const melder = d.k === MELDSLEUTEL && d.actie === 'nieuw' && d.letter === '';
   const monteur = d.k === MONTEURSLEUTEL && d.actie === 'nieuw' && d.letter === 'TD';
-  if (d.k !== SLEUTEL && !melder && !monteur) return uit_({ fout: 'geen toegang' });
+  // Verwijderen en een bonstatus aanpassen kan alleen met de sleutel van de werkvoorbereider. Die sleutel kan verder niets.
+  const wvActie = d.actie === 'verwijder' || d.actie === 'bonstatus';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -113,6 +155,19 @@ function doPost(e) {
       b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '']);
       naarWachtrij_(b);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto, code: code });
+    }
+    if (d.actie === 'verwijder') {
+      if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });
+      const rijen = b.getDataRange().getDisplayValues();
+      const i = rijen.findIndex((r, n) => n > 0 && r[0] === d.id);
+      if (i < 0) return uit_({ fout: 'melding niet gevonden' });
+      verwijder_(b, i + 1, rijen[i], d);
+      return uit_({ ok: true });
+    }
+    if (d.actie === 'bonstatus') {
+      if (!/^[A-Za-z0-9-]{1,20}$/.test(d.nr) || !BONSTATUS.includes(d.status)) return uit_({ fout: 'onbekende status' });
+      zetBonstatus_(d.nr, d.status, d.rij, d.door);
+      return uit_({ ok: true });
     }
     if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
