@@ -145,7 +145,12 @@ html.present .deelkop .knop{display:none}
 .meldform label{display:flex;flex-direction:column;gap:5px;font-size:.875rem;font-weight:500}
 .meldform input[type=text],.meldform input[type=date],.meldform textarea,.meldform select{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .meldform textarea{min-height:72px;resize:vertical}
-.meldform input[type=file]{font-size:.875rem;font-weight:400}
+.fotoveld{display:flex;flex-direction:column;gap:6px;font-size:.875rem;font-weight:500}
+.fotoknoppen{display:flex;gap:8px}
+.meldform .fotoknoppen .knop{flex:1 1 0;flex-direction:row;gap:7px;position:relative;min-height:44px}
+.fotoknoppen input{position:absolute;width:1px;height:1px;opacity:0}
+.fotoknoppen .knop:focus-within{outline:2px solid var(--gold);outline-offset:1px}
+.fotovb .knop{margin-top:6px}
 .voorbeeld,.foto img{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:8px}
 .foto{padding:0 20px 16px;color:var(--ink2);font-size:.875rem}
 .foto img{max-height:none;object-fit:contain}
@@ -369,7 +374,9 @@ const ICON={
   zoek:'<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   sluit:'<path d="M6 6l12 12M18 6 6 18"/>',
-  scherm:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>'
+  scherm:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.5"/>',
+  foto:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5L6 20"/>'
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
@@ -567,21 +574,34 @@ async function stuur(d){
   const j=await r.json();if(!j.ok)throw new Error(j.fout||"mislukt");return j;
 }
 function n0(plus){const d=new Date();d.setDate(d.getDate()+(plus||0));d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+/* Fotoveld: op een telefoon of tablet opent Foto maken direct de camera, Foto kiezen de galerij. */
+function fotoVeld(id,titel){
+  const knop=(t,icoon,rest)=>'<label class="knop">'+ico(icoon)+t+'<input type="file" accept="image/*"'+rest+"></label>";
+  const camera=navigator.maxTouchPoints>0?knop("Foto maken","camera",' id="'+id+'_cam" capture="environment"'):"";
+  return'<div class="fotoveld" id="'+id+'_veld"><span>'+titel+'</span><div class="fotoknoppen">'+camera+knop("Foto kiezen","foto",' id="'+id+'"')+'</div><div class="fotovb" hidden><img class="voorbeeld" alt="Gekozen foto"><button class="knop" type="button">Foto verwijderen</button></div></div>';
+}
+function koppelFoto(id){
+  const vak=$("#"+id+"_veld");if(!vak)return()=>null;
+  const vb=vak.querySelector(".fotovb"),img=vb.querySelector("img");let gekozen=null;
+  const zet=f=>{if(gekozen)URL.revokeObjectURL(img.src);gekozen=f;if(f)img.src=URL.createObjectURL(f);vb.hidden=!f};
+  vak.querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{if(i.files[0])zet(i.files[0]);i.value=""}));
+  vb.querySelector("button").addEventListener("click",()=>zet(null));
+  return()=>gekozen;
+}
 function meldVelden(){
   return'<label>Melder<input type="text" id="m_naam" required value="'+esc(naam())+'"></label>'+
-    '<label>Foto<input type="file" id="m_foto" accept="image/*"></label><img class="voorbeeld" id="m_vb" alt="Gekozen foto" hidden>'+
+    fotoVeld("m_foto","Foto")+
     '<label>Probleem<textarea id="m_tekst" required></textarea></label>'+
     '<fieldset class="risico"><legend>Risico</legend><div>'+["Safety","Quality","Delivery"].map(r=>'<label><input type="radio" name="m_risico" value="'+r+'" required><span>'+r+"</span></label>").join("")+"</div></fieldset>";
 }
 function koppelMeld(l,klaar){
-  const v=$("#m_vb"),fv=$("#m_foto");
-  if(fv)fv.addEventListener("change",e=>{const f=e.target.files[0];if(f){v.src=URL.createObjectURL(f);v.hidden=false}else v.hidden=true});
+  const gekozen=koppelFoto("m_foto");
   $("#meldform").addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#m_knop"),fout=$("#m_fout");k.disabled=true;fout.hidden=true;
     const w=id=>{const x=$(id);return x?x.value.trim():""};
     const wie=w("#m_naam");naam(wie);
     let foto="";
-    if(fv&&fv.files[0]){try{foto=await verklein(fv.files[0])}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto of verstuur zonder foto.";fout.hidden=false;k.disabled=false;return}}
+    if(gekozen()){try{foto=await verklein(gekozen())}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto of verstuur zonder foto.";fout.hidden=false;k.disabled=false;return}}
     const r=document.querySelector('input[name="m_risico"]:checked');
     const d={actie:"nieuw",letter:l,melding:w("#m_tekst"),risico:r?r.value:"",foto,melder:wie,actiehouder:w("#m_actie"),datum:w("#m_dat").split("-").reverse().join("-")};
     if(l==="")d.bon_nodig=true;
@@ -644,9 +664,9 @@ function storingVelden(){
     '<div class="eerder" id="r_eerder" hidden></div>'+
     '<label>Machinedeel<input type="text" id="r_deel"></label>'+
     '<label>Storing<textarea id="r_st" required></textarea></label>'+
-    '<label>Foto van de storing<input type="file" id="r_foto1" accept="image/*"></label><img class="voorbeeld" id="r_vb1" alt="Gekozen foto van de storing" hidden>'+
+    fotoVeld("r_foto1","Foto van de storing")+
     '<label><span id="r_opltitel">Oplossing</span><textarea id="r_opl" required></textarea></label>'+
-    '<label>Foto van de oplossing<input type="file" id="r_foto2" accept="image/*"></label><img class="voorbeeld" id="r_vb2" alt="Gekozen foto van de oplossing" hidden>'+
+    fotoVeld("r_foto2","Foto van de oplossing")+
     '<fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="r_verv" value="'+v[0]+'" required><span>'+v[0]+"</span></label>").join("")+"</fieldset>"+
     '<p class="fout" id="r_fout" hidden></p><button class="knop hoofd" id="r_knop" type="submit">Storing opslaan</button>';
 }
@@ -665,12 +685,12 @@ function koppelStoring(klaar){
   ms.addEventListener("change",()=>{const a=ms.value===ANDERS;av.hidden=!a;ai.required=a;if(!a)ai.value="";toonEerder()});
   ai.addEventListener("input",toonEerder);
   document.querySelectorAll('input[name="r_verv"]').forEach(r=>r.addEventListener("change",()=>{const o=r.value===OVERDRAGEN;$("#r_opl").required=!o;$("#r_opltitel").textContent=o?"Wat is er al gedaan?":"Oplossing"}));
-  [1,2].forEach(n=>$("#r_foto"+n).addEventListener("change",e=>{const f=e.target.files[0],vb=$("#r_vb"+n);if(f){vb.src=URL.createObjectURL(f);vb.hidden=false}else vb.hidden=true}));
+  const foto1=koppelFoto("r_foto1"),foto2=koppelFoto("r_foto2");
   $("#stform").addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#r_knop"),fout=$("#r_fout");k.disabled=true;fout.hidden=true;
     const w=id=>$(id).value.trim(),wie=w("#r_naam");naam(wie);
     const vervolg=document.querySelector('input[name="r_verv"]:checked').value;
-    const delen=[[$("#r_foto1").files[0],"Storing"],[$("#r_foto2").files[0],"Oplossing"]].filter(x=>x[0]);
+    const delen=[[foto1(),"Storing"],[foto2(),"Oplossing"]].filter(x=>x[0]);
     if(vervolg==="Onderdeel bestellen"&&!delen.length){fout.textContent="Voeg bij Onderdeel bestellen een foto toe.";fout.hidden=false;k.disabled=false;return}
     let foto="";
     if(delen.length){try{foto=await fotoSamen(delen)}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
