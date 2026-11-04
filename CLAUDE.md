@@ -40,7 +40,9 @@ Nieuwe zaterdag vanuit een chat: elke regel moet een bon met bestanden hebben in
 
 Voorlopig staan alleen taken in bedrijf in de planning (wekelijks, 2-wekelijks en maandelijks). Operatortaken staan er bewust bij om te inventariseren. Uit bedrijf volgt later.
 
-De monteur meldt een bon af in de eigen inlog: taken aanvinken, eventueel een opmerking. Niet alles gedaan betekent Deels uitgevoerd, met een verplichte opmerking; zo'n bon blijft bij Te doen staan. Zonder bereik wacht de afmelding op de telefoon. Afmeldingen staan op het tabblad `PM` in de Sheet (`nr`, `datum`, `status`, `taken`, `opmerking`, `door`, `tijd`), per bon één regel. De pagina PM-bonnen toont aan TD en werkvoorbereider wat is afgemeld, deels gedaan of achterstallig. Bij een PM-taak staat in het detailpaneel wanneer hij voor het laatst is uitgevoerd.
+`pmpunten` geeft per taak-id de controlepunten: een lijst met `o` (het onderdeel, zoals `Band 104`, of leeg) en `p` (de punten). `tools/pm.py` zet ze bij de taak in `pmplan.taken`. Een taak zonder punten heeft de taaktekst als enige punt.
+
+De monteur meldt een bon af in de eigen inlog: punten aanvinken, per onderdeel kan dat in één keer met Alles in orde, eventueel een opmerking. Niet alles gedaan betekent Deels uitgevoerd, met een verplichte opmerking; zo'n bon blijft bij Te doen staan. Zonder bereik wacht de afmelding op de telefoon. Afmeldingen staan op het tabblad `PM` in de Sheet (`nr`, `datum`, `status`, `taken`, `opmerking`, `door`, `tijd`), per bon één regel. In `taken` staat een helemaal gedane taak als `PM-061` en een half gedane taak per punt als `PM-0610302` (taak, onderdeel, punt). De pagina PM-bonnen toont aan TD en werkvoorbereider wat is afgemeld, deels gedaan of achterstallig. Bij een PM-taak staat in het detailpaneel wanneer hij voor het laatst is uitgevoerd.
 
 `python3 tools/bonnen.py pmdag /tmp/site.json <werkmap> --datum DD-MM-JJJJ` maakt de bonnen van een dag in F.95.602 en zet ze in 1 PDF. Op bonnen in bedrijf staat stap 1 aangepast (machine blijft draaien, LMRA) en vervalt de stap LOTOTO opheffen. Dit draait nog niet dagelijks: dat kan als de test met de monteurinlog bevalt.
 

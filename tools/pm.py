@@ -120,7 +120,8 @@ def bijwerken(data, vandaag):
     if nu > tot:
         plan["vast_tot"] = tekst(nu)
     rijen = {r["id"]: r for r in data.get("pm", [])}
-    plan["taken"] = {t: {k: (rijen.get(t) or {}).get(k) for k in ("taak", "onderdeel", "frequentie", "discipline", "benodigdheden")} for b in bonnen for t in b["taken"]}
+    punten = data.get("pmpunten") or {}
+    plan["taken"] = {t: {**{k: (rijen.get(t) or {}).get(k) for k in ("taak", "onderdeel", "frequentie", "discipline", "benodigdheden")}, "punten": punten.get(t)} for b in bonnen for t in b["taken"]}
 
 
 def monteur_deel(data, vandaag):

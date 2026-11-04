@@ -237,17 +237,28 @@ html.present .deelkop .knop{display:none}
 .pmaf{margin:0;color:var(--ink2);font-size:.875rem}
 .pmopm{margin:0;font-size:.9375rem}
 .pmopm b{display:block;font-size:.875rem}
-.pmtaken{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pmtaken{display:flex;flex-direction:column;gap:14px;min-width:0}
 .pmtkop{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .pmtkop b{font-size:.875rem}
-.meldform .pmtaak,.pmtaak{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid var(--line2);border-radius:8px;font-size:.9375rem;font-weight:400;cursor:pointer}
+.pmblok{display:flex;flex-direction:column;gap:6px;min-width:0}
+.pmblok h3{margin:0;font-size:.9375rem;font-weight:700;line-height:1.3}
+.pmblok>small{margin-top:-4px;color:var(--ink2);font-size:.8125rem}
+.pmobj{border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.pmokop{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;padding:9px 12px;background:var(--sunken)}
+.pmokop b{font-size:.875rem;font-weight:600}
+.pmotel{color:var(--ink2);font-size:.8125rem}
+.pmokop .tekstknop{margin-left:auto;padding:2px 0}
+.pmobj.vol .pmrijen{display:none}
+.pmobj.vol .pmokop{background:var(--gold-soft)}
+.meldform .pmtaak,.pmtaak{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:.9375rem;font-weight:400;cursor:pointer}
+.pmrijen .pmtaak:first-child{border-top:0}
 .pmtaak input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--gold)}
 .pmtaak span{min-width:0}
-.pmtaak small{display:block;margin-top:2px;color:var(--ink2);font-size:.8125rem}
-.pmtaak:has(input:checked){background:var(--gold-soft);border-color:var(--gold)}
+.pmtaak:has(input:checked){background:var(--gold-soft)}
 .pmtaak:has(input:disabled){cursor:default}
 .pmvink{margin:0;padding-left:18px}
 .pmvink li{margin-bottom:3px}
+.pmvink small{display:block;color:var(--crit-ink);font-size:.8125rem}
 .pmvink li.af::marker{content:"✓  ";color:var(--ok);font-weight:700}
 .dag{margin-top:18px}
 .dag:first-child{margin-top:4px}
@@ -1001,6 +1012,13 @@ const pmTitel=b=>"Preventief "+pmFreq(b).toLowerCase()+" – "+b.lijndeel+" "+b.
 const pmDag=d=>hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}));
 const pmNu=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
 const pmGedaan=a=>String(a&&a.taken||"").split(",").filter(Boolean);
+/* Een taak bestaat uit controlepunten, per onderdeel zoals een band of motor. Zonder punten is de taak zelf het enige punt. */
+const pmPunten=t=>t.punten&&t.punten.length?t.punten:[{o:"",p:[t.taak]}];
+const pmCode=(id,i,j)=>id+String(i).padStart(2,"0")+String(j).padStart(2,"0");
+/* In de Sheet staat een helemaal gedane taak als PM-061 en een half gedane taak per punt als PM-0610302. */
+function pmTakenTekst(ts,gekozen){
+  return ts.flatMap(t=>{const c=pmPunten(t).flatMap((x,i)=>x.p.map((_,j)=>pmCode(t.id,i,j))),aan=c.filter(x=>gekozen.includes(x));return aan.length===c.length?[t.id]:aan}).join(",");
+}
 function pmAf(nr){
   const w=UIT.filter(x=>x.d.actie==="pm"&&x.d.nr===nr).pop();
   return w?Object.assign({},w.d,{tijd:w.tijd,wacht:true}):(PMAF||[]).find(x=>x.nr===nr)||null;
@@ -1045,8 +1063,11 @@ function pmScherm(){
     vak.innerHTML=h;
   }
   function taak(t,gedaan,alleen){
-    const sub=[t.onderdeel,t.benodigdheden?"Nodig: "+t.benodigdheden:"",t.discipline==="Operator"?"Operatortaak":""].filter(Boolean).join(" · ");
-    return'<label class="pmtaak"><input type="checkbox" value="'+esc(t.id)+'"'+(gedaan?" checked":"")+(alleen?" disabled":"")+"><span>"+esc(t.taak)+(sub?"<small>"+esc(sub)+"</small>":"")+"</span></label>";
+    const sub=[t.benodigdheden?"Nodig: "+t.benodigdheden:"",t.discipline==="Operator"?"Operatortaak":""].filter(Boolean).join(" · "),heel=gedaan.includes(t.id);
+    return'<section class="pmblok"><h3>'+esc(t.onderdeel||t.taak)+"</h3>"+(sub?"<small>"+esc(sub)+"</small>":"")+pmPunten(t).map((x,i)=>'<div class="pmobj">'+(x.o?'<div class="pmokop"><b>'+esc(x.o)+'</b><span class="pmotel"></span>'+(alleen?"":'<button type="button" class="tekstknop" data-pmobj>Alles in orde</button>')+"</div>":"")+'<div class="pmrijen">'+x.p.map((p,j)=>{const c=pmCode(t.id,i,j);return'<label class="pmtaak"><input type="checkbox" value="'+c+'"'+(heel||gedaan.includes(c)?" checked":"")+(alleen?" disabled":"")+"><span>"+esc(p)+"</span></label>"}).join("")+"</div></div>").join("")+"</section>";
+  }
+  function tellen(){
+    vak.querySelectorAll(".pmobj").forEach(o=>{const c=[...o.querySelectorAll("input")],n=c.filter(x=>x.checked).length,k=o.querySelector(".pmotel"),vol=n===c.length&&!!k&&!o.classList.contains("open");o.classList.toggle("vol",vol);if(k)k.textContent=n+" van "+c.length;const b=o.querySelector("[data-pmobj]");if(b)b.textContent=vol?"Openen":"Alles in orde"});
   }
   function bon(nr,aanpassen){
     const b=pmPlan().bonnen.find(x=>x.nr===nr);if(!b){lijst();return}
@@ -1055,21 +1076,22 @@ function pmScherm(){
     const kopje='<button type="button" class="tekstknop pmterug" data-pmterug>Terug naar de lijst</button><article class="pmbon"><div class="pmb1"><div><small>'+esc(nr)+"</small><h2>"+esc(pmTitel(b))+"</h2></div>"+st(pmStand(b))+'</div><dl class="pmvelden"><dt>Uitvoeren op</dt><dd>'+esc(pmDag(datum(b.datum)))+"</dd><dt>Lijn / machine</dt><dd>"+esc(b.lijn+" / "+b.lijndeel)+'</dd></dl><p class="pmlet">'+esc(PMLET)+"</p>";
     const stand=a?'<p class="pmaf">'+esc((a.wacht?"Wacht op bereik, afgemeld door ":"Afgemeld door ")+a.door+", "+a.tijd)+"</p>":"";
     if(klaar){
-      vak.innerHTML=kopje+stand+'<div class="pmtaken">'+ts.map(t=>taak(t,gedaan.includes(t.id),true)).join("")+"</div>"+(a.opmerking?'<p class="pmopm"><b>Opmerking</b>'+esc(a.opmerking)+"</p>":"")+'<button type="button" class="knop" data-pmaanpas>Aanpassen</button></article>';
+      vak.innerHTML=kopje+stand+'<div class="pmtaken">'+ts.map(t=>taak(t,gedaan,true)).join("")+"</div>"+(a.opmerking?'<p class="pmopm"><b>Opmerking</b>'+esc(a.opmerking)+"</p>":"")+'<button type="button" class="knop" data-pmaanpas>Aanpassen</button></article>';
+      tellen();
       return;
     }
-    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate><div class="pmtaken"><div class="pmtkop"><b>Taken</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div>'+ts.map(t=>taak(t,gedaan.includes(t.id))).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
+    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate><div class="pmtaken"><div class="pmtkop"><b>Controlepunten</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div>'+ts.map(t=>taak(t,gedaan)).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
     const vinken=()=>[...vak.querySelectorAll(".pmtaak input")],knop=$("#pm_knop");
-    const tel=()=>{const n=vinken().filter(x=>x.checked).length;knop.textContent=!n||n===ts.length?"Afmelden":"Deels afmelden ("+n+" van "+ts.length+")"};
+    const tel=()=>{const n=vinken().filter(x=>x.checked).length,m=vinken().length;knop.textContent=!n||n===m?"Afmelden":"Deels afmelden ("+n+" van "+m+")";tellen()};
     tel();
     $("#pmform").addEventListener("change",tel);
     $("#pmform").addEventListener("submit",async e=>{
       e.preventDefault();
-      const ids=vinken().filter(x=>x.checked).map(x=>x.value),opm=$("#pm_opm").value.trim(),f=$("#pm_fout"),alles=ids.length===ts.length;
+      const ids=vinken().filter(x=>x.checked).map(x=>x.value),opm=$("#pm_opm").value.trim(),f=$("#pm_fout"),alles=ids.length===vinken().length;
       f.hidden=true;
       if(!ids.length){f.textContent="Vink aan wat je hebt gedaan.";f.hidden=false;return}
       if(!alles&&!opm){f.textContent="Schrijf bij Opmerking waarom niet alles is gedaan.";f.hidden=false;$("#pm_opm").focus();return}
-      const d={actie:"pm",nr,datum:b.datum,status:alles?"Uitgevoerd":"Deels uitgevoerd",taken:ids.join(","),opmerking:opm,door:D.naam};
+      const d={actie:"pm",nr,datum:b.datum,status:alles?"Uitgevoerd":"Deels uitgevoerd",taken:pmTakenTekst(ts,ids),opmerking:opm,door:D.naam};
       knop.disabled=true;knop.textContent="Bezig";
       try{const j=await stuur(d);pmZet(Object.assign({},d,{tijd:j.tijd}));lijst();window.scrollTo(0,0);melder(nr+(alles?" is afgemeld":" is deels afgemeld"))}
       catch(_){
@@ -1084,6 +1106,13 @@ function pmScherm(){
     if(e.target.closest("[data-pmterug]")){lijst();window.scrollTo(0,0);return}
     if(e.target.closest("[data-pmaanpas]")){bon(open,true);return}
     if(e.target.closest("[data-pmalles]")){vak.querySelectorAll(".pmtaak input").forEach(x=>{x.checked=true});$("#pmform").dispatchEvent(new Event("change"))}
+    const obj=e.target.closest("[data-pmobj]");
+    if(obj){
+      const o=obj.closest(".pmobj");
+      if(o.classList.contains("vol"))o.classList.add("open");
+      else{o.classList.remove("open");o.querySelectorAll("input").forEach(x=>{x.checked=true})}
+      $("#pmform").dispatchEvent(new Event("change"));
+    }
   });
   pmTeken=()=>{if(!open)lijst()};rteken=pmTeken;
   lijst();
@@ -1108,7 +1137,11 @@ function vPmBonnen(){
       {k:"o",l:"Opmerking",w:"26%",c:"m-sub",ml:"Opmerking",r:b=>of(af2(b,"opmerking")),s:b=>norm(af2(b,"opmerking"))}],
     detail:b=>{
       const a=pmAf(b.nr),g=pmGedaan(a);
-      return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(t=>"<li"+(g.includes(t.id)?' class="af"':"")+">"+esc(t.taak)+"</li>").join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Opmerking",a&&a.opmerking]]};
+      const regel=t=>{
+        const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),mis=alle.filter(y=>!g.includes(y.c));
+        return"<li"+(vol?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
+      };
+      return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Opmerking",a&&a.opmerking]]};
     }});
 }
 function verklein(f){
