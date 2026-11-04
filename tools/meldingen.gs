@@ -5,12 +5,17 @@ const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
 const WVSLEUTEL = '__WVSLEUTEL__';
+const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
 const BONSTATUS = ['Open', 'Gepland', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
+
+const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];
+const LIJNEN = ['Lijn 1', 'Lijn 2', 'Lijn 3'];
+const OUTKOP = ['datum', 'ploeg', 'lijn', 'output', 'opmerking', 'door', 'tijd'];
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -117,9 +122,36 @@ function verwijder_(b, rij, r, d) {
   }
 }
 
+// Output staat op een eigen tabblad, per datum, ploeg en lijn één regel. Opnieuw invullen vervangt die regel.
+function outputRijen_() {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Output');
+  if (!b || b.getLastRow() < 2) return [];
+  return b.getRange(2, 1, b.getLastRow() - 1, OUTKOP.length).getValues().slice(-500).map(r => {
+    const o = {};
+    OUTKOP.forEach((k, i) => { o[k] = r[i]; });
+    return o;
+  });
+}
+
+function zetOutput_(d) {
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const b = s.getSheetByName('Output') || s.insertSheet('Output', s.getNumSheets());
+  b.getRange('A:C').setNumberFormat('@');
+  b.getRange('G:G').setNumberFormat('@');
+  b.getRange(1, 1, 1, OUTKOP.length).setValues([OUTKOP]);
+  const n = b.getLastRow();
+  const sleutels = n > 1 ? b.getRange(2, 1, n - 1, 3).getValues() : [];
+  const i = sleutels.findIndex(r => r[0] === d.datum && r[1] === d.ploeg && r[2] === d.lijn);
+  const rij = [d.datum, d.ploeg, d.lijn, Number(d.output), schoon_(d.opmerking), schoon_(d.door), nu_()];
+  if (i >= 0) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
+  else b.appendRow(rij);
+  return i >= 0;
+}
+
 function doGet(e) {
   const p = e.parameter || {};
   const monteur = p.k === MONTEURSLEUTEL;
+  if (p.k === OUTPUTSLEUTEL) return uit_({ output: outputRijen_() });
   if (p.k !== SLEUTEL && !monteur) return uit_({ fout: 'geen toegang' });
   const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
@@ -130,7 +162,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_() });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_() });
 }
 
 function doPost(e) {
@@ -140,7 +172,9 @@ function doPost(e) {
   const monteur = d.k === MONTEURSLEUTEL && d.actie === 'nieuw' && d.letter === 'TD';
   // Verwijderen en een bonstatus aanpassen kan alleen met de sleutel van de werkvoorbereider. Die sleutel kan verder niets.
   const wvActie = d.actie === 'verwijder' || d.actie === 'bonstatus';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur) return uit_({ fout: 'geen toegang' });
+  // De ploegen kunnen alleen hun output invullen.
+  const ploeg = d.k === OUTPUTSLEUTEL && d.actie === 'output';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -159,6 +193,11 @@ function doPost(e) {
       b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '', prio_(d.prio)]);
       naarWachtrij_(b);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto, code: code });
+    }
+    if (d.actie === 'output') {
+      const kg = Number(d.output);
+      if (!/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PLOEGEN.includes(d.ploeg) || !LIJNEN.includes(d.lijn) || d.output === '' || !(kg >= 0 && kg < 10000000)) return uit_({ fout: 'onjuiste invoer' });
+      return uit_({ ok: true, vervangen: zetOutput_(d) });
     }
     if (d.actie === 'verwijder') {
       if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });

@@ -14,7 +14,7 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 2. `python3 tools/site.py extract <dat bestand> /tmp/site.json`
 3. Pas `/tmp/site.json` aan met Python. Lijsten: `cm`, `zaterdag`, `bestellijst`, `priolijst`, `opnamelijsten`, `pm`. Toelichting per lijst en de stand per lijst staan in `meta.standen`.
    - `sqdc`: `datum`, `vakken` (S, Q, D; `kleur` is groen, rood of null; `punten` is een lijst teksten) en `directie_acties` (`actie`, `actiehouder`, `datum` als DD-MM-JJJJ of DD-MM-JJJJ UU:MM, `gereed`). Er is bewust geen vak voor Cost.
-   - `output`: `datum`, `eenheid`, `lijnen` (`lijn`, `plan`, `output`, `opmerking`).
+   - `output`: `eenheid`, `bron`, `dagen` (`datum`, `lijn`, `ploeg`, `kg`) en `plan` (`datum`, `lijn`, `kg`). Dit zijn de startcijfers uit het Excel-bestand "Output per ploeg EHV"; het plan is de som van de productieorders per lijn op Due Date. Wat de ploegen invullen staat live in de Sheet (tabblad `Output`) en gaat voor op deze cijfers.
    - `storingen` niet met de hand aanpassen: `site.py build` maakt die lijst uit de open bonnen van het CM-overzicht. Gepland blijft Gepland, Besteld of een bestelregel op Besteld wordt In bestelling, de rest wordt Open. Gereed verdwijnt. Een veld `actiehouder` op een CM-regel gaat voor op `monteur`.
 4. `python3 tools/site.py build /tmp/site.json --stand DD-MM-JJJJ --plain /tmp/artifact.html --public index.html`
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
@@ -35,13 +35,14 @@ Een statuswijziging of een verwijderde bon staat als `status-<nr>.txt` in de wac
 
 De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/bonnen.md`. De taak draait elk uur, dag en nacht. Pas je `tools/meldingen.gs` aan, stuur dan een nieuwe ingevulde versie van het script; de echte waarden staan in `meta.meldingen`.
 
-## Vijf toegangsniveaus
+## Zes toegangsniveaus
 - **Melden:** alleen het meldformulier. Dit deel bevat geen enkele lijst, en de meldsleutel kan alleen nieuwe meldingen versturen.
 - **Monteur:** storing melden en het gedeelde dienstrapport. Dit deel bevat alleen de machinenamen voor het formulier en geen andere lijsten; de monteursleutel leest alleen dienstrapportregels en voegt alleen storingen toe. Dienstrapportregels staan in de Sheet met letter `TD` en status `Rapport`, met `vervolg` Gereed, Overdragen aan volgende dienst, Onderdeel bestellen of Plannen voor onderhoudstop. De machinelijst komt uit `opnamelijsten`; aanvullen kan per lijn in `meta.machines_extra`. Zonder bereik blijft een storing op de telefoon staan en verstuurt hij zichzelf. `sw.js` zorgt dat de pagina dan ook opent.
-- **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn en Zaterdag.
+- **Output:** één gezamenlijke inlog voor de ploegen. Alleen het formulier met naam, datum, ploeg, lijn, output in kilo en opmerking. Dit deel bevat geen enkele lijst; de outputsleutel leest en schrijft alleen het tabblad `Output`. Opnieuw invullen voor dezelfde datum, ploeg en lijn vervangt de regel.
+- **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn en Zaterdag. In de presentatie staat Meldingen niet, en heeft Output per lijn een eigen stap per lijn met tabel en grafiek. Lopende storingen toont alleen prio 1: bonnen en meldingen, omdat die SQD direct in gevaar brengen. Bij een melding zonder bon staat een vinkje of er een bon gemaakt moet worden.
 - **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten, PM-taken en Dienstrapport. Geen bonbestanden: dit deel bevat de sleutel van de bonnen niet.
 - **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn. Alleen dit deel bevat `meta.bonnen.sleutel`, `cm[].bon` en `meta.meldingen.sleutel_wv`. Met die sleutel past de werkvoorbereider de status van een bon aan en verwijdert hij meldingen, storingen, directie-acties en bonnen die uit een melding komen.
 `index.html` bevat per niveau een eigen versleuteld deel. Het dagstart-wachtwoord kan de TD-gegevens niet openen.
 
 ## Wachtwoord wijzigen
-`python3 tools/site.py setkey /tmp/site.json --niveau td --password "..."` `--niveau dagstart`, `--niveau melden`, `--niveau monteur` of `--niveau wv`, en daarna stap 4 t/m 6.
+`python3 tools/site.py setkey /tmp/site.json --niveau td --password "..."` `--niveau dagstart`, `--niveau melden`, `--niveau monteur`, `--niveau output` of `--niveau wv`, en daarna stap 4 t/m 6.

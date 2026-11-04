@@ -11,6 +11,7 @@
   --gold:#E3A416;--gold-ink:#7D5A00;--on-gold:#1D2023;--gold-soft:#FBF1D7;
   --ok:#1C8350;--warn:#C27A0E;--warn2:#E9B44C;--crit:#C5382D;--info:#2C6DB2;--none:#A9ADB1;
   --crit-ink:#A92C22;--warn-ink:#8F5A06;--white:#FFFFFF;--shadow:rgba(20,22,24,.14);
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;
   --font:"Roboto",Arial,"Helvetica Neue",sans-serif;
   --kop:"Roboto Slab",Georgia,"Times New Roman",serif;
 }
@@ -20,6 +21,7 @@
   --gold:#E3A416;--gold-ink:#F0C565;--on-gold:#1D2023;--gold-soft:#3A2F13;
   --ok:#3FB47A;--warn:#E0A03A;--warn2:#B98223;--crit:#E86A5E;--info:#6DA8E5;--none:#6C7176;
   --crit-ink:#F08B81;--warn-ink:#EDB962;--white:#FFFFFF;--shadow:rgba(0,0,0,.45);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#17191B;--side:#1E2124;--sunken:#24272A;--hover:#212427;
@@ -27,6 +29,7 @@
   --gold:#E3A416;--gold-ink:#F0C565;--on-gold:#1D2023;--gold-soft:#3A2F13;
   --ok:#3FB47A;--warn:#E0A03A;--warn2:#B98223;--crit:#E86A5E;--info:#6DA8E5;--none:#6C7176;
   --crit-ink:#F08B81;--warn-ink:#EDB962;--white:#FFFFFF;--shadow:rgba(0,0,0,.45);
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;
   color-scheme:dark}
 *{box-sizing:border-box}
 html{font-size:16px}
@@ -164,6 +167,12 @@ html.present .deelkop .knop{display:none}
 .meldform .vink{flex-direction:row;align-items:center;gap:8px;font-weight:400}
 .meldform .fout{margin:0;color:var(--crit-ink);font-size:.875rem}
 .risico{margin:0;padding:0;border:0;min-width:0}
+.risico.vier div{grid-template-columns:repeat(2,minmax(0,1fr))}
+.risico small{display:block;color:var(--ink2);font-size:.75rem;font-weight:400}
+.meldform input[type=number]{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
+.laatste{margin:0;padding:0 20px 20px;color:var(--ink2);font-size:.8125rem}
+.laatste b{display:block;margin-bottom:4px;color:var(--ink);font-weight:500}
+.laatste p{margin:0;display:flex;justify-content:space-between;gap:12px}
 .risico legend{padding:0;margin-bottom:5px;font-size:.875rem;font-weight:500}
 .risico div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .meldform .risico label{position:relative;display:block;cursor:pointer}
@@ -235,6 +244,33 @@ html.present .deelkop .knop{display:none}
 .alkeuze{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 .alkeuze label{display:inline-flex;align-items:center;gap:6px}
 .alstand{margin:0 0 12px;color:var(--ink2);font-size:.875rem}
+.bonvink{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.realis{display:flex;align-items:center;gap:8px}
+.realis .vulbalk{flex:1 1 auto;min-width:40px}
+.glegenda{display:flex;flex-wrap:wrap;gap:4px 16px;margin:4px 0 10px;color:var(--ink2);font-size:.8125rem}
+.glegenda span{display:inline-flex;align-items:center;gap:6px}
+.glegenda i{width:12px;height:12px;border-radius:3px}
+.glegenda i.gp{height:2px;border-radius:0;background:var(--ink)}
+.grafiek{padding-bottom:40px;margin-bottom:12px}
+.gvlak{position:relative;height:280px;margin:0 8px 0 56px;border-bottom:1px solid var(--line2)}
+html.present .gvlak{height:min(46vh,460px)}
+.glijn{position:absolute;left:0;right:0;height:1px;background:var(--line)}
+.glijn span{position:absolute;right:calc(100% + 8px);top:0;transform:translateY(-50%);color:var(--ink3);font-size:.75rem;white-space:nowrap}
+.gkolommen{position:absolute;inset:0;display:flex}
+.gkol{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:flex-end;justify-content:center;outline:0}
+.gkol:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.gstapel{display:flex;flex-direction:column-reverse;gap:2px;width:min(66%,72px);border-radius:4px 4px 0 0;overflow:hidden}
+.gstapel i{display:flex;align-items:center;justify-content:center;min-height:1px;overflow:hidden;font-style:normal;font-size:.75rem;font-weight:500;color:#fff;white-space:nowrap}
+.gstapel i.gdonker{color:#1D2023}
+.gplan{position:absolute;left:8%;right:8%;height:2px;background:var(--ink);box-shadow:0 0 0 1px var(--bg)}
+.gx{position:absolute;top:calc(100% + 6px);left:0;right:0;text-align:center;color:var(--ink2);font-size:.75rem;line-height:1.25}
+.gtip{display:none;position:absolute;z-index:5;top:0;left:50%;transform:translateX(-50%);width:172px;padding:8px 10px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);box-shadow:0 4px 14px var(--shadow);font-size:.8125rem}
+.gkol:hover .gtip,.gkol:focus .gtip{display:block}
+.gtip b{display:block;margin-bottom:3px;font-weight:500}
+.gtip span{display:flex;justify-content:space-between;gap:10px;color:var(--ink2)}
+.gtip span span{gap:0;align-items:center}
+.gtip i{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:2px}
+@media (max-width:640px){.gvlak{height:220px;margin:0 4px 0 46px}.gstapel i{font-size:0}}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
@@ -398,6 +434,9 @@ const ICON={
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"}];
+const LIJNEN_OUTPUT=["Lijn 1","Lijn 2","Lijn 3"];
+const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l}));
+const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
 const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
 
@@ -483,7 +522,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon]"))return;
+    if(e.target.closest("[data-bon],.bonvink"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -512,7 +551,7 @@ document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t],d=t.detail(t.rijen[+e.target.dataset.i]);if(d)openPaneel(d)}
   if(e.key==="Escape"){if(!$("#bonvak").hidden)sluitBon();else if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
   if(document.documentElement.classList.contains("present")&&$("#paneel").hidden){
-    const l=P_DAG.map(p=>p.id),i=l.indexOf(HUIDIG);
+    const l=P_PRES.map(p=>p.id),i=l.indexOf(HUIDIG);
     if(["ArrowRight","PageDown"," "].includes(e.key)&&!e.target.matches("button")){e.preventDefault();if(i<l.length-1)location.hash=l[i+1]}
     if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();if(i>0)location.hash=l[i-1]}
   }
@@ -619,18 +658,18 @@ function wegVak(vak,x,tekst,klaar,bonNr){
 
 /* ---- SQD-overzicht ---- */
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
-let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="";
+let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[];
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
-const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","start","cm","sqdbonnen","cmbonnen","actielijst"].includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
-function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
+function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
   const m=MELD();if(!m||alBezig)return;
   const fout=MELDFOUT;
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
-    MELDFOUT=false;const t=JSON.stringify([j.meldingen||[],j.bonstatus||[]]);
-    if(t!==laatste||fout){laatste=t;MELDINGEN=j.meldingen||[];(j.bonstatus||[]).forEach(pasBonToe);if(rteken)rteken();herteken()}
+    MELDFOUT=false;const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[]]);
+    if(t!==laatste||fout){laatste=t;MELDINGEN=j.meldingen||[];OUTPUT=j.output||[];(j.bonstatus||[]).forEach(pasBonToe);if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;if(!fout)herteken()}
 }
 async function stuur(d){
@@ -951,33 +990,93 @@ function vMeldingen(){
       {k:"s",l:"Status",w:"136px",c:"m-status",r:x=>st(soort(x)),s:x=>soort(x)}],
     detail:x=>{openDetailMelding(x);return null}});
 }
+/* Lopende storingen brengen SQD direct in gevaar: alleen de hoogste prio, uit de bonnen en uit de meldingen. */
 function vStoringen(){
-  const r=D.storingen||[];
-  lijstScherm({key:"storingen",titel:"Lopende storingen",sub:"Gereedgemelde storingen verdwijnen automatisch van deze lijst.",dagstart:true,rijen:r,eenheid:["storing","storingen"],
+  const m=(MELDINGEN||[]).filter(x=>x.letter!=="DIR"&&String(x.prio)==="1");
+  const r=(D.storingen||[]).filter(x=>String(x.prio)==="1"&&!m.some(y=>y.code===x.nr)).concat(m.map(x=>{const s=(D.storingen||[]).find(y=>y.nr===x.code);return{nr:x.code||"Melding",storing:x.melding,lijn:x.lijn,machine:x.machine,status:s?s.status:"Open",actiehouder:x.actiehouder,prio:1,_m:x}}));
+  const bonVeld=x=>!x._m?of(null):bonVan(x._m.id)?"Gemaakt":'<label class="bonvink"><input type="checkbox" data-lsbon="'+esc(x._m.id)+'"'+(x._m.bon_nodig==="Ja"?" checked":"")+"> Bon maken</label>";
+  lijstScherm({key:"storingen",titel:"Lopende storingen",sub:"Storingen met prio 1: deze brengen SQD direct in gevaar. Gereedgemelde storingen verdwijnen automatisch.",dagstart:true,rijen:r,eenheid:["storing","storingen"],
+    geen:"Geen storingen met prio 1.",
     seg:{get:x=>x.status,o:["Open","In bestelling","Gepland"]},
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep}],
     tekst:x=>[x.nr,x.storing,x.lijn,x.machine,x.actiehouder].join(" "),
     kolommen:[
-      {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
+      {k:"nr",l:"Nummer",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
       {k:"st",l:"Storing",c:"m-main",x:"titel",r:x=>esc(x.storing),s:x=>norm(x.storing)},
-      {k:"mach",l:"Machine",w:"24%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
-      {k:"pr",l:"Prio",w:"76px",r:x=>prio(x.prio),s:x=>x.prio||9},
-      {k:"status",l:"Status",w:"130px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
-      {k:"h",l:"Actiehouder",w:"150px",c:"m-sub",ml:"Actiehouder",r:x=>of(x.actiehouder,"Nog toewijzen"),s:x=>norm(x.actiehouder)||"zzz"}],
-    detail:x=>{const c=(D.cm||[]).find(y=>y.nr===x.nr);return c?cmDetail(c):{klein:x.nr,titel:x.storing,velden:[["Status",st(x.status),true],["Prio",x.prio?prio(x.prio):null,true],["Lijn",x.lijn],["Machine",x.machine],["Actiehouder",x.actiehouder||"Nog toewijzen"]]}}
+      {k:"mach",l:"Machine",w:"22%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
+      {k:"status",l:"Status",w:"120px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
+      {k:"h",l:"Actiehouder",w:"130px",c:"m-sub",ml:"Actiehouder",r:x=>of(x.actiehouder,"Nog toewijzen"),s:x=>norm(x.actiehouder)||"zzz"},
+      {k:"b",l:"Bon",w:"130px",c:"m-sub",ml:"Bon",r:bonVeld,s:x=>x._m?1:0}],
+    detail:x=>{if(x._m){openDetailMelding(x._m);return null}const c=(D.cm||[]).find(y=>y.nr===x.nr);return c?cmDetail(c):{klein:x.nr,titel:x.storing,velden:[["Status",st(x.status),true],["Prio",x.prio?prio(x.prio):null,true],["Lijn",x.lijn],["Machine",x.machine],["Actiehouder",x.actiehouder||"Nog toewijzen"]]}}
   });
 }
-function vOutput(){
-  const o=D.output||{},l=o.lijnen||[],heeft=l.some(x=>x.plan!=null||x.output!=null);
-  const pct=x=>x.plan?Math.round(x.output/x.plan*100):null;
-  const cols=[
-    {k:"l",l:"Lijn",w:"120px",c:"m-main",x:"titel",r:x=>esc(x.lijn)},
-    {k:"p",l:"Plan",w:"110px",n:1,c:"m-sub",ml:"Plan",r:x=>of(x.plan)},
-    {k:"u",l:"Output",w:"110px",n:1,c:"m-sub",ml:"Output",r:x=>of(x.output)},
-    {k:"v",l:"Verschil",w:"110px",n:1,c:"m-sub",ml:"Verschil",r:x=>x.plan!=null&&x.output!=null?esc((x.output-x.plan>0?"+":"")+(x.output-x.plan)):of(null)},
-    {k:"r",l:"Realisatie",c:"m-sub",r:x=>x.plan!=null&&x.output!=null?'<div class="vulbalk" title="'+pct(x)+'%"><i style="width:'+Math.min(100,pct(x))+'%"></i></div>':of(null)},
-    {k:"o",l:"Opmerking",c:"m-sub",r:x=>of(x.opmerking,"")}];
-  $("#view").innerHTML=kop("Output per lijn",heeft?[o.datum,o.eenheid].filter(Boolean).join(", "):"Nog geen productiecijfers ontvangen voor deze dagstart.",true)+vasteTabel(cols,l);
+async function zetBonVink(k){
+  const m=(MELDINGEN||[]).find(x=>x.id===k.dataset.lsbon);if(!m)return;
+  k.disabled=true;
+  try{await stuur({actie:"bijwerken",id:m.id,prio:m.prio,oplossing:m.oplossing,lijn:m.lijn,machine:m.machine,actiehouder:m.actiehouder,datum:m.datum,bon_nodig:k.checked});m.bon_nodig=k.checked?"Ja":"Nee";laatste="";melder(k.checked?"De bon wordt bij de volgende run gemaakt":"Er wordt geen bon gemaakt")}
+  catch(_){k.checked=!k.checked;melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
+  k.disabled=false;
+}
+document.addEventListener("change",e=>{if(e.target.matches("[data-lsbon]"))zetBonVink(e.target)});
+/* Output per lijn: startcijfers uit het Excel-bestand (D.output), aangevuld met wat de ploegen invullen (OUTPUT). */
+const PLOEGEN=[["ochtend","Ochtend","05:50-13:50"],["middag","Middag","13:50-21:50"],["nacht a","Nacht a","21:50-24:00"],["nacht b","Nacht b","00:00-05:50"]];
+const kgTekst=n=>n==null?"–":Math.round(n).toLocaleString("nl-NL");
+const dagTotaal=r=>PLOEGEN.reduce((s,p)=>s+(r.ploeg[p[0]]||0),0);
+function outputDagen(lijn){
+  const o=D.output||{},d={},nu=new Date();
+  const dag=k=>d[k]||(d[k]={datum:k,ploeg:{},plan:null,opm:[]});
+  (o.dagen||[]).filter(x=>x.lijn===lijn).forEach(x=>{dag(x.datum).ploeg[x.ploeg]=x.kg});
+  (o.plan||[]).filter(x=>x.lijn===lijn).forEach(x=>{dag(x.datum).plan=x.kg});
+  OUTPUT.filter(x=>x.lijn===lijn).forEach(x=>{const r=dag(x.datum);r.ploeg[x.ploeg]=Number(x.output);if(x.opmerking)r.opm.push(x.opmerking)});
+  return Object.values(d).filter(r=>{const t=datum(r.datum);return t&&t<=nu}).sort((a,b)=>datum(a.datum)-datum(b.datum)).slice(-7);
+}
+function outputGrafiek(rijen,lijn){
+  const top=Math.max(1,...rijen.map(r=>Math.max(dagTotaal(r),r.plan||0))),stap=[1000,2000,5000,10000,20000,50000].find(s=>top/s<=5)||100000,max=Math.ceil(top/stap)*stap;
+  const pc=n=>(n/max*100).toFixed(2)+"%",lijnen=[];
+  for(let w=stap;w<=max;w+=stap)lijnen.push('<div class="glijn" style="bottom:'+pc(w)+'"><span>'+kgTekst(w)+"</span></div>");
+  /* De namen staan in de laatste volle dag, de legenda geldt voor de rest. */
+  const benoemd=rijen.slice().reverse().find(r=>Object.keys(r.ploeg).length>=3)||rijen[rijen.length-1];
+  const kol=r=>{
+    const t=datum(r.datum),tot=dagTotaal(r),dg=t.toLocaleDateString("nl-NL",{weekday:"short"});
+    const tip='<div class="gtip"><b>'+esc(hoofd(dg)+" "+r.datum)+"</b>"+PLOEGEN.map((p,i)=>'<span><span><i style="background:var(--s'+(i+1)+')"></i>'+p[1]+"</span>"+kgTekst(r.ploeg[p[0]])+"</span>").join("")+"<span><span>Totaal</span>"+kgTekst(tot)+"</span><span><span>Plan</span>"+kgTekst(r.plan)+"</span></div>";
+    return'<div class="gkol" tabindex="0" aria-label="'+esc(r.datum+": "+kgTekst(tot)+" kilo")+'"><div class="gstapel" style="height:'+pc(tot)+'">'+PLOEGEN.map((p,i)=>r.ploeg[p[0]]?'<i'+(i>1?' class="gdonker"':"")+' style="flex:'+r.ploeg[p[0]]+' 0 0;background:var(--s'+(i+1)+')">'+(r===benoemd&&r.ploeg[p[0]]/max>.065?p[1]:"")+"</i>":"").join("")+"</div>"+(r.plan?'<div class="gplan" style="bottom:'+pc(r.plan)+'"></div>':"")+'<div class="gx">'+esc(dg)+"<br>"+esc(r.datum.slice(0,5))+"</div>"+tip+"</div>";
+  };
+  return'<p class="glegenda">'+PLOEGEN.map((p,i)=>'<span><i style="background:var(--s'+(i+1)+')"></i>'+p[1]+"</span>").join("")+'<span><i class="gp"></i>Plan</span></p><div class="grafiek" role="group" aria-label="'+esc("Output "+lijn+" per dag in kilo, per ploeg, met het plan. De cijfers staan ook in de tabel.")+'"><div class="gvlak">'+lijnen.join("")+'<div class="gkolommen">'+rijen.map(kol).join("")+"</div></div></div>";
+}
+function vOutput(vast){
+  const s=mem.output||(mem.output={lijn:"Lijn 1"}),lijn=vast||s.lijn,rijen=outputDagen(lijn),o=D.output||{};
+  const pct=r=>r.plan?Math.round(dagTotaal(r)/r.plan*100):null;
+  const opm=rijen.some(r=>r.opm.length);
+  const cols=[{k:"d",l:"Datum",w:"120px",c:"m-main",x:"titel",r:r=>esc(r.datum)}].concat(PLOEGEN.map(p=>({k:p[0],l:p[1],w:"92px",n:1,c:"m-sub",ml:p[1],r:r=>kgTekst(r.ploeg[p[0]])})),[
+    {k:"t",l:"Totaal",w:"92px",n:1,c:"m-sub",ml:"Totaal",r:r=>"<b>"+kgTekst(dagTotaal(r))+"</b>"},
+    {k:"p",l:"Plan",w:"92px",n:1,c:"m-sub",ml:"Plan",r:r=>kgTekst(r.plan)},
+    {k:"v",l:"Verschil",w:"92px",n:1,c:"m-sub",ml:"Verschil",r:r=>r.plan?(dagTotaal(r)>r.plan?"+":"")+kgTekst(dagTotaal(r)-r.plan):"–"},
+    {k:"r",l:"Realisatie",w:"120px",c:"m-sub",ml:"Realisatie",r:r=>r.plan?'<div class="realis"><div class="vulbalk"><i style="width:'+Math.min(100,pct(r))+'%"></i></div><span>'+pct(r)+"%</span></div>":"–"}],opm?[{k:"o",l:"Opmerking",c:"m-sub",ml:"Opmerking",r:r=>of(r.opm.join(" "),"")}]:[]);
+  const tabs=vast?"":'<div class="seg" id="lijnkeuze" role="group" aria-label="Kies een lijn">'+LIJNEN_OUTPUT.map(l=>'<button data-lijn="'+l+'" aria-pressed="'+(l===lijn)+'">'+l+"</button>").join("")+"</div>";
+  $("#view").innerHTML=kop(vast?"Output "+lijn.toLowerCase():"Output per lijn","In kilo per ploeg. Het plan komt uit de productieorders, op Due Date.",true)+tabs+(rijen.length?outputGrafiek(rijen,lijn)+vasteTabel(cols,rijen.slice().reverse()):'<div class="leegmelding">Nog geen output voor deze lijn.</div>');
+  if(!vast)$("#lijnkeuze").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.lijn=b.dataset.lijn;vOutput()}});
+}
+function outputScherm(){
+  $("#lock").hidden=true;$("#meldscherm").hidden=false;$("#meldscherm h1").textContent="Output invullen";
+  const vak=$("#meldinhoud"),keuze={ploeg:"",lijn:""};
+  if(!MELD()){vak.innerHTML='<p class="bevestigd">Output invullen staat nog niet aan.</p>';return}
+  const groep=(titel,naam,o,kl)=>'<fieldset class="risico'+kl+'"><legend>'+titel+"</legend><div>"+o.map(x=>'<label><input type="radio" name="'+naam+'" value="'+esc(x[0])+'" required'+(keuze[naam]===x[0]?" checked":"")+"><span>"+esc(x[1])+(x[2]?"<small>"+esc(x[2])+"</small>":"")+"</span></label>").join("")+"</div></fieldset>";
+  async function lijst(){
+    try{const m=MELD(),r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();const l=(j.output||[]).slice(-6).reverse();const v=$("#o_laatste");if(v&&l.length)v.innerHTML="<b>Laatst ingevuld</b>"+l.map(x=>"<p><span>"+esc(x.datum+", "+x.lijn+", "+x.ploeg)+"</span><span>"+kgTekst(Number(x.output))+" kg</span></p>").join("")}catch(_){}
+  }
+  function formulier(){
+    vak.innerHTML='<form class="meldform" id="outform"><label>Naam<input type="text" id="u_naam" required value="'+esc(naam())+'"></label><label>Datum<input type="date" id="u_dat" required value="'+n0(0)+'"></label>'+groep("Ploeg","ploeg",PLOEGEN,"  vier")+groep("Lijn","lijn",LIJNEN_OUTPUT.map(l=>[l,l]),"")+'<label>Output in kilo<input type="number" id="u_kg" inputmode="decimal" min="0" step="any" required></label><label>Opmerking<textarea id="u_opm"></textarea></label><p class="fout" id="u_fout" hidden></p><button class="knop hoofd" id="u_knop" type="submit">Output opslaan</button></form><div class="laatste" id="o_laatste"></div>';
+    lijst();
+    $("#outform").addEventListener("submit",async e=>{
+      e.preventDefault();const k=$("#u_knop"),f=$("#u_fout");k.disabled=true;f.hidden=true;
+      const wie=$("#u_naam").value.trim();naam(wie);
+      keuze.ploeg=document.querySelector('input[name="ploeg"]:checked').value;keuze.lijn=document.querySelector('input[name="lijn"]:checked').value;
+      const d={actie:"output",datum:$("#u_dat").value.split("-").reverse().join("-"),ploeg:keuze.ploeg,lijn:keuze.lijn,output:$("#u_kg").value,opmerking:$("#u_opm").value.trim(),door:wie};
+      try{const j=await stuur(d);vak.innerHTML='<div class="bevestigd"><p><b>Output opgeslagen.</b></p><p>'+esc(d.lijn+", "+d.ploeg+": "+kgTekst(Number(d.output))+" kilo.")+(j.vervangen?" Dit vervangt de eerdere invoer.":"")+'</p><button class="knop hoofd" id="u_opnieuw">Nog een lijn invullen</button></div>';$("#u_opnieuw").addEventListener("click",formulier)}
+      catch(_){f.textContent="Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.";f.hidden=false;k.disabled=false}
+    });
+  }
+  formulier();
 }
 function vZaterdag(){
   const s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[],d=datum(s.datum);
@@ -1166,7 +1265,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={actielijst:vActielijst,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -1176,13 +1275,14 @@ function route(){
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
   menu(false);
-  if(document.documentElement.classList.contains("present")&&!P_DAG.some(p=>p.id===HUIDIG))presenteer(false);
+  if(document.documentElement.classList.contains("present")&&!P_PRES.some(p=>p.id===HUIDIG))presenteer(false);
   vasteTabel.reg={};
   SCHERM[HUIDIG]();
   window.scrollTo(0,0);
 }
 function menu(open){$("#side").classList.toggle("open",open);$("#menuwaas").hidden=!open}
 function presenteer(aan){
+  if(aan&&!P_PRES.some(p=>p.id===HUIDIG))location.hash=HUIDIG==="output"?"lijn1":"sqd";
   document.documentElement.classList.toggle("present",aan);
   const el=document.documentElement;
   try{if(aan&&el.requestFullscreen)el.requestFullscreen().catch(()=>{});else if(!aan&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}
@@ -1191,13 +1291,14 @@ function start(data){
   D=data;
   if(D.niveau==="melden"){meldScherm();return}
   if(D.niveau==="monteur"){monteurScherm();return}
+  if(D.niveau==="output"){outputScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   const pWv=P_WV.concat(alRegels().length?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
-  PAGINAS=P_DAG.concat(td?P_TD:[],wv?pWv:[]);
+  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
   $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+pWv.map(lnk).join("")+"</div>":"");
-  $("#stappen").innerHTML=P_DAG.map(p=>'<button data-v="'+p.id+'">'+esc(p.kort)+"</button>").join("");
+  $("#stappen").innerHTML=P_PRES.map(p=>'<button data-v="'+p.id+'">'+esc(p.kort)+"</button>").join("");
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
   $("#menu").innerHTML=ico("menu");
   $("#pdatum").textContent="Dagstart, "+new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long"});
