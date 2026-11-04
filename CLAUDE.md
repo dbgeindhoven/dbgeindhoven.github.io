@@ -20,6 +20,9 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
 6. Commit en push alleen `index.html` en `bonnen/` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
+## Actielijst ochtendoverleg
+`meta.actielijst` (`bron`, `regels`) staat alleen in het werkvoorbereidingsdeel. Op de pagina Actielijst controleert de werkvoorbereider de indeling en zet hij de acties in één keer op het SQD-bord: de browser maakt per regel een melding met melder `Ochtendoverleg`, zodat Google het SQDM-nummer geeft. Haal `meta.actielijst` weg als alles geplaatst is.
+
 Een nieuwe pagina maak je in `tools/template.html`: voeg een scherm toe aan `SCHERM` en aan `P_DAG` of `P_TD`. Dagstartpagina's moeten ook in het dagstartdeel van `build` in `tools/site.py`.
 
 ## Meldingen

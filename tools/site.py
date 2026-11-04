@@ -135,6 +135,7 @@ def build(a):
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
     mld.pop("sleutel_wv", None)
+    td["meta"].pop("actielijst", None)
     td["meta"]["bonnen"] = {"verwerkt": verwerkt, "gesloten": gesloten}
     for r in td.get("cm", []):
         r.pop("bon", None)

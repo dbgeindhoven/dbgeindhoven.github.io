@@ -119,7 +119,7 @@ def rij_voor(w, spec, datum):
     if w.get("risico"):
         regels.append("Risico: " + w["risico"] + ".")
     if w.get("oplossing"):
-        regels.append(("Oplossing: " if gereed else "Al gedaan: ") + w["oplossing"].rstrip(". ") + ".")
+        regels.append(("Oplossing: " if gereed else "Al gedaan: " if monteur else "Actie: ") + w["oplossing"].rstrip(". ") + ".")
     if not gereed:
         regels.append("Concept: nog controleren.")
     return dict(

@@ -4,6 +4,7 @@ De geplande taak "TD Hub bonnen" maakt van meldingen echte CM-bonnen in het form
 
 ## Welke meldingen een bon worden
 - **Productiemelding:** krijgt bij binnenkomst de code `SQDM-n` en wordt meteen een bon met hetzelfde nummer. Is er geen bon nodig, dan haalt de dagstart of TD bij de opvolging het vinkje "Technische dienst nodig: maak een CM-bon" weg voordat de taak draait. Een productiemelding heeft meestal geen lijn en machine: haal die uit de tekst en de foto, of zet `n.t.b.` op de bon.
+- **Actie uit het ochtendoverleg:** is een productiemelding met melder `Ochtendoverleg`. In `oplossing` staat de afgesproken actie met de laatste stand, dus nog niet wat er is gedaan. Gebruik die tekst voor de stappen. `actiehouder` en `datum` komen uit de actielijst.
 - **Monteurstoring:** wordt altijd een bon, met het eerstvolgende CM-nummer.
   - Vervolg Gereed: de bon komt direct op Uitgevoerd.
   - Vervolg Onderdeel bestellen: de bon blijft Open en krijgt een regel op de bestellijst.

@@ -139,6 +139,7 @@ html.present .deelkop .knop{display:none}
 .melding:hover{background:var(--hover)}
 .melding b{display:block;font-weight:500}
 .melding small{display:block;margin-top:2px;color:var(--ink2);font-size:.8125rem}
+.melding small.kort{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* meldformulier */
 .meldform{display:flex;flex-direction:column;gap:14px;padding:16px 20px 24px}
@@ -226,6 +227,9 @@ html.present .deelkop .knop{display:none}
 .bonweg{padding:0 20px 24px}
 .knop.gevaar{color:var(--crit-ink);border-color:var(--crit)}
 .tekstknop.gevaar{color:var(--crit-ink)}
+.alkeuze{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.alkeuze label{display:inline-flex;align-items:center;gap:6px}
+.alstand{margin:0 0 12px;color:var(--ink2);font-size:.875rem}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
 
@@ -610,11 +614,11 @@ function wegVak(vak,x,tekst,klaar,bonNr){
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
 let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="";
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-actie binnen 24 uur"};
-const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","start","cm","sqdbonnen","cmbonnen"].includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","start","cm","sqdbonnen","cmbonnen","actielijst"].includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
-  const m=MELD();if(!m)return;
+  const m=MELD();if(!m||alBezig)return;
   const fout=MELDFOUT;
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
@@ -905,7 +909,7 @@ function vSqd(){
     const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
     const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
     const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?"<small>Oplossing: "+esc(x.oplossing)+"</small>":"")+"<small>"+esc([x.code,[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
+    const lijst=open.length?'<div class="meldingen">'+open.map(x=>'<button class="melding" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+"</b>"+(x.oplossing?'<small class="kort">Oplossing: '+esc(x.oplossing.split("\n")[0])+"</small>":"")+"<small>"+esc([x.code,[x.lijn,x.machine].filter(Boolean).join(", "),x.actiehouder?"Actie: "+[x.actiehouder,x.datum].filter(Boolean).join(", "):"Nog geen actiehouder",x.foto?"Met foto":""].filter(Boolean).join(". "))+"</small></button>").join("")+"</div>":"";
     const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
     return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div></div>"+pt+lijst+geen+"</section>";
   }).join("");
@@ -1013,6 +1017,49 @@ function vCm(){
       {k:"u",l:"Uitvoeren op",w:"150px",r:x=>of(x.uitvoeren),s:x=>norm(x.uitvoeren)||"zzz"}],
     detail:cmDetail});
 }
+/* Actielijst van het ochtendoverleg: de werkvoorbereider controleert de indeling en zet alles in één keer op het bord. Google geeft de SQDM-nummers. */
+const RISICO={S:"Safety",Q:"Quality",D:"Delivery"};
+const alRegels=()=>((D.meta&&D.meta.actielijst)||{}).regels||[];
+const alMelding=x=>(MELDINGEN||[]).find(m=>m.melder==="Ochtendoverleg"&&m.melding===x.melding);
+const alKlaar=x=>{const m=alMelding(x);return!!(m&&m.letter)};
+let alBezig=false,alTekst="";
+function vActielijst(){
+  const r=alRegels(),a=D.meta.actielijst,open=r.filter(x=>!alKlaar(x)),bonnenNodig=open.filter(x=>x.bon).length,klaar=!open.length;
+  const knop=klaar?"":'<button class="knop hoofd" id="al_knop"'+(alBezig||!MELDINGEN||MELDFOUT?" disabled":"")+">"+open.length+(open.length===1?" melding":" meldingen")+" plaatsen</button>";
+  const regel=x=>{
+    const i=r.indexOf(x),m=alMelding(x),af=alKlaar(x);
+    const keuze=af?st(m.code||"Geplaatst"):'<div class="alkeuze"><label>Bord <select data-alletter="'+i+'" aria-label="Plaats op het bord">'+["S","Q","D"].map(l=>"<option"+(l===x.letter?" selected":"")+' value="'+l+'">'+RISICO[l]+"</option>").join("")+'</select></label><label><input type="checkbox" data-albon="'+i+'"'+(x.bon?" checked":"")+"> Bon maken</label></div>";
+    return'<article class="regel"><div class="rkop"><b>'+esc(x.melding)+"</b><time>"+esc(x.datum||"Geen datum")+'</time></div><p class="ropl"><span>Actie: </span>'+esc(x.actie)+'</p><div class="rvoet"><span>'+esc([x.actiehouder,x.zie?"Zie "+x.zie:""].filter(Boolean).join(", "))+"</span>"+keuze+"</div></article>";
+  };
+  const delen=["S","Q","D"].map(l=>{const g=r.filter(x=>x.letter===l);return g.length?'<section class="dag"><h2>'+RISICO[l]+"<span>"+g.length+"</span></h2>"+g.map(regel).join("")+"</section>":""}).join("");
+  const uitleg=klaar?"Alle acties staan op het SQD-bord.":alTekst||(!MELDINGEN?"Open meldingen ophalen.":MELDFOUT?"Meldingen zijn nu niet bereikbaar.":bonnenNodig+(bonnenNodig===1?" actie krijgt":" acties krijgen")+" een SQDM-bon. Die maakt de geplande taak bij de eerstvolgende run.");
+  $("#view").innerHTML=kop("Actielijst",esc(a.bron)+". Controleer de indeling en zet de acties in één keer op het SQD-bord.",false,knop)+'<p class="alstand" id="al_stand">'+esc(uitleg)+"</p>"+delen;
+  if($("#al_knop"))$("#al_knop").addEventListener("click",plaatsActielijst);
+  document.querySelectorAll("[data-alletter]").forEach(k=>k.addEventListener("change",()=>{r[+k.dataset.alletter].letter=k.value;vActielijst()}));
+  document.querySelectorAll("[data-albon]").forEach(k=>k.addEventListener("change",()=>{r[+k.dataset.albon].bon=k.checked;vActielijst()}));
+}
+async function plaatsActielijst(){
+  if(alBezig||!MELDINGEN)return;
+  const t=alRegels().filter(x=>!alKlaar(x));
+  const toon=()=>{if(HUIDIG==="actielijst"&&$("#paneel").hidden)vActielijst()};
+  alBezig=true;let n=0;
+  try{
+    for(const x of t){
+      n++;alTekst="Bezig met "+n+" van "+t.length+". Laat deze pagina open.";toon();
+      let m=alMelding(x);
+      if(!m){
+        const d={actie:"nieuw",letter:"",melding:x.melding,oplossing:x.oplossing,lijn:x.lijn||"",machine:x.machine||"",melder:"Ochtendoverleg",actiehouder:x.actiehouder,datum:x.datum||"",risico:RISICO[x.letter],bon_nodig:!!x.bon};
+        const j=await stuur(d);
+        m=Object.assign({},d,{foto:"",id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:x.bon?"Ja":"Nee"});
+        MELDINGEN=MELDINGEN.concat([m]);
+      }
+      await stuur({actie:"verplaats",id:m.id,letter:x.letter});
+      m.letter=x.letter;m.risico=RISICO[x.letter];
+    }
+    alTekst="";melder(t.length+(t.length===1?" melding":" meldingen")+" op het SQD-bord gezet");
+  }catch(_){alTekst="Regel "+n+" is niet gelukt. Klik nogmaals op plaatsen, dan gaat hij daar verder."}
+  alBezig=false;laatste="";toon();
+}
 function bonLijst(c){
   const r=D.cm.filter(x=>x.bon&&c.test(x)).reverse();
   lijstScherm({key:c.key,titel:c.titel,sub:c.sub+" De nieuwste staat bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
@@ -1094,7 +1141,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={actielijst:vActielijst,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -1120,10 +1167,11 @@ function start(data){
   if(D.niveau==="melden"){meldScherm();return}
   if(D.niveau==="monteur"){monteurScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
-  PAGINAS=P_DAG.concat(td?P_TD:[],wv?P_WV:[]);
+  const pWv=P_WV.concat(alRegels().length?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
+  PAGINAS=P_DAG.concat(td?P_TD:[],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+P_WV.map(lnk).join("")+"</div>":"");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+pWv.map(lnk).join("")+"</div>":"");
   $("#stappen").innerHTML=P_DAG.map(p=>'<button data-v="'+p.id+'">'+esc(p.kort)+"</button>").join("");
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
   $("#menu").innerHTML=ico("menu");
