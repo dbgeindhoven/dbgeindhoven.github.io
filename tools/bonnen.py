@@ -7,6 +7,8 @@
   bonnen.py registreer <site.json> <werkmap>
   bonnen.py beelden    <site.json>                  Maakt de afbeelding voor bonnen die er nog geen hebben.
   bonnen.py wijzig     <site.json> <werkmap>        Verwerkt statuswijzigingen en verwijderde bonnen uit wijzig.json.
+  bonnen.py lijst      <site.json> <leeg.docx>      Versleutelt het lege Word-format van de zaterdaglijst naar bonnen/.
+  bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst bij en maakt de PDF om te printen.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
 met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er <nr>.docx en
@@ -24,6 +26,8 @@ import fill_bon
 REPO = Path(__file__).resolve().parent.parent
 MAP = REPO / "bonnen"
 TEMPLATE = "template.bin"
+LIJST = "zaterdaglijst.bin"
+KLAAR = ("Uitgevoerd", "Gereed")
 LEEG = {"melder": None, "uitvoeren": None, "onderdelen": None, "opmerking": None, "uitgevoerd_op": None, "monteur": None, "afgetekend": None, "prio": None}
 
 
@@ -218,6 +222,89 @@ def wijzig(a):
     bewaar(a.site, data)
 
 
+def zat_rijen(data):
+    z = data.get("zaterdag") or {}
+    return (z.get("correctief") or []) + (z.get("preventief") or [])
+
+
+def zat_regel(r, c):
+    """Wat er op de lijst en de bon staat. De site rekent hetzelfde uit in zatStempel."""
+    c = c or {}
+    return (r.get("prio") or c.get("prio") or "", r.get("uitvoerder") or "", "1" if c.get("status") in KLAAR else "")
+
+
+def zat_stempel(data):
+    cm = {x.get("nr"): x for x in data.get("cm", [])}
+    return ";".join("|".join([r["nr"], *map(str, zat_regel(r, cm.get(r["nr"])))]) for r in zat_rijen(data))
+
+
+def lijst(a):
+    data = laad(a.site)
+    stand(data)["lijst"] = versleutel(Path(a.docx).read_bytes(), stand(data)["sleutel"], LIJST)
+    bewaar(a.site, data)
+
+
+def naar_pdf(bestanden, map_):
+    subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(map_)] + [str(x) for x in bestanden], check=True, capture_output=True, timeout=280)
+
+
+def zaterdag(a):
+    """Zet prio, uitvoerder en datum op de bonnen van de lijst en maakt de PDF om te printen. Wat niet veranderde blijft staan."""
+    data = laad(a.site)
+    b = stand(data)
+    z = data.get("zaterdag") or {}
+    wm = Path(a.map)
+    wm.mkdir(parents=True, exist_ok=True)
+    cm = {r.get("nr"): r for r in data.get("cm", [])}
+    dag = "Zaterdag " + str(z.get("datum"))
+    nieuw, zonder = [], []
+    for r in zat_rijen(data):
+        c = cm.get(r["nr"])
+        bon = (c or {}).get("bon")
+        if not (bon and bon.get("docx")):
+            zonder.append(r["nr"])
+            continue
+        prio, uitvoerder, _ = zat_regel(r, c)
+        merk = "|".join((str(prio), uitvoerder, dag))
+        if bon.get("stempel") != merk:
+            docx = wm / (bon["naam"] + ".docx")
+            docx.write_bytes(fill_bon.zet_zaterdag(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), prio, uitvoerder, dag))
+            nieuw.append((bon, docx, merk))
+    if nieuw:
+        naar_pdf([x[1] for x in nieuw], wm)
+    for bon, docx, merk in nieuw:
+        pdf = docx.with_suffix(".pdf")
+        for k in ("docx", "pdf", "beeld"):
+            if bon.get(k):
+                (REPO / bon[k]).unlink(missing_ok=True)
+        bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]), stempel=merk)
+    if zonder:
+        print("Geen bonbestand:", ", ".join(zonder))
+    oud = b.get("zaterdag") or {}
+    stempel = zat_stempel(data)
+    if not nieuw and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel:
+        print("Printversie is actueel.")
+    else:
+        regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
+        docx = wm / "zaterdaglijst.docx"
+        docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), str(z.get("datum")), [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")]))
+        naar_pdf([docx], wm)
+        stukken = [docx.with_suffix(".pdf")]
+        for i, r in enumerate(zat_rijen(data)):
+            bon = (cm.get(r["nr"]) or {}).get("bon")
+            if bon and bon.get("pdf"):
+                p = wm / ("stuk-%03d.pdf" % i)
+                p.write_bytes(ontsleutel(Path(bon["pdf"]).name, b["sleutel"]))
+                stukken.append(p)
+        alles = wm / "zaterdagwerk.pdf"
+        subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
+        if oud.get("pdf"):
+            (REPO / oud["pdf"]).unlink(missing_ok=True)
+        b["zaterdag"] = {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "stempel": stempel}
+        print("Printversie gemaakt:", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
+    bewaar(a.site, data)
+
+
 def beelden(a):
     data = laad(a.site)
     sleutel = stand(data)["sleutel"]
@@ -239,5 +326,7 @@ x = sub.add_parser("maak"); x.add_argument("site"); x.add_argument("map"); x.set
 x = sub.add_parser("registreer"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=registreer)
 x = sub.add_parser("beelden"); x.add_argument("site"); x.set_defaults(fn=beelden)
 x = sub.add_parser("wijzig"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=wijzig)
+x = sub.add_parser("lijst"); x.add_argument("site"); x.add_argument("docx"); x.set_defaults(fn=lijst)
+x = sub.add_parser("zaterdag"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=zaterdag)
 a = ap.parse_args()
 a.fn(a)

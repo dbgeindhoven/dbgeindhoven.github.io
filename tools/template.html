@@ -282,7 +282,7 @@ html.present .gvlak{height:min(46vh,460px)}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer{width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer::placeholder{color:var(--ink3)}
-.zatweg{display:inline-flex;gap:10px;white-space:nowrap}
+.zatweg{display:inline-flex;flex-wrap:wrap;gap:4px 10px;white-space:nowrap}
 .tbl td.m-zat{padding-top:7px;padding-bottom:7px}
 @media (min-width:761px){.tbl .statuskeuze,.zatinvoer{font-size:.875rem}.tbl td:has(>.statuskeuze){padding-top:7px;padding-bottom:7px}}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:9px 14px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:.875rem;font-weight:500;max-width:calc(100% - 32px)}
@@ -344,6 +344,8 @@ html.present .page{max-width:none}
   .kpi:nth-child(n+3){border-top:1px solid var(--line)}
 }
 @media (max-width:760px){
+  .head{flex-wrap:wrap}
+  .headknoppen{flex:1 1 100%;flex-wrap:wrap}
   .zoek{flex:1 1 100%}
   .tbl thead{display:none}
   .tbl,.tbl tbody{display:block}
@@ -559,6 +561,7 @@ document.addEventListener("click",e=>{
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
+  const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   const nieuw=e.target.closest("[data-meld]");if(nieuw)openMelding(nieuw.dataset.meld);
   const klap=e.target.closest("[data-klap]");if(klap){UITGEKLAPT[klap.dataset.klap]=!UITGEKLAPT[klap.dataset.klap];vSqd();return}
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
@@ -591,13 +594,13 @@ function bonKnop(r){
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
 }
 const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf",beeld:"image/jpeg"};
-async function bonBestand(r,soort){
-  const g=await fetch(r.bon[soort]);if(!g.ok)throw new Error("bon");
+async function bonBytes(pad){
+  const g=await fetch(pad);if(!g.ok)throw new Error("bon");
   const inhoud=new Uint8Array(await g.arrayBuffer());
   const k=await crypto.subtle.importKey("raw",b64(bonnen().sleutel),"AES-GCM",false,["decrypt"]);
-  const uit=await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12));
-  return new File([uit],r.bon.naam+"."+soort,{type:BONTYPE[soort]});
+  return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12)));
 }
+async function bonBestand(r,soort){return new File([await bonBytes(r.bon[soort])],r.bon.naam+"."+soort,{type:BONTYPE[soort]})}
 const opTelefoon=f=>/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]});
 async function geefBestand(f){
   if(opTelefoon(f)){
@@ -1187,6 +1190,103 @@ async function zatKlik(k){
   try{const w=await zatStuur(r,{datum:D.zaterdag.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",weg:true});pasBonToe(w);laatste="";SCHERM[HUIDIG]();melder(nr+" staat niet meer op de lijst. De bon blijft bestaan.")}
   catch(_){vak.outerHTML=zatWegKnop(r);melder(nr+" is niet verwijderd. Probeer het opnieuw.")}
 }
+/* ---- Word-bestanden in de browser vullen: zo zitten de laatste wijzigingen er altijd in ---- */
+const WNS="http://schemas.openxmlformats.org/wordprocessingml/2006/main",KLAAR=["Uitgevoerd","Gereed"];
+function zipLees(b){
+  const d=new DataView(b.buffer,b.byteOffset,b.byteLength);let e=b.length-22;
+  while(e>=0&&d.getUint32(e,true)!==0x06054b50)e--;
+  if(e<0)throw new Error("geen zip");
+  const uit=[],n=d.getUint16(e+10,true);let p=d.getUint32(e+16,true);
+  for(let i=0;i<n;i++){
+    const nl=d.getUint16(p+28,true),o=d.getUint32(p+42,true),s=o+30+d.getUint16(o+26,true)+d.getUint16(o+28,true);
+    uit.push({naam:new TextDecoder().decode(b.subarray(p+46,p+46+nl)),m:d.getUint16(p+10,true),crc:d.getUint32(p+16,true),us:d.getUint32(p+24,true),data:b.subarray(s,s+d.getUint32(p+20,true))});
+    p+=46+nl+d.getUint16(p+30,true)+d.getUint16(p+32,true);
+  }
+  return uit;
+}
+const zipStroom=async(b,s)=>new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(s)).arrayBuffer());
+const zipTekst=async e=>new TextDecoder().decode(e.m?await zipStroom(e.data,new DecompressionStream("deflate-raw")):e.data);
+const CRCTABEL=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xEDB88320^(n>>>1):n>>>1;return n>>>0});
+function crc32(b){let c=~0;for(let i=0;i<b.length;i++)c=CRCTABEL[(c^b[i])&255]^(c>>>8);return(~c)>>>0}
+async function zipZet(e,t){const r=new TextEncoder().encode(t);e.crc=crc32(r);e.us=r.length;e.m=8;e.data=await zipStroom(r,new CompressionStream("deflate-raw"))}
+function zipMaak(lijst){
+  const nu=new Date(),tijd=(nu.getHours()<<11)|(nu.getMinutes()<<5),dag=((nu.getFullYear()-1980)<<9)|((nu.getMonth()+1)<<5)|nu.getDate();
+  /* De velden die het lokale en het centrale kopblok delen. */
+  const velden=(d,p,e,n)=>{[[20,2],[0x800,2],[e.m,2],[tijd,2],[dag,2],[e.crc,4],[e.data.length,4],[e.us,4],[n,2]].forEach(([w,g])=>{if(g===2)d.setUint16(p,w,true);else d.setUint32(p,w,true);p+=g})};
+  const delen=[],mid=[];let o=0;
+  lijst.forEach(e=>{
+    const naam=new TextEncoder().encode(e.naam),a=new Uint8Array(30+naam.length),c=new Uint8Array(46+naam.length),da=new DataView(a.buffer),dc=new DataView(c.buffer);
+    da.setUint32(0,0x04034b50,true);velden(da,4,e,naam.length);a.set(naam,30);
+    dc.setUint32(0,0x02014b50,true);dc.setUint16(4,20,true);velden(dc,6,e,naam.length);dc.setUint32(42,o,true);c.set(naam,46);
+    delen.push(a,e.data);mid.push(c);o+=a.length+e.data.length;
+  });
+  const lengte=mid.reduce((n,b)=>n+b.length,0),s=new DataView(new ArrayBuffer(22));
+  s.setUint32(0,0x06054b50,true);s.setUint16(8,lijst.length,true);s.setUint16(10,lijst.length,true);s.setUint32(12,lengte,true);s.setUint32(16,o,true);
+  const uit=new Uint8Array(o+lengte+22);let p=0;
+  delen.concat(mid,[new Uint8Array(s.buffer)]).forEach(b=>{uit.set(b,p);p+=b.length});
+  return uit;
+}
+const wEl=(n,t)=>n.getElementsByTagNameNS(WNS,t);
+const wTekst=n=>[...wEl(n,"t")].map(x=>x.textContent).join("").trim();
+const wKind=(n,t)=>[...n.children].filter(x=>x.localName===t);
+function wLees(t){const d=new DOMParser().parseFromString(t,"application/xml");if(d.querySelector("parsererror"))throw new Error("xml");return d}
+const wXml=d=>'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+new XMLSerializer().serializeToString(d).replace(/^<\?xml[^>]*\?>\s*/,"");
+function wRun(d,t){
+  const r=d.createElementNS(WNS,"w:r"),p=d.createElementNS(WNS,"w:rPr"),x=d.createElementNS(WNS,"w:t");
+  ["sz","szCs"].forEach(n=>{const e=d.createElementNS(WNS,"w:"+n);e.setAttributeNS(WNS,"w:val","16");p.appendChild(e)});
+  x.setAttributeNS("http://www.w3.org/XML/1998/namespace","xml:space","preserve");x.textContent=t;
+  r.append(p,x);return r;
+}
+function wZetCel(d,label,waarde){
+  const tc=[...wEl(d,"tc")].find(x=>wTekst(x)===label);if(!tc)return;
+  let cel=tc.nextElementSibling;while(cel&&cel.localName!=="tc")cel=cel.nextElementSibling;if(!cel)return;
+  const [p,...rest]=wKind(cel,"p");rest.forEach(x=>x.remove());wKind(p,"r").forEach(x=>x.remove());
+  if(waarde)p.appendChild(wRun(d,waarde));
+}
+async function bonWord(r,c){
+  const z=zipLees(await bonBytes(c.bon.docx)),e=z.find(x=>x.naam==="word/document.xml"),d=wLees(await zipTekst(e)),p=zatPrio(r);
+  wZetCel(d,"Uitvoeren op","Zaterdag "+D.zaterdag.datum);wZetCel(d,"Uitvoerder",r.uitvoerder);
+  const t=[...wEl(d,"t")].find(x=>x.textContent.startsWith("Prio:"));
+  if(t)t.textContent=t.textContent.replace(/[☐☒]\s*([123])/g,(m,n)=>(String(p)===n?"☒ ":"☐ ")+n);
+  await zipZet(e,wXml(d));return zipMaak(z);
+}
+const zatBon=nr=>(D.cm||[]).find(x=>x.nr===nr);
+/* Zelfde opbouw als zat_stempel in bonnen.py. Klopt hij niet, dan is de PDF van voor de laatste wijziging. */
+const zatStempel=()=>zatRijen().map(r=>{const c=zatBon(r.nr);return[r.nr,r.prio||"",r.uitvoerder||"",c&&KLAAR.includes(c.status)?"1":""].join("|")}).join(";");
+async function zatWordBonnen(){
+  const s=D.zaterdag,met=zatRijen().filter(r=>{const c=zatBon(r.nr);return c&&c.bon&&c.bon.docx}),zonder=zatRijen().filter(r=>!met.includes(r)).map(r=>r.nr);
+  const lijst=await Promise.all(met.map(async r=>{const c=zatBon(r.nr),data=await bonWord(r,c);return{naam:c.bon.naam+".docx",m:0,crc:crc32(data),us:data.length,data}}));
+  await geefBestand(new File([zipMaak(lijst)],"Bonnen_zaterdag_"+s.datum+"_Word.zip",{type:"application/zip"}));
+  melder(zonder.length?"Zonder bestand: "+zonder.join(", "):lijst.length+" bonnen gedownload");
+}
+async function zatPdf(){
+  const s=D.zaterdag,z=bonnen().zaterdag;
+  if(!z||z.datum!==s.datum||z.stempel!==zatStempel()){melder("De PDF loopt achter op je laatste wijziging. Binnen een uur is hij bijgewerkt, vernieuw dan de pagina. Word is al actueel.");return}
+  await geefBestand(new File([await bonBytes(z.pdf)],"Zaterdagwerk_"+s.datum+".pdf",{type:BONTYPE.pdf}));
+}
+function wVulTabel(t,rijen){
+  const leeg=wKind(t,"tr").slice(2,-1);
+  while(leeg.length<rijen.length){const k=leeg[0].cloneNode(true);leeg[leeg.length-1].after(k);leeg.push(k)}
+  rijen.forEach((r,i)=>{
+    const c=wKind(leeg[i],"tc"),b=zatBon(r.nr);
+    [r.nr,r.werkzaamheid,r.lijn_machine,zatPrio(r)||"",r.uitvoerder||""].forEach((w,j)=>{wEl(c[j],"t")[0].textContent=w});
+    if(b&&KLAAR.includes(b.status))wEl(c[5],"t")[0].textContent="☒";
+  });
+}
+async function zatLijst(){
+  const s=D.zaterdag,z=zipLees(await bonBytes(bonnen().lijst)),e=z.find(x=>x.naam==="word/document.xml"),d=wLees(await zipTekst(e));
+  [...wEl(d,"t")].forEach(t=>{if(t.textContent==="__DATUM__")t.textContent=s.datum});
+  const tabellen=[...wEl(d,"tbl")].filter(t=>wTekst(t).includes("Werkzaamheid"));
+  [s.correctief||[],s.preventief||[]].forEach((r,i)=>wVulTabel(tabellen[i],r));
+  await zipZet(e,wXml(d));
+  await geefBestand(new File([zipMaak(z)],"Overzicht_zaterdagwerk_"+s.datum+".docx",{type:BONTYPE.docx}));
+}
+async function zatDownload(k){
+  const was=k.innerHTML,doe={word:zatWordBonnen,pdf:zatPdf,lijst:zatLijst}[k.dataset.zatdl];
+  k.disabled=true;k.textContent="Bezig";
+  try{await doe()}catch(_){melder("Downloaden is niet gelukt. Probeer het opnieuw.")}
+  k.disabled=false;k.innerHTML=was;
+}
 function vZaterdag(){
   const s=D.zaterdag||{},c=s.correctief||[],p=s.preventief||[],d=datum(s.datum),wv=wvMag();
   const prioVeld=r=>{const q=zatPrio(r);return wv?'<select class="statuskeuze" data-zat="prio" data-nr="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen</option>'+[1,2,3].map(n=>'<option value="'+n+'"'+(n===q?" selected":"")+">Prio "+n+"</option>").join("")+"</select>":prio(q)};
@@ -1194,14 +1294,17 @@ function vZaterdag(){
   const cols=[
     {k:"n",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:r=>of(r.nr)},
     {k:"w",l:"Werkzaamheid",c:"m-main",x:"titel",r:r=>esc(r.werkzaamheid)},
-    {k:"m",l:"Lijn en machine",w:wv?"20%":"28%",c:"m-sub",r:r=>esc(r.lijn_machine)},
-    {k:"p",l:"Prio",w:wv?"104px":"76px",c:"m-status",r:prioVeld},
-    {k:"u",l:"Uitvoerder",w:wv?"170px":"150px",c:wv?"m-sub m-zat":"m-sub",ml:"Uitvoerder",r:uitVeld}
-  ].concat(wv?[{k:"x",l:"",w:"132px",c:"m-sub",r:zatWegKnop}]:[]);
+    {k:"m",l:"Lijn en machine",w:wv?"17%":"28%",c:"m-sub",r:r=>esc(r.lijn_machine)}
+  ].concat(wv?[{k:"s",l:"Status",w:"150px",c:"m-sub m-zat",ml:"Status",r:r=>{const b=zatBon(r.nr);return b?statusVeld(b):of(null)}}]:[],[
+    {k:"p",l:"Prio",w:wv?"96px":"76px",c:"m-status",r:prioVeld},
+    {k:"u",l:"Uitvoerder",w:wv?"150px":"150px",c:wv?"m-sub m-zat":"m-sub",ml:"Uitvoerder",r:uitVeld}
+  ],wv?[{k:"x",l:"",w:"96px",c:"m-sub",r:zatWegKnop}]:[]);
   const bon=(D.cm||[]).length?r=>{const x=D.cm.find(y=>y.nr===r.nr);return x?cmDetail(x):null}:null;
   const dl=(t,r)=>'<section class="deel"><h2>'+t+"<span>"+r.length+"</span></h2>"+(r.length?vasteTabel(cols,r,bon):'<div class="leegmelding">Niets ingepland.</div>')+"</section>";
   const namen=wv?[...new Set((D.cm||[]).map(x=>x.monteur).concat(zatRijen().map(x=>x.uitvoerder)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"nl")):[];
-  $("#view").innerHTML=kop(d?hoofd(langeDatum(d)):"Zaterdagwerk",s.stand,true)+dl("Correctief",c)+dl("Preventief",p)+(wv?'<datalist id="zatnamen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>":"");
+  const knop=(soort,t)=>'<button class="knop" data-zatdl="'+soort+'">'+ico("download")+t+"</button>";
+  const knoppen=wv&&bonnen().sleutel?knop("word","Bonnen in Word")+knop("pdf","Bonnen in PDF")+(bonnen().lijst?knop("lijst","Zaterdaglijst"):""):"";
+  $("#view").innerHTML=kop(d?hoofd(langeDatum(d)):"Zaterdagwerk",s.stand,true,knoppen)+dl("Correctief",c)+dl("Preventief",p)+(wv?'<datalist id="zatnamen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>":"");
 }
 
 /* ---- TD-pagina's ---- */

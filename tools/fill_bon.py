@@ -7,7 +7,7 @@ Alleen word/document.xml krijgt tekst erbij. De rest van het template blijft ong
 op de foto na (word/media, en de verwijzing daarnaar). Het template zelf staat niet in deze
 repository. De velden van de spec staan in tools/bonnen.md.
 """
-import copy, io, json, sys, zipfile
+import copy, io, json, re, sys, zipfile
 
 from lxml import etree
 from PIL import Image
@@ -164,6 +164,73 @@ def maak(spec, template, uit):
     with zipfile.ZipFile(uit, "w", zipfile.ZIP_DEFLATED) as z:
         for n in namen + [n for n in delen if n not in namen]:
             z.writestr(n, delen[n])
+
+
+def zet_veld(root, label, waarde):
+    """Vervangt de tekst in het vak naast een label."""
+    cel = next((volgende_cel(tc) for tc in root.iter(q("tc")) if tekst(tc) == label), None)
+    if cel is None:
+        raise SystemExit("Template wijkt af: geen veld '%s'." % label)
+    p, *rest = cel.findall(q("p"))
+    for x in rest:
+        cel.remove(x)
+    for r in p.findall(q("r")):
+        p.remove(r)
+    if waarde:
+        p.append(run(waarde))
+
+
+def zet_prio(root, prio):
+    t = next(x for x in root.iter(q("t")) if (x.text or "").startswith("Prio:"))
+    t.text = re.sub(r"[☐☒]\s*([123])", lambda m: ("☒ " if str(prio) == m.group(1) else "☐ ") + m.group(1), t.text)
+
+
+def lees_zip(inhoud):
+    with zipfile.ZipFile(io.BytesIO(inhoud)) as z:
+        return {n: z.read(n) for n in z.namelist()}
+
+
+def schrijf_zip(delen):
+    uit = io.BytesIO()
+    with zipfile.ZipFile(uit, "w", zipfile.ZIP_DEFLATED) as z:
+        for n, d in delen.items():
+            z.writestr(n, d)
+    return uit.getvalue()
+
+
+def zet_zaterdag(inhoud, prio, uitvoerder, uitvoeren):
+    """Geeft een Word-bon terug met deze prio, uitvoerder en datum. De site doet hetzelfde in de browser."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    zet_veld(root, "Uitvoeren op", uitvoeren)
+    zet_veld(root, "Uitvoerder", uitvoerder)
+    zet_prio(root, prio)
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
+
+
+def zaterdaglijst(inhoud, datum, lijsten):
+    """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed). De site doet hetzelfde in de browser."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    for t in root.iter(q("t")):
+        if t.text == "__DATUM__":
+            t.text = datum
+    tabellen = [t for t in root.iter(q("tbl")) if "Werkzaamheid" in tekst(t)]
+    for tabel, regels in zip(tabellen, lijsten):
+        leeg = tabel.findall(q("tr"))[2:-1]
+        while len(leeg) < len(regels):
+            kopie = copy.deepcopy(leeg[0])
+            leeg[-1].addnext(kopie)
+            leeg.append(kopie)
+        for rij, regel in zip(leeg, regels):
+            cellen = rij.findall(q("tc"))
+            for cel, waarde in zip(cellen, regel[:5]):
+                cel.find(".//" + q("t")).text = str(waarde or "")
+            if regel[5]:
+                cellen[5].find(".//" + q("t")).text = "☒"
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
 
 
 if __name__ == "__main__":

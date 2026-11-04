@@ -20,6 +20,15 @@ Repository: `dbgeindhoven/dbgeindhoven.github.io`.
 5. Publiceer `/tmp/artifact.html` met de Artifact-tool op dezelfde `url`.
 6. Commit en push alleen `index.html` en `bonnen/` (en eventueel `tools/`) naar `main`. GitHub Pages publiceert vanaf `main`, map `/`.
 
+## Zaterdagwerk
+`zaterdag` heeft `datum`, `stand`, `correctief` en `preventief` (`nr`, `werkzaamheid`, `lijn_machine`, `prio`, `uitvoerder`, `gereed`). De werkvoorbereider past op de pagina Zaterdagwerk per bon de status, prio en uitvoerder aan en haalt regels van de lijst. Dat gaat via de wachtrij (`rij.zat` in `status-<nr>.txt`, zie `tools/bonnen.md`) en is meteen voor iedereen zichtbaar. Van de lijst halen laat de bon bestaan: `uitvoeren` wordt leeg en Gepland wordt Open.
+
+Boven de pagina staan voor de werkvoorbereider Bonnen in Word, Bonnen in PDF en Zaterdaglijst.
+- **Word:** de browser vult de bonnen (`cm[].bon.docx`) en de lijst (`meta.bonnen.lijst`, leeg format `bonnen/zaterdaglijst.bin`) op het moment van downloaden, dus altijd met de laatste wijzigingen.
+- **PDF:** de lijst met alle bonnen erachter, `meta.bonnen.zaterdag` (`datum`, `pdf`, `stempel`). De geplande taak maakt die opnieuw. Klopt de `stempel` niet met de pagina, dan meldt de site dat de PDF achterloopt.
+
+Nieuwe zaterdag vanuit een chat: elke regel moet een bon met bestanden hebben in `cm[].bon` (`naam`, `docx`, `pdf`, `beeld`, versleuteld in `bonnen/`). Draai na het aanpassen van `zaterdag` en voor stap 4 `python3 tools/bonnen.py zaterdag /tmp/site.json /tmp/zat`. Een nieuw leeg format zet je erin met `python3 tools/bonnen.py lijst /tmp/site.json <leeg.docx>`: het moet per tabel een kopregel, een sectieregel, lege regels met een tekstrun per cel en een laatste regel voor aanvullingen hebben.
+
 ## Actielijst ochtendoverleg
 `meta.actielijst` (`bron`, `regels`) staat alleen in het werkvoorbereidingsdeel. Op de pagina Actielijst controleert de werkvoorbereider de indeling en zet hij de acties in één keer op het SQD-bord: de browser maakt per regel een melding met melder `Ochtendoverleg`, zodat Google het SQDM-nummer geeft. De melddatum op het bord is de invoerdatum uit de actielijst. Met `geplaatst: true` toont de pagina alleen nog de prio's. Haal `meta.actielijst` weg als alles geplaatst is en de prio's zijn opgeslagen.
 
@@ -41,7 +50,7 @@ De geplande taak "TD Hub bonnen" maakt de bonnen. De werkwijze staat in `tools/b
 - **Output:** één gezamenlijke inlog voor de ploegen. Alleen het formulier met naam, datum, ploeg, lijn, output in kilo en opmerking. Dit deel bevat geen enkele lijst; de outputsleutel leest en schrijft alleen het tabblad `Output`. Opnieuw invullen voor dezelfde datum, ploeg en lijn vervangt de regel.
 - **Dagstart:** SQD, Meldingen, Lopende storingen, Output per lijn en Zaterdag. In de presentatie staat Meldingen niet, en heeft Output per lijn een eigen stap per lijn met tabel en grafiek. Lopende storingen toont alleen prio 1: bonnen en meldingen, omdat die SQD direct in gevaar brengen. Bij een melding zonder bon staat een vinkje of er een bon gemaakt moet worden.
 - **TD:** alles, dus ook TD-overzicht, CM-bonnen, Bestellijst, Priolijst, Opnamelijsten, PM-taken en Dienstrapport. Geen bonbestanden: dit deel bevat de sleutel van de bonnen niet.
-- **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn. Alleen dit deel bevat `meta.bonnen.sleutel`, `cm[].bon` en `meta.meldingen.sleutel_wv`. Met die sleutel past de werkvoorbereider de status van een bon aan en verwijdert hij meldingen, storingen, directie-acties en bonnen die uit een melding komen.
+- **Werkvoorbereider (`wv`):** alles van TD plus de pagina's SQD-bonnen en Aangemaakte CM-bonnen, waar de Word- en PDF-bonnen te downloaden zijn, en aanpassen en downloaden op Zaterdagwerk. Alleen dit deel bevat `meta.bonnen.sleutel`, `cm[].bon`, `meta.bonnen.lijst`, `meta.bonnen.zaterdag` en `meta.meldingen.sleutel_wv`. Met die sleutel past de werkvoorbereider de status van een bon aan en verwijdert hij meldingen, storingen, directie-acties en bonnen die uit een melding komen.
 `index.html` bevat per niveau een eigen versleuteld deel. Het dagstart-wachtwoord kan de TD-gegevens niet openen.
 
 ## Wachtwoord wijzigen
