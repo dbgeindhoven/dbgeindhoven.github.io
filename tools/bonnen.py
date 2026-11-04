@@ -9,6 +9,7 @@
   bonnen.py wijzig     <site.json> <werkmap>        Verwerkt statuswijzigingen en verwijderde bonnen uit wijzig.json.
   bonnen.py lijst      <site.json> <leeg.docx>      Versleutelt het lege Word-format van de zaterdaglijst naar bonnen/.
   bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst bij en maakt de PDF om te printen.
+  bonnen.py zatbon     <site.json> <werkmap> <nr>   Maakt de Word- en PDF-bon voor een bestaande bon zonder bestanden, uit <nr>.json.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
 met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er <nr>.docx en
@@ -118,21 +119,23 @@ def maak(a):
 
 def rij_voor(w, spec, datum):
     monteur = w.get("letter") == "TD"
+    werkvoorbereider = w.get("letter") == "CM"
     gereed = monteur and w.get("vervolg") == "Gereed"
-    regels = ["Automatisch gemaakt uit de melding van " + str(w.get("tijd")) + "."]
+    regels = [("Gemaakt op de site op " if werkvoorbereider else "Automatisch gemaakt uit de melding van ") + str(w.get("tijd")) + "."]
     if w.get("risico"):
         regels.append("Risico: " + w["risico"] + ".")
     if w.get("oplossing"):
-        regels.append(("Oplossing: " if gereed else "Al gedaan: " if monteur else "Actie: ") + w["oplossing"].replace("[x] ", "Gedaan: ").rstrip(". ") + ".")
+        regels.append(("Oplossing: " if gereed else "Al gedaan: " if monteur else "" if werkvoorbereider else "Actie: ") + w["oplossing"].replace("[x] ", "Gedaan: ").rstrip(". ") + ".")
     if not gereed:
         regels.append("Concept: nog controleren.")
     return dict(
         LEEG, nr=w["nr"], lijn=w.get("lijn") or None, machine=w.get("machine") or None,
         omschrijving=spec["kort"], melder=w.get("melder") or None, uitvoeren=spec.get("uitvoeren_op"),
-        onderdelen=spec.get("onderdelen"), status="Uitgevoerd" if gereed else "Open", opmerking=" ".join(regels),
+        onderdelen=spec.get("onderdelen"), status="Uitgevoerd" if gereed else "Gepland" if w.get("vervolg") == "Zaterdag" else "Open", opmerking=" ".join(regels),
+        prio=int(w["prio"]) if str(w.get("prio") or "") in ("1", "2", "3") else None,
         uitgevoerd_op=datum if gereed else None, monteur=w.get("melder") if monteur else None,
         actiehouder=w.get("actiehouder") or None, bron="CM-overzicht, uit melding van " + datum,
-        herkomst="Monteur" if monteur else "Productie", risico=w.get("risico") or None, melding=w["id"],
+        herkomst="Monteur" if monteur else "Werkvoorbereider" if werkvoorbereider else "Productie", risico=w.get("risico") or None, melding=w["id"],
     )
 
 
@@ -154,6 +157,10 @@ def registreer(a):
             "beeld": versleutel((wm / (w["nr"] + "-bon.jpg")).read_bytes(), b["sleutel"]),
         }
         data["cm"].append(rij)
+        z = data.get("zaterdag") or {}
+        if w.get("vervolg") == "Zaterdag" and w.get("datum") == z.get("datum"):
+            z.setdefault("preventief" if str(spec.get("omschrijving")).lower().startswith("preventief") else "correctief", []).append(
+                {"nr": w["nr"], "werkzaamheid": spec["kort"], "lijn_machine": spec.get("lijn_machine"), "prio": rij["prio"], "uitvoerder": None, "gereed": None})
         if w.get("vervolg") == "Onderdeel bestellen":
             data["bestellijst"].append({
                 "cm": w["nr"], "onderdeel": spec.get("onderdelen") or "Zie bon", "specificatie": None, "aantal": None,
@@ -167,6 +174,11 @@ def registreer(a):
     bewaar(a.site, data)
 
 
+def zat_rijen(data):
+    z = data.get("zaterdag") or {}
+    return (z.get("correctief") or []) + (z.get("preventief") or [])
+
+
 def zat_weg(data, nr):
     z = data.get("zaterdag") or {}
     for k in ("correctief", "preventief"):
@@ -178,18 +190,45 @@ def zat_wijzig(data, nr, rij, zat):
     z = data.get("zaterdag") or {}
     if zat.get("datum") != z.get("datum"):
         print(nr, "wijziging hoort bij een andere zaterdag, overgeslagen")
-    elif zat.get("weg"):
+        return
+    nieuw = zat.get("nieuw")
+    if nieuw and nr not in [r.get("nr") for r in zat_rijen(data)]:
+        z.setdefault("preventief" if nieuw.get("lijst") == "preventief" else "correctief", []).append(
+            {"nr": nr, "werkzaamheid": nieuw.get("werkzaamheid"), "lijn_machine": nieuw.get("lijn_machine"), "prio": zat.get("prio"), "uitvoerder": None, "gereed": None})
+    if zat.get("weg"):
         zat_weg(data, nr)
         if rij is not None:
             rij["uitvoeren"] = None
         print(nr, "van de zaterdaglijst gehaald")
+        return
+    for r in zat_rijen(data):
+        if r.get("nr") == nr:
+            r["prio"], r["uitvoerder"], r["uren"] = zat.get("prio"), zat.get("uitvoerder") or None, zat.get("uren")
+    if rij is not None:
+        rij["prio"] = zat.get("prio")
+        if nieuw:
+            rij["uitvoeren"] = "Zaterdag " + str(z.get("datum"))
+    print(nr, "zaterdag: prio", zat.get("prio"), "uitvoerder", zat.get("uitvoerder"), "uren", zat.get("uren"))
+
+
+def zat_kop(data, kop):
+    """Teamleider, monteurs, LET OP en beschikbare manuren van de zaterdag."""
+    z = data.get("zaterdag") or {}
+    if kop.get("datum") == z.get("datum"):
+        z.update({k: kop.get(k) for k in ("teamleider", "monteurs", "letop", "capaciteit")})
+        print("zaterdag: kop bijgewerkt")
+
+
+BESTELSTATUS = {"Nog niet besteld": "Nee", "Eerst opmeten of checken": "Eerst opmeten", "Opgevraagd": "Opgevraagd", "Besteld": "Besteld", "Binnen": "Binnen"}
+
+
+def bestel_wijzig(data, b):
+    r = next((x for x in data["bestellijst"] if x.get("id") == b.get("id")), None)
+    if r is None or b.get("groep") not in BESTELSTATUS:
+        print(b.get("id"), "staat niet op de bestellijst")
     else:
-        for r in (z.get("correctief") or []) + (z.get("preventief") or []):
-            if r.get("nr") == nr:
-                r["prio"], r["uitvoerder"] = zat.get("prio"), zat.get("uitvoerder") or None
-        if rij is not None:
-            rij["prio"] = zat.get("prio")
-        print(nr, "zaterdag: prio", zat.get("prio"), "uitvoerder", zat.get("uitvoerder"))
+        r["groep"], r["status"] = b["groep"], BESTELSTATUS[b["groep"]]
+        print(r.get("cm"), r.get("onderdeel"), "staat op", b["groep"])
 
 
 def wijzig(a):
@@ -197,6 +236,13 @@ def wijzig(a):
     data = laad(a.site)
     for w in laad(Path(a.map) / "wijzig.json"):
         nr, status = w["nr"], w["status"]
+        extra = w.get("rij") or {}
+        if extra.get("bestel"):
+            bestel_wijzig(data, extra["bestel"])
+            continue
+        if extra.get("zatkop"):
+            zat_kop(data, extra["zatkop"])
+            continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         if status == "Verwijderd":
             zat_weg(data, nr)
@@ -222,11 +268,6 @@ def wijzig(a):
     bewaar(a.site, data)
 
 
-def zat_rijen(data):
-    z = data.get("zaterdag") or {}
-    return (z.get("correctief") or []) + (z.get("preventief") or [])
-
-
 def zat_regel(r, c):
     """Wat er op de lijst en de bon staat. De site rekent hetzelfde uit in zatStempel."""
     c = c or {}
@@ -235,7 +276,8 @@ def zat_regel(r, c):
 
 def zat_stempel(data):
     cm = {x.get("nr"): x for x in data.get("cm", [])}
-    return ";".join("|".join([r["nr"], *map(str, zat_regel(r, cm.get(r["nr"])))]) for r in zat_rijen(data))
+    z = data.get("zaterdag") or {}
+    return ";".join("|".join([r["nr"], *map(str, zat_regel(r, cm.get(r["nr"])))]) for r in zat_rijen(data)) + "#" + "|".join(z.get(k) or "" for k in ("teamleider", "monteurs", "letop"))
 
 
 def lijst(a):
@@ -287,7 +329,7 @@ def zaterdag(a):
     else:
         regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
         docx = wm / "zaterdaglijst.docx"
-        docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), str(z.get("datum")), [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")]))
+        docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), str(z.get("datum")), [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")], z))
         naar_pdf([docx], wm)
         stukken = [docx.with_suffix(".pdf")]
         for i, r in enumerate(zat_rijen(data)):
@@ -303,6 +345,25 @@ def zaterdag(a):
         b["zaterdag"] = {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "stempel": stempel}
         print("Printversie gemaakt:", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
     bewaar(a.site, data)
+
+
+def zatbon(a):
+    """Maakt de bestanden voor een bon die al in het overzicht staat maar nog geen Word-bon op de site heeft."""
+    data = laad(a.site)
+    b = stand(data)
+    wm = Path(a.map)
+    rij = next(r for r in data["cm"] if r.get("nr") == a.nr)
+    spec = laad(wm / (a.nr + ".json"))
+    sjabloon = wm / "template.docx"
+    sjabloon.write_bytes(ontsleutel(TEMPLATE, b["sleutel"]))
+    docx = wm / (a.nr + ".docx")
+    fill_bon.maak(spec, sjabloon, docx)
+    naar_pdf([docx], wm)
+    pdf = docx.with_suffix(".pdf")
+    paginas = int(re.search(r"Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(pdf)], check=True, capture_output=True, text=True).stdout).group(1))
+    rij["bon"] = {"naam": spec["naam"], "docx": versleutel(docx.read_bytes(), b["sleutel"]), "pdf": versleutel(pdf.read_bytes(), b["sleutel"]), "beeld": versleutel(afbeelding(pdf).read_bytes(), b["sleutel"])}
+    bewaar(a.site, data)
+    print(a.nr, "1 pagina" if paginas == 1 else "%d pagina's: maak de tekst korter" % paginas)
 
 
 def beelden(a):
@@ -328,5 +389,6 @@ x = sub.add_parser("beelden"); x.add_argument("site"); x.set_defaults(fn=beelden
 x = sub.add_parser("wijzig"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=wijzig)
 x = sub.add_parser("lijst"); x.add_argument("site"); x.add_argument("docx"); x.set_defaults(fn=lijst)
 x = sub.add_parser("zaterdag"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=zaterdag)
+x = sub.add_parser("zatbon"); x.add_argument("site"); x.add_argument("map"); x.add_argument("nr"); x.set_defaults(fn=zatbon)
 a = ap.parse_args()
 a.fn(a)

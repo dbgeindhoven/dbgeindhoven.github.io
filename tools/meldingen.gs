@@ -225,7 +225,11 @@ function doPost(e) {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
       for (let i = 1; i < ids.length; i++) {
         if (ids[i][0] === d.id) {
-          if (d.actie === 'gereed') b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
+          if (d.actie === 'gereed') {
+            b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
+            // De bon hoort bij de melding en gaat tegelijk op Uitgevoerd.
+            if (d.bon && /^[A-Za-z0-9-]{1,20}$/.test(d.bon)) zetBonstatus_(d.bon, 'Uitgevoerd', d.rij, d.door);
+          }
           else if (d.actie === 'verplaats') b.getRange(i + 1, 3).setValue(['S', 'Q', 'D'].includes(d.letter) ? d.letter : '');
           else {
             b.getRange(i + 1, 5, 1, 2).setValues([[schoon_(d.lijn), schoon_(d.machine)]]);

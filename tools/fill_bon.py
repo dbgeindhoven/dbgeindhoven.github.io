@@ -209,13 +209,21 @@ def zet_zaterdag(inhoud, prio, uitvoerder, uitvoeren):
     return schrijf_zip(delen)
 
 
-def zaterdaglijst(inhoud, datum, lijsten):
+def zaterdaglijst(inhoud, datum, lijsten, kop=None):
     """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed). De site doet hetzelfde in de browser."""
     delen = lees_zip(inhoud)
     root = etree.fromstring(delen["word/document.xml"])
+    kop = kop or {}
     for t in root.iter(q("t")):
         if t.text == "__DATUM__":
             t.text = datum
+    for label, veld in (("Teamleider", "teamleider"), ("Monteurs", "monteurs")):
+        if kop.get(veld):
+            for tc in [x for x in root.iter(q("tc")) if tekst(x) == label]:
+                volgende_cel(tc).find(q("p")).append(run(kop[veld], 18))
+    if kop.get("letop"):
+        for tc in [x for x in root.iter(q("tc")) if "LET OP!" in tekst(x)]:
+            tc.find(q("p")).append(run(" " + kop["letop"], 18))
     tabellen = [t for t in root.iter(q("tbl")) if "Werkzaamheid" in tekst(t)]
     for tabel, regels in zip(tabellen, lijsten):
         leeg = tabel.findall(q("tr"))[2:-1]

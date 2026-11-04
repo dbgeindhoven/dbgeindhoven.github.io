@@ -90,6 +90,16 @@ def storingen(data):
     return uit
 
 
+def bestel_ids(data):
+    """Elke bestelregel krijgt een vast nummer, zodat de site één regel kan aanpassen."""
+    rijen = data.get("bestellijst", [])
+    hoogste = max([int(r["id"][1:]) for r in rijen if re.fullmatch(r"B\d+", str(r.get("id") or ""))] + [0])
+    for r in rijen:
+        if not r.get("id"):
+            hoogste += 1
+            r["id"] = "B%d" % hoogste
+
+
 def zaterdag(data):
     """Regels zonder eigen prio krijgen die van de bon. De dagstart heeft geen CM-overzicht."""
     cm = {r.get("nr"): r for r in data.get("cm", [])}
@@ -121,6 +131,7 @@ def build(a):
     for r in data.get("bestellijst", []):
         if not r.get("groep"):
             bestel_groep(r)
+    bestel_ids(data)
     data["storingen"] = storingen(data)
     zaterdag(data)
     data.setdefault("sqdc", {}).pop("auto", None)
@@ -142,7 +153,7 @@ def build(a):
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
     verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
     monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}
-    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
+    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {})}
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
     mld.pop("sleutel_wv", None)
