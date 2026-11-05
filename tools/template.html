@@ -834,8 +834,8 @@ function vanPlan(c,status){
   const op=planVanBon(c.nr),r=planRijen(op).find(x=>x.nr===c.nr);
   return zatStuur(r,Object.assign(op.id?{plan:op.id}:{},{datum:op.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren,weg:true}),{uitvoeren:/^Best/.test(status)?"Na levering":"In overleg"},status);
 }
-const P_SQDSUB=P_PLAN.map(p=>({id:"s"+p.id,t:p.t}));
-const planMelding=c=>{const g=P_PLAN.find(p=>p.id===bonGroep(c));return P_PLAN.concat(P_SQDSUB).some(p=>p.id===HUIDIG)?c.nr+" staat nu onder "+g.t+(g.id==="pgepland"&&!planVanBon(c.nr)?". Geef hem nog een datum.":"."):c.nr+" staat nu op "+c.status};
+const P_SQDSUB=P_PLAN.map(p=>({id:"s"+p.id,t:p.t})),P_CMSUB=P_PLAN.map(p=>({id:"c"+p.id,t:p.t})),P_SUB=P_SQDSUB.concat(P_CMSUB);
+const planMelding=c=>{const g=P_PLAN.find(p=>p.id===bonGroep(c));return P_PLAN.concat(P_SUB).some(p=>p.id===HUIDIG)?c.nr+" staat nu onder "+g.t+(g.id==="pgepland"&&!planVanBon(c.nr)?". Geef hem nog een datum.":"."):c.nr+" staat nu op "+c.status};
 async function zetBonStatus(sel){
   const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status,status=sel.value;
   if(!GESLOTEN.includes(status))delete AFOPEN[c.nr];
@@ -917,7 +917,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{planTel();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"].concat(P_PLAN.map(p=>p.id),P_SQDSUB.map(p=>p.id))).includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{planTel();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"].concat(P_PLAN.concat(P_SUB).map(p=>p.id))).includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -2129,7 +2129,7 @@ function vPlan(s,o){
 /* ---- werkvoorbereiding: alle bonnen per status ---- */
 /* Klaar gaat voor alles. Een bon op de agenda is gepland, ook als hij deels gedaan is. Open bestelregels horen bij wachten op bestelling. */
 const bonGroep=c=>GESLOTEN.includes(c.status)?"pafgerond":c.status==="Gepland"||planVanBon(c.nr)?"pgepland":c.status==="Bestellen"||c.status==="Besteld"||zatOnderdelen(c.nr).length?"pbestel":"pgeen";
-const inGroep=(c,id)=>id[0]==="s"?isSqd(c)&&bonGroep(c)===id.slice(1):bonGroep(c)===id;
+const inGroep=(c,id)=>id[0]==="p"?bonGroep(c)===id:isSqd(c)===(id[0]==="s")&&bonGroep(c)===id.slice(1);
 function planTel(){document.querySelectorAll("[data-plantel]").forEach(x=>{x.textContent=(D.cm||[]).filter(c=>inGroep(c,x.dataset.plantel)).length})}
 const isDag=t=>/^\d{2}-\d{2}-\d{4}$/.test(t||"");
 const bonDag=c=>{if(GESLOTEN.includes(c.status))return isDag(c.uitgevoerd_op)?c.uitgevoerd_op:"";const p=planVanBon(c.nr);return p?p.datum:""};
@@ -2163,9 +2163,9 @@ let datumKlok=null;
 /* Tijdens het typen is een datum al even geldig, dus er wordt gewacht tot hij af is. */
 document.addEventListener("change",e=>{if(!e.target.matches("[data-bondatum]"))return;clearTimeout(datumKlok);const el=e.target;datumKlok=setTimeout(()=>zetBonDatum(el),1000)});
 function vPlanLijst(id){
-  /* Dezelfde vier pagina's bestaan ook voor alleen de SQD-bonnen, met een s voor het id. */
-  const sqd=id[0]==="s",soort=sqd?id.slice(1):id,g=P_PLAN.find(p=>p.id===soort),af=soort==="pafgerond",r=D.cm.filter(c=>inGroep(c,id)),zonder=soort==="pgepland"?r.filter(c=>!planVanBon(c.nr)).length:0;
-  lijstScherm({key:id,titel:(sqd?"SQD-bonnen: ":"")+g.t,sub:g.sub+(zonder?" "+zonder+(zonder===1?" bon heeft":" bonnen hebben")+" nog geen datum.":""),rijen:r,eenheid:["bon","bonnen"],sort:soort==="pgepland"?{k:"d",d:1}:af?{k:"d",d:-1}:{k:"nr",d:-1},
+  /* Dezelfde vier pagina's bestaan ook voor alleen de SQD-bonnen (s voor het id) en alleen de CM-bonnen (c voor het id). */
+  const deel=id[0]!=="p",soort=deel?id.slice(1):id,g=P_PLAN.find(p=>p.id===soort),af=soort==="pafgerond",r=D.cm.filter(c=>inGroep(c,id)),zonder=soort==="pgepland"?r.filter(c=>!planVanBon(c.nr)).length:0;
+  lijstScherm({key:id,titel:(deel?(id[0]==="s"?"SQD-bonnen: ":"CM-bonnen: "):"")+g.t,sub:g.sub+(zonder?" "+zonder+(zonder===1?" bon heeft":" bonnen hebben")+" nog geen datum.":""),rijen:r,eenheid:["bon","bonnen"],sort:soort==="pgepland"?{k:"d",d:1}:af?{k:"d",d:-1}:{k:"nr",d:-1},
     geen:r.length?"Niets gevonden. Pas de filters aan.":"Hier staan nu geen bonnen.",
     seg:{get:x=>x.status,o:BONSTATUS},
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}],
@@ -2176,7 +2176,7 @@ function vPlanLijst(id){
       {k:"m",l:"Lijn en machine",w:"20%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))||of(null),s:x=>norm(x.lijn)+norm(x.machine)},
       {k:"p",l:"Prio",w:"70px",c:"m-status",r:x=>prio(x.prio),s:x=>x.prio||9},
       {k:"s",l:"Status",w:"156px",c:"m-sub m-zat",ml:"Status",r:statusVeld,s:x=>x.status},
-      {k:"d",l:af?"Afgemeld op":"Datum",w:"152px",c:"m-sub m-zat",ml:af?"Afgemeld op":"Datum",r:datumVeld,s:x=>+datum(bonDag(x))||0}].concat(sqd?[weekKolom]:[]),
+      {k:"d",l:af?"Afgemeld op":"Datum",w:"152px",c:"m-sub m-zat",ml:af?"Afgemeld op":"Datum",r:datumVeld,s:x=>+datum(bonDag(x))||0}].concat(deel?[weekKolom]:[]),
     detail:cmDetail});
   planTel();
 }
@@ -2432,7 +2432,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["Laatst uitgevoerd",pmLaatst(x.id)],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={cpgepland:()=>vPlanLijst("cpgepland"),cpbestel:()=>vPlanLijst("cpbestel"),cpgeen:()=>vPlanLijst("cpgeen"),cpafgerond:()=>vPlanLijst("cpafgerond"),spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -2467,13 +2467,13 @@ function start(data){
   if(D.niveau==="pm"){pmScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   const pWv=P_WV.concat(alRegels().length?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
-  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[P_RAPPORT],wv?P_PLAN.concat(pWv,P_SQDSUB):[]);
+  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[P_RAPPORT],wv?P_PLAN.concat(pWv,P_SUB):[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
   /* De werkvoorbereider heeft de agenda bij zijn eigen pagina's. Andere inloggen zien hem onder Dagstart. */
   const sub=p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+'</span><small data-plantel="'+p.id+'"></small></a>';
   const pStop=P_DAG.find(p=>p.id==="stop");
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.filter(p=>!wv||p!==pStop).concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.filter(p=>!wv||p.id!=="cm").map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+lnk(pStop)+P_PLAN.map(sub).join("")+lnk(P_TD.find(p=>p.id==="cm"))+pWv.map(p=>lnk(p)+(p.id==="sqdbonnen"?P_SQDSUB.map(sub).join(""):"")).join("")+"</div>":"");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.filter(p=>!wv||p!==pStop).concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.filter(p=>!wv||p.id!=="cm").map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+lnk(pStop)+P_PLAN.map(sub).join("")+lnk(P_TD.find(p=>p.id==="cm"))+P_CMSUB.map(sub).join("")+pWv.map(p=>lnk(p)+(p.id==="sqdbonnen"?P_SQDSUB.map(sub).join(""):"")).join("")+"</div>":"");
   planTel();
   presStappen();
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
