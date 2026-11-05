@@ -11,6 +11,8 @@
   bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst en de onderhoudsstops bij en maakt per plan de PDF om te printen.
   bonnen.py pmdag      <site.json> <werkmap> --datum DD-MM-JJJJ   Maakt de PM-bonnen van die dag en zet ze samen in 1 PDF.
   bonnen.py zatbon     <site.json> <werkmap> <nr>   Maakt de Word- en PDF-bon voor een bestaande bon zonder bestanden, uit <nr>.json.
+  bonnen.py zoekwerk   <site.json> [--aantal 8]     Geeft de bestelregels die opgezocht moeten worden.
+  bonnen.py zoek       <site.json> <zoek.json>      Zet de zoekresultaten op de bestellijst.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
 met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er <nr>.docx en
@@ -297,6 +299,9 @@ def bestel_wijzig(data, b):
     else:
         r["groep"], r["status"] = b["groep"], BESTELSTATUS[b["groep"]]
         print(r.get("cm"), r.get("onderdeel"), "staat op", b["groep"])
+        if b.get("zoek"):
+            r.pop("zoek", None)
+            r["zoekeerst"] = True
 
 
 def bon_uitvoeren(data, rij, wm):
@@ -353,6 +358,57 @@ def volgorde(w):
     return (not extra.get("stop"), bool(extra.get("vervolg")), w["nr"] if extra.get("vervolg") else "")
 
 
+ZOEKSOORT = ("Exact", "Vergelijkbaar", "Geen")
+ZOEKVELDEN = ("id", "cm", "onderdeel", "specificatie", "aantal", "leverancier", "link")
+GOED = {"email": r"[^@\s]+@[^@\s]+\.[A-Za-z]{2,}", "tel": r"\+?[0-9][0-9 ()/-]{5,20}", "site": r"https://\S+", "link": r"https://\S+"}
+
+
+def zoekwerk(a):
+    """Geeft de bestelregels die nog opgezocht moeten worden, de belangrijkste eerst, en de leveranciers die al bekend zijn."""
+    data = laad(a.site)
+    cm = {r.get("nr"): r for r in data.get("cm", [])}
+    dicht = ("Uitgevoerd", "Gereed", "Dubbel", "Vervallen")
+    rijen = [r for r in data.get("bestellijst", []) if r.get("id") and not r.get("zoek") and r.get("groep") not in ("Binnen", "Besteld") and (cm.get(r.get("cm")) or {}).get("status") not in dicht]
+    rijen.sort(key=lambda r: (not r.get("zoekeerst"), (cm.get(r.get("cm")) or {}).get("prio") or 9, int(r["id"][1:])))
+    print(json.dumps({"rest": max(0, len(rijen) - a.aantal), "regels": [{k: r.get(k) for k in ZOEKVELDEN} for r in rijen[:a.aantal]], "leveranciers": [x["naam"] for x in data.get("leveranciers") or []]}, ensure_ascii=False, indent=1))
+
+
+def zoek_goed(k, w):
+    """Alleen wat eruitziet als een adres, nummer of beveiligde link komt op de site."""
+    w = str(w or "").strip()
+    return w if re.fullmatch(GOED[k], w) else ""
+
+
+def zoek(a):
+    """Zet de zoekresultaten op de bestellijst. Contactgegevens staan per leverancier één keer in leveranciers; wat er al staat blijft staan."""
+    data = laad(a.site)
+    werk = laad(a.bestand)
+    dag = datetime.date.today().strftime("%d-%m-%Y")
+    lev = data.setdefault("leveranciers", [])
+    for z in werk.get("leveranciers") or []:
+        naam = str(z.get("naam") or "").strip()[:60]
+        if not naam:
+            continue
+        x = next((l for l in lev if l["naam"].lower() == naam.lower()), None)
+        if x is None:
+            x = {"naam": naam}
+            lev.append(x)
+        for k in ("email", "tel", "site"):
+            if not x.get(k) and zoek_goed(k, z.get(k)):
+                x[k] = zoek_goed(k, z.get(k))
+    regels = {r.get("id"): r for r in data.get("bestellijst", [])}
+    for z in werk.get("regels") or []:
+        r = regels.get(z.get("id"))
+        if r is None or z.get("soort") not in ZOEKSOORT:
+            print(z.get("id"), "overgeslagen")
+            continue
+        link = zoek_goed("link", z.get("link"))
+        r["zoek"] = {"datum": dag, "soort": z["soort"] if link or z["soort"] == "Geen" else "Geen", "bij": str(z.get("bij") or "").strip()[:60], "link": link, "tekst": str(z.get("tekst") or "").strip()[:200]}
+        r.pop("zoekeerst", None)
+        print(z["id"], r.get("onderdeel"), z["soort"], r["zoek"]["bij"])
+    bewaar(a.site, data)
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
@@ -360,6 +416,8 @@ def wijzig(a):
     for w in sorted(laad(Path(a.map) / "wijzig.json"), key=volgorde):
         nr, status = w["nr"], w["status"]
         extra = w.get("rij") or {}
+        if extra.get("zoekmeer"):
+            continue
         if extra.get("vervolg"):
             vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
             continue
@@ -644,5 +702,7 @@ x = sub.add_parser("lijst"); x.add_argument("site"); x.add_argument("docx"); x.s
 x = sub.add_parser("zaterdag"); x.add_argument("site"); x.add_argument("map"); x.set_defaults(fn=zaterdag)
 x = sub.add_parser("pmdag"); x.add_argument("site"); x.add_argument("map"); x.add_argument("--datum", required=True); x.set_defaults(fn=pmdag)
 x = sub.add_parser("zatbon"); x.add_argument("site"); x.add_argument("map"); x.add_argument("nr"); x.set_defaults(fn=zatbon)
+x = sub.add_parser("zoekwerk"); x.add_argument("site"); x.add_argument("--aantal", type=int, default=8); x.set_defaults(fn=zoekwerk)
+x = sub.add_parser("zoek"); x.add_argument("site"); x.add_argument("bestand"); x.set_defaults(fn=zoek)
 a = ap.parse_args()
 a.fn(a)

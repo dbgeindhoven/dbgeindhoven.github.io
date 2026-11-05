@@ -358,6 +358,12 @@ html.present .gvlak{height:min(46vh,460px)}
 .tbl td.m-zat{padding-top:7px;padding-bottom:7px}
 .bondatum{width:100%;max-width:150px}
 .bonlos{display:block;margin-top:2px;color:var(--ink2);font-size:.75rem;line-height:1.25}
+.bonbest{display:block;margin-top:6px;font-size:.8125rem;font-weight:400;line-height:1.35}
+.bonbest:first-child{margin-top:0}
+.bonbest b{display:block;font-weight:500}
+.bonbest span{display:block;color:var(--ink2)}
+.bonbest small{display:block;color:var(--ink2);font-size:.75rem}
+.bonbest a{color:var(--gold-ink)}
 .zatkop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin:0 0 12px}
 .zatkop label{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;color:var(--ink2)}
 .zatkop label.breed{grid-column:1/-1}
@@ -676,7 +682,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select,input"))return;
+    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select,input,a"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -699,6 +705,7 @@ document.addEventListener("click",e=>{
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
   const reg=e.target.closest("[data-pmpdf]");if(reg)haalRegistratie(reg);
+  const zk=e.target.closest("[data-bestelzoek]");if(zk)zoekOpnieuw(zk);
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   if(e.target.closest("[data-zattoe]"))zatPaneel();
@@ -738,7 +745,7 @@ function openPaneel(d){
   if(d.weg)d.weg($("#b_weg"));
 }
 function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",wvMag()?uitvoerVeld(r):r.uitvoeren,wvMag()],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
+const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",wvMag()?uitvoerVeld(r):r.uitvoeren,wvMag()],["Onderdelen",r.onderdelen],["Bestellen",bestelRegels(r),true],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
@@ -795,9 +802,9 @@ function storingRij(c){
 /* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
 function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{},oudKlaar=c&&KLAAR.includes(c.status);
-  if(extra.pmreg)return;
+  if(extra.pmreg||extra.zoekmeer)return;
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
-  if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r)r.groep=extra.bestel.groep;return}
+  if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r){r.groep=extra.bestel.groep;if(extra.bestel.zoek)delete r.zoek}return}
   if(extra.zatkop){pasZatKop(extra.zatkop);return}
   if(extra.stop){if(!stops().some(x=>x.id===extra.stop.id)){D.stops=stops().concat([Object.assign({correctief:[],preventief:[]},extra.stop)]);presStappen()}return}
   if(extra.stopweg){pasStopWeg(extra.stopweg);presStappen();return}
@@ -2096,7 +2103,7 @@ function vPlanLijst(id){
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.monteur,x.onderdelen,x.opmerking,x.uitvoeren].join(" "),
     kolommen:[
       {k:"nr",l:"Bon",w:"88px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
-      {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving)+delenLabel(x),s:x=>norm(x.omschrijving)},
+      {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving)+delenLabel(x)+(id==="pbestel"?bestelRegels(x):""),s:x=>norm(x.omschrijving)},
       {k:"m",l:"Lijn en machine",w:"20%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))||of(null),s:x=>norm(x.lijn)+norm(x.machine)},
       {k:"p",l:"Prio",w:"70px",c:"m-status",r:x=>prio(x.prio),s:x=>x.prio||9},
       {k:"s",l:"Status",w:"156px",c:"m-sub m-zat",ml:"Status",r:statusVeld,s:x=>x.status},
@@ -2257,6 +2264,31 @@ function bonLijst(c){
 }
 const vSqdBonnen=()=>bonLijst({key:"sqdbonnen",titel:"SQD-bonnen",sub:"Bonnen uit meldingen van productie.",geen:"Er zijn nog geen SQD-bonnen.",test:isSqd,risico:true});
 const vCmBonnen=()=>bonLijst({key:"cmbonnen",titel:"Aangemaakte CM-bonnen",sub:"Bonnen uit storingen van monteurs.",geen:"Er zijn nog geen CM-bonnen aangemaakt.",test:x=>!isSqd(x)});
+/* Wat de uurronde op internet vond. Contactgegevens staan per leverancier één keer in D.leveranciers. */
+const levVan=n=>(D.leveranciers||[]).find(x=>norm(x.naam)===norm(n));
+const zoekNaam=x=>x.zoek&&x.zoek.bij||x.leverancier;
+const zoekUrl=x=>{const l=x.zoek&&x.zoek.link||x.link;return l&&/^https?:/i.test(l)?l:""};
+const urlHtml=(u,t)=>'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(t)+"</a>";
+const telHtml=t=>'<a href="tel:'+esc(t.replace(/[^+0-9]/g,""))+'">'+esc(t)+"</a>";
+const mailHtml=t=>'<a href="mailto:'+esc(t)+'">'+esc(t)+"</a>";
+function zoekTekst(x){
+  const z=x.zoek;
+  if(!z)return"Wordt nog opgezocht";
+  if(z.soort==="Geen")return z.tekst||"Niet gevonden";
+  return[z.soort==="Vergelijkbaar"?"Vergelijkbaar, controleer of het past":"",z.tekst].filter(Boolean).join(". ");
+}
+function bestelHtml(x){
+  const z=x.zoek||{},l=levVan(z.bij),u=zoekUrl(x),d=[z.bij?esc(z.bij):"",u?urlHtml(u,"Bekijken"):"",l&&l.tel?telHtml(l.tel):"",l&&l.email?mailHtml(l.email):""].filter(Boolean);
+  return'<span class="bonbest"><b>'+esc(x.onderdeel)+"</b>"+(d.length?"<span>"+d.join(" · ")+"</span>":"")+"<small>"+esc(zoekTekst(x))+"</small></span>";
+}
+/* Alle openstaande bestelregels van een bon, met waar ze te koop zijn. */
+const bestelRegels=c=>(D.bestellijst||[]).filter(x=>x.cm===c.nr&&x.groep!=="Binnen").map(bestelHtml).join("");
+async function zoekOpnieuw(k){
+  const r=D.bestellijst.find(x=>x.id===k.dataset.bestelzoek),w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:r.groep,zoek:true}}};
+  k.disabled=true;
+  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);k.textContent="Komt bij de volgende ronde";laatste="";melder(r.onderdeel+" wordt opgezocht bij de volgende ronde")}
+  catch(_){k.disabled=false;melder("Dat is niet gelukt. Probeer het opnieuw.")}
+}
 async function zetBestel(sel){
   const r=D.bestellijst.find(x=>x.id===sel.dataset.bestel),oud=r.groep,w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:sel.value}}};
   sel.disabled=true;
@@ -2265,19 +2297,21 @@ async function zetBestel(sel){
 }
 function vBestel(){
   const r=D.bestellijst,g=["Nog niet besteld","Eerst opmeten of checken","Opgevraagd","Besteld","Binnen"];
+  const lev=x=>levVan(zoekNaam(x))||{};
   const groepVeld=x=>wvMag()&&x.id?'<select class="statuskeuze" data-bestel="'+esc(x.id)+'" aria-label="Status van '+esc(x.onderdeel)+'">'+g.map(o=>"<option"+(o===x.groep?" selected":"")+">"+o+"</option>").join("")+"</select>":st(x.groep);
   lijstScherm({key:"bestel",titel:"Bestellijst",sub:stand("bestel"),rijen:r,eenheid:["regel","regels"],
     seg:{get:x=>x.groep,o:g},
-    selects:[{k:"lev",l:"Alle leveranciers",o:uniek(r.map(x=>x.leverancier)).sort(),get:x=>x.leverancier}],
-    tekst:x=>[x.cm,x.onderdeel,x.specificatie,x.leverancier,x.opmerking].join(" "),
+    selects:[{k:"lev",l:"Alle leveranciers",o:uniek(r.map(zoekNaam)).sort(),get:zoekNaam}],
+    tekst:x=>[x.cm,x.onderdeel,x.specificatie,x.leverancier,zoekNaam(x),x.zoek&&x.zoek.tekst,x.opmerking].join(" "),
     kolommen:[
       {k:"cm",l:"Bon",w:"72px",c:"m-nr",x:"nr",r:x=>of(x.cm),s:x=>nummer(x.cm)},
       {k:"o",l:"Onderdeel",w:"26%",c:"m-main",x:"titel",r:x=>esc(x.onderdeel),s:x=>norm(x.onderdeel)},
       {k:"sp",l:"Specificatie",c:"m-sub",r:x=>of(x.specificatie),s:x=>norm(x.specificatie)},
       {k:"a",l:"Aantal",w:"70px",c:"m-hide",r:x=>of(x.aantal)},
-      {k:"l",l:"Leverancier",w:"170px",r:x=>of(x.leverancier),s:x=>norm(x.leverancier)||"zzz"},
+      {k:"l",l:"Leverancier",w:"170px",r:x=>of(zoekNaam(x)),s:x=>norm(zoekNaam(x))||"zzz"},
+      {k:"u",l:"Online",w:"84px",c:"m-sub",ml:"Online",r:x=>zoekUrl(x)?urlHtml(zoekUrl(x),"Bekijken"):of(null),s:x=>zoekUrl(x)?0:1},
       {k:"g",l:"Status",w:"190px",c:"m-status",r:groepVeld,s:x=>g.indexOf(x.groep)}],
-    detail:x=>({klein:x.cm,titel:x.onderdeel,velden:[["Status",groepVeld(x),true],["Specificatie",x.specificatie],["Aantal",x.aantal],["Leverancier",x.leverancier],["Toelichting",x.toelichting],["Opmerking",x.opmerking],["Link",x.link&&/^https?:/i.test(x.link)?'<a href="'+esc(x.link)+'" target="_blank" rel="noopener">Bekijk bij leverancier</a>':null,true]]})});
+    detail:x=>({klein:x.cm,titel:x.onderdeel,velden:[["Status",groepVeld(x),true],["Specificatie",x.specificatie],["Aantal",x.aantal],["Leverancier",zoekNaam(x)],["E-mail",lev(x).email?mailHtml(lev(x).email):null,true],["Telefoon",lev(x).tel?telHtml(lev(x).tel):null,true],["Website",lev(x).site?urlHtml(lev(x).site,lev(x).site.replace(/^https:\/\//,"")):null,true],["Op internet",zoekUrl(x)?urlHtml(zoekUrl(x),"Bekijk het onderdeel"):null,true],["Zoekresultaat",x.zoek?[zoekTekst(x).replace(/\.\s*$/,""),"Gezocht op "+x.zoek.datum].filter(Boolean).join(". ")+".":null],["Toelichting",x.toelichting],["Opmerking",x.opmerking],["Zoeken",wvMag()&&x.id&&x.groep!=="Binnen"?'<button class="knop" type="button" data-bestelzoek="'+esc(x.id)+'">'+(x.zoek?"Opnieuw zoeken":"Nu opzoeken")+"</button>":null,true]]})});
 }
 function vPrio(){
   const r=D.priolijst;
