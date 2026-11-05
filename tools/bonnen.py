@@ -116,10 +116,9 @@ def maak(a):
         docx = wm / (w["nr"] + ".docx")
         fill_bon.maak(laad(wm / (w["nr"] + ".json")), sjabloon, docx)
         subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(wm), str(docx)], check=True, capture_output=True, timeout=180)
-        info = subprocess.run(["pdfinfo", str(docx.with_suffix(".pdf"))], check=True, capture_output=True, text=True).stdout
-        paginas = int(re.search(r"Pages:\s+(\d+)", info).group(1))
+        aantal = paginas(docx.with_suffix(".pdf"))
         afbeelding(docx.with_suffix(".pdf"))
-        print(w["nr"], "1 pagina" if paginas == 1 else "%d pagina's: maak de tekst korter" % paginas)
+        print(w["nr"], "1 pagina" if aantal == 1 else "%d pagina's: maak de tekst korter" % aantal)
 
 
 def rij_voor(w, spec, datum):
@@ -476,7 +475,7 @@ def wijzig(a):
 
 
 def zat_regel(r, c):
-    """Wat er op de lijst en de bon staat. De site rekent hetzelfde uit in zatStempel."""
+    """Wat er op de lijst en de bon staat. De site rekent hetzelfde uit in zatRegel."""
     c = c or {}
     return (r.get("prio") or c.get("prio") or "", r.get("uitvoerder") or "", "1" if c.get("status") in KLAAR else "")
 
@@ -496,8 +495,46 @@ def naar_pdf(bestanden, map_):
     subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(map_)] + [str(x) for x in bestanden], check=True, capture_output=True, timeout=280)
 
 
+def paginas(pdf):
+    return int(re.search(r"Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(pdf)], check=True, capture_output=True, text=True).stdout).group(1))
+
+
+LIJST_REGEL = 21.25  # hoogte van een lege regel op de lijst, in punten
+LIJST_EINDE = 68  # van de tekst Extra werkzaamheden tot de onderrand van de pagina: de regel zelf en de marge
+
+
+def lijst_ruimte(pdf):
+    """Hoeveel lege regels er per tabel nog bij passen, gemeten vanaf de laatste regel van die tabel."""
+    tekst = subprocess.run(["pdftotext", "-bbox", str(pdf), "-"], check=True, capture_output=True, text=True).stdout
+    hoogte = float(re.search(r'<page [^>]*height="([\d.]+)"', tekst).group(1))
+    return [max(0, int((hoogte - LIJST_EINDE - float(y)) // LIJST_REGEL)) for y in re.findall(r'yMin="([\d.]+)"[^>]*>aanvullingen:<', tekst)]
+
+
+def lijst_opmaken(maak, docx, wm):
+    """Lange regels zijn hoger dan het format rekent, waardoor de laatste regel op een eigen pagina viel.
+    Daarom eerst opmaken zonder lege regels, meten wat er over is en de pagina daarmee vullen."""
+    pdf = docx.with_suffix(".pdf")
+
+    def opmaak(vrij):
+        docx.write_bytes(maak(vrij))
+        naar_pdf([docx], wm)
+        return paginas(pdf)
+
+    minimaal = opmaak((0, 0))
+    vrij = lijst_ruimte(pdf)
+    while opmaak(vrij) > minimaal:
+        vrij = [max(0, x - 1) for x in vrij]
+    return pdf
+
+
+def plan_print_weg(oud):
+    for k in ("pdf", "lijstpdf"):
+        if oud.get(k):
+            (REPO / oud[k]).unlink(missing_ok=True)
+
+
 def plan_print(data, z, wm, oud):
-    """Zet prio, uitvoerder en datum op de bonnen van een plan en maakt de PDF om te printen. Wat niet veranderde blijft staan."""
+    """Zet prio, uitvoerder en datum op de bonnen van een plan en maakt de lijst en de PDF om te printen. Wat niet veranderde blijft staan."""
     b = stand(data)
     wm.mkdir(parents=True, exist_ok=True)
     cm = {r.get("nr"): r for r in data.get("cm", [])}
@@ -526,15 +563,16 @@ def plan_print(data, z, wm, oud):
     if zonder:
         print("Geen bonbestand:", ", ".join(zonder))
     stempel = zat_stempel(data, z)
-    if not nieuw and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel:
+    if not nieuw and oud.get("lijstpdf") and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel:
         print(plan_naam(z) + ": printversie is actueel.")
         return oud
     regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
     docx = wm / "zaterdaglijst.docx"
     datum = str(z.get("datum")) + (" – " + str(z.get("lijn")) if z.get("lijn") else "")
-    docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), datum, [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")], z, plan_tekst(z)))
-    naar_pdf([docx], wm)
-    stukken = [docx.with_suffix(".pdf")]
+    leeg = ontsleutel(LIJST, b["sleutel"])
+    lijsten = [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")]
+    lijstpdf = lijst_opmaken(lambda vrij: fill_bon.zaterdaglijst(leeg, datum, lijsten, z, plan_tekst(z), vrij), docx, wm)
+    stukken = [lijstpdf]
     for i, r in enumerate(zat_rijen(z)):
         bon = (cm.get(r["nr"]) or {}).get("bon")
         if bon and bon.get("pdf"):
@@ -543,14 +581,13 @@ def plan_print(data, z, wm, oud):
             stukken.append(p)
     alles = wm / "zaterdagwerk.pdf"
     subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
-    if oud.get("pdf"):
-        (REPO / oud["pdf"]).unlink(missing_ok=True)
+    plan_print_weg(oud)
     print(plan_naam(z) + ": printversie gemaakt,", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
-    return {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "stempel": stempel}
+    return {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "lijstpdf": versleutel(lijstpdf.read_bytes(), b["sleutel"]), "stempel": stempel}
 
 
 def zaterdag(a):
-    """Doet dit voor de zaterdaglijst en elke onderhoudsstop. De PDF van een weggehaalde stop verdwijnt."""
+    """Doet dit voor de zaterdaglijst en elke onderhoudsstop. De PDF's van een weggehaalde stop verdwijnen."""
     data = laad(a.site)
     b = stand(data)
     wm = Path(a.map)
@@ -560,7 +597,7 @@ def zaterdag(a):
     for s in data.get("stops") or []:
         klaar[s["id"]] = plan_print(data, s, wm / s["id"], klaar.get(s["id"]) or {})
     for k in [k for k in klaar if not plan_van(data, k)]:
-        (REPO / klaar.pop(k)["pdf"]).unlink(missing_ok=True)
+        plan_print_weg(klaar.pop(k))
     bewaar(a.site, data)
 
 
@@ -671,10 +708,10 @@ def zatbon(a):
     fill_bon.maak(spec, sjabloon, docx)
     naar_pdf([docx], wm)
     pdf = docx.with_suffix(".pdf")
-    paginas = int(re.search(r"Pages:\s+(\d+)", subprocess.run(["pdfinfo", str(pdf)], check=True, capture_output=True, text=True).stdout).group(1))
+    aantal = paginas(pdf)
     rij["bon"] = {"naam": spec["naam"], "docx": versleutel(docx.read_bytes(), b["sleutel"]), "pdf": versleutel(pdf.read_bytes(), b["sleutel"]), "beeld": versleutel(afbeelding(pdf).read_bytes(), b["sleutel"])}
     bewaar(a.site, data)
-    print(a.nr, "1 pagina" if paginas == 1 else "%d pagina's: maak de tekst korter" % paginas)
+    print(a.nr, "1 pagina" if aantal == 1 else "%d pagina's: maak de tekst korter" % aantal)
 
 
 def beelden(a):

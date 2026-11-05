@@ -259,9 +259,10 @@ def zet_uitvoeren(inhoud, uitvoeren):
     return schrijf_zip(delen)
 
 
-def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None):
+def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None, vrij=None):
     """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed).
-    Een onderhoudsstop gebruikt hetzelfde format: vervang zet er andere koppen in. De site doet hetzelfde in de browser."""
+    Een onderhoudsstop gebruikt hetzelfde format: vervang zet er andere koppen in.
+    vrij zegt per tabel hoeveel lege regels er mogen blijven staan. Zonder vrij blijven alle lege regels van het format staan."""
     delen = lees_zip(inhoud)
     root = etree.fromstring(delen["word/document.xml"])
     kop, vervang = kop or {}, vervang or {}
@@ -284,7 +285,7 @@ def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None):
         for tc in [x for x in root.iter(q("tc")) if "LET OP!" in tekst(x)]:
             tc.find(q("p")).append(run(" " + kop["letop"], 18))
     tabellen = [t for t in root.iter(q("tbl")) if "Werkzaamheid" in tekst(t)]
-    for tabel, regels in zip(tabellen, lijsten):
+    for i, (tabel, regels) in enumerate(zip(tabellen, lijsten)):
         leeg = tabel.findall(q("tr"))[2:-1]
         while len(leeg) < len(regels):
             kopie = copy.deepcopy(leeg[0])
@@ -296,6 +297,14 @@ def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None):
                 cel.find(".//" + q("t")).text = str(waarde or "")
             if regel[5]:
                 cellen[5].find(".//" + q("t")).text = "☒"
+        if vrij is not None:
+            for rij in leeg[len(regels) + vrij[i]:]:
+                tabel.remove(rij)
+        # Een SQDM-nummer past niet in de kolom Nr van het format en viel anders uiteen over twee regels.
+        for el in (*tabel.iter(q("gridCol")), *tabel.iter(q("tcW"))):
+            breedte = {"850": "1100", "4480": "4230"}.get(el.get(q("w")))
+            if breedte:
+                el.set(q("w"), breedte)
     delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
     return schrijf_zip(delen)
 

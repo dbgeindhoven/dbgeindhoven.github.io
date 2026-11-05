@@ -354,6 +354,7 @@ html.present .gvlak{height:min(46vh,460px)}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer{width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer::placeholder{color:var(--ink3)}
+.zatpdf{white-space:nowrap;padding:6px 0}
 .zatweg{display:inline-flex;flex-wrap:wrap;gap:4px 10px;white-space:nowrap}
 .tbl td.m-zat{padding-top:7px;padding-bottom:7px}
 .bondatum{width:100%;max-width:150px}
@@ -708,6 +709,7 @@ document.addEventListener("click",e=>{
   const zk=e.target.closest("[data-bestelzoek]");if(zk)zoekOpnieuw(zk);
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
+  const zb=e.target.closest("[data-zatbon]");if(zb)zatBonHaal(zb);
   if(e.target.closest("[data-zattoe]"))zatPaneel();
   if(e.target.closest("[data-nieuwestop]"))openNieuweStop();
   const ad=e.target.closest("[data-agdag]");if(ad){DAGKEUZE=ad.dataset.agdag;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
@@ -1923,48 +1925,33 @@ function wPrio(d,p){
 }
 const zatBon=nr=>(D.cm||[]).find(x=>x.nr===nr);
 const planBestand=p=>p.id?"planning_"+(p.lijn?String(p.lijn).replace(/\s+/g,"_")+"_":"")+p.datum:"zaterdag_"+p.datum;
-/* Een dag buiten de zaterdag gebruikt hetzelfde Word-format, met andere koppen. */
-const STOPTEKST=p=>({"WERKBON TD – ZATERDAGWERK":"WERKBON TD – ONDERHOUD","Overzicht zaterdagwerkzaamheden":"Overzicht onderhoudsplanning","Zaterdag ":planWeekdag(p)+" ","Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ":"Overzicht onderhoudsplanning – F.95.602 Werkbon TD – pagina "});
 /* Zelfde opbouw als zat_stempel in bonnen.py. Klopt hij niet, dan is de PDF van voor de laatste wijziging. */
-const zatStempel=()=>{const s=plan();return zatRijen().map(r=>{const c=zatBon(r.nr);return[r.nr,r.prio||"",r.uitvoerder||"",c&&KLAAR.includes(c.status)?"1":""].join("|")}).join(";")+"#"+[s.teamleider||"",s.monteurs||"",s.letop||""].join("|")};
+const zatRegel=(r,c)=>[r.prio||(c&&c.prio)||"",r.uitvoerder||"",c&&KLAAR.includes(c.status)?"1":""];
+const zatStempel=()=>{const s=plan();return zatRijen().map(r=>[r.nr,...zatRegel(r,zatBon(r.nr))].join("|")).join(";")+"#"+[s.teamleider||"",s.monteurs||"",s.letop||""].join("|")};
 async function zatWordBonnen(){
   const s=plan(),met=zatRijen().filter(r=>{const c=zatBon(r.nr);return c&&c.bon&&c.bon.docx}),zonder=zatRijen().filter(r=>!met.includes(r)).map(r=>r.nr);
   const lijst=await Promise.all(met.map(async r=>{const c=zatBon(r.nr),data=await bonWord(r,c);return{naam:c.bon.naam+".docx",m:0,crc:crc32(data),us:data.length,data}}));
   await geefBestand(new File([zipMaak(lijst)],"Bonnen_"+planBestand(s)+"_Word.zip",{type:"application/zip"}));
   melder(zonder.length?"Zonder bestand: "+zonder.join(", "):lijst.length+" bonnen gedownload");
 }
-async function zatPdf(){
+/* De lijst en de PDF met alle bonnen maakt de geplande taak. Klopt de stempel niet, dan zijn ze van voor de laatste wijziging. */
+async function planPdf(veld,begin,melding){
   const s=plan(),z=s.id?(bonnen().stops||{})[s.id]:bonnen().zaterdag;
-  if(!z||z.datum!==s.datum||z.stempel!==zatStempel()){melder("De PDF loopt achter op je laatste wijziging. Binnen een uur is hij bijgewerkt, vernieuw dan de pagina. Word is al actueel.");return}
-  await geefBestand(new File([await bonBytes(z.pdf)],(s.id?"Onderhoudsplanning_":"Zaterdagwerk_")+planBestand(s).replace(/^(zaterdag|planning)_/,"")+".pdf",{type:BONTYPE.pdf}));
+  if(!z||!z[veld]||z.datum!==s.datum||z.stempel!==zatStempel()){melder(melding);return}
+  await geefBestand(new File([await bonBytes(z[veld])],begin(s)+planBestand(s).replace(/^(zaterdag|planning)_/,"")+".pdf",{type:BONTYPE.pdf}));
 }
-function wVulKop(d,s){
-  [["Teamleider",s.teamleider],["Monteurs",s.monteurs]].forEach(([l,w])=>{
-    if(w)[...wEl(d,"tc")].filter(x=>wTekst(x)===l).forEach(tc=>{const c=tc.nextElementSibling,p=c&&wKind(c,"p")[0];if(p)p.appendChild(wRun(d,w,"18"))});
-  });
-  if(s.letop)[...wEl(d,"tc")].filter(x=>wTekst(x).includes("LET OP!")).forEach(tc=>wKind(tc,"p")[0].appendChild(wRun(d," "+s.letop,"18")));
-}
-function wVulTabel(t,rijen){
-  const leeg=wKind(t,"tr").slice(2,-1);
-  while(leeg.length<rijen.length){const k=leeg[0].cloneNode(true);leeg[leeg.length-1].after(k);leeg.push(k)}
-  rijen.forEach((r,i)=>{
-    const c=wKind(leeg[i],"tc"),b=zatBon(r.nr);
-    [r.nr,r.werkzaamheid,r.lijn_machine,zatPrio(r)||"",r.uitvoerder||""].forEach((w,j)=>{wEl(c[j],"t")[0].textContent=w});
-    if(b&&KLAAR.includes(b.status))wEl(c[5],"t")[0].textContent="☒";
-  });
-}
-async function zatLijst(){
-  const s=plan(),z=zipLees(await bonBytes(bonnen().lijst)),e=z.find(x=>x.naam==="word/document.xml"),d=wLees(await zipTekst(e));
-  [...wEl(d,"t")].forEach(t=>{if(t.textContent==="__DATUM__")t.textContent=s.lijn?s.datum+" – "+s.lijn:s.datum});
-  if(!planIsZat(s)){
-    const v=STOPTEKST(s);[...wEl(d,"t")].forEach(t=>{if(v[t.textContent])t.textContent=v[t.textContent]});
-    for(const n of z.filter(x=>/^word\/footer\d*\.xml$/.test(x.naam))){const f=wLees(await zipTekst(n));[...wEl(f,"t")].forEach(t=>{if(v[t.textContent])t.textContent=v[t.textContent]});await zipZet(n,wXml(f))}
-  }
-  wVulKop(d,s);
-  const tabellen=[...wEl(d,"tbl")].filter(t=>wTekst(t).includes("Werkzaamheid"));
-  [s.correctief||[],s.preventief||[]].forEach((r,i)=>wVulTabel(tabellen[i],r));
-  await zipZet(e,wXml(d));
-  await geefBestand(new File([zipMaak(z)],"Overzicht_"+(s.id?planBestand(s).replace("planning_","onderhoudsplanning_"):"zaterdagwerk_"+s.datum)+".docx",{type:BONTYPE.docx}));
+const zatPdf=()=>planPdf("pdf",s=>s.id?"Onderhoudsplanning_":"Zaterdagwerk_","De PDF loopt achter op je laatste wijziging. Binnen een uur is hij bijgewerkt, vernieuw dan de pagina. Word is al actueel.");
+const zatLijst=()=>planPdf("lijstpdf",s=>planIsZat(s)?"Zaterdaglijst_":"Daglijst_","De lijst loopt achter op je laatste wijziging. Binnen een uur staat de PDF klaar, vernieuw dan de pagina.");
+const zatBonPdf=r=>{const c=zatBon(r.nr);return c&&c.bon&&c.bon.pdf&&bonnen().sleutel?'<button type="button" class="tekstknop zatpdf" data-zatbon="'+esc(r.nr)+'" aria-label="PDF van '+esc(r.nr)+'">PDF</button>':""};
+/* De geplande taak zet prio, uitvoerder en datum op de bon. Is die er nog niet aan toegekomen, dan krijg je de bon wel, met een seintje. */
+async function zatBonHaal(k){
+  const c=zatBon(k.dataset.zatbon),r=zatRijen().find(x=>x.nr===k.dataset.zatbon);
+  k.disabled=true;k.textContent="Ophalen";
+  try{
+    await geefBestand(await bonBestand(c,"pdf"));
+    if(c.bon.stempel!==[...zatRegel(r,c).slice(0,2),planDag(plan())].join("|"))melder(c.nr+": prio, uitvoerder of datum op deze PDF zijn nog van voor je laatste wijziging. Binnen een uur is hij bijgewerkt.");
+  }catch(_){melder("De bon kan nu niet worden opgehaald. Probeer het opnieuw.")}
+  k.disabled=false;k.textContent="PDF";
 }
 async function zatDownload(k){
   const was=k.innerHTML,doe={word:zatWordBonnen,pdf:zatPdf,lijst:zatLijst}[k.dataset.zatdl];
@@ -2042,7 +2029,7 @@ function vPlan(s,o){
     {k:"p",l:"Prio",w:wv?"88px":"76px",c:"m-status",r:prioVeld}
   ],wv?[{k:"ur",l:"Uren",w:"66px",c:"m-sub m-zat",ml:"Uren",r:r=>'<input class="zatinvoer zatuur" data-zat="uren" data-nr="'+esc(r.nr)+'" inputmode="decimal" value="'+esc(urenTekst(r.uren))+'" aria-label="Uren voor '+esc(r.nr)+'">'}]:[],[
     {k:"u",l:"Uitvoerder",w:wv?"136px":"150px",c:wv?"m-sub m-zat":"m-sub",ml:"Uitvoerder",r:uitVeld}
-  ],wv?[{k:"x",l:"",w:"44px",c:"m-sub m-zat",r:zatWegKnop}]:[]);
+  ],wv?[{k:"b",l:"",w:"56px",c:"m-sub m-zat",r:zatBonPdf},{k:"x",l:"",w:"44px",c:"m-sub m-zat",r:zatWegKnop}]:[]);
   const bon=td?r=>{const x=D.cm.find(y=>y.nr===r.nr);if(!x)return null;const k=cmDetail(x),o=zatOnderdelen(r.nr);if(o.length)k.velden.splice(1,0,["Niet binnen",o.map(y=>y.onderdeel+" ("+y.groep+")").join(", ")]);return k}:null;
   const dl=(t,r)=>'<section class="deel"><h2>'+t+"<span>"+r.length+"</span></h2>"+(r.length?vasteTabel(cols,r,bon):'<div class="leegmelding">'+(ZATF.lijn||ZATF.soort?"Niets gevonden met dit filter.":"Niets ingepland.")+"</div>")+"</section>";
   const namen=wv?uniek((D.cm||[]).map(x=>x.monteur).concat(zatRijen().map(x=>x.uitvoerder),[s.teamleider])).sort((a,b)=>a.localeCompare(b,"nl")):[];
