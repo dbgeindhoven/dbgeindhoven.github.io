@@ -272,6 +272,21 @@ def stop_nieuw(data, s):
         print("Stop aangemaakt:", plan_naam(s))
 
 
+def stops_samen(data):
+    """De agenda toont één plan per dag. Staan er twee op dezelfde dag, dan komen de bonnen op het eerste en vervalt het tweede."""
+    per_dag = {}
+    for s in list(data.get("stops") or []):
+        eerste = per_dag.setdefault(s.get("datum"), s)
+        if eerste is s:
+            continue
+        for k in ("correctief", "preventief"):
+            eerste[k] = (eerste.get(k) or []) + (s.get(k) or [])
+        for k in ("lijn", "naam", "teamleider", "monteurs", "letop", "capaciteit"):
+            eerste[k] = eerste.get(k) or s.get(k)
+        data["stops"].remove(s)
+        print("Plannen op", s.get("datum"), "samengevoegd")
+
+
 def stop_weg(data, k):
     """De bonnen blijven bestaan. Wat nog niet klaar is staat daarna nergens meer op."""
     s = plan_van(data, k)
@@ -483,6 +498,7 @@ def wijzig(a):
                 data["bestellijst"].append(bestelregel(nr, rij.get("onderdelen"), "Uit de onderhoudsplanning van " + str(w.get("tijd"))[:10] + "."))
     for rij in {r["nr"]: r for r in opnieuw}.values():
         bon_uitvoeren(data, rij, Path(a.map) / "uitvoeren")
+    stops_samen(data)
     # Een dag zonder bonnen en zonder lijn of naam is leeggehaald: die hoeft niet in de agenda te blijven.
     data["stops"] = [s for s in data.get("stops") or [] if zat_rijen(s) or s.get("lijn") or s.get("naam")]
     bewaar(a.site, data)

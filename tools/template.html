@@ -1742,10 +1742,14 @@ const planDag=p=>planWeekdag(p)+" "+p.datum;
 const planKort=p=>planDag(p)+(p.id&&p.lijn?", "+p.lijn:"");
 const planSleutel=p=>p.leeg?p.datum:p.id||"zaterdag";
 /* Een dag zonder bonnen krijgt pas een eigen lijst als er iets op komt. */
-async function planVoor(t){
-  const p=planOpDatum(t);if(p)return p;
-  const id="S"+Date.now().toString(36),w={nr:"STOP-"+id,status:"Open",rij:{stop:{id,datum:t,lijn:"",naam:""}}};
-  await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);return planVan(id);
+/* Twee bonnen tegelijk op een lege dag moeten samen op één plan komen, dus de tweede wacht op het plan van de eerste. */
+const PLANNIEUW={};
+function planVoor(t){
+  const p=planOpDatum(t);if(p)return Promise.resolve(p);
+  return PLANNIEUW[t]||(PLANNIEUW[t]=(async()=>{
+    const id="S"+Date.now().toString(36),w={nr:"STOP-"+id,status:"Open",rij:{stop:{id,datum:t,lijn:"",naam:""}}};
+    await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);return planVan(id);
+  })().finally(()=>{delete PLANNIEUW[t]}));
 }
 const zatMelding=nr=>(MELDINGEN||[]).find(x=>x.code===nr);
 /* Bij een melding gaat de prio uit de Sheet voor: die kleurt ook het SQD-bord. */
@@ -2180,9 +2184,8 @@ async function zetBonDatum(el){
     laatste="";planTel();SCHERM[HUIDIG]();melder(GESLOTEN.includes(c.status)?c.nr+": afgemeld op "+(t||"onbekend"):t?c.nr+" staat op "+planKort(planVanBon(c.nr)):planMelding(c));
   }catch(_){el.value=oud?isoTekst(oud):"";el.disabled=false;melder("Datum aanpassen is niet gelukt. Probeer het opnieuw.")}
 }
-let datumKlok=null;
-/* Tijdens het typen is een datum al even geldig, dus er wordt gewacht tot hij af is. */
-document.addEventListener("change",e=>{if(!e.target.matches("[data-bondatum]"))return;clearTimeout(datumKlok);const el=e.target;datumKlok=setTimeout(()=>zetBonDatum(el),1000)});
+/* Tijdens het typen is een datum al even geldig, dus er wordt per veld gewacht tot hij af is. */
+document.addEventListener("change",e=>{if(!e.target.matches("[data-bondatum]"))return;const el=e.target;clearTimeout(el.klok);el.klok=setTimeout(()=>zetBonDatum(el),1000)});
 function vPlanLijst(id){
   /* Dezelfde vier pagina's bestaan ook voor alleen de SQD-bonnen (s voor het id) en alleen de CM-bonnen (c voor het id). */
   const deel=id[0]!=="p",soort=deel?id.slice(1):id,g=P_PLAN.find(p=>p.id===soort),af=soort==="pafgerond",r=D.cm.filter(c=>inGroep(c,id)),zonder=soort==="pgepland"?r.filter(c=>!planVanBon(c.nr)).length:0;
