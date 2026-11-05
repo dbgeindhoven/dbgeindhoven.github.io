@@ -185,7 +185,8 @@ def build(a):
     if pub.get("sleutel_monteur"):
         boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
     for wie, sleutel in (pub.get("monteurs") or {}).items():
-        boxes.append(box(dict(monteur_deel, naam=wie), sleutel))
+        tekst = (data["meta"].get("monteur_tekst") or {}).get(wie)
+        boxes.append(box(dict(monteur_deel, naam=wie, **({"tekst": tekst} if tekst else {})), sleutel))
     if pub.get("sleutel_output"):
         # Alleen het webadres en de outputsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "output", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": output_sleutel}}}, pub["sleutel_output"]))

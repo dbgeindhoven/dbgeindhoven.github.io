@@ -214,6 +214,7 @@ html.present .deelkop .knop{display:none}
 .bevestigd p{margin:0}
 #monteurscherm{min-height:100vh;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .mkop{display:flex;align-items:center;gap:12px}
+.mtekst{margin:0;padding:10px 14px;border:2px solid var(--gold);border-radius:8px;background:var(--gold-soft);font-weight:700;text-align:center}
 .mkop b{display:block;font:700 1.0625rem/1.25 var(--kop)}
 .mkop small{display:block;color:var(--ink2);font-size:.75rem}
 .seg.mtabs{display:flex;margin:0}
@@ -1191,6 +1192,7 @@ function monteurScherm(){
   $("#lock").hidden=true;$("#monteurscherm").hidden=false;
   const vak=$("#minhoud");
   if(D.naam)$(".mkop small").textContent="Ingelogd als "+D.naam;
+  if(D.tekst){const t=document.createElement("p");t.className="mtekst";t.textContent=D.tekst;$(".mkop").after(t)}
   function toon(t){
     document.querySelectorAll("#mtabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===t)));
     rteken=null;pmTeken=null;
