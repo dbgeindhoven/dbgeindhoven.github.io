@@ -18,7 +18,7 @@ const VERVOLG = ['Gereed', 'Overdragen aan volgende dienst', 'Onderdeel bestelle
 const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];
 const LIJNEN = ['Lijn 1', 'Lijn 2', 'Lijn 3'];
 const OUTKOP = ['datum', 'ploeg', 'lijn', 'output', 'opmerking', 'door', 'tijd'];
-const PMKOP = ['nr', 'datum', 'status', 'taken', 'opmerking', 'door', 'tijd'];
+const PMKOP = ['nr', 'datum', 'status', 'taken', 'opmerking', 'door', 'tijd', 'reg'];
 const PMSTATUS = ['Uitgevoerd', 'Deels uitgevoerd'];
 
 function blad_() {
@@ -185,19 +185,28 @@ function pmRijen_() {
   });
 }
 
+// Een bon die helemaal is afgemeld krijgt een doorlopend registratienummer en een bestand voor de geplande taak, die de registratiebon maakt.
+// Dit draait binnen de lock, dus nooit dubbel. Met een nummer ligt de regel vast.
 function zetPm_(d) {
   const s = SpreadsheetApp.openById(SHEET_ID);
   const b = s.getSheetByName('PM') || s.insertSheet('PM', s.getNumSheets());
-  b.getRange('A:G').setNumberFormat('@');
+  b.getRange('A:H').setNumberFormat('@');
   b.getRange(1, 1, 1, PMKOP.length).setValues([PMKOP]);
   const n = b.getLastRow();
-  const nrs = n > 1 ? b.getRange(2, 1, n - 1, 1).getValues().map(r => r[0]) : [];
-  const i = nrs.indexOf(d.nr);
+  const rijen = n > 1 ? b.getRange(2, 1, n - 1, PMKOP.length).getValues() : [];
+  const i = rijen.findIndex(r => r[0] === d.nr);
+  if (i >= 0 && rijen[i][7]) return { tijd: rijen[i][6], reg: rijen[i][7], al: true };
   const tijd = nu_();
-  const rij = [d.nr, d.datum, d.status, d.taken, schoon_(d.opmerking), schoon_(d.door), tijd];
+  let reg = '';
+  if (d.status === 'Uitgevoerd') {
+    const hoogste = rijen.reduce((h, r) => Math.max(h, Number((/^PMR-(\d+)$/.exec(r[7]) || [0, 0])[1])), 0);
+    reg = 'PMR-' + (hoogste + 1);
+    zetBonstatus_(reg, d.status, { pmreg: { reg: reg, nr: d.nr, opmerking: String(d.opmerking == null ? '' : d.opmerking).slice(0, 1000), door: schoon_(d.door), tijd: tijd } }, d.door);
+  }
+  const rij = [d.nr, d.datum, d.status, d.taken, schoon_(d.opmerking), schoon_(d.door), tijd, reg];
   if (i >= 0) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
   else b.appendRow(rij);
-  return tijd;
+  return { tijd: tijd, reg: reg };
 }
 
 function doGet(e) {
@@ -258,7 +267,7 @@ function doPost(e) {
     }
     if (d.actie === 'pm') {
       if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PMSTATUS.includes(d.status) || !/^PM-\d+(,PM-\d+)*$/.test(d.taken)) return uit_({ fout: 'onjuiste invoer' });
-      return uit_({ ok: true, tijd: zetPm_(d) });
+      return uit_(Object.assign({ ok: true }, zetPm_(d)));
     }
     if (d.actie === 'rapport') {
       if (!VERVOLG.includes(d.vervolg)) return uit_({ fout: 'onjuiste invoer' });

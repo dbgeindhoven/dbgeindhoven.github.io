@@ -111,7 +111,9 @@ def bijwerken(data, vandaag):
     g = groepen(data)
     verdeel(plan, g)
     tot = dat(plan["vast_tot"]) if plan.get("vast_tot") else start - EEN_DAG
-    bonnen, d = [b for b in plan.get("bonnen", []) if nu - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]) <= tot], tot + EEN_DAG
+    # Een bon met een registratiebon blijft staan: dat is het bewijs dat het werk is gedaan.
+    vast = (data["meta"].get("bonnen") or {}).get("pmreg") or {}
+    bonnen, d = [b for b in plan.get("bonnen", []) if dat(b["datum"]) <= tot and (b["nr"] in vast or nu - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]))], tot + EEN_DAG
     while d <= nu + datetime.timedelta(days=VOORUIT):
         if d >= start and d.weekday() < 5:
             bonnen += bonnen_op(plan, g, d)
@@ -130,5 +132,5 @@ def monteur_deel(data, vandaag):
     if not plan:
         return None
     grens = dat(vandaag) + datetime.timedelta(days=MONTEUR_VOORUIT)
-    bonnen = [b for b in plan.get("bonnen", []) if dat(b["datum"]) <= grens]
+    bonnen = [b for b in plan.get("bonnen", []) if dat(vandaag) - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]) <= grens]
     return {"bonnen": bonnen, "taken": {t: plan["taken"][t] for b in bonnen for t in b["taken"]}}

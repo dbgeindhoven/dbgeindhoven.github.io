@@ -17,7 +17,7 @@ met drive_id. Per bon staat daar <nr>.json met de tekst van de bon; maak zet er 
 <nr>.pdf en <nr>-bon.jpg (de afbeelding waarmee de bon op de site opent) naast. De leesbare bonnen en het template komen nooit in deze repository, alleen
 versleuteld in bonnen/.
 """
-import argparse, base64, datetime, json, re, secrets, subprocess, sys, tempfile
+import argparse, base64, datetime, json, re, secrets, subprocess, sys, tempfile, textwrap
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -330,7 +330,7 @@ def vervolg_wijzig(data, v, w, opnieuw):
         print(v.get("id"), "heeft geen bon, vervolg overgeslagen")
         return
     keuze, tekst, door, dag = v.get("vervolg"), v.get("tekst"), v.get("door"), str(w.get("tijd"))[:10]
-    regel = "%s, %s: %s." % (dag, door or "Monteur", keuze) + (" " + tekst.rstrip(". ") + "." if tekst else "")
+    regel = "%s, %s: %s." % (dag, door or "Monteur", keuze) + (" " + tekst.rstrip() + ("" if tekst.rstrip()[-1:] in ".!?" else ".") if tekst else "")
     rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
     print(nr, keuze, door)
     if rij.get("status") in KLAAR:
@@ -362,6 +362,9 @@ def wijzig(a):
         extra = w.get("rij") or {}
         if extra.get("vervolg"):
             vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
+            continue
+        if extra.get("pmreg"):
+            pm_registratie(data, extra["pmreg"], Path(a.map) / "pmreg")
             continue
         if extra.get("stop"):
             stop_nieuw(data, extra["stop"])
@@ -556,6 +559,34 @@ def pmdag(a):
         sets[a.datum] = {"pdf": versleutel(alles.read_bytes(), b["sleutel"]), "bonnen": len(bonnen)}
     print(a.datum + ":", len(bonnen), "PM-bonnen")
     bewaar(a.site, data)
+
+
+def pm_registratie(data, r, wm):
+    """Een PM-bon die helemaal is afgemeld krijgt een registratiebon in F.95.602. Alleen als PDF: dit is het bewijs en dat verandert niet meer."""
+    b = stand(data)
+    klaar = b.setdefault("pmreg", {})
+    bon = next((x for x in data["pmplan"]["bonnen"] if x["nr"] == r["nr"]), None)
+    if r["nr"] in klaar or bon is None:
+        print(r["reg"], r["nr"], "staat al vast" if bon else "staat niet meer in de planning")
+        return
+    spec = pm_spec(bon, {x["id"]: x for x in data.get("pm", [])})
+    dag = str(r.get("tijd"))[:10]
+    regels = ["Registratie van PM-bon %s, gepland op %s." % (r["nr"], bon["datum"]), "Alle taken en controlepunten afgetekend door %s op %s." % (r.get("door"), r.get("tijd"))]
+    if r.get("opmerking"):
+        regels += textwrap.wrap("Opmerking monteur: " + " ".join(r["opmerking"].split()), 112, max_lines=2, placeholder=" … zie TD Hub")
+    spec.update(
+        naam=r["reg"] + spec["naam"][len(r["nr"]):], werkbon_nr=r["reg"], uitvoerder=r.get("door"), uitvoeren_op="Uitgevoerd op " + dag,
+        omschrijving="Registratie " + spec["omschrijving"][0].lower() + spec["omschrijving"][1:], opmerking=regels,
+        afmelding={"monteur": str(r.get("door")), "datum": dag}, foto_tekst="Geen foto bij deze registratie",
+    )
+    wm.mkdir(parents=True, exist_ok=True)
+    sjabloon, pad = wm / "template.docx", wm / (spec["naam"] + ".docx")
+    sjabloon.write_bytes(ontsleutel(TEMPLATE, b["sleutel"]))
+    fill_bon.maak(spec, sjabloon, pad)
+    naar_pdf([pad], wm)
+    pdf = pad.with_suffix(".pdf")
+    print(r["reg"], r["nr"], "registratiebon gemaakt,", subprocess.run(["pdfinfo", str(pdf)], check=True, capture_output=True, text=True).stdout.split("Pages:")[1].split()[0], "pagina")
+    klaar[r["nr"]] = {"reg": r["reg"], "naam": spec["naam"], "pdf": versleutel(pdf.read_bytes(), b["sleutel"])}
 
 
 def zatbon(a):

@@ -653,7 +653,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon],.bonvink,select"))return;
+    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -675,6 +675,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-storing]"))openStoring();
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
+  const reg=e.target.closest("[data-pmpdf]");if(reg)haalRegistratie(reg);
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   if(e.target.closest("[data-zattoe]"))zatPaneel();
@@ -771,6 +772,7 @@ function storingRij(c){
 /* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
 function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{};
+  if(extra.pmreg)return;
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
   if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r)r.groep=extra.bestel.groep;return}
   if(extra.zatkop){pasZatKop(extra.zatkop);return}
@@ -944,7 +946,7 @@ async function verzendUitbak(){
       /* Een regel die intussen is verwijderd mag de rest niet tegenhouden. */
       try{j=await stuur(x.d)}catch(e){if(x.d.actie!=="rapport"||e.message!=="melding niet gevonden")throw e;await UITBAK.weg(x.n);continue}
       await UITBAK.weg(x.n);
-      if(x.d.actie==="pm")pmZet(Object.assign({},x.d,{tijd:j.tijd}));
+      if(x.d.actie==="pm")pmZet(Object.assign({},x.d,{tijd:j.tijd,reg:j.reg||""}));
       else if(x.d.actie==="rapport")rapportZet(x.d,j);
       else{RAPPORT=(RAPPORT||[]).concat([Object.assign({},x.d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste=""}
     }
@@ -1166,7 +1168,7 @@ function pmScherm(){
   const vak=$("#minhoud"),tabs=$("#mtabs");let tab="doen",open=null;
   const kaart=b=>{
     const s=pmStand(b),n=b.taken.length,a=pmAf(b.nr);
-    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.lijn+", "+b.lijndeel)+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.nr].join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
+    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.lijn+", "+b.lijndeel)+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.nr,a&&a.reg].filter(Boolean).join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
   };
   const groep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.map(kaart).join("")+"</section>";
   function lijst(){
@@ -1196,9 +1198,9 @@ function pmScherm(){
     open=nr;
     const a=pmAf(nr),klaar=a&&a.status==="Uitgevoerd"&&!aanpassen,gedaan=pmGedaan(a),ts=pmTaken(b);
     const kopje='<button type="button" class="tekstknop pmterug" data-pmterug>Terug naar de lijst</button><article class="pmbon"><div class="pmb1"><div><small>'+esc(nr)+"</small><h2>"+esc(pmTitel(b))+"</h2></div>"+st(pmStand(b))+'</div><dl class="pmvelden"><dt>Uitvoeren op</dt><dd>'+esc(pmDag(datum(b.datum)))+"</dd><dt>Lijn / machine</dt><dd>"+esc(b.lijn+" / "+b.lijndeel)+'</dd></dl><p class="pmlet">'+esc(PMLET)+"</p>";
-    const stand=a?'<p class="pmaf">'+esc((a.wacht?"Wacht op bereik, afgemeld door ":"Afgemeld door ")+a.door+", "+a.tijd)+"</p>":"";
+    const stand=a?'<p class="pmaf">'+esc((a.wacht?"Wacht op bereik, afgemeld door ":"Afgemeld door ")+a.door+", "+a.tijd)+"</p>"+(a.reg?'<p class="pmaf">Registratienummer <b>'+esc(a.reg)+"</b></p>":""):"";
     if(klaar){
-      vak.innerHTML=kopje+stand+'<div class="pmtaken">'+ts.map(t=>taak(t,gedaan,true)).join("")+"</div>"+(a.opmerking?'<p class="pmopm"><b>Opmerking</b>'+esc(a.opmerking)+"</p>":"")+'<button type="button" class="knop" data-pmaanpas>Aanpassen</button></article>';
+      vak.innerHTML=kopje+stand+'<div class="pmtaken">'+ts.map(t=>taak(t,gedaan,true)).join("")+"</div>"+(a.opmerking?'<p class="pmopm"><b>Opmerking</b>'+esc(a.opmerking)+"</p>":"")+(a.reg?"":'<button type="button" class="knop" data-pmaanpas>Aanpassen</button>')+"</article>";
       tellen();
       return;
     }
@@ -1215,7 +1217,7 @@ function pmScherm(){
       if(!alles&&!opm){f.textContent="Schrijf bij Opmerking waarom niet alles is gedaan.";f.hidden=false;$("#pm_opm").focus();return}
       const d={actie:"pm",nr,datum:b.datum,status:alles?"Uitgevoerd":"Deels uitgevoerd",taken:pmTakenTekst(ts,ids),opmerking:opm,door:D.naam};
       knop.disabled=true;knop.textContent="Bezig";
-      try{const j=await stuur(d);pmZet(Object.assign({},d,{tijd:j.tijd}));lijst();window.scrollTo(0,0);melder(nr+(alles?" is afgemeld":" is deels afgemeld"))}
+      try{const j=await stuur(d);pmZet(Object.assign({},d,{tijd:j.tijd,reg:j.reg||""}));if(j.al)haalPm();lijst();window.scrollTo(0,0);melder(j.reg?nr+" is afgemeld, registratienummer "+j.reg:nr+(alles?" is afgemeld":" is deels afgemeld"))}
       catch(_){
         try{await UITBAK.zet({d,tijd:nuTekst()});await leesUitbak();lijst();window.scrollTo(0,0);melder("Geen bereik. De afmelding wordt vanzelf verstuurd.")}
         catch(_2){f.textContent="Afmelden is niet gelukt. Probeer het opnieuw.";f.hidden=false;knop.disabled=false;tel()}
@@ -1240,31 +1242,41 @@ function pmScherm(){
   lijst();
   if(MELD()){haalPm();leesUitbak();uitbakAan();setInterval(()=>{if(!document.hidden)haalPm()},60000)}
 }
+/* De werkvoorbereider downloadt de registratiebon. Die maakt de geplande taak, tot die tijd staat alleen het nummer er. */
+const regVeld=b=>{const r=(pmAf(b.nr)||{}).reg,p=(bonnen().pmreg||{})[b.nr];return!r?null:p?'<button class="tekstknop" data-pmpdf="'+esc(b.nr)+'" aria-label="Registratiebon '+esc(r)+' downloaden">'+esc(r)+"</button>":esc(r)};
+async function haalRegistratie(k){
+  const p=bonnen().pmreg[k.dataset.pmpdf];k.disabled=true;
+  try{await geefBestand(new File([await bonBytes(p.pdf)],p.naam+".pdf",{type:BONTYPE.pdf}))}
+  catch(_){melder("Downloaden is niet gelukt. Probeer het opnieuw.")}
+  k.disabled=false;
+}
 function pmDetail(b){
   const a=pmAf(b.nr),g=pmGedaan(a);
   const regel=t=>{
     const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),mis=alle.filter(y=>!g.includes(y.c));
     return"<li"+(vol?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
   };
-  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Opmerking",a&&a.opmerking]]};
+  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Registratie",regVeld(b),true],["Opmerking",a&&a.opmerking]]};
 }
 function vPmBonnen(){
-  const bonnenLijst=pmPlan().bonnen,nu=pmNu(),tot=bonnenLijst.filter(b=>datum(b.datum)<=nu);
+  /* Bonnen met een registratiebon blijven altijd staan, andere gaan na 8 weken uit de planning. De telling kijkt daarom alleen naar die 8 weken. */
+  const bonnenLijst=pmPlan().bonnen,nu=pmNu(),van=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate()-56),tot=bonnenLijst.filter(b=>datum(b.datum)>=van&&datum(b.datum)<=nu);
   const af=tot.filter(b=>pmStand(b)==="Uitgevoerd").length,laat=tot.filter(b=>pmStand(b)==="Achterstallig").length;
   const af2=(b,k)=>(pmAf(b.nr)||{})[k]||null;
-  lijstScherm({key:"pmbonnen",titel:"PM-bonnen",sub:"Taken in bedrijf, wekelijks en maandelijks. Tot en met vandaag "+af+" van de "+tot.length+" afgemeld"+(laat?", "+laat+" achterstallig":"")+".",rijen:bonnenLijst,eenheid:["bon","bonnen"],
+  lijstScherm({key:"pmbonnen",titel:"PM-bonnen",sub:"Taken in bedrijf, wekelijks en maandelijks. Laatste 8 weken "+af+" van de "+tot.length+" afgemeld"+(laat?", "+laat+" achterstallig":"")+".",rijen:bonnenLijst,eenheid:["bon","bonnen"],
     geen:"Er staan nog geen PM-bonnen gepland.",
     alleen:{l:"Tot en met vandaag",test:b=>datum(b.datum)<=nu},
     seg:{get:pmStand,o:PMSTAND},
     selects:[{k:"lijn",l:"Alle lijnen",o:uniek(bonnenLijst.map(b=>b.lijn)),get:b=>b.lijn}],
-    tekst:b=>[b.nr,b.lijn,b.lijndeel,af2(b,"door"),af2(b,"opmerking")].concat(pmTaken(b).map(t=>t.taak)).join(" "),
+    tekst:b=>[b.nr,b.lijn,b.lijndeel,af2(b,"door"),af2(b,"reg"),af2(b,"opmerking")].concat(pmTaken(b).map(t=>t.taak)).join(" "),
     kolommen:[
       {k:"d",l:"Uitvoeren op",w:"104px",c:"m-nr",x:"nr",r:b=>esc(b.datum),s:b=>+datum(b.datum)},
       {k:"b",l:"Bon",c:"m-main",x:"titel",r:b=>esc(b.lijn+", "+b.lijndeel),s:b=>norm(b.lijn+b.lijndeel)},
       {k:"t",l:"Taken",w:"64px",n:true,r:b=>String(b.taken.length),s:b=>b.taken.length},
       {k:"st",l:"Status",w:"160px",c:"m-status",r:b=>st(pmStand(b)),s:b=>PMSTAND.indexOf(pmStand(b))},
       {k:"w",l:"Afgemeld door",w:"150px",c:"m-sub",ml:"Afgemeld door",r:b=>of(af2(b,"door")),s:b=>norm(af2(b,"door"))},
-      {k:"o",l:"Opmerking",w:"26%",c:"m-sub",ml:"Opmerking",r:b=>of(af2(b,"opmerking")),s:b=>norm(af2(b,"opmerking"))}],
+      {k:"r",l:"Registratie",w:"100px",c:"m-sub",ml:"Registratie",r:b=>regVeld(b)||of(null),s:b=>Number(String(af2(b,"reg")||"").replace(/\D/g,""))},
+      {k:"o",l:"Opmerking",w:"22%",c:"m-sub",ml:"Opmerking",r:b=>of(af2(b,"opmerking")),s:b=>norm(af2(b,"opmerking"))}],
     detail:pmDetail});
 }
 function verklein(f){

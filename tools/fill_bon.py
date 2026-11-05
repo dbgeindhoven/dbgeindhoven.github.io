@@ -158,6 +158,16 @@ def in_bedrijf(root):
     p.getparent().remove(p)
 
 
+def zet_afmelding(root, af):
+    """Registratie van afgerond werk: monteur en datum bij Tijdregistratie en Werk gereed op JA. De rest blijft voor de teamleider."""
+    kop = next(tc for tc in root.iter(q("tc")) if tekst(tc) == "Monteur")
+    for cel, waarde in zip(kop.getparent().getnext().findall(q("tc")), (af["monteur"], af["datum"])):
+        cel.find(q("p")).append(run(waarde))
+    gereed = next(volgende_cel(tc) for tc in root.iter(q("tc")) if tekst(tc) == "Werk gereed?")
+    t = next(gereed.iter(q("t")))
+    t.text = t.text.replace("☐", "☒", 1)
+
+
 def maak(spec, template, uit):
     with zipfile.ZipFile(template) as z:
         namen = z.namelist()
@@ -171,6 +181,8 @@ def maak(spec, template, uit):
     if spec.get("let_op"):
         alinea(root, "⚠ Let op").append(run(" " + spec["let_op"]))
     vul_opmerkingen(root, spec.get("opmerking", []))
+    if spec.get("afmelding"):
+        zet_afmelding(root, spec["afmelding"])
     zet_foto(volgende_cel(cel), spec, delen)
     delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
     with zipfile.ZipFile(uit, "w", zipfile.ZIP_DEFLATED) as z:
