@@ -202,18 +202,18 @@ def plan_dag(p):
 
 
 def plan_naam(p):
-    return plan_dag(p) + (", " + str(p.get("lijn")) if p.get("id") else "")
+    return plan_dag(p) + (", " + str(p.get("lijn")) if p.get("id") and p.get("lijn") else "")
 
 
 def plan_tekst(p):
-    """Een stop gebruikt het Word-format van de zaterdaglijst, met andere koppen. De site doet hetzelfde in STOPTEKST."""
-    if not p.get("id"):
+    """Een dag buiten de zaterdag gebruikt het Word-format van de zaterdaglijst, met andere koppen. De site doet hetzelfde in STOPTEKST."""
+    if not p.get("id") or plan_dag(p).startswith("Zaterdag"):
         return None
     return {
-        "WERKBON TD – ZATERDAGWERK": "WERKBON TD – ONDERHOUDSSTOP",
-        "Overzicht zaterdagwerkzaamheden": "Overzicht onderhoudsstop",
+        "WERKBON TD – ZATERDAGWERK": "WERKBON TD – ONDERHOUD",
+        "Overzicht zaterdagwerkzaamheden": "Overzicht onderhoudsplanning",
         "Zaterdag ": plan_dag(p).split()[0] + " ",
-        "Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ": "Overzicht onderhoudsstop – F.95.602 Werkbon TD – pagina ",
+        "Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ": "Overzicht onderhoudsplanning – F.95.602 Werkbon TD – pagina ",
     }
 
 
@@ -296,9 +296,29 @@ def bestel_wijzig(data, b):
         print(r.get("cm"), r.get("onderdeel"), "staat op", b["groep"])
 
 
+def bon_uitvoeren(data, rij, wm):
+    """Zet de nieuwe tekst bij Uitvoeren op ook op de Word- en PDF-bon."""
+    bon = rij.get("bon") or {}
+    print(rij["nr"], "uitvoeren op", rij["uitvoeren"])
+    if not bon.get("docx"):
+        return
+    b = stand(data)
+    wm.mkdir(parents=True, exist_ok=True)
+    docx = wm / (bon["naam"] + ".docx")
+    docx.write_bytes(fill_bon.zet_uitvoeren(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), rij["uitvoeren"]))
+    naar_pdf([docx], wm)
+    pdf = docx.with_suffix(".pdf")
+    for k in ("docx", "pdf", "beeld"):
+        if bon.get(k):
+            (REPO / bon[k]).unlink(missing_ok=True)
+    bon.pop("stempel", None)
+    bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
+    opnieuw = []
     # Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn.
     for w in sorted(laad(Path(a.map) / "wijzig.json"), key=lambda x: not (x.get("rij") or {}).get("stop")):
         nr, status = w["nr"], w["status"]
@@ -337,6 +357,11 @@ def wijzig(a):
                 rij["uitgevoerd_op"] = None
             rij["status"] = status
             print(nr, status)
+            if "uitvoeren" in extra:
+                rij["uitvoeren"] = extra["uitvoeren"] or None
+                opnieuw.append(rij)
+    for rij in opnieuw:
+        bon_uitvoeren(data, rij, Path(a.map) / "uitvoeren")
     bewaar(a.site, data)
 
 
@@ -396,7 +421,7 @@ def plan_print(data, z, wm, oud):
         return oud
     regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
     docx = wm / "zaterdaglijst.docx"
-    datum = str(z.get("datum")) + (" – " + str(z.get("lijn")) if z.get("id") else "")
+    datum = str(z.get("datum")) + (" – " + str(z.get("lijn")) if z.get("lijn") else "")
     docx.write_bytes(fill_bon.zaterdaglijst(ontsleutel(LIJST, b["sleutel"]), datum, [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")], z, plan_tekst(z)))
     naar_pdf([docx], wm)
     stukken = [docx.with_suffix(".pdf")]

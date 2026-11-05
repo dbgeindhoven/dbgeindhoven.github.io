@@ -229,6 +229,15 @@ def zet_zaterdag(inhoud, prio, uitvoerder, uitvoeren):
     return schrijf_zip(delen)
 
 
+def zet_uitvoeren(inhoud, uitvoeren):
+    """Geeft een Word-bon terug met deze tekst bij Uitvoeren op."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    zet_veld(root, "Uitvoeren op", uitvoeren)
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
+
+
 def zaterdaglijst(inhoud, datum, lijsten, kop=None, vervang=None):
     """Vult het lege Word-format. Elke regel is (nr, werkzaamheid, lijn en machine, prio, uitvoerder, gereed).
     Een onderhoudsstop gebruikt hetzelfde format: vervang zet er andere koppen in. De site doet hetzelfde in de browser."""

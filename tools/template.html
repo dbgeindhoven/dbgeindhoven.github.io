@@ -326,6 +326,7 @@ html.present .gvlak{height:min(46vh,460px)}
 .gtip span span{gap:0;align-items:center}
 .gtip i{display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:2px}
 @media (max-width:640px){.gvlak{height:220px;margin:0 4px 0 46px}.gstapel i{font-size:0}}
+.uitvoerveld{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .statuskeuze{max-width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer{width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer::placeholder{color:var(--ink3)}
@@ -343,6 +344,26 @@ html.present .gvlak{height:min(46vh,460px)}
 .zatmeter.teveel i{background:var(--crit)}
 .zatbulk{position:sticky;top:8px;z-index:4;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px;padding:8px 10px;border-radius:8px;background:var(--sunken);font-size:.875rem}
 .stopweg{margin-top:16px}
+#zat_doel{width:160px}
+.agenda{margin:0 0 22px}
+.agkop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.agkop b{min-width:150px;text-align:center;font-size:1rem}
+.agkop .knop{padding:4px 12px;font-size:1.0625rem;line-height:1.2}
+.agkop .tekstknop{margin-left:8px}
+.aggrid{display:grid;grid-template-columns:30px repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.agkopje{padding:6px 4px;background:var(--sunken);color:var(--ink2);font-size:.75rem;font-weight:500;text-align:center}
+.agwk{display:flex;justify-content:center;padding-top:7px;background:var(--sunken);color:var(--ink3);font-size:.6875rem}
+.agcel{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;min-height:84px;padding:5px 6px;border:0;background:var(--bg);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.agcel.buiten{background:var(--side);color:var(--ink3)}
+.agcel:hover{background:var(--hover)}
+.agcel[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--gold)}
+.agnr{font-size:.8125rem;font-weight:500}
+.agcel.nu .agnr{align-self:flex-start;min-width:20px;padding:0 4px;border-radius:10px;background:var(--gold);color:var(--on-gold);text-align:center}
+.agchip{display:block;padding:2px 5px;border-radius:5px;background:var(--gold-soft);font-size:.75rem;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agchip.pm{background:var(--sunken)}
+.agchip.laat{box-shadow:inset 0 0 0 1px var(--crit);color:var(--crit-ink)}
+.agkort{display:none}
+.dagkop h2{margin:0;font:700 1.25rem/1.3 var(--kop)}
 .zatbulk .zatinvoer{width:200px}
 .zatkies{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
 .zatlet{display:block;margin-top:3px;font-size:.8125rem;font-weight:400;color:var(--ink2);white-space:normal}
@@ -420,6 +441,12 @@ html.present .page{max-width:none}
 }
 @media (max-width:760px){
   .zatbulk{top:calc(env(safe-area-inset-top,0px) + 56px)}
+  .aggrid{grid-template-columns:22px repeat(7,minmax(0,1fr))}
+  .agcel{min-height:58px;padding:4px 3px;align-items:center}
+  .agchip{width:100%;padding:1px 2px;font-size:.6875rem;text-align:center}
+  .aglang{display:none}
+  .agkort{display:inline}
+  .agkop b{flex:1;min-width:0}
   .head{flex-wrap:wrap}
   .zatkop{grid-template-columns:minmax(0,1fr)}
   .zatx span{display:inline}
@@ -526,10 +553,11 @@ const ICON={
   scherm:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>',
   camera:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.5" r="3.5"/>',
   afvink:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
   foto:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5L6 20"/>'
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
-const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"},{id:"stop",t:"Onderhoudsstop",i:"pauze",kort:"Stop"}];
+const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"},{id:"stop",t:"Onderhoudsplanning",i:"agenda",kort:"Planning"}];
 const LIJNEN_OUTPUT=["Lijn 1","Lijn 2","Lijn 3"];
 const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l}));
 const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"};
@@ -646,7 +674,9 @@ document.addEventListener("click",e=>{
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   if(e.target.closest("[data-zattoe]"))zatPaneel();
   if(e.target.closest("[data-nieuwestop]"))openNieuweStop();
-  const sk=e.target.closest("[data-stop]");if(sk){STOPKEUZE=sk.dataset.stop;vStop()}
+  const ad=e.target.closest("[data-agdag]");if(ad){DAGKEUZE=ad.dataset.agdag;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
+  const am=e.target.closest("[data-agmaand]");if(am){const d=new Date(MAAND.j,MAAND.m+Number(am.dataset.agmaand),1);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
+  if(e.target.closest("[data-agnu]")){const d=pmNu();DAGKEUZE=dagTekst(d);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
   const sw=e.target.closest("[data-stopweg]");if(sw)stopWegKlik(sw);
   if(e.target.closest("#zat_verplaats"))zatVerplaats();
   if(e.target.closest("[data-nieuwebon]"))openNieuweBon();
@@ -679,7 +709,7 @@ function openPaneel(d){
   if(d.weg)d.weg($("#b_weg"));
 }
 function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
+const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",wvMag()?uitvoerVeld(r):r.uitvoeren,wvMag()],["Onderdelen",r.onderdelen],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
@@ -745,6 +775,7 @@ function pasBonToe(w){
   if(mid&&b){b.gesloten=(b.gesloten||[]).filter(x=>x!==mid);if(GESLOTEN.includes(w.status))b.gesloten.push(mid);if(MELDINGEN)MELDINGEN=MELDINGEN.filter(meldZicht)}
   if(c&&w.status==="Verwijderd")D.cm.splice(D.cm.indexOf(c),1);else if(c)c.status=w.status;
   if(w.status==="Verwijderd")zatWeg(w.nr);else if(w.rij&&w.rij.zat)pasZatToe(w.nr,w.rij.zat);
+  if(extra.uitvoeren!==undefined&&w.status!=="Verwijderd"){UITOPEN[w.nr]=extra.uitvoeren;if(c)c.uitvoeren=extra.uitvoeren}
   D.storingen=(D.storingen||[]).filter(x=>x.nr!==w.nr).concat(w.rij&&w.rij.nr?[w.rij]:[]).sort((x,y)=>(x.prio||9)-(y.prio||9)||volg.indexOf(x.status)-volg.indexOf(y.status)||nummer(x.nr)-nummer(y.nr));
 }
 async function zetBonStatus(sel){
@@ -756,6 +787,39 @@ async function zetBonStatus(sel){
   sel.disabled=false;
 }
 document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))zetBonStatus(e.target)});
+/* Uitvoeren op: een zaterdag of stop zet de bon op die lijst, een tekst of datum haalt hem van de lijst af. */
+const UITVOERTEKST=["Volgende dienst","Z.s.m.","In overleg","Na levering","Eerstvolgende onderhoudstop"];
+const planVanBon=nr=>plannen().find(p=>planRijen(p).some(x=>x.nr===nr));
+function uitvoerVeld(r){
+  const op=planVanBon(r.nr),nu=new Date();nu.setHours(0,0,0,0);
+  const lijst=plannen().filter(p=>p===op||datum(p.datum)>=nu),tekst=(!op&&r.uitvoeren&&!UITVOERTEKST.includes(r.uitvoeren)?[r.uitvoeren]:[]).concat(UITVOERTEKST);
+  const opt=(w,t,aan)=>'<option value="'+esc(w)+'"'+(aan?" selected":"")+">"+esc(t)+"</option>";
+  return'<div class="uitvoerveld" data-uitvoernr="'+esc(r.nr)+'"><select class="statuskeuze" data-bonuitvoeren aria-label="Uitvoeren op voor '+esc(r.nr)+'">'+(!op&&!r.uitvoeren?opt("","Niet ingevuld",true):"")+(lijst.length?'<optgroup label="Op de lijst zetten">'+lijst.map(p=>opt("plan:"+planSleutel(p),planKort(p),p===op)).join("")+"</optgroup>":"")+'<optgroup label="Geen lijst">'+tekst.map(t=>opt("tekst:"+t,t,!op&&t===r.uitvoeren)).join("")+opt("kies:datum","Andere datum")+opt("kies:tekst","Eigen tekst")+"</optgroup></select></div>";
+}
+async function zetUitvoeren(veld,keuze){
+  const c=D.cm.find(x=>x.nr===veld.dataset.uitvoernr),op=planVanBon(c.nr),t=keuze.replace(/^tekst:/,"");
+  let doel=keuze.startsWith("plan:")?planVan(keuze==="plan:zaterdag"?"":keuze.slice(5)):null;
+  veld.querySelectorAll("select,input").forEach(x=>{x.disabled=true});
+  try{
+    if(keuze.startsWith("datum:"))doel=await planVoor(isoTekst(keuze.slice(6)));
+    if(doel){if(doel!==op)pasBonToe(await planZet(c,doel))}
+    else if(op){const r=planRijen(op).find(x=>x.nr===c.nr);pasBonToe(await zatStuur(r,Object.assign(op.id?{plan:op.id}:{},{datum:op.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren,weg:true}),{uitvoeren:t}))}
+    else{const w={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(c)),{uitvoeren:t})};await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w)}
+    laatste="";if(rteken)rteken();SCHERM[HUIDIG]();melder(doel?c.nr+" staat op "+planKort(doel):c.nr+": uitvoeren op "+t);
+  }catch(_){melder("Aanpassen is niet gelukt. Probeer het opnieuw.")}
+  veld.outerHTML=uitvoerVeld(c);
+}
+document.addEventListener("change",e=>{
+  const veld=e.target.closest("[data-uitvoernr]");if(!veld)return;
+  if(e.target.matches("select")){
+    const w=e.target.value,oud=veld.querySelector("input");if(oud)oud.remove();
+    if(!w.startsWith("kies:")){if(w)zetUitvoeren(veld,w);return}
+    veld.insertAdjacentHTML("beforeend",w==="kies:datum"?'<input type="date" class="statuskeuze" aria-label="Kies een datum">':'<input type="text" class="statuskeuze" maxlength="60" placeholder="Bijvoorbeeld week 47" aria-label="Eigen tekst">');
+    veld.querySelector("input").focus();return;
+  }
+  const w=e.target.value.trim();if(!w)return;
+  zetUitvoeren(veld,(e.target.type==="date"?"datum:":"tekst:")+w);
+});
 /* Verwijderknop met bevestiging in vak. Hoort er een bon bij, dan kiest de werkvoorbereider of die ook weg moet. Met bonNr gaat het om de bon zelf: die gaat altijd samen met zijn melding weg. */
 function wegVak(vak,x,tekst,klaar,bonNr){
   const dicht=()=>{vak.innerHTML='<button class="tekstknop gevaar" type="button">'+tekst+"</button>";vak.firstChild.addEventListener("click",vraag)};
@@ -1118,6 +1182,14 @@ function pmScherm(){
   lijst();
   if(MELD()){haalPm();leesUitbak();uitbakAan();setInterval(()=>{if(!document.hidden)haalPm()},60000)}
 }
+function pmDetail(b){
+  const a=pmAf(b.nr),g=pmGedaan(a);
+  const regel=t=>{
+    const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),mis=alle.filter(y=>!g.includes(y.c));
+    return"<li"+(vol?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
+  };
+  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Opmerking",a&&a.opmerking]]};
+}
 function vPmBonnen(){
   const bonnenLijst=pmPlan().bonnen,nu=pmNu(),tot=bonnenLijst.filter(b=>datum(b.datum)<=nu);
   const af=tot.filter(b=>pmStand(b)==="Uitgevoerd").length,laat=tot.filter(b=>pmStand(b)==="Achterstallig").length;
@@ -1135,14 +1207,7 @@ function vPmBonnen(){
       {k:"st",l:"Status",w:"160px",c:"m-status",r:b=>st(pmStand(b)),s:b=>PMSTAND.indexOf(pmStand(b))},
       {k:"w",l:"Afgemeld door",w:"150px",c:"m-sub",ml:"Afgemeld door",r:b=>of(af2(b,"door")),s:b=>norm(af2(b,"door"))},
       {k:"o",l:"Opmerking",w:"26%",c:"m-sub",ml:"Opmerking",r:b=>of(af2(b,"opmerking")),s:b=>norm(af2(b,"opmerking"))}],
-    detail:b=>{
-      const a=pmAf(b.nr),g=pmGedaan(a);
-      const regel=t=>{
-        const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),mis=alle.filter(y=>!g.includes(y.c));
-        return"<li"+(vol?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
-      };
-      return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Opmerking",a&&a.opmerking]]};
-    }});
+    detail:pmDetail});
 }
 function verklein(f){
   return new Promise((ok,nee)=>{
@@ -1383,20 +1448,34 @@ function outputScherm(){
 /* ---- Zaterdagwerk ---- */
 /* Een wijziging staat tot de geplande taak hem verwerkt in de wachtrij, net als een bonstatus. Alles voor één bon staat in één bestand. */
 /* Een plan is de zaterdaglijst of een onderhoudsstop: zelfde opbouw, een stop heeft daarnaast een id en een lijn. Een bon staat op één plan. */
-let STOPKEUZE="";
+let DAGKEUZE="",MAAND=null;
 const stops=()=>D.stops||[];
 const stopTijd=s=>{const d=datum(s.datum);return d?d.getTime():0};
 const stopLijst=()=>stops().slice().sort((a,b)=>stopTijd(a)-stopTijd(b));
-const stopHuidig=()=>{const l=stopLijst(),nu=new Date().setHours(0,0,0,0);return l.find(x=>x.id===STOPKEUZE)||l.find(x=>stopTijd(x)>=nu)||l[l.length-1]};
+const dagTekst=d=>[String(d.getDate()).padStart(2,"0"),String(d.getMonth()+1).padStart(2,"0"),d.getFullYear()].join("-");
+const isoTekst=s=>s.split("-").reverse().join("-");
 const planVan=k=>k?stops().find(x=>x.id===k):D.zaterdag;
 const plannen=()=>[D.zaterdag].concat(stops()).filter(p=>p&&p.datum);
-const plan=()=>(HUIDIG==="stop"?stopHuidig():D.zaterdag)||{};
+const planOpDatum=t=>plannen().find(p=>p.datum===t);
+/* De agenda opent op de gekozen dag, anders op de eerstvolgende dag met bonnen, anders op vandaag. */
+const dagNu=()=>{if(DAGKEUZE)return DAGKEUZE;const nu=pmNu(),v=plannen().filter(p=>datum(p.datum)>=nu).sort((a,b)=>datum(a.datum)-datum(b.datum))[0];return v?v.datum:dagTekst(nu)};
+const dagPlan=()=>{const t=dagNu();return planOpDatum(t)||{datum:t,leeg:true,correctief:[],preventief:[]}};
+/* Zaterdagwerk toont de komende zaterdag: is de lijst voorbij, dan de eerstvolgende zaterdag uit de planning. */
+const zatNu=()=>{const z=D.zaterdag,nu=pmNu();if(z&&z.datum&&datum(z.datum)>=nu)return z;return stopLijst().find(s=>datum(s.datum)>=nu&&datum(s.datum).getDay()===6)||z||{}};
+const plan=()=>HUIDIG==="stop"?dagPlan():zatNu();
+const planIsZat=p=>!p.id||datum(p.datum).getDay()===6;
 const planRijen=s=>(s.correctief||[]).concat(s.preventief||[]);
 const zatRijen=()=>planRijen(plan());
-const planWeekdag=p=>{if(!p.id)return"Zaterdag";const d=datum(p.datum);return d?hoofd(d.toLocaleDateString("nl-NL",{weekday:"long"})):""};
+const planWeekdag=p=>{const d=datum(p.datum);return d?hoofd(d.toLocaleDateString("nl-NL",{weekday:"long"})):""};
 const planDag=p=>planWeekdag(p)+" "+p.datum;
-const planKort=p=>planDag(p)+(p.id?", "+p.lijn:"");
-const planSleutel=p=>p.id||"zaterdag";
+const planKort=p=>planDag(p)+(p.id&&p.lijn?", "+p.lijn:"");
+const planSleutel=p=>p.leeg?p.datum:p.id||"zaterdag";
+/* Een dag zonder bonnen krijgt pas een eigen lijst als er iets op komt. */
+async function planVoor(t){
+  const p=planOpDatum(t);if(p)return p;
+  const id="S"+Date.now().toString(36),w={nr:"STOP-"+id,status:"Open",rij:{stop:{id,datum:t,lijn:"",naam:""}}};
+  await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);return planVan(id);
+}
 const zatMelding=nr=>(MELDINGEN||[]).find(x=>x.code===nr);
 /* Bij een melding gaat de prio uit de Sheet voor: die kleurt ook het SQD-bord. */
 const zatPrio=r=>{const m=zatMelding(r.nr);return m&&m.prio?Number(m.prio):r.prio||null};
@@ -1413,7 +1492,8 @@ function pasZatKop(z){
   const s=planVan(z.plan);if(!s||z.datum!==s.datum)return;
   Object.assign(s,{teamleider:z.teamleider,monteurs:z.monteurs,letop:z.letop,capaciteit:z.capaciteit});
 }
-const metZat=(nr,rij)=>ZATOPEN[nr]?Object.assign({},rij,{zat:ZATOPEN[nr]}):rij;
+const UITOPEN={};
+const metZat=(nr,rij)=>ZATOPEN[nr]||nr in UITOPEN?Object.assign({},rij,ZATOPEN[nr]?{zat:ZATOPEN[nr]}:null,nr in UITOPEN?{uitvoeren:UITOPEN[nr]}:null):rij;
 function zatWeg(nr,alleen){
   (alleen?[alleen]:plannen()).forEach(s=>{s.correctief=(s.correctief||[]).filter(r=>r.nr!==nr);s.preventief=(s.preventief||[]).filter(r=>r.nr!==nr)});
 }
@@ -1434,9 +1514,15 @@ function pasZatToe(nr,z){
   if(c)c.prio=z.prio;
 }
 /* Op volgorde versturen: een latere wijziging aan dezelfde bon vervangt de eerdere. */
-function zatStuur(r,z){
+/* Zet een bon op een lijst. Staat hij al op een andere lijst, dan gaan prio, uren en uitvoerder mee. */
+function planZet(c,s){
+  const oud=plannen().flatMap(planRijen).find(x=>x.nr===c.nr),nieuw={lijst:/^preventief/i.test(c.omschrijving||"")?"preventief":"correctief",werkzaamheid:oud?oud.werkzaamheid:c.omschrijving,lijn_machine:oud?oud.lijn_machine:[c.lijn,c.machine].filter(Boolean).join(" / ")};
+  return zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw}));
+}
+function zatStuur(r,z,extra){
+  if(z.nieuw)delete UITOPEN[r.nr];
   const c=(D.cm||[]).find(x=>x.nr===r.nr),status=!c?"Gepland":z.weg&&c.status==="Gepland"?"Open":z.nieuw&&c.status==="Open"?"Gepland":c.status;
-  const w={nr:r.nr,status,rij:Object.assign({},c?storingRij(Object.assign({},c,{status,prio:z.prio})):null,{zat:z})};
+  const w={nr:r.nr,status,rij:Object.assign({},c?storingRij(Object.assign({},c,{status,prio:z.prio})):null,{zat:z},extra)};
   const stap=zatKeten.then(()=>stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w)));
   zatKeten=stap.catch(()=>{});
   return stap.then(()=>w);
@@ -1471,7 +1557,7 @@ function zatKopVeld(v){
   stap.then(()=>{laatste="";melder("Opgeslagen")}).catch(()=>{melder("Opslaan is niet gelukt. Probeer het opnieuw.")});
 }
 function zatTotaalHtml(){
-  const r=zatRijen(),s=plan(),uren=r.reduce((n,x)=>n+(Number(x.uren)||0),0),cap=Number(s.capaciteit)||(s.id?0:35);
+  const r=zatRijen(),s=plan(),uren=r.reduce((n,x)=>n+(Number(x.uren)||0),0),cap=Number(s.capaciteit)||(planIsZat(s)?35:0);
   const tel=(n,een,meer)=>n+" "+(n===1?een:meer),per={};
   r.forEach(x=>{if(x.uitvoerder&&x.uren)per[x.uitvoerder]=(per[x.uitvoerder]||0)+Number(x.uren)});
   const zonderUren=r.filter(x=>x.uren==null).length,zonderWie=r.filter(x=>!x.uitvoerder).length,wacht=r.filter(x=>zatOnderdelen(x.nr).length).length;
@@ -1497,9 +1583,12 @@ async function zatBulk(){
 }
 /* Verplaatsen haalt de bon van dit plan af en zet hem op het andere. Prio, uren en uitvoerder gaan mee. */
 async function zatVerplaats(){
-  const k=$("#zat_verplaats"),nu=plan(),doel=planVan($("#zat_doel").value==="zaterdag"?"":$("#zat_doel").value),r=zatRijen().filter(x=>ZATKIES.has(x.nr));
-  if(!doel||!r.length)return;
-  k.disabled=true;let n=0,mis=0;
+  const k=$("#zat_verplaats"),nu=plan(),w=$("#zat_doel").value,r=zatRijen().filter(x=>ZATKIES.has(x.nr));
+  if(!r.length)return;
+  if(!w){melder("Kies eerst een datum.");$("#zat_doel").focus();return}
+  if(isoTekst(w)===nu.datum){melder("Deze bonnen staan al op die dag.");return}
+  k.disabled=true;let n=0,mis=0,doel=null;
+  try{doel=await planVoor(isoTekst(w))}catch(_){k.disabled=false;melder("Verplaatsen is niet gelukt. Probeer het opnieuw.");return}
   for(const x of r){
     n++;k.textContent="Bezig "+n+" van "+r.length;
     const z=Object.assign(doel.id?{plan:doel.id}:{},{datum:doel.datum,prio:zatPrio(x),uitvoerder:x.uitvoerder||"",uren:x.uren==null?null:x.uren,nieuw:{lijst:(nu.preventief||[]).includes(x)?"preventief":"correctief",werkzaamheid:x.werkzaamheid,lijn_machine:x.lijn_machine}});
@@ -1510,24 +1599,26 @@ async function zatVerplaats(){
 }
 function openNieuweStop(){
   if($("#paneel").hidden)terug=document.activeElement;
-  const p=$("#paneel"),nu=new Date();nu.setDate(nu.getDate()+((5-nu.getDay()+7)%7||7));nu.setMinutes(nu.getMinutes()-nu.getTimezoneOffset());
-  p.innerHTML='<div class="pkopbalk"><div><small>Onderhoudsstop</small><h2 id="ptitel">Nieuwe stop</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="stopform"><div class="twee"><label>Datum<input type="date" id="s_dat" required value="'+nu.toISOString().slice(0,10)+'"></label><label>Lijn<select id="s_lijn" required><option value="">Kies</option>'+LIJNEN_OUTPUT.concat("Alle lijnen").map(l=>"<option>"+l+"</option>").join("")+'</select></label></div><label>Toelichting<input type="text" id="s_naam" placeholder="Bijvoorbeeld: lijn staat de hele dag stil"></label><p class="fout" id="s_fout" hidden></p><button class="knop hoofd" id="s_knop" type="submit">Stop aanmaken</button></form>';
+  const p=$("#paneel");
+  p.innerHTML='<div class="pkopbalk"><div><small>Onderhoudsplanning</small><h2 id="ptitel">Stop toevoegen</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><form class="meldform" id="stopform"><div class="twee"><label>Datum<input type="date" id="s_dat" required value="'+isoTekst(dagNu())+'"></label><label>Lijn<select id="s_lijn" required><option value="">Kies</option>'+LIJNEN_OUTPUT.concat("Alle lijnen").map(l=>"<option>"+l+"</option>").join("")+'</select></label></div><label>Toelichting<input type="text" id="s_naam" placeholder="Bijvoorbeeld: lijn staat de hele dag stil"></label><p class="fout" id="s_fout" hidden></p><button class="knop hoofd" id="s_knop" type="submit">Stop aanmaken</button></form>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   $("#stopform").addEventListener("submit",async e=>{
-    e.preventDefault();const k=$("#s_knop"),f=$("#s_fout"),id="S"+Date.now().toString(36);
-    const w={nr:"STOP-"+id,status:"Open",rij:{stop:{id,datum:$("#s_dat").value.split("-").reverse().join("-"),lijn:$("#s_lijn").value,naam:$("#s_naam").value.trim()}}};
-    k.disabled=true;f.hidden=true;
-    try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);STOPKEUZE=id;laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Stop aangemaakt: "+planKort(planVan(id)))}
+    e.preventDefault();const k=$("#s_knop"),f=$("#s_fout"),id="S"+Date.now().toString(36),t=isoTekst($("#s_dat").value);
+    f.hidden=true;
+    if(planOpDatum(t)){f.textContent="Op deze dag staat al een planning.";f.hidden=false;return}
+    const w={nr:"STOP-"+id,status:"Open",rij:{stop:{id,datum:t,lijn:$("#s_lijn").value,naam:$("#s_naam").value.trim()}}};
+    k.disabled=true;
+    try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);DAGKEUZE=t;MAAND=null;laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Stop aangemaakt: "+planKort(planVan(id)))}
     catch(_){f.textContent="Opslaan is niet gelukt. Probeer het opnieuw.";f.hidden=false;k.disabled=false}
   });
 }
 async function stopWegKlik(k){
-  const s=stopHuidig(),vak=k.closest(".stopweg");if(!s)return;
-  if(k.dataset.stopweg==="vraag"){vak.innerHTML="<p>Stop van "+esc(planKort(s))+" verwijderen? "+(planRijen(s).length?"De bonnen blijven bestaan. Geplande bonnen gaan terug naar Open.":"")+'</p><div class="wegknoppen"><button class="knop gevaar" type="button" data-stopweg="ja">Stop verwijderen</button><button class="knop" type="button" data-stopweg="nee">Annuleren</button></div>';return}
+  const s=plan(),vak=k.closest(".stopweg");if(!s.id)return;
+  if(k.dataset.stopweg==="vraag"){vak.innerHTML="<p>Planning van "+esc(planKort(s))+" verwijderen? "+(planRijen(s).length?"De bonnen blijven bestaan. Geplande bonnen gaan terug naar Open.":"")+'</p><div class="wegknoppen"><button class="knop gevaar" type="button" data-stopweg="ja">Verwijderen</button><button class="knop" type="button" data-stopweg="nee">Annuleren</button></div>';return}
   if(k.dataset.stopweg==="nee"){vStop();return}
   k.disabled=true;
   const w={nr:"STOP-"+s.id,status:"Open",rij:{stopweg:s.id}};
-  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";vStop();melder("Stop verwijderd")}
+  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";vStop();melder("Planning verwijderd")}
   catch(_){k.disabled=false;melder("Verwijderen is niet gelukt. Probeer het opnieuw.")}
 }
 function zatPaneel(){
@@ -1550,9 +1641,9 @@ function zatPaneel(){
   q.addEventListener("input",teken);
   vak.addEventListener("click",async e=>{
     const k=e.target.closest("[data-ztnr]");if(!k)return;
-    const c=zatBon(k.dataset.ztnr),oud=plannen().flatMap(planRijen).find(x=>x.nr===c.nr),nieuw={lijst:/^preventief/i.test(c.omschrijving||"")?"preventief":"correctief",werkzaamheid:oud?oud.werkzaamheid:c.omschrijving,lijn_machine:oud?oud.lijn_machine:[c.lijn,c.machine].filter(Boolean).join(" / ")};
+    const c=zatBon(k.dataset.ztnr);
     k.disabled=true;
-    try{pasBonToe(await zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw})));laatste="";teken();melder(c.nr+" staat op de lijst");SCHERM[HUIDIG]()}
+    try{pasBonToe(await planZet(c,await planVoor(s.datum)));laatste="";teken();melder(c.nr+" staat op de lijst");SCHERM[HUIDIG]()}
     catch(_){k.disabled=false;melder(c.nr+" is niet toegevoegd. Probeer het opnieuw.")}
   });
   teken();q.focus();
@@ -1663,9 +1754,9 @@ function wPrio(d,p){
   let i=0;ts.forEach(x=>{const n=x.textContent.length;x.textContent=heel.slice(i,i+n);i+=n});
 }
 const zatBon=nr=>(D.cm||[]).find(x=>x.nr===nr);
-const planBestand=p=>p.id?"stop_"+String(p.lijn).replace(/\s+/g,"_")+"_"+p.datum:"zaterdag_"+p.datum;
-/* Een stop gebruikt hetzelfde Word-format, met andere koppen. */
-const STOPTEKST=p=>({"WERKBON TD – ZATERDAGWERK":"WERKBON TD – ONDERHOUDSSTOP","Overzicht zaterdagwerkzaamheden":"Overzicht onderhoudsstop","Zaterdag ":planWeekdag(p)+" ","Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ":"Overzicht onderhoudsstop – F.95.602 Werkbon TD – pagina "});
+const planBestand=p=>p.id?"planning_"+(p.lijn?String(p.lijn).replace(/\s+/g,"_")+"_":"")+p.datum:"zaterdag_"+p.datum;
+/* Een dag buiten de zaterdag gebruikt hetzelfde Word-format, met andere koppen. */
+const STOPTEKST=p=>({"WERKBON TD – ZATERDAGWERK":"WERKBON TD – ONDERHOUD","Overzicht zaterdagwerkzaamheden":"Overzicht onderhoudsplanning","Zaterdag ":planWeekdag(p)+" ","Overzicht zaterdagwerk – F.95.602 Werkbon TD – pagina ":"Overzicht onderhoudsplanning – F.95.602 Werkbon TD – pagina "});
 /* Zelfde opbouw als zat_stempel in bonnen.py. Klopt hij niet, dan is de PDF van voor de laatste wijziging. */
 const zatStempel=()=>{const s=plan();return zatRijen().map(r=>{const c=zatBon(r.nr);return[r.nr,r.prio||"",r.uitvoerder||"",c&&KLAAR.includes(c.status)?"1":""].join("|")}).join(";")+"#"+[s.teamleider||"",s.monteurs||"",s.letop||""].join("|")};
 async function zatWordBonnen(){
@@ -1677,7 +1768,7 @@ async function zatWordBonnen(){
 async function zatPdf(){
   const s=plan(),z=s.id?(bonnen().stops||{})[s.id]:bonnen().zaterdag;
   if(!z||z.datum!==s.datum||z.stempel!==zatStempel()){melder("De PDF loopt achter op je laatste wijziging. Binnen een uur is hij bijgewerkt, vernieuw dan de pagina. Word is al actueel.");return}
-  await geefBestand(new File([await bonBytes(z.pdf)],(s.id?"Onderhoudsstop_":"Zaterdagwerk_")+planBestand(s).replace(/^(zaterdag|stop)_/,"")+".pdf",{type:BONTYPE.pdf}));
+  await geefBestand(new File([await bonBytes(z.pdf)],(s.id?"Onderhoudsplanning_":"Zaterdagwerk_")+planBestand(s).replace(/^(zaterdag|planning)_/,"")+".pdf",{type:BONTYPE.pdf}));
 }
 function wVulKop(d,s){
   [["Teamleider",s.teamleider],["Monteurs",s.monteurs]].forEach(([l,w])=>{
@@ -1696,8 +1787,8 @@ function wVulTabel(t,rijen){
 }
 async function zatLijst(){
   const s=plan(),z=zipLees(await bonBytes(bonnen().lijst)),e=z.find(x=>x.naam==="word/document.xml"),d=wLees(await zipTekst(e));
-  [...wEl(d,"t")].forEach(t=>{if(t.textContent==="__DATUM__")t.textContent=s.id?s.datum+" – "+s.lijn:s.datum});
-  if(s.id){
+  [...wEl(d,"t")].forEach(t=>{if(t.textContent==="__DATUM__")t.textContent=s.lijn?s.datum+" – "+s.lijn:s.datum});
+  if(!planIsZat(s)){
     const v=STOPTEKST(s);[...wEl(d,"t")].forEach(t=>{if(v[t.textContent])t.textContent=v[t.textContent]});
     for(const n of z.filter(x=>/^word\/footer\d*\.xml$/.test(x.naam))){const f=wLees(await zipTekst(n));[...wEl(f,"t")].forEach(t=>{if(v[t.textContent])t.textContent=v[t.textContent]});await zipZet(n,wXml(f))}
   }
@@ -1705,7 +1796,7 @@ async function zatLijst(){
   const tabellen=[...wEl(d,"tbl")].filter(t=>wTekst(t).includes("Werkzaamheid"));
   [s.correctief||[],s.preventief||[]].forEach((r,i)=>wVulTabel(tabellen[i],r));
   await zipZet(e,wXml(d));
-  await geefBestand(new File([zipMaak(z)],"Overzicht_"+(s.id?planBestand(s).replace("stop_","onderhoudsstop_"):"zaterdagwerk_"+s.datum)+".docx",{type:BONTYPE.docx}));
+  await geefBestand(new File([zipMaak(z)],"Overzicht_"+(s.id?planBestand(s).replace("planning_","onderhoudsplanning_"):"zaterdagwerk_"+s.datum)+".docx",{type:BONTYPE.docx}));
 }
 async function zatDownload(k){
   const was=k.innerHTML,doe={word:zatWordBonnen,pdf:zatPdf,lijst:zatLijst}[k.dataset.zatdl];
@@ -1713,12 +1804,48 @@ async function zatDownload(k){
   try{await doe()}catch(_){melder("Downloaden is niet gelukt. Probeer het opnieuw.")}
   k.disabled=false;k.innerHTML=was;
 }
-function vZaterdag(){const s=D.zaterdag||{},d=datum(s.datum);vPlan(s,{titel:d?hoofd(langeDatum(d)):"Zaterdagwerk",sub:s.stand})}
+function vZaterdag(){const s=zatNu(),d=datum(s.datum);vPlan(s,{titel:d?hoofd(langeDatum(d)):"Zaterdagwerk",sub:s.stand})}
+const weekNr=d=>{const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));return Math.ceil(((x-Date.UTC(x.getUTCFullYear(),0,1))/864e5+1)/7)};
+function agendaCel(d,nu,gekozen){
+  const t=dagTekst(d),p=planOpDatum(t),r=p?planRijen(p):[],pm=pmPlan().bonnen.filter(b=>b.datum===t),open=r.filter(x=>{const c=zatBon(x.nr);return!c||!KLAAR.includes(c.status)}).length,pmOpen=pm.filter(b=>pmStand(b)==="Achterstallig").length;
+  const naam=p?(p.id?p.lijn:"Zaterdag"):"",chip=(k,lang,kort)=>'<span class="agchip '+k+'"><span class="aglang">'+esc(lang)+'</span><span class="agkort">'+esc(kort)+"</span></span>";
+  const bij=[];
+  if(p)bij.push(chip(d<nu&&open?"laat":"",(naam?naam+": ":"")+r.length+(r.length===1?" bon":" bonnen"),String(r.length)));
+  if(pm.length)bij.push(chip("pm"+(pmOpen?" laat":""),"PM: "+pm.length,"PM"));
+  return'<button type="button" class="agcel'+(d.getMonth()!==MAAND.m?" buiten":"")+(+d===+nu?" nu":"")+'" data-agdag="'+t+'" aria-pressed="'+(t===gekozen)+'" aria-label="'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+", "+r.length+" bonnen")+'"><span class="agnr">'+d.getDate()+"</span>"+bij.join("")+"</button>";
+}
+function agendaHtml(){
+  const nu=pmNu(),gekozen=dagNu(),eerste=new Date(MAAND.j,MAAND.m,1),begin=new Date(eerste);begin.setDate(1-(eerste.getDay()+6)%7);
+  let h='<div class="agenda"><div class="agkop"><button type="button" class="knop" data-agmaand="-1" aria-label="Vorige maand">‹</button><b>'+esc(hoofd(eerste.toLocaleDateString("nl-NL",{month:"long",year:"numeric"})))+'</b><button type="button" class="knop" data-agmaand="1" aria-label="Volgende maand">›</button><button type="button" class="tekstknop" data-agnu>Vandaag</button></div><div class="aggrid"><span class="agkopje">Wk</span>'+["Ma","Di","Wo","Do","Vr","Za","Zo"].map(x=>'<span class="agkopje">'+x+"</span>").join("");
+  for(let w=0;w<6;w++){
+    const ma=new Date(begin);ma.setDate(begin.getDate()+w*7);
+    if(w>3&&ma.getMonth()!==MAAND.m)break;
+    h+='<span class="agwk">'+weekNr(ma)+"</span>";
+    for(let i=0;i<7;i++){const d=new Date(ma);d.setDate(ma.getDate()+i);h+=agendaCel(d,nu,gekozen)}
+  }
+  return h+"</div></div>";
+}
+function pmDagHtml(t){
+  const r=pmPlan().bonnen.filter(b=>b.datum===t);if(!r.length)return"";
+  const cols=[
+    {k:"b",l:"Bon",c:"m-main",x:"titel",r:b=>esc(pmTitel(b))},
+    {k:"n",l:"Nummer",w:"130px",c:"m-nr",x:"nr",r:b=>esc(b.nr)},
+    {k:"t",l:"Taken",w:"70px",n:true,r:b=>String(b.taken.length)},
+    {k:"s",l:"Status",w:"170px",c:"m-status",r:b=>st(pmStand(b))},
+    {k:"w",l:"Afgemeld door",w:"150px",c:"m-sub",ml:"Afgemeld door",r:b=>of((pmAf(b.nr)||{}).door)}];
+  return'<section class="deel"><h2>PM-bonnen<span>'+r.length+"</span></h2>"+vasteTabel(cols,r,pmDetail)+"</section>";
+}
 function vStop(){
-  const s=stopHuidig(),l=stopLijst(),wv=wvMag(),nieuw=wv?'<button class="knop" type="button" data-nieuwestop>Nieuwe stop</button>':"";
-  if(!s){$("#view").innerHTML=kop("Onderhoudsstop","Plan hier de dagen dat een lijn stilstaat en zet de bonnen erop die dan kunnen.",true,nieuw)+'<div class="leegmelding">Er staat nog geen onderhoudsstop gepland.</div>';return}
-  const d=datum(s.datum),keuze=l.length>1?'<div class="seg" role="group" aria-label="Kies een stop">'+l.map(x=>'<button type="button" data-stop="'+esc(x.id)+'" aria-pressed="'+(x===s)+'">'+esc(planKort(x))+"</button>").join("")+"</div>":"";
-  vPlan(s,{titel:"Onderhoudsstop "+s.lijn,sub:(d?hoofd(langeDatum(d)):s.datum)+(s.naam?". "+s.naam:""),boven:keuze,extra:nieuw,onder:wv?'<div class="weg stopweg"><button class="tekstknop gevaar" type="button" data-stopweg="vraag">Stop verwijderen</button></div>':""});
+  const s=dagPlan(),d=datum(s.datum),wv=wvMag(),pm=pmDagHtml(s.datum);
+  if(!MAAND)MAAND={j:d.getFullYear(),m:d.getMonth()};
+  const boven=kop("Onderhoudsplanning","Klik op een datum om te zien welke bonnen er die dag gedaan worden.",true)+agendaHtml();
+  const sub=[s.lijn,s.naam].filter(Boolean).join(". ");
+  const kopje=k=>'<div class="head dagkop"><div><h2>'+esc(hoofd(langeDatum(d)))+"</h2>"+(sub?"<p>"+esc(sub)+"</p>":"")+"</div>"+(k?'<div class="headknoppen">'+k+"</div>":"")+"</div>";
+  if(s.leeg){
+    $("#view").innerHTML=boven+kopje(wv?'<button class="knop hoofd" type="button" data-zattoe>Bon toevoegen</button><button class="knop" type="button" data-nieuwestop>Stop toevoegen</button>':"")+(pm||'<div class="leegmelding">Op deze dag staat niets gepland.</div>');
+    return;
+  }
+  vPlan(s,{voor:boven,kop:kopje,onder:pm+(wv&&s.id?'<div class="weg stopweg"><button class="tekstknop gevaar" type="button" data-stopweg="vraag">Planning van deze dag verwijderen</button></div>':"")});
 }
 function vPlan(s,o){
   if(vPlan.vorig!==planSleutel(s)){ZATKIES.clear();ZATF.lijn="";ZATF.soort="";vPlan.vorig=planSleutel(s)}
@@ -1738,16 +1865,15 @@ function vPlan(s,o){
   const dl=(t,r)=>'<section class="deel"><h2>'+t+"<span>"+r.length+"</span></h2>"+(r.length?vasteTabel(cols,r,bon):'<div class="leegmelding">'+(ZATF.lijn||ZATF.soort?"Niets gevonden met dit filter.":"Niets ingepland.")+"</div>")+"</section>";
   const namen=wv?uniek((D.cm||[]).map(x=>x.monteur).concat(zatRijen().map(x=>x.uitvoerder),[s.teamleider])).sort((a,b)=>a.localeCompare(b,"nl")):[];
   const knop=(soort,t)=>'<button class="knop" data-zatdl="'+soort+'">'+ico("download")+t+"</button>";
-  const knoppen=wv&&bonnen().sleutel?knop("word","Bonnen in Word")+knop("pdf","Bonnen in PDF")+(bonnen().lijst?knop("lijst",s.id?"Stoplijst":"Zaterdaglijst"):""):"";
+  const knoppen=wv&&bonnen().sleutel?knop("word","Bonnen in Word")+knop("pdf","Bonnen in PDF")+(bonnen().lijst?knop("lijst",planIsZat(s)?"Zaterdaglijst":"Daglijst"):""):"";
   const veld=(k,t,w,extra)=>'<label'+(k==="letop"?' class="breed"':"")+">"+t+'<input class="zatinvoer" data-zatkop="'+k+'" value="'+esc(w==null?"":w)+'"'+(extra||"")+"></label>";
-  const kopVelden=wv?'<div class="zatkop">'+veld("teamleider","Teamleider",s.teamleider,' list="zatnamen" autocomplete="off"')+veld("monteurs","Monteurs",s.monteurs)+veld("capaciteit","Beschikbare manuren",urenTekst(s.capaciteit||(s.id?"":35)),' inputmode="decimal"')+veld("letop","LET OP",s.letop)+"</div>":[["Teamleider",s.teamleider],["Monteurs",s.monteurs],["LET OP",s.letop]].filter(x=>x[1]).map(x=>'<p class="zatinfo"><b>'+x[0]+":</b> "+esc(x[1])+"</p>").join("");
+  const kopVelden=wv?'<div class="zatkop">'+veld("teamleider","Teamleider",s.teamleider,' list="zatnamen" autocomplete="off"')+veld("monteurs","Monteurs",s.monteurs)+veld("capaciteit","Beschikbare manuren",urenTekst(s.capaciteit||(planIsZat(s)?35:"")),' inputmode="decimal"')+veld("letop","LET OP",s.letop)+"</div>":[["Teamleider",s.teamleider],["Monteurs",s.monteurs],["LET OP",s.letop]].filter(x=>x[1]).map(x=>'<p class="zatinfo"><b>'+x[0]+":</b> "+esc(x[1])+"</p>").join("");
   const lijnen=uniek(zatRijen().map(zatLijn)).sort((a,b)=>a.localeCompare(b,"nl")),keuze=(a,b)=>a===b?" selected":"";
   const balk=td?'<div class="toolbar"><select id="zat_lijn" aria-label="Filter op lijn"><option value="">Alle lijnen</option>'+lijnen.map(l=>'<option value="'+esc(l)+'"'+keuze(l,ZATF.lijn)+">"+esc(l)+"</option>").join("")+'</select><select id="zat_soort" aria-label="Filter op bon"><option value="">Alle bonnen</option><option value="zonder"'+keuze("zonder",ZATF.soort)+'>Zonder uitvoerder</option><option value="onderdelen"'+keuze("onderdelen",ZATF.soort)+">Onderdelen niet binnen</option></select>"+(wv?'<label class="toggle"><input type="checkbox" id="zat_alles"> Alles kiezen</label><button class="knop" type="button" data-zattoe>Bon toevoegen</button>':"")+"</div>":"";
-  const anders=plannen().filter(x=>x!==s);
-  const bulk=wv?'<div class="zatbulk" id="zat_bulk" hidden><span id="zat_bulktal"></span><input class="zatinvoer" id="zat_bulknaam" list="zatnamen" placeholder="Uitvoerder" autocomplete="off" aria-label="Uitvoerder voor de gekozen bonnen"><button class="knop hoofd" type="button" id="zat_bulkknop">Toewijzen</button>'+(anders.length?'<select class="statuskeuze" id="zat_doel" aria-label="Verplaatsen naar">'+anders.map(x=>'<option value="'+esc(planSleutel(x))+'">'+esc(planKort(x))+"</option>").join("")+'</select><button class="knop" type="button" id="zat_verplaats">Verplaatsen</button>':"")+(s.id?"":'<button class="tekstknop" type="button" data-nieuwestop>Nieuwe stop</button>')+'<button class="tekstknop" type="button" id="zat_bulkweg">Selectie wissen</button></div>':"";
+  const bulk=wv?'<div class="zatbulk" id="zat_bulk" hidden><span id="zat_bulktal"></span><input class="zatinvoer" id="zat_bulknaam" list="zatnamen" placeholder="Uitvoerder" autocomplete="off" aria-label="Uitvoerder voor de gekozen bonnen"><button class="knop hoofd" type="button" id="zat_bulkknop">Toewijzen</button><input type="date" class="zatinvoer" id="zat_doel" aria-label="Verplaatsen naar datum"><button class="knop" type="button" id="zat_verplaats">Verplaatsen</button><button class="tekstknop" type="button" id="zat_bulkweg">Selectie wissen</button></div>':"";
   const hier=s.id?"Stop:"+s.id:"Zaterdag",nieuweBonnen=NIEUWBON.filter(x=>x.vervolg===hier).length;
   const wacht=wv&&nieuweBonnen?'<p class="zatinfo">'+nieuweBonnen+(nieuweBonnen===1?" nieuwe bon komt":" nieuwe bonnen komen")+" na de volgende run op deze lijst.</p>":"";
-  $("#view").innerHTML=kop(o.titel,o.sub,true,knoppen+(o.extra||""))+(o.boven||"")+kopVelden+(td?'<div id="zattotaal">'+zatTotaalHtml()+"</div>":"")+wacht+balk+bulk+dl("Correctief",c)+dl("Preventief",p)+(wv?'<datalist id="zatnamen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>":"")+(o.onder||"");
+  $("#view").innerHTML=(o.voor||"")+(o.kop?o.kop(knoppen):kop(o.titel,o.sub,true,knoppen))+kopVelden+(td?'<div id="zattotaal">'+zatTotaalHtml()+"</div>":"")+wacht+balk+bulk+dl("Correctief",c)+dl("Preventief",p)+(wv?'<datalist id="zatnamen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>":"")+(o.onder||"");
   zatBulkTeken();
 }
 
@@ -1995,7 +2121,7 @@ function presenteer(aan){
   const el=document.documentElement;
   try{if(aan&&el.requestFullscreen)el.requestFullscreen().catch(()=>{});else if(!aan&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}
 }
-/* De presentatie slaat Onderhoudsstop over zolang er geen stop gepland staat. */
+/* De presentatie slaat de planning over zolang er geen dag gepland staat. */
 function presStappen(){
   P_PRES=P_PRES_ALLES.filter(p=>p.id!=="stop"||stops().length);
   $("#stappen").innerHTML=P_PRES.map(p=>'<button data-v="'+p.id+'" aria-current="'+(p.id===HUIDIG)+'">'+esc(p.kort)+"</button>").join("");
