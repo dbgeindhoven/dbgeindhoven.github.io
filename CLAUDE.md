@@ -58,6 +58,20 @@ De monteur meldt een bon af in de eigen inlog: punten aanvinken, per onderdeel k
 ## Uitvoerbare bonnen
 De monteur heeft in zijn inlog de tab Uitvoerbare bonnen: hetzelfde scherm als de PM-inlog (`pmVak` in `tools/template.html`), met daarboven de CM- en SQD-bonnen die de werkvoorbereider heeft ingepland. De pagina CM-bonnen staat voor de werkvoorbereider onder Werkvoorbereiding. Daar, op SQD-bonnen, op Aangemaakte CM-bonnen en in het detailpaneel staat bij elke open bon de knop Plannen voor monteurs (SQD-bonnen werken hetzelfde). Dat gaat via de wachtrij als `status-WEEK-<nr>.txt` met `rij.week` (`nr`, `aan`, plus de velden voor de kaart), `bonnen.py wijzig` zet `week` op de regel in `cm`, en de monteur ziet het meteen. De monteur meldt af met Afmelden of Deels uitgevoerd (verplichte opmerking): actie `weekbon`, `status-<nr>.txt` met `rij.weekaf` (`tekst`, `door`). `wijzig` zet de regel achter `opmerking`. Een deels uitgevoerde bon blijft bij Te doen, een afgemelde bon staat twee weken bij Afgemeld (`weekbonnen` in `tools/site.py`).
 
+## Machinedocumentatie
+De pagina Machinedocumentatie onder Ultimo voorbereiding toont de documenten per machine. De bestanden staan versleuteld in de aparte openbare repository `dbgeindhoven/docs`, die GitHub Pages serveert op `docs/` naast de site. Ze staan bewust niet in deze repository: het zijn honderden MB's, en elke push van de site publiceert alles opnieuw.
+
+`meta.docs` heeft `sleutel` en `lijst` (`machine`, `soort`, `titel` en `bestanden` met per extensie de bestandsnaam) en staat alleen in het TD- en werkvoorbereidingsdeel. De titel opent de PDF in een nieuw tabblad, de knoppen geven het bestand zelf. Soorten: Storingsinstructies, PM-bonnen, Onderhoudsschema's, Bestellijsten, PM-taken, Werkbonnen en Overzichten. Extensies: pdf, docx, xlsx en jpg.
+
+Documenten toevoegen:
+1. Zet de bestanden in een lege map als `<map>/<machine>/<soort>/<bestand>`. Dezelfde naam met een andere extensie wordt één document. De bestandsnaam zonder extensie is de titel.
+2. Clone `dbgeindhoven/docs` naast deze repository (`add_repo` met access push).
+3. Volg stap 1 en 2 van Bijwerken vanuit een chat en draai `python3 tools/docs.py voegtoe /tmp/site.json <map> <clone van docs>`. Dat versleutelt alleen wat nieuw is en vult `meta.docs`. Zonder `meta.docs` maakt het de sleutel.
+4. Commit en push de `.bin`-bestanden en `.nojekyll` in de clone van docs naar `main`. Doe dat in delen van hooguit 100 MB, dan blijft het goed gaan als de verbinding wegvalt. Zet nooit een leesbaar document in die repository.
+5. Volg stap 4 t/m 6 van Bijwerken vanuit een chat.
+
+Opnieuw toevoegen met dezelfde machine, soort en titel vervangt het bestand op de site. Het oude `.bin`-bestand blijft staan tot je het zelf weghaalt.
+
 ## Bestellijst
 Elke regel in `bestellijst` heeft een vast `id` (`B<n>`), dat `site.py build` uitdeelt. De werkvoorbereider zet op de pagina Bestellijst de `groep` per regel. Dat gaat via de wachtrij als `status-B<n>.txt`.
 

@@ -374,6 +374,8 @@ html.present .gvlak{height:min(46vh,460px)}
 .zatinvoer{width:100%;padding:6px 8px;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:7px}
 .zatinvoer::placeholder{color:var(--ink3)}
 .zatpdf{white-space:nowrap;padding:6px 0}
+.doctitel{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.doctitel:hover{color:var(--gold-ink);text-decoration:underline}
 .zatweg{display:inline-flex;flex-wrap:wrap;gap:4px 10px;white-space:nowrap}
 .tbl td.m-zat{padding-top:7px;padding-bottom:7px}
 .bondatum{width:100%;max-width:150px}
@@ -617,7 +619,7 @@ const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCas
 const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"};
 const P_PRES_ALLES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 let P_PRES=P_PRES_ALLES;
-const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
+const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"},{id:"docs",t:"Machinedocumentatie",i:"lijst"}];
 const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
 const P_PLAN=[{id:"pgepland",t:"Gepland",sub:"Een bon met een datum staat in de onderhoudsplanning."},{id:"pbestel",t:"Bestellen/wachten op bestelling",sub:"Bonnen die besteld moeten worden of op onderdelen wachten. Met een datum gaan ze naar de onderhoudsplanning."},{id:"pgeen",t:"Geen status",sub:"Bonnen zonder vervolg. Geef een status of een datum."},{id:"pafgerond",t:"Afgerond",sub:"De datum is de dag van afmelden en staat ook in de onderhoudsplanning."}];
 
@@ -725,6 +727,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-storing]"))openStoring();
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
+  const doc=e.target.closest("[data-doc]");if(doc)haalDoc(doc);
   const reg=e.target.closest("[data-pmpdf]");if(reg)haalRegistratie(reg);
   const zk=e.target.closest("[data-bestelzoek]");if(zk)zoekOpnieuw(zk);
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
@@ -773,12 +776,13 @@ function bonKnop(r){
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
 }
 const BONTYPE={docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",pdf:"application/pdf",beeld:"image/jpeg"};
-async function bonBytes(pad){
-  const g=await fetch(pad);if(!g.ok)throw new Error("bon");
+async function ontsleutelBestand(pad,sleutel){
+  const g=await fetch(pad);if(!g.ok)throw new Error("bestand");
   const inhoud=new Uint8Array(await g.arrayBuffer());
-  const k=await crypto.subtle.importKey("raw",b64(bonnen().sleutel),"AES-GCM",false,["decrypt"]);
+  const k=await crypto.subtle.importKey("raw",b64(sleutel),"AES-GCM",false,["decrypt"]);
   return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:inhoud.slice(0,12)},k,inhoud.slice(12)));
 }
+function bonBytes(pad){return ontsleutelBestand(pad,bonnen().sleutel)}
 async function bonBestand(r,soort){return new File([await bonBytes(r.bon[soort])],r.bon.naam+"."+soort,{type:BONTYPE[soort]})}
 const opTelefoon=f=>/Android|iPhone|iPad/.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]});
 async function geefBestand(f){
@@ -2449,7 +2453,36 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["Laatst uitgevoerd",pmLaatst(x.id)],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={cpgepland:()=>vPlanLijst("cpgepland"),cpbestel:()=>vPlanLijst("cpbestel"),cpgeen:()=>vPlanLijst("cpgeen"),cpafgerond:()=>vPlanLijst("cpafgerond"),spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+/* ---- machinedocumentatie: de bestanden staan versleuteld in de repository docs, met een eigen sleutel voor TD en werkvoorbereider ---- */
+const DOCSOORT=["Storingsinstructies","PM-bonnen","Onderhoudsschema's","Bestellijsten","PM-taken","Werkbonnen","Overzichten"];
+const DOCTYPE={pdf:BONTYPE.pdf,docx:BONTYPE.docx,xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",jpg:"image/jpeg"};
+const DOCNAAM={pdf:"PDF",docx:"Word",xlsx:"Excel",jpg:"Foto"};
+const docs=()=>D.meta.docs||{lijst:[]};
+const docBestand=async(r,s)=>new File([await ontsleutelBestand("docs/"+r.bestanden[s],docs().sleutel)],r.titel+"."+s,{type:DOCTYPE[s]});
+/* De titel opent de PDF om te lezen, de knoppen geven het bestand zelf om te bewaren of te delen. Een nieuw tabblad moet meteen bij de klik open, anders houdt de browser het tegen. */
+async function haalDoc(k){
+  const r=docs().lijst[+k.dataset.doc],s=k.dataset.docsoort,was=k.textContent,tab=k.dataset.docopen&&!/Android|iPhone|iPad/.test(navigator.userAgent)?window.open("","_blank"):null;
+  k.disabled=true;if(!tab)k.textContent="Ophalen";
+  try{const f=await docBestand(r,s);if(tab)tab.location=URL.createObjectURL(f);else await geefBestand(f)}
+  catch(_){if(tab)tab.close();melder("Het document kan nu niet worden opgehaald. Probeer het opnieuw.")}
+  k.disabled=false;k.textContent=was;
+}
+function vDocs(){
+  const r=docs().lijst,site=MODE==="enc"&&!!docs().sleutel,nr=x=>r.indexOf(x);
+  const titel=x=>site&&x.bestanden.pdf?'<button type="button" class="doctitel" data-doc="'+nr(x)+'" data-docsoort="pdf" data-docopen="1">'+esc(x.titel)+"</button>":esc(x.titel);
+  const knoppen=x=>site?'<span class="bonknoppen">'+["pdf","docx","xlsx","jpg"].filter(s=>x.bestanden[s]).map(s=>'<button type="button" class="tekstknop" data-doc="'+nr(x)+'" data-docsoort="'+s+'" aria-label="'+DOCNAAM[s]+" van "+esc(x.titel)+'">'+DOCNAAM[s]+"</button>").join("")+"</span>":of(null);
+  lijstScherm({key:"docs",titel:"Machinedocumentatie",sub:"Storingsinstructies, PM-bonnen, onderhoudsschema's en bestellijsten per machine. Klik op de naam om een document te lezen.",rijen:r,eenheid:["document","documenten"],sort:{k:"m",d:1},
+    geen:r.length?"Niets gevonden. Pas de filters aan.":"Er staan nog geen documenten op de site.",
+    seg:{get:x=>x.soort,o:DOCSOORT},
+    selects:[{k:"machine",l:"Alle machines",o:uniek(r.map(x=>x.machine)),get:x=>x.machine}],
+    tekst:x=>[x.titel,x.machine,x.soort].join(" "),
+    kolommen:[
+      {k:"t",l:"Document",c:"m-main",x:"titel",r:titel,s:x=>norm(x.titel)},
+      {k:"m",l:"Machine",w:"24%",c:"m-sub",r:x=>esc(x.machine),s:x=>norm(x.machine)+DOCSOORT.indexOf(x.soort)+norm(x.titel)},
+      {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
+      {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
+}
+const SCHERM={docs:vDocs,cpgepland:()=>vPlanLijst("cpgepland"),cpbestel:()=>vPlanLijst("cpbestel"),cpgeen:()=>vPlanLijst("cpgeen"),cpafgerond:()=>vPlanLijst("cpafgerond"),spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -2492,7 +2525,7 @@ function start(data){
   const sub=p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+'</span><small data-plantel="'+p.id+'"></small></a>';
   const pStop=P_DAG.find(p=>p.id==="stop");
   /* Uitklapmenu zonder eigen pagina: de hele regel klapt uit. */
-  const P_ULTIMO=["opname","pm","pmbonnen","prio"];
+  const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
   const kop=(t,i,subs)=>'<div class="klapgroep" data-groep="'+subs.map(x=>x.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico(i)+"<span>"+esc(t)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+subs.map(p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+"</span></a>").join("")+"</div></div>";
   /* Uitklapmenu: de pijl klapt uit, een klik op de naam opent de pagina. De groep van de huidige pagina staat altijd open. */
   const klap=(p,subs)=>'<div class="klapgroep" data-groep="'+subs.concat([p]).map(x=>x.id).join(" ")+'"><div class="klaprij">'+lnk(p)+'<button type="button" class="klappijl" data-navklap aria-expanded="false" aria-label="'+esc(p.t+" uitklappen")+'">'+ico("omlaag")+'</button></div><div class="klapsub">'+subs.map(sub).join("")+"</div></div>";
