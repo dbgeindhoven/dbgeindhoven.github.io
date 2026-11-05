@@ -72,6 +72,11 @@ nav a[aria-current="page"] .i{color:var(--gold-ink)}
 .klappijl:hover{background:var(--sunken);color:var(--ink)}
 .klappijl .i{width:16px;height:16px;transition:transform .12s ease}
 .klapgroep.open .klappijl .i{transform:rotate(180deg)}
+.klapkop{display:flex;align-items:center;gap:10px;width:100%;padding:7px 7px 7px 10px;border:0;border-radius:7px;background:none;color:var(--ink2);font-weight:500;font-size:.875rem;text-align:left;cursor:pointer}
+.klapkop:hover{background:var(--sunken);color:var(--ink)}
+.klapkop span{flex:1;min-width:0}
+.klapkop .i:last-child{width:16px;height:16px;color:var(--ink3);transition:transform .12s ease}
+.klapgroep.open .klapkop .i:last-child{transform:rotate(180deg)}
 .klapsub{display:none}
 .klapgroep.open .klapsub{display:block}
 nav a.subnav{justify-content:space-between;margin-left:28px;padding:5px 10px;font-weight:400;font-size:.8125rem;line-height:1.25}
@@ -2484,9 +2489,12 @@ function start(data){
   /* De werkvoorbereider heeft de agenda bij zijn eigen pagina's. Andere inloggen zien hem onder Dagstart. */
   const sub=p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+'</span><small data-plantel="'+p.id+'"></small></a>';
   const pStop=P_DAG.find(p=>p.id==="stop");
+  /* Uitklapmenu zonder eigen pagina: de hele regel klapt uit. */
+  const P_ULTIMO=["opname","pm","pmbonnen","prio"];
+  const kop=(t,i,subs)=>'<div class="klapgroep" data-groep="'+subs.map(x=>x.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico(i)+"<span>"+esc(t)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+subs.map(p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+"</span></a>").join("")+"</div></div>";
   /* Uitklapmenu: de pijl klapt uit, een klik op de naam opent de pagina. De groep van de huidige pagina staat altijd open. */
   const klap=(p,subs)=>'<div class="klapgroep" data-groep="'+subs.concat([p]).map(x=>x.id).join(" ")+'"><div class="klaprij">'+lnk(p)+'<button type="button" class="klappijl" data-navklap aria-expanded="false" aria-label="'+esc(p.t+" uitklappen")+'">'+ico("omlaag")+'</button></div><div class="klapsub">'+subs.map(sub).join("")+"</div></div>";
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.filter(p=>!wv||p!==pStop).concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.filter(p=>!wv||p.id!=="cm").map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+klap(pStop,P_PLAN)+klap(P_TD.find(p=>p.id==="cm"),P_CMSUB)+pWv.map(p=>p.id==="sqdbonnen"?klap(p,P_SQDSUB):lnk(p)).join("")+"</div>":"");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.filter(p=>!wv||p!==pStop).concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.filter(p=>!P_ULTIMO.includes(p.id)&&(!wv||p.id!=="cm")).map(lnk).join("")+kop("Ultimo voorbereiding","lijst",P_ULTIMO.map(i=>P_TD.find(p=>p.id===i)))+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+klap(pStop,P_PLAN)+klap(P_TD.find(p=>p.id==="cm"),P_CMSUB)+pWv.map(p=>p.id==="sqdbonnen"?klap(p,P_SQDSUB):lnk(p)).join("")+"</div>":"");
   $("#nav").addEventListener("click",e=>{const k=e.target.closest("[data-navklap]");if(!k)return;e.preventDefault();const g=k.closest(".klapgroep");g.classList.toggle("open");k.setAttribute("aria-expanded",String(g.classList.contains("open")))});
   planTel();
   presStappen();
