@@ -2239,7 +2239,7 @@ function vCm(){
   const wacht=NIEUWBON.length?" "+NIEUWBON.length+(NIEUWBON.length===1?" nieuwe bon wordt":" nieuwe bonnen worden")+" bij de volgende run gemaakt.":"";
   lijstScherm({key:"cm",titel:"CM-bonnen",sub:stand("cm")+wacht,rijen:r,eenheid:["bon","bonnen"],sort:{k:"nr",d:-1},
     extra:'<button class="knop" data-cmxlsx>'+ico("download")+"Excel</button>"+(wvMag()?'<button class="knop hoofd" data-nieuwebon>Nieuwe bon</button>':""),
-    seg:{get:x=>x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Bestellen","Besteld","Uitgevoerd","Gereed","Dubbel","Vervallen"]},
+    seg:{get:x=>x.status==="Uitgevoerd"?"Gereed":x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Bestellen","Besteld","Gereed","Dubbel","Vervallen"]},
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Monteurmelding","Eigen bon"],get:herkomst}]:[]),
     alleen:{l:"Alleen openstaand",test:isOpen,standaard:false},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.onderdelen,x.opmerking,x.monteur].join(" "),
