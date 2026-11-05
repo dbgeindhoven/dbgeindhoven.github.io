@@ -69,6 +69,13 @@ def setkey(a):
     pub = data["meta"].setdefault("publiek", {"iter": ITER, "salt": b64(secrets.token_bytes(16))})
     salt = base64.b64decode(pub["salt"])
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
+    if a.naam:
+        # Een eigen inlog per monteur: zelfde deel als de gedeelde monteurinlog, met zijn naam erbij.
+        if a.niveau != "monteur":
+            raise SystemExit("--naam hoort bij --niveau monteur")
+        pub.setdefault("monteurs", {})[a.naam] = b64(key)
+        p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
+        return
     pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "output": "sleutel_output", "pm": "sleutel_pm"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
@@ -173,9 +180,12 @@ def build(a):
     if pub.get("sleutel_melden"):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
+    # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de bonnen die de werkvoorbereider heeft ingepland. Geen bonbestanden.
+    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
     if pub.get("sleutel_monteur"):
-        # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de CM-bonnen die de werkvoorbereider heeft aangevinkt. Geen bonbestanden.
-        boxes.append(box({"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}, pub["sleutel_monteur"]))
+        boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
+    for wie, sleutel in (pub.get("monteurs") or {}).items():
+        boxes.append(box(dict(monteur_deel, naam=wie), sleutel))
     if pub.get("sleutel_output"):
         # Alleen het webadres en de outputsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "output", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": output_sleutel}}}, pub["sleutel_output"]))
@@ -203,7 +213,7 @@ def weekbonnen(data, stand):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "output", "pm"], default="td"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "output", "pm"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

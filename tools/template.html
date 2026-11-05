@@ -1049,7 +1049,7 @@ function rapportZet(d,j){
 }
 const RTITEL={Gereed:["Oplossing","Vul de oplossing in."],[OVERDRAGEN]:["Wat is er al gedaan?"],"Onderdeel bestellen":["Welk onderdeel is nodig?","Vul in welk onderdeel nodig is."],"Plannen voor onderhoudstop":["Wat moet er gebeuren?","Vul in wat er moet gebeuren."]};
 function rapportForm(x){
-  return'<form class="meldform rform" id="rform" novalidate><fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="rf_verv" value="'+esc(v[0])+'"'+(v[0]===x.vervolg?" checked":"")+"><span>"+esc(v[0])+"</span></label>").join("")+'</fieldset><label><span id="rf_titel"></span><textarea id="rf_tekst"></textarea></label><label>Monteur<input type="text" id="rf_naam" value="'+esc(naam())+'"></label><p class="fout" id="rf_fout" hidden></p><div class="rfknoppen"><button class="knop" type="button" id="rf_weg">Annuleren</button><button class="knop hoofd" id="rf_knop" type="submit">Opslaan</button></div></form>';
+  return'<form class="meldform rform" id="rform" novalidate><fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="rf_verv" value="'+esc(v[0])+'"'+(v[0]===x.vervolg?" checked":"")+"><span>"+esc(v[0])+"</span></label>").join("")+'</fieldset><label><span id="rf_titel"></span><textarea id="rf_tekst"></textarea></label><label>Monteur<input type="text" id="rf_naam" value="'+esc(D.naam||naam())+'"'+(D.naam?" readonly":"")+'></label><p class="fout" id="rf_fout" hidden></p><div class="rfknoppen"><button class="knop" type="button" id="rf_weg">Annuleren</button><button class="knop hoofd" id="rf_knop" type="submit">Opslaan</button></div></form>';
 }
 function koppelRapport(x,dicht){
   const f=$("#rform"),ta=$("#rf_tekst"),nm=$("#rf_naam"),fout=$("#rf_fout"),k=$("#rf_knop");
@@ -1079,7 +1079,7 @@ function koppelRapport(x,dicht){
   f.scrollIntoView({block:"nearest"});
 }
 function storingVelden(){
-  return'<label>Monteur<input type="text" id="r_naam" required value="'+esc(naam())+'"></label>'+
+  return'<label>Monteur<input type="text" id="r_naam" required value="'+esc(D.naam||naam())+'"'+(D.naam?" readonly":"")+"></label>"+
     '<label>Lijn<select id="r_lijn" required><option value="">Kies</option><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label>'+
     '<label>Machine<select id="r_mach" required disabled><option value="">Kies eerst een lijn</option></select></label>'+
     '<label id="r_andersveld" hidden>Welke machine?<input type="text" id="r_anders"></label>'+
@@ -1185,6 +1185,7 @@ function vRapport(){
 function monteurScherm(){
   $("#lock").hidden=true;$("#monteurscherm").hidden=false;
   const vak=$("#minhoud");
+  if(D.naam)$(".mkop small").textContent="Ingelogd als "+D.naam;
   function toon(t){
     document.querySelectorAll("#mtabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===t)));
     rteken=null;pmTeken=null;
