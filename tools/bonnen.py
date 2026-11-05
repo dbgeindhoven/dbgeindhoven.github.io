@@ -142,6 +142,13 @@ def rij_voor(w, spec, datum):
     )
 
 
+def bestelregel(nr, onderdeel, opmerking):
+    return {
+        "cm": nr, "onderdeel": onderdeel or "Zie bon", "specificatie": None, "aantal": None,
+        "leverancier": None, "status": "Nee", "link": None, "groep": "Nog niet besteld", "toelichting": None, "opmerking": opmerking,
+    }
+
+
 def registreer(a):
     """Zet de bonnen in het CM-overzicht, de onderdelen op de bestellijst en de bestanden versleuteld in bonnen/."""
     data = laad(a.site)
@@ -171,11 +178,7 @@ def registreer(a):
                 {"nr": w["nr"], "werkzaamheid": spec["kort"], "lijn_machine": spec.get("lijn_machine"), "prio": rij["prio"], "uitvoerder": None, "gereed": None})
             rij["status"], rij["uitvoeren"] = "Gepland", plan_dag(z)
         if w.get("vervolg") == "Onderdeel bestellen":
-            data["bestellijst"].append({
-                "cm": w["nr"], "onderdeel": spec.get("onderdelen") or "Zie bon", "specificatie": None, "aantal": None,
-                "leverancier": None, "status": "Nee", "link": None, "groep": "Nog niet besteld", "toelichting": None,
-                "opmerking": "Uit storing van " + datum + ", monteur " + str(w.get("melder")) + ". Foto op de bon.",
-            })
+            data["bestellijst"].append(bestelregel(w["nr"], spec.get("onderdelen"), "Uit storing van " + datum + ", monteur " + str(w.get("melder")) + ". Foto op de bon."))
         b["verwerkt"][w["id"]] = w["nr"]
         m = re.fullmatch(r"CM(\d+)", w["nr"])
         if m:
@@ -315,14 +318,51 @@ def bon_uitvoeren(data, rij, wm):
     bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
 
 
+UITVOEREN_VERVOLG = {"Overdragen aan volgende dienst": "Volgende dienst", "Plannen voor onderhoudstop": "Eerstvolgende onderhoudstop", "Onderdeel bestellen": "In overleg"}
+UITVOEREN_LOS = (None, "", *UITVOEREN_VERVOLG.values())
+
+
+def vervolg_wijzig(data, v, w, opnieuw):
+    """Een volgende dienst past in het dienstrapport het vervolg van een storing aan of meldt hem af. De bon gaat mee."""
+    nr = stand(data)["verwerkt"].get(v.get("id"))
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None:
+        print(v.get("id"), "heeft geen bon, vervolg overgeslagen")
+        return
+    keuze, tekst, door, dag = v.get("vervolg"), v.get("tekst"), v.get("door"), str(w.get("tijd"))[:10]
+    regel = "%s, %s: %s." % (dag, door or "Monteur", keuze) + (" " + tekst.rstrip(". ") + "." if tekst else "")
+    rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+    print(nr, keuze, door)
+    if rij.get("status") in KLAAR:
+        return
+    if keuze == "Gereed":
+        rij["status"], rij["uitgevoerd_op"] = "Uitgevoerd", dag
+    if keuze == "Onderdeel bestellen" and not any(r.get("cm") == nr for r in data["bestellijst"]):
+        data["bestellijst"].append(bestelregel(nr, tekst or rij.get("onderdelen"), "Uit dienstrapport van " + dag + ", monteur " + str(door) + "."))
+    # Een bon op een dag in de planning houdt die dag, en wat de werkvoorbereider zelf invulde blijft staan tot de bon klaar is.
+    nieuw = "Uitgevoerd op " + dag if keuze == "Gereed" else UITVOEREN_VERVOLG.get(keuze) if rij.get("uitvoeren") in UITVOEREN_LOS else None
+    if nieuw and nieuw != rij.get("uitvoeren") and not any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
+        rij["uitvoeren"] = nieuw
+        if rij not in opnieuw:
+            opnieuw.append(rij)
+
+
+def volgorde(w):
+    """Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn. Het vervolg uit het dienstrapport als laatste, op tijd: het nummer eindigt op het moment van de wijziging."""
+    extra = w.get("rij") or {}
+    return (not extra.get("stop"), bool(extra.get("vervolg")), w["nr"] if extra.get("vervolg") else "")
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
     opnieuw = []
-    # Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn.
-    for w in sorted(laad(Path(a.map) / "wijzig.json"), key=lambda x: not (x.get("rij") or {}).get("stop")):
+    for w in sorted(laad(Path(a.map) / "wijzig.json"), key=volgorde):
         nr, status = w["nr"], w["status"]
         extra = w.get("rij") or {}
+        if extra.get("vervolg"):
+            vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
+            continue
         if extra.get("stop"):
             stop_nieuw(data, extra["stop"])
             continue

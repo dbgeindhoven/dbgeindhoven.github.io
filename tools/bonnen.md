@@ -25,6 +25,8 @@ Staat er `rij.uitvoeren` in het bestand, dan is dat de nieuwe tekst bij Uitvoere
 
 Andere soorten staan ook als `status-`-bestand en verwerkt `bonnen.py wijzig` ook. `status-ZAT-<datum>.txt` en `status-KOP-<id>.txt` hebben `rij.zatkop`: teamleider, monteurs, LET OP en beschikbare manuren van de zaterdag of een dag in de planning (met `plan`). `status-STOP-<id>.txt` heeft `rij.stop` (`id`, `datum`, `lijn`, `naam`): een nieuwe dag in de planning, of `rij.stopweg` (het id): de stop verdwijnt, de bonnen blijven bestaan en Gepland wordt Open. `status-B<n>.txt` heeft `rij.bestel` (`id`, `groep`): een regel op de bestellijst.
 
+Een monteur past in het dienstrapport het vervolg van een storing aan of meldt hem af. Dat staat als `status-VV-<id>-<tijd>.txt` in dezelfde map, per wijziging een eigen bestand, met `rij.vervolg` (`id` van de melding, `vervolg`, `tekst`, `door`). `bonnen.py wijzig` zoekt de bon op in `meta.bonnen.verwerkt`, verwerkt deze bestanden na de andere en op volgorde van tijd, en zet per wijziging een regel achter `opmerking`. Gereed zet de bon op Uitgevoerd. Onderdeel bestellen zet een regel op de bestellijst als die er nog niet is, met `tekst` als onderdeel. Uitvoeren op volgt het vervolg, ook op de Word-bon en de PDF, behalve bij een bon op een dag in de planning en bij een tekst van de werkvoorbereider. Een bon die al klaar is krijgt alleen de regel in `opmerking`. Staat de bon nog in de wachtrij, dan maakt `registreer` hem eerst uit de oude melding en past `wijzig` het vervolg daarna toe.
+
 Een afgehandelde melding zet de bon via Apps Script op Uitgevoerd, ook als `status-<nr>.txt`. Een afgesloten bon haalt de site zelf van het SQD-bord: `meta.bonnen.gesloten` bevat de meldingen van afgesloten bonnen.
 
 ## Stappen

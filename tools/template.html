@@ -270,6 +270,11 @@ html.present .deelkop .knop{display:none}
 .rkop time{color:var(--ink2);font-size:.8125rem;white-space:nowrap}
 .regel p{margin:0}
 .regel .ropl span{color:var(--ink2)}
+.regel .rafm{color:var(--ink2);font-size:.8125rem}
+.knop.rbewerk{align-self:flex-start;margin-top:6px}
+.meldform.rform,#minhoud .meldform.rform{margin-top:8px;padding:12px;background:var(--sunken);border-radius:8px}
+.rform .keuzes span{background:var(--bg)}
+.rfknoppen{display:flex;justify-content:flex-end;gap:8px}
 .rvoet{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:center;margin-top:3px;color:var(--ink2);font-size:.8125rem}
 .rfoto{margin-top:6px}
 .rfoto img{display:block;width:100%;max-height:320px;object-fit:contain;border-radius:8px;background:var(--sunken)}
@@ -416,7 +421,7 @@ html.present .gvlak{height:min(46vh,460px)}
 /* presentatie */
 .pbalk{display:none}
 html.present #app{grid-template-columns:minmax(0,1fr)}
-html.present .side,html.present .topbar,html.present .toolbar,html.present .seg,html.present .head .knop,html.present .stopweg{display:none}
+html.present .side,html.present .topbar,html.present .toolbar,html.present .seg,html.present .head .knop,html.present .stopweg,html.present .rbewerk{display:none}
 html.present .pbalk{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px max(32px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
 html.present .pbalk .stappen{display:flex;gap:4px}
 html.present .pbalk .stappen button{padding:6px 12px;border:0;border-radius:7px;background:none;color:var(--ink2);font-weight:500;cursor:pointer}
@@ -766,6 +771,7 @@ function storingRij(c){
 /* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
 function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{};
+  if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
   if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r)r.groep=extra.bestel.groep;return}
   if(extra.zatkop){pasZatKop(extra.zatkop);return}
   if(extra.stop){if(!stops().some(x=>x.id===extra.stop.id)){D.stops=stops().concat([Object.assign({correctief:[],preventief:[]},extra.stop)]);presStappen()}return}
@@ -934,9 +940,12 @@ async function verzendUitbak(){
   verzendt=true;
   try{
     for(const x of (await UITBAK.alles()).filter(uitbakVanMij)){
-      const j=await stuur(x.d);
+      let j;
+      /* Een regel die intussen is verwijderd mag de rest niet tegenhouden. */
+      try{j=await stuur(x.d)}catch(e){if(x.d.actie!=="rapport"||e.message!=="melding niet gevonden")throw e;await UITBAK.weg(x.n);continue}
       await UITBAK.weg(x.n);
       if(x.d.actie==="pm")pmZet(Object.assign({},x.d,{tijd:j.tijd}));
+      else if(x.d.actie==="rapport")rapportZet(x.d,j);
       else{RAPPORT=(RAPPORT||[]).concat([Object.assign({},x.d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste=""}
     }
   }catch(_){}
@@ -945,7 +954,50 @@ async function verzendUitbak(){
 }
 function nuTekst(){const d=new Date(),t=n=>String(n).padStart(2,"0");return t(d.getDate())+"-"+t(d.getMonth()+1)+"-"+d.getFullYear()+" "+t(d.getHours())+":"+t(d.getMinutes())}
 const eerderOp=(lijn,mach)=>{const m=norm(mach);return m?(RAPPORT||[]).filter(x=>x.lijn===lijn&&norm(x.machine).startsWith(m)).slice(-4).reverse():[]};
-const nogOpen=x=>!!x.vervolg&&x.vervolg!=="Gereed"&&!(bonnen().gesloten||[]).includes(x.id);
+const bonDicht=x=>(bonnen().gesloten||[]).includes(x.id);
+const nogOpen=x=>!!x.vervolg&&x.vervolg!=="Gereed"&&!bonDicht(x);
+/* Monteurs, TD en werkvoorbereider passen het vervolg aan. De dagstart bekijkt het rapport alleen. */
+const rapportMag=()=>!!MELD()&&(D.niveau==="monteur"||PAGINAS.some(p=>p.id==="cm"));
+const rapportTekst=(oud,d)=>d.tekst?[oud,(d.door?d.door+": ":"")+d.tekst].filter(Boolean).join(" · "):oud;
+/* Werkt de regel meteen bij. Een afgemelde storing haalt ook de bon dicht, de geplande taak zet dat daarna vast. */
+function rapportZet(d,j){
+  rlaatste="";
+  if(j.al){haalRapport();return}
+  const x=(RAPPORT||[]).find(y=>y.id===d.id),gereed=d.vervolg==="Gereed",nr=bonVan(d.id);
+  if(x)Object.assign(x,{vervolg:d.vervolg,oplossing:j.oplossing,gereed_op:gereed?j.tijd:"",gereed_door:gereed?d.door:""});
+  if(gereed&&nr){pasBonToe({nr,status:"Uitgevoerd",rij:null});laatste=""}
+}
+const RTITEL={Gereed:["Oplossing","Vul de oplossing in."],[OVERDRAGEN]:["Wat is er al gedaan?"],"Onderdeel bestellen":["Welk onderdeel is nodig?","Vul in welk onderdeel nodig is."],"Plannen voor onderhoudstop":["Wat moet er gebeuren?","Vul in wat er moet gebeuren."]};
+function rapportForm(x){
+  return'<form class="meldform rform" id="rform" novalidate><fieldset class="keuzes"><legend>Vervolg</legend>'+VERVOLG.map(v=>'<label><input type="radio" name="rf_verv" value="'+esc(v[0])+'"'+(v[0]===x.vervolg?" checked":"")+"><span>"+esc(v[0])+"</span></label>").join("")+'</fieldset><label><span id="rf_titel"></span><textarea id="rf_tekst"></textarea></label><label>Monteur<input type="text" id="rf_naam" value="'+esc(naam())+'"></label><p class="fout" id="rf_fout" hidden></p><div class="rfknoppen"><button class="knop" type="button" id="rf_weg">Annuleren</button><button class="knop hoofd" id="rf_knop" type="submit">Opslaan</button></div></form>';
+}
+function koppelRapport(x,dicht){
+  const f=$("#rform"),ta=$("#rf_tekst"),nm=$("#rf_naam"),fout=$("#rf_fout"),k=$("#rf_knop");
+  const keuze=()=>(f.querySelector('input[name="rf_verv"]:checked')||{}).value;
+  const titel=()=>{$("#rf_titel").textContent=(RTITEL[keuze()]||["Toelichting"])[0]};
+  const meld=t=>{fout.textContent=t;fout.hidden=false};
+  titel();
+  f.addEventListener("change",titel);
+  $("#rf_weg").addEventListener("click",dicht);
+  f.addEventListener("submit",async e=>{
+    e.preventDefault();fout.hidden=true;
+    const vervolg=keuze(),tekst=ta.value.trim(),door=nm.value.trim();
+    if(!vervolg)return meld("Kies een vervolg.");
+    if(!door)return meld("Vul je naam in.");
+    if(vervolg===x.vervolg&&!tekst)return meld("Kies een ander vervolg of vul in wat er is gedaan.");
+    if(RTITEL[vervolg][1]&&!tekst)return meld(RTITEL[vervolg][1]);
+    naam(door);k.disabled=true;
+    const d={actie:"rapport",id:x.id,vervolg,tekst,door};
+    try{const j=await stuur(d);rapportZet(d,j);dicht();melder(j.al?"Deze storing was al afgemeld":vervolg==="Gereed"?"Storing afgemeld":"Vervolg aangepast")}
+    catch(e){
+      if(e instanceof TypeError||e.name==="TimeoutError"||navigator.onLine===false){
+        try{await UITBAK.zet({d,tijd:nuTekst()});await leesUitbak();dicht();melder("Geen bereik. De wijziging wordt vanzelf verstuurd.");return}catch(_){}
+      }
+      meld("Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.");k.disabled=false;
+    }
+  });
+  f.scrollIntoView({block:"nearest"});
+}
 function storingVelden(){
   return'<label>Monteur<input type="text" id="r_naam" required value="'+esc(naam())+'"></label>'+
     '<label>Lijn<select id="r_lijn" required><option value="">Kies</option><option>Lijn 1</option><option>Lijn 2</option><option>Lijn 3</option><option>Overig</option></select></label>'+
@@ -1013,24 +1065,30 @@ async function haalRapport(){
 }
 function rapportLijst(vak,toolbar){
   const s=mem.rapport||(mem.rapport={q:"",lijn:"",open:false});
+  let bewerk=null;
   vak.innerHTML=(toolbar||"")+'<div class="toolbar"><div class="zoek">'+ico("zoek")+'<input type="search" id="rq" placeholder="Zoeken" aria-label="Zoeken" value="'+esc(s.q)+'"></div><select id="rl" aria-label="Alle lijnen"><option value="">Alle lijnen</option>'+["Lijn 1","Lijn 2","Lijn 3","Overig"].map(l=>"<option"+(l===s.lijn?" selected":"")+">"+l+"</option>").join("")+'</select><label class="toggle"><input type="checkbox" id="ropen"'+(s.open?" checked":"")+'> Nog open</label></div><div id="rlijst"></div>';
   function teken(){
     const doel=$("#rlijst");if(!doel)return;
     const w=norm(s.q).split(/\s+/).filter(Boolean);
-    const wacht=UIT.map(x=>Object.assign({},x.d,{tijd:x.tijd,wacht:true}));
-    const r=(RAPPORT||[]).concat(wacht).filter(x=>(!s.lijn||x.lijn===s.lijn)&&(!s.open||x.wacht||nogOpen(x))&&(!w.length||w.every(y=>norm([x.melder,x.lijn,x.machine,x.melding,x.oplossing,x.vervolg].join(" ")).includes(y)))).slice().reverse();
+    const wacht=UIT.filter(x=>x.d.actie!=="rapport").map(x=>Object.assign({},x.d,{tijd:x.tijd,wacht:true}));
+    /* Een wijziging die nog op de telefoon staat, staat al op de regel. */
+    const metWijziging=x=>UIT.filter(y=>y.d.actie==="rapport"&&y.d.id===x.id).reduce((u,y)=>Object.assign({},u,{vervolg:y.d.vervolg,oplossing:rapportTekst(u.oplossing,y.d),wacht:true}),x);
+    const r=(RAPPORT||[]).map(metWijziging).concat(wacht).filter(x=>(!s.lijn||x.lijn===s.lijn)&&(!s.open||x.wacht||nogOpen(x))&&(!w.length||w.every(y=>norm([x.melder,x.lijn,x.machine,x.melding,x.oplossing,x.vervolg].join(" ")).includes(y)))).slice().reverse();
     if(!r.length){doel.innerHTML='<div class="leegmelding">'+(!MELD()?"Het dienstrapport staat nog niet aan.":RFOUT?"Het dienstrapport is nu niet bereikbaar.":RAPPORT===null?"Dienstrapport ophalen.":"Nog geen storingen in het dienstrapport.")+"</div>";return}
     const dagen=[];r.forEach(x=>{const k=(x.tijd||"").slice(0,10);let d=dagen.find(y=>y.k===k);if(!d){d={k,r:[]};dagen.push(d)}d.r.push(x)});
     doel.innerHTML=dagen.map(d=>{const dt=datum(d.k);return'<section class="dag"><h2>'+esc(dt?hoofd(dt.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"})):d.k)+"<span>"+d.r.length+"</span></h2>"+d.r.map(x=>{
-      const v=VERVOLG.find(y=>y[0]===x.vervolg);
-      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div>"+(wvMag()&&!x.wacht?'<div class="weg" data-rweg="'+esc(x.id)+'"></div>':"")+"</article>";
+      const v=bonDicht(x)&&x.vervolg!=="Gereed"?["Bon gesloten","ok"]:VERVOLG.find(y=>y[0]===x.vervolg);
+      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+(x.vervolg==="Gereed"&&x.gereed_door&&!x.wacht?'<p class="rafm">Afgemeld door '+esc(x.gereed_door)+(x.gereed_op?", "+esc(x.gereed_op):"")+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div>"+(rapportMag()&&!x.wacht&&nogOpen(x)?(bewerk===x.id?rapportForm(x):'<button class="knop rbewerk" data-rbewerk="'+esc(x.id)+'">Status aanpassen</button>'):"")+(wvMag()&&!x.wacht?'<div class="weg" data-rweg="'+esc(x.id)+'"></div>':"")+"</article>";
     }).join("")+"</section>"}).join("");
     doel.querySelectorAll("[data-rweg]").forEach(v=>{const x=r.find(y=>y.id===v.dataset.rweg);wegVak(v,x,"Melding verwijderen",()=>{RAPPORT=RAPPORT.filter(y=>y.id!==x.id);rlaatste="";teken();melder("Melding verwijderd")})});
+    doel.querySelectorAll("[data-rbewerk]").forEach(k=>k.addEventListener("click",()=>{bewerk=k.dataset.rbewerk;teken()}));
+    if($("#rform"))koppelRapport(r.find(x=>x.id===bewerk),()=>{bewerk=null;teken()});
   }
-  $("#rq").addEventListener("input",e=>{s.q=e.target.value;teken()});
-  $("#rl").addEventListener("change",e=>{s.lijn=e.target.value;teken()});
-  $("#ropen").addEventListener("change",e=>{s.open=e.target.checked;teken()});
-  rteken=teken;teken();
+  $("#rq").addEventListener("input",e=>{s.q=e.target.value;bewerk=null;teken()});
+  $("#rl").addEventListener("change",e=>{s.lijn=e.target.value;bewerk=null;teken()});
+  $("#ropen").addEventListener("change",e=>{s.open=e.target.checked;bewerk=null;teken()});
+  /* Een open formulier blijft staan als er nieuwe regels binnenkomen, anders is wat de monteur typte weg. */
+  rteken=()=>{if(!bewerk)teken()};teken();
 }
 async function toonFoto(b){
   const m=MELD(),vak=document.createElement("div");vak.className="rfoto";vak.textContent="Foto laden";

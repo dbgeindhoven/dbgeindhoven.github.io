@@ -13,6 +13,7 @@ const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
 const BONSTATUS = ['Open', 'Gepland', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
+const VERVOLG = ['Gereed', 'Overdragen aan volgende dienst', 'Onderdeel bestellen', 'Plannen voor onderhoudstop'];
 
 const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];
 const LIJNEN = ['Lijn 1', 'Lijn 2', 'Lijn 3'];
@@ -125,6 +126,28 @@ function verwijder_(b, rij, r, d) {
   }
 }
 
+// Een volgende dienst past het vervolg van een storing aan of meldt hem af. De tekst komt achter wat er al stond, zodat zichtbaar blijft wie wat deed.
+// Elke wijziging krijgt een eigen bestand: de geplande taak zet ze op volgorde op de bon en zoekt de bon zelf op, ook als die nog gemaakt moet worden.
+function zetRapport_(b, d) {
+  const rijen = b.getDataRange().getDisplayValues();
+  const i = rijen.findIndex((r, n) => n > 0 && r[0] === d.id && r[2] === 'TD' && r[10] !== 'Verwijderd');
+  if (i < 0) return { fout: 'melding niet gevonden' };
+  const r = rijen[i];
+  if (r[16] === 'Gereed') return { ok: true, al: true };
+  const door = String(d.door == null ? '' : d.door).trim().slice(0, 100);
+  const tekst = String(d.tekst == null ? '' : d.tekst).trim().slice(0, 1000);
+  const oplossing = (tekst ? [r[13], (door ? door + ': ' : '') + tekst].filter(Boolean).join(' · ') : r[13]).slice(-1000);
+  const tijd = nu_();
+  const gereed = d.vervolg === 'Gereed';
+  zetBonstatus_('VV-' + d.id + '-' + Date.now(), d.vervolg, { vervolg: { id: d.id, vervolg: d.vervolg, tekst: tekst, door: door } }, door);
+  b.getRange(i + 1, 14).setValue(schoon_(oplossing));
+  b.getRange(i + 1, 17).setValue(d.vervolg);
+  const af = b.getRange(i + 1, 12, 1, 2);
+  af.setNumberFormat('@');
+  af.setValues([[gereed ? tijd : '', gereed ? schoon_(door) : '']]);
+  return { ok: true, tijd: tijd, oplossing: oplossing };
+}
+
 // Output staat op een eigen tabblad, per datum, ploeg en lijn één regel. Opnieuw invullen vervangt die regel.
 function outputRijen_() {
   const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Output');
@@ -206,7 +229,9 @@ function doPost(e) {
   const ploeg = d.k === OUTPUTSLEUTEL && d.actie === 'output';
   // De PM-inlog kan alleen PM-bonnen afmelden.
   const pm = d.k === PMSLEUTEL && d.actie === 'pm';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm) return uit_({ fout: 'geen toegang' });
+  // Elke dienst kan het vervolg van een storing in het dienstrapport aanpassen, verder niets.
+  const rapport = d.k === MONTEURSLEUTEL && d.actie === 'rapport';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -234,6 +259,10 @@ function doPost(e) {
     if (d.actie === 'pm') {
       if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PMSTATUS.includes(d.status) || !/^PM-\d+(,PM-\d+)*$/.test(d.taken)) return uit_({ fout: 'onjuiste invoer' });
       return uit_({ ok: true, tijd: zetPm_(d) });
+    }
+    if (d.actie === 'rapport') {
+      if (!VERVOLG.includes(d.vervolg)) return uit_({ fout: 'onjuiste invoer' });
+      return uit_(zetRapport_(b, d));
     }
     if (d.actie === 'verwijder') {
       if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });
