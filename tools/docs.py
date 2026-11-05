@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Machinedocumentatie: documenten per machine, versleuteld in de openbare repository dbgeindhoven/docs.
+"""Machinedocumentatie: documenten per machine, versleuteld in de tak documenten van deze repository.
 
-  docs.py voegtoe <site.json> <map> <clone van docs>
+  docs.py voegtoe <site.json> <map> <clone van de tak documenten>
 
 <map> is ingedeeld als <machine>/<soort>/<bestand>. Bestanden met dezelfde naam en een andere extensie
 worden één document, bijvoorbeeld een PM-bon als Word en PDF. Zie CLAUDE.md.
@@ -25,9 +25,8 @@ def voegtoe(a):
     site = Path(a.site)
     data = json.loads(site.read_text("utf-8"))
     doel = Path(a.doel)
-    if (doel / "index.html").exists() or not (doel / ".git").exists():
-        raise SystemExit("Dit is niet de clone van dbgeindhoven/docs.")
-    (doel / ".nojekyll").touch()
+    if "refs/heads/documenten" not in (doel / ".git" / "HEAD").read_text():
+        raise SystemExit("Dit is niet de clone van de tak documenten.")
     d = data["meta"].setdefault("docs", {"lijst": []})
     d.setdefault("sleutel", base64.b64encode(os.urandom(32)).decode())
     sleutel = base64.b64decode(d["sleutel"])

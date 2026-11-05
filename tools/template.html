@@ -2456,12 +2456,14 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["Laatst uitgevoerd",pmLaatst(x.id)],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-/* ---- machinedocumentatie: de bestanden staan versleuteld in de repository docs, met een eigen sleutel voor TD en werkvoorbereider ---- */
+/* ---- machinedocumentatie: de bestanden staan versleuteld in de tak documenten, met een eigen sleutel voor TD en werkvoorbereider.
+   Die tak hoort niet bij de site, dus een bestand komt pas binnen als iemand het aanklikt. ---- */
+const DOCBRON="https://raw.githubusercontent.com/dbgeindhoven/dbgeindhoven.github.io/documenten/";
 const DOCSOORT=["Storingsinstructies","PM-bonnen","Onderhoudsschema's","Bestellijsten","PM-taken","Werkbonnen","Overzichten"];
 const DOCTYPE={pdf:BONTYPE.pdf,docx:BONTYPE.docx,xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",jpg:"image/jpeg"};
 const DOCNAAM={pdf:"PDF",docx:"Word",xlsx:"Excel",jpg:"Foto"};
 const docs=()=>D.meta.docs||{lijst:[]};
-const docBestand=async(r,s)=>new File([await ontsleutelBestand("docs/"+r.bestanden[s],docs().sleutel)],r.titel+"."+s,{type:DOCTYPE[s]});
+const docBestand=async(r,s)=>new File([await ontsleutelBestand(DOCBRON+r.bestanden[s],docs().sleutel)],r.titel+"."+s,{type:DOCTYPE[s]});
 /* De titel opent de PDF om te lezen, de knoppen geven het bestand zelf om te bewaren of te delen. Een nieuw tabblad moet meteen bij de klik open, anders houdt de browser het tegen. */
 async function haalDoc(k){
   const r=docs().lijst[+k.dataset.doc],s=k.dataset.docsoort,was=k.textContent,tab=k.dataset.docopen&&!/Android|iPhone|iPad/.test(navigator.userAgent)?window.open("","_blank"):null;
