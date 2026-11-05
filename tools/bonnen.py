@@ -572,12 +572,14 @@ def pm_registratie(data, r, wm):
     spec = pm_spec(bon, {x["id"]: x for x in data.get("pm", [])})
     dag = str(r.get("tijd"))[:10]
     regels = ["Registratie van PM-bon %s, gepland op %s." % (r["nr"], bon["datum"]), "Alle taken en controlepunten afgetekend door %s op %s." % (r.get("door"), r.get("tijd"))]
-    if r.get("opmerking"):
-        regels += textwrap.wrap("Opmerking monteur: " + " ".join(r["opmerking"].split()), 112, max_lines=2, placeholder=" … zie TD Hub")
+    punten = r.get("punten") or []
+    extra = (["Opmerking monteur: " + r["opmerking"].rstrip(". ") + "."] if r.get("opmerking") else []) + (["Bevindingen: " + "; ".join(p["naam"] + " – " + p["opmerking"] for p in punten) + "."] if punten else [])
+    if extra:
+        regels += textwrap.wrap(" ".join(" ".join(extra).split()), 112, max_lines=2, placeholder=" … zie TD Hub")
     spec.update(
         naam=r["reg"] + spec["naam"][len(r["nr"]):], werkbon_nr=r["reg"], uitvoerder=r.get("door"), uitvoeren_op="Uitgevoerd op " + dag,
         omschrijving="Registratie " + spec["omschrijving"][0].lower() + spec["omschrijving"][1:], opmerking=regels,
-        afmelding={"monteur": str(r.get("door")), "datum": dag}, foto_tekst="Geen foto bij deze registratie",
+        afmelding={"monteur": str(r.get("door")), "datum": dag, "vervolg": any(p.get("bon") == "Ja" for p in punten)}, foto_tekst="Geen foto bij deze registratie",
     )
     wm.mkdir(parents=True, exist_ok=True)
     sjabloon, pad = wm / "template.docx", wm / (spec["naam"] + ".docx")

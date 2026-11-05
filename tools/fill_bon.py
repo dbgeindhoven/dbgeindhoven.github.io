@@ -166,6 +166,15 @@ def zet_afmelding(root, af):
     gereed = next(volgende_cel(tc) for tc in root.iter(q("tc")) if tekst(tc) == "Werk gereed?")
     t = next(gereed.iter(q("t")))
     t.text = t.text.replace("☐", "☒", 1)
+    # De tekst kan over meer runs verdeeld zijn, dus het vakje wordt per teken gezet.
+    ts = list(alinea(root, "Vervolgactie nodig?").iter(q("t")))
+    heel = "".join(x.text or "" for x in ts)
+    vak = [m.start() for m in re.finditer("☐", heel)][0 if af.get("vervolg") else 1]
+    heel, i = heel[:vak] + "☒" + heel[vak + 1:], 0
+    for x in ts:
+        n = len(x.text or "")
+        x.text = heel[i:i + n]
+        i += n
 
 
 def maak(spec, template, uit):

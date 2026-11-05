@@ -20,6 +20,7 @@ const LIJNEN = ['Lijn 1', 'Lijn 2', 'Lijn 3'];
 const OUTKOP = ['datum', 'ploeg', 'lijn', 'output', 'opmerking', 'door', 'tijd'];
 const PMKOP = ['nr', 'datum', 'status', 'taken', 'opmerking', 'door', 'tijd', 'reg'];
 const PMSTATUS = ['Uitgevoerd', 'Deels uitgevoerd'];
+const BEVKOP = ['id', 'nr', 'punt', 'naam', 'opmerking', 'foto', 'bon', 'door', 'tijd'];
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -185,6 +186,40 @@ function pmRijen_() {
   });
 }
 
+// Bevindingen bij controlepunten van PM-bonnen staan op een eigen tabblad.
+function bevRijen_() {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Bevindingen');
+  if (!b || b.getLastRow() < 2) return [];
+  return b.getRange(2, 1, b.getLastRow() - 1, BEVKOP.length).getValues().slice(-3000).map(r => {
+    const o = {};
+    BEVKOP.forEach((k, i) => { o[k] = String(r[i]); });
+    return o;
+  });
+}
+
+// Is er een CM-bon nodig, dan komt de bevinding ook in het dienstrapport. De geplande taak maakt er dan een bon van, net als van een storing.
+function zetBevinding_(b, d) {
+  const id = Utilities.getUuid().slice(0, 8);
+  const tijd = nu_();
+  let foto = '';
+  if (d.foto) {
+    if (d.foto.length > MAX_FOTO) return { fout: 'foto te groot' };
+    foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'bevinding-' + id + '.jpg')).getId();
+  }
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const t = s.getSheetByName('Bevindingen') || s.insertSheet('Bevindingen', s.getNumSheets());
+  t.getRange('A:I').setNumberFormat('@');
+  t.getRange(1, 1, 1, BEVKOP.length).setValues([BEVKOP]);
+  const bon = d.bon === 'Ja' ? 'Ja' : 'Nee';
+  t.appendRow([id, d.nr, d.punt, schoon_(d.naam), schoon_(d.opmerking), foto, bon, schoon_(d.door), tijd]);
+  if (bon === 'Ja') {
+    b.getRange(1, 1, 1, KOP.length).setValues([KOP]);
+    b.appendRow([id, tijd, 'TD', schoon_('PM-bevinding ' + d.nr + ', ' + d.naam + ': ' + d.opmerking), schoon_(d.lijn), schoon_(d.machine), schoon_(d.door), '', '', 'Nee', 'Rapport', '', '', '', foto, '', VERVOLG[3], '', '', '']);
+    naarWachtrij_(b);
+  }
+  return { ok: true, id: id, tijd: tijd, foto: foto };
+}
+
 // Een bon die helemaal is afgemeld krijgt een doorlopend registratienummer en een bestand voor de geplande taak, die de registratiebon maakt.
 // Dit draait binnen de lock, dus nooit dubbel. Met een nummer ligt de regel vast.
 function zetPm_(d) {
@@ -201,7 +236,8 @@ function zetPm_(d) {
   if (d.status === 'Uitgevoerd') {
     const hoogste = rijen.reduce((h, r) => Math.max(h, Number((/^PMR-(\d+)$/.exec(r[7]) || [0, 0])[1])), 0);
     reg = 'PMR-' + (hoogste + 1);
-    zetBonstatus_(reg, d.status, { pmreg: { reg: reg, nr: d.nr, opmerking: String(d.opmerking == null ? '' : d.opmerking).slice(0, 1000), door: schoon_(d.door), tijd: tijd } }, d.door);
+    const punten = bevRijen_().filter(x => x.nr === d.nr).map(x => ({ naam: x.naam, opmerking: x.opmerking, bon: x.bon }));
+    zetBonstatus_(reg, d.status, { pmreg: { reg: reg, nr: d.nr, opmerking: String(d.opmerking == null ? '' : d.opmerking).slice(0, 1000), door: schoon_(d.door), tijd: tijd, punten: punten } }, d.door);
   }
   const rij = [d.nr, d.datum, d.status, d.taken, schoon_(d.opmerking), schoon_(d.door), tijd, reg];
   if (i >= 0) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
@@ -213,18 +249,20 @@ function doGet(e) {
   const p = e.parameter || {};
   const monteur = p.k === MONTEURSLEUTEL;
   if (p.k === OUTPUTSLEUTEL) return uit_({ output: outputRijen_() });
-  if (p.k === PMSLEUTEL) return uit_({ pm: pmRijen_() });
-  if (p.k !== SLEUTEL && !monteur) return uit_({ fout: 'geen toegang' });
+  const pm = p.k === PMSLEUTEL;
+  if (pm && !p.foto) return uit_({ pm: pmRijen_(), bevindingen: bevRijen_() });
+  if (p.k !== SLEUTEL && !monteur && !pm) return uit_({ fout: 'geen toegang' });
   const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
-    // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive.
-    if (!rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD'))) return uit_({ fout: 'foto niet gevonden' });
+    // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive. De PM-inlog ziet alleen foto's van bevindingen.
+    const bevinding = !monteur && bevRijen_().some(x => x.foto === p.foto);
+    if (!bevinding && (pm || !rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
   if (monteur || p.rapport) {
     return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_() });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_() });
 }
 
 function doPost(e) {
@@ -236,8 +274,8 @@ function doPost(e) {
   const wvActie = d.actie === 'verwijder' || d.actie === 'bonstatus';
   // De ploegen kunnen alleen hun output invullen.
   const ploeg = d.k === OUTPUTSLEUTEL && d.actie === 'output';
-  // De PM-inlog kan alleen PM-bonnen afmelden.
-  const pm = d.k === PMSLEUTEL && d.actie === 'pm';
+  // De PM-inlog kan alleen PM-bonnen afmelden en bevindingen bij controlepunten vastleggen.
+  const pm = d.k === PMSLEUTEL && (d.actie === 'pm' || d.actie === 'pmbev');
   // Elke dienst kan het vervolg van een storing in het dienstrapport aanpassen, verder niets.
   const rapport = d.k === MONTEURSLEUTEL && d.actie === 'rapport';
   if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport) return uit_({ fout: 'geen toegang' });
@@ -268,6 +306,10 @@ function doPost(e) {
     if (d.actie === 'pm') {
       if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PMSTATUS.includes(d.status) || !/^PM-\d+(,PM-\d+)*$/.test(d.taken)) return uit_({ fout: 'onjuiste invoer' });
       return uit_(Object.assign({ ok: true }, zetPm_(d)));
+    }
+    if (d.actie === 'pmbev') {
+      if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^PM-\d+$/.test(d.punt) || !String(d.opmerking == null ? '' : d.opmerking).trim()) return uit_({ fout: 'onjuiste invoer' });
+      return uit_(zetBevinding_(b, d));
     }
     if (d.actie === 'rapport') {
       if (!VERVOLG.includes(d.vervolg)) return uit_({ fout: 'onjuiste invoer' });

@@ -11,6 +11,7 @@ De geplande taak "TD Hub bonnen" maakt van meldingen echte CM-bonnen in het form
   - Vervolg Onderdeel bestellen: de bon blijft Open en krijgt een regel op de bestellijst.
   - Vervolg Plannen voor onderhoudstop: de bon blijft Open tot de werkvoorbereider hem inplant.
   - Vervolg Overdragen aan volgende dienst: de bon blijft Open. `oplossing` is dan wat er al is gedaan en mag leeg zijn.
+- **Bevinding uit een PM-bon:** een monteur meldt bij een controlepunt een probleem met het vinkje "Maak een CM-bon". Dat is een gewone monteurstoring met letter `TD`, zonder `oplossing` en met vervolg Plannen voor onderhoudstop. `melding` begint met `PM-bevinding`, gevolgd door de PM-bon en het controlepunt. Neem dat over in de opmerking op de bon.
 
 Apps Script zet elke melding die een bon moet worden als tekstbestand `bon-<id>.txt` in de Drive-map "TD Hub wachtrij" (`meta.meldingen.wachtrij`). De taak draait elk uur. Een bestand verdwijnt pas uit die map als de bon helemaal klaar is. Mislukt een run, dan pakt de volgende run het opnieuw op.
 
@@ -27,7 +28,7 @@ Andere soorten staan ook als `status-`-bestand en verwerkt `bonnen.py wijzig` oo
 
 Een monteur past in het dienstrapport het vervolg van een storing aan of meldt hem af. Dat staat als `status-VV-<id>-<tijd>.txt` in dezelfde map, per wijziging een eigen bestand, met `rij.vervolg` (`id` van de melding, `vervolg`, `tekst`, `door`). `bonnen.py wijzig` zoekt de bon op in `meta.bonnen.verwerkt`, verwerkt deze bestanden na de andere en op volgorde van tijd, en zet per wijziging een regel achter `opmerking`. Gereed zet de bon op Uitgevoerd. Onderdeel bestellen zet een regel op de bestellijst als die er nog niet is, met `tekst` als onderdeel. Uitvoeren op volgt het vervolg, ook op de Word-bon en de PDF, behalve bij een bon op een dag in de planning en bij een tekst van de werkvoorbereider. Een bon die al klaar is krijgt alleen de regel in `opmerking`. Staat de bon nog in de wachtrij, dan maakt `registreer` hem eerst uit de oude melding en past `wijzig` het vervolg daarna toe.
 
-Een PM-bon die helemaal is afgemeld staat als `status-PMR-<n>.txt` in dezelfde map, met `rij.pmreg` (`reg`, `nr`, `opmerking`, `door`, `tijd`). `bonnen.py wijzig` maakt daarvan de registratiebon in F.95.602, alleen als PDF, en zet die in `meta.bonnen.pmreg[<nr>]` (`reg`, `naam`, `pdf`). Een Deels uitgevoerd krijgt geen nummer en geen bon.
+Een PM-bon die helemaal is afgemeld staat als `status-PMR-<n>.txt` in dezelfde map, met `rij.pmreg` (`reg`, `nr`, `opmerking`, `door`, `tijd`, `punten` met de bevindingen). `bonnen.py wijzig` maakt daarvan de registratiebon in F.95.602, alleen als PDF, en zet die in `meta.bonnen.pmreg[<nr>]` (`reg`, `naam`, `pdf`). Een Deels uitgevoerd krijgt geen nummer en geen bon.
 
 Een afgehandelde melding zet de bon via Apps Script op Uitgevoerd, ook als `status-<nr>.txt`. Een afgesloten bon haalt de site zelf van het SQD-bord: `meta.bonnen.gesloten` bevat de meldingen van afgesloten bonnen.
 
