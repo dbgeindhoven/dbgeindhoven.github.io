@@ -403,8 +403,17 @@ def wijzig(a):
             if "uitvoeren" in extra:
                 rij["uitvoeren"] = extra["uitvoeren"] or None
                 opnieuw.append(rij)
-    for rij in opnieuw:
+            if "afgemeld" in extra:
+                rij["uitgevoerd_op"] = extra["afgemeld"] or None
+                if extra["afgemeld"] and str(rij.get("uitvoeren")).startswith("Uitgevoerd op"):
+                    rij["uitvoeren"] = "Uitgevoerd op " + extra["afgemeld"]
+                    opnieuw.append(rij)
+            if status == "Bestellen" and not any(r.get("cm") == nr for r in data["bestellijst"]):
+                data["bestellijst"].append(bestelregel(nr, rij.get("onderdelen"), "Uit de onderhoudsplanning van " + str(w.get("tijd"))[:10] + "."))
+    for rij in {r["nr"]: r for r in opnieuw}.values():
         bon_uitvoeren(data, rij, Path(a.map) / "uitvoeren")
+    # Een dag zonder bonnen en zonder lijn of naam is leeggehaald: die hoeft niet in de agenda te blijven.
+    data["stops"] = [s for s in data.get("stops") or [] if zat_rijen(s) or s.get("lijn") or s.get("naam")]
     bewaar(a.site, data)
 
 

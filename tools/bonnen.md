@@ -22,6 +22,8 @@ De werkvoorbereider kan op de site de status van een bon aanpassen en een meldin
 
 Op de pagina's Zaterdagwerk en Onderhoudsplanning past de werkvoorbereider prio, uitvoerder en uren aan, haalt hij regels van de lijst en voegt of verplaatst hij bonnen. Dat komt in hetzelfde bestand, in `rij.zat`: `datum`, `prio`, `uitvoerder`, `uren`, eventueel `weg: true` en bij een toegevoegde of verplaatste bon `nieuw` (`lijst`, `werkzaamheid`, `lijn_machine`). `plan` is het id van de stop; zonder `plan` gaat het om de zaterdag. `bonnen.py wijzig` zet dit in `zaterdag` of `stops` en de prio op de bon. Bij `nieuw` verdwijnt de bon van elk ander plan. Bij `weg` blijft de bon bestaan: alleen `uitvoeren` wordt leeg en Gepland wordt Open.
 
+Staat er `rij.afgemeld` in het bestand, dan is dat de dag van afmelden (`uitgevoerd_op`), of leeg. Bij status `Bestellen` zet `bonnen.py wijzig` de bon op de bestellijst als hij daar nog niet staat.
+
 Staat er `rij.uitvoeren` in het bestand, dan is dat de nieuwe tekst bij Uitvoeren op. `bonnen.py wijzig` zet die in `cm` en maakt de Word-bon, de PDF en de afbeelding opnieuw. Een bon op een dag in de planning krijgt zijn dag van die lijst, via `rij.zat`.
 
 Andere soorten staan ook als `status-`-bestand en verwerkt `bonnen.py wijzig` ook. `status-ZAT-<datum>.txt` en `status-KOP-<id>.txt` hebben `rij.zatkop`: teamleider, monteurs, LET OP en beschikbare manuren van de zaterdag of een dag in de planning (met `plan`). `status-STOP-<id>.txt` heeft `rij.stop` (`id`, `datum`, `lijn`, `naam`): een nieuwe dag in de planning, of `rij.stopweg` (het id): de stop verdwijnt, de bonnen blijven bestaan en Gepland wordt Open. `status-B<n>.txt` heeft `rij.bestel` (`id`, `groep`): een regel op de bestellijst.

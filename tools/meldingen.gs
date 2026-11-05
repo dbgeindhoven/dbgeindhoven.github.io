@@ -12,7 +12,7 @@ const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'ac
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
-const BONSTATUS = ['Open', 'Gepland', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
+const BONSTATUS = ['Open', 'Gepland', 'Bestellen', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
 const VERVOLG = ['Gereed', 'Overdragen aan volgende dienst', 'Onderdeel bestellen', 'Plannen voor onderhoudstop'];
 
 const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];

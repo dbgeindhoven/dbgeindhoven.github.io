@@ -66,6 +66,8 @@ nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7p
 nav a:hover{background:var(--sunken);color:var(--ink)}
 nav a[aria-current="page"]{background:var(--gold-soft);color:var(--ink)}
 nav a[aria-current="page"] .i{color:var(--gold-ink)}
+nav a.subnav{justify-content:space-between;margin-left:28px;padding:5px 10px;font-weight:400;font-size:.8125rem;line-height:1.25}
+nav a.subnav small{flex:none;color:var(--ink3);font-size:.75rem}
 .sidefoot{margin-top:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0 10px;color:var(--ink2);font-size:.75rem}
 .topbar{display:none}
 .uitlog{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;margin:0 -10px 8px;border:0;border-radius:7px;background:none;color:var(--ink2);font-weight:500;font-size:.875rem;text-align:left;cursor:pointer}
@@ -354,6 +356,8 @@ html.present .gvlak{height:min(46vh,460px)}
 .zatinvoer::placeholder{color:var(--ink3)}
 .zatweg{display:inline-flex;flex-wrap:wrap;gap:4px 10px;white-space:nowrap}
 .tbl td.m-zat{padding-top:7px;padding-bottom:7px}
+.bondatum{width:100%;max-width:150px}
+.bonlos{display:block;margin-top:2px;color:var(--ink2);font-size:.75rem;line-height:1.25}
 .zatkop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin:0 0 12px}
 .zatkop label{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;color:var(--ink2)}
 .zatkop label.breed{grid-column:1/-1}
@@ -383,6 +387,7 @@ html.present .gvlak{height:min(46vh,460px)}
 .agcel.nu .agnr{align-self:flex-start;min-width:20px;padding:0 4px;border-radius:10px;background:var(--gold);color:var(--on-gold);text-align:center}
 .agchip{display:block;padding:2px 5px;border-radius:5px;background:var(--gold-soft);font-size:.75rem;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agchip.pm{background:var(--sunken)}
+.agchip.af{background:none;box-shadow:inset 0 0 0 1px var(--ok);color:var(--ok)}
 .agchip.laat{box-shadow:inset 0 0 0 1px var(--crit);color:var(--crit-ink)}
 .agkort{display:none}
 .dagkop h2{margin:0;font:700 1.25rem/1.3 var(--kop)}
@@ -587,9 +592,10 @@ const P_PRES_ALLES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN
 let P_PRES=P_PRES_ALLES;
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"}];
 const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
+const P_PLAN=[{id:"pgepland",t:"Gepland",sub:"Een bon met een datum staat in de onderhoudsplanning."},{id:"pbestel",t:"Bestellen/wachten op bestelling",sub:"Bonnen die besteld moeten worden of op onderdelen wachten. Met een datum gaan ze naar de onderhoudsplanning."},{id:"pgeen",t:"Geen status",sub:"Bonnen zonder vervolg. Geef een status of een datum."},{id:"pafgerond",t:"Afgerond",sub:"De datum is de dag van afmelden en staat ook in de onderhoudsplanning."}];
 
 /* ---- kleine bouwstenen ---- */
-const STATUS={"Achterstallig":"crit","Vandaag":"warn","Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
+const STATUS={"Achterstallig":"crit","Vandaag":"warn","Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Bestellen":"warn","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
 const st=s=>s?'<span class="st '+(STATUS[s]||"")+'"><i></i>'+esc(s)+"</span>":"";
 const prio=p=>p?'<span class="p p'+esc(p)+'">Prio '+esc(p)+"</span>":'<span class="zacht">–</span>';
 const leeg=v=>v==null||v==="";
@@ -670,7 +676,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select"))return;
+    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select,input"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -776,7 +782,7 @@ async function haalBon(b){
 }
 
 /* ---- alleen de werkvoorbereider: bonstatus aanpassen en verwijderen ---- */
-const BONSTATUS=["Open","Gepland","Besteld","Deels uitgevoerd","On hold","Uitgevoerd","Gereed","Dubbel","Vervallen"];
+const BONSTATUS=["Open","Gepland","Bestellen","Besteld","Deels uitgevoerd","On hold","Uitgevoerd","Gereed","Dubbel","Vervallen"];
 const wvMag=()=>MODE==="enc"&&!!MELD()&&!!MELD().sleutel_wv;
 const wvDoor=()=>naam()||"Werkvoorbereider";
 const statusVeld=r=>wvMag()?'<select class="statuskeuze" data-bonstatus="'+esc(r.nr)+'" aria-label="Status van '+esc(r.nr)+'">'+BONSTATUS.map(s=>"<option"+(s===r.status?" selected":"")+">"+s+"</option>").join("")+"</select>":st(r.status);
@@ -788,7 +794,7 @@ function storingRij(c){
 }
 /* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
 function pasBonToe(w){
-  const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{};
+  const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{},oudKlaar=c&&KLAAR.includes(c.status);
   if(extra.pmreg)return;
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
   if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r)r.groep=extra.bestel.groep;return}
@@ -801,14 +807,31 @@ function pasBonToe(w){
   if(c&&w.status==="Verwijderd")D.cm.splice(D.cm.indexOf(c),1);else if(c)c.status=w.status;
   if(w.status==="Verwijderd")zatWeg(w.nr);else if(w.rij&&w.rij.zat)pasZatToe(w.nr,w.rij.zat);
   if(extra.uitvoeren!==undefined&&w.status!=="Verwijderd"){UITOPEN[w.nr]=extra.uitvoeren;if(c)c.uitvoeren=extra.uitvoeren}
+  /* Afgemeld op volgt de status, net als in bonnen.py wijzig. De werkvoorbereider kan de dag aanpassen op de pagina Afgerond. */
+  if(c&&KLAAR.includes(w.status)&&!c.uitgevoerd_op)c.uitgevoerd_op=String(w.tijd||nuTekst()).slice(0,10);
+  else if(c&&oudKlaar&&!KLAAR.includes(w.status))c.uitgevoerd_op=null;
+  if(c&&extra.afgemeld!==undefined){AFOPEN[w.nr]=extra.afgemeld;c.uitgevoerd_op=extra.afgemeld||null}
   D.storingen=(D.storingen||[]).filter(x=>x.nr!==w.nr).concat(w.rij&&w.rij.nr?[w.rij]:[]).sort((x,y)=>(x.prio||9)-(y.prio||9)||volg.indexOf(x.status)-volg.indexOf(y.status)||nummer(x.nr)-nummer(y.nr));
 }
+/* Bij deze statussen hoort een bon niet op de agenda. Klaar of deels gedaan blijft wel op zijn dag staan. */
+const VAN_AGENDA=["Open","Bestellen","Besteld","On hold"];
+function vanPlan(c,status){
+  const op=planVanBon(c.nr),r=planRijen(op).find(x=>x.nr===c.nr);
+  return zatStuur(r,Object.assign(op.id?{plan:op.id}:{},{datum:op.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren,weg:true}),{uitvoeren:/^Best/.test(status)?"Na levering":"In overleg"},status);
+}
+const planMelding=c=>{const g=P_PLAN.find(p=>p.id===bonGroep(c));return P_PLAN.some(p=>p.id===HUIDIG)?c.nr+" staat nu onder "+g.t+(g.id==="pgepland"&&!planVanBon(c.nr)?". Geef hem nog een datum.":"."):c.nr+" staat nu op "+c.status};
 async function zetBonStatus(sel){
-  const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status;
-  const w={nr:c.nr,status:sel.value,rij:metZat(c.nr,storingRij(Object.assign({},c,{status:sel.value})))};
+  const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status,status=sel.value;
+  if(!GESLOTEN.includes(status))delete AFOPEN[c.nr];
   sel.disabled=true;
-  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";if(rteken)rteken();SCHERM[HUIDIG]();melder(w.nr+" staat nu op "+w.status)}
-  catch(_){sel.value=oud;melder("Status aanpassen is niet gelukt. Probeer het opnieuw.")}
+  try{
+    if(planVanBon(c.nr)&&VAN_AGENDA.includes(status))pasBonToe(await vanPlan(c,status));
+    else{
+      const w={nr:c.nr,status,rij:metZat(c.nr,storingRij(Object.assign({},c,{status})))};
+      await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);
+    }
+    laatste="";if(rteken)rteken();planTel();SCHERM[HUIDIG]();melder(planMelding(c));
+  }catch(_){sel.value=oud;melder("Status aanpassen is niet gelukt. Probeer het opnieuw.")}
   sel.disabled=false;
 }
 document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))zetBonStatus(e.target)});
@@ -868,7 +891,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"]).includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{planTel();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"].concat(P_PLAN.map(p=>p.id))).includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -1630,8 +1653,8 @@ function pasZatKop(z){
   const s=planVan(z.plan);if(!s||z.datum!==s.datum)return;
   Object.assign(s,{teamleider:z.teamleider,monteurs:z.monteurs,letop:z.letop,capaciteit:z.capaciteit});
 }
-const UITOPEN={};
-const metZat=(nr,rij)=>ZATOPEN[nr]||nr in UITOPEN?Object.assign({},rij,ZATOPEN[nr]?{zat:ZATOPEN[nr]}:null,nr in UITOPEN?{uitvoeren:UITOPEN[nr]}:null):rij;
+const UITOPEN={},AFOPEN={};
+const metZat=(nr,rij)=>ZATOPEN[nr]||nr in UITOPEN||nr in AFOPEN?Object.assign({},rij,ZATOPEN[nr]?{zat:ZATOPEN[nr]}:null,nr in UITOPEN?{uitvoeren:UITOPEN[nr]}:null,nr in AFOPEN?{afgemeld:AFOPEN[nr]}:null):rij;
 function zatWeg(nr,alleen){
   (alleen?[alleen]:plannen()).forEach(s=>{s.correctief=(s.correctief||[]).filter(r=>r.nr!==nr);s.preventief=(s.preventief||[]).filter(r=>r.nr!==nr)});
 }
@@ -1653,13 +1676,13 @@ function pasZatToe(nr,z){
 }
 /* Op volgorde versturen: een latere wijziging aan dezelfde bon vervangt de eerdere. */
 /* Zet een bon op een lijst. Staat hij al op een andere lijst, dan gaan prio, uren en uitvoerder mee. */
-function planZet(c,s){
+function planZet(c,s,status){
   const oud=plannen().flatMap(planRijen).find(x=>x.nr===c.nr),nieuw={lijst:/^preventief/i.test(c.omschrijving||"")?"preventief":"correctief",werkzaamheid:oud?oud.werkzaamheid:c.omschrijving,lijn_machine:oud?oud.lijn_machine:[c.lijn,c.machine].filter(Boolean).join(" / ")};
-  return zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw}));
+  return zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw}),null,status);
 }
-function zatStuur(r,z,extra){
+function zatStuur(r,z,extra,eigen){
   if(z.nieuw)delete UITOPEN[r.nr];
-  const c=(D.cm||[]).find(x=>x.nr===r.nr),status=!c?"Gepland":z.weg&&c.status==="Gepland"?"Open":z.nieuw&&c.status==="Open"?"Gepland":c.status;
+  const c=(D.cm||[]).find(x=>x.nr===r.nr),status=eigen||(!c?"Gepland":z.weg&&c.status==="Gepland"?"Open":z.nieuw&&c.status==="Open"?"Gepland":c.status);
   const w={nr:r.nr,status,rij:Object.assign({},c?storingRij(Object.assign({},c,{status,prio:z.prio})):null,{zat:z},extra)};
   const stap=zatKeten.then(()=>stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w)));
   zatKeten=stap.catch(()=>{});
@@ -1944,12 +1967,16 @@ async function zatDownload(k){
 }
 function vZaterdag(){const s=zatNu(),d=datum(s.datum);vPlan(s,{titel:d?hoofd(langeDatum(d)):"Zaterdagwerk",sub:s.stand})}
 const weekNr=d=>{const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));return Math.ceil(((x-Date.UTC(x.getUTCFullYear(),0,1))/864e5+1)/7)};
+/* Storingen die op deze dag zijn afgemeld. Alleen TD en werkvoorbereider hebben het CM-overzicht. */
+const afOp=t=>(D.cm||[]).filter(c=>c.uitgevoerd_op===t&&GESLOTEN.includes(c.status));
 function agendaCel(d,nu,gekozen){
-  const t=dagTekst(d),p=planOpDatum(t),r=p?planRijen(p):[],pm=pmPlan().bonnen.filter(b=>b.datum===t),open=r.filter(x=>{const c=zatBon(x.nr);return!c||!KLAAR.includes(c.status)}).length,pmOpen=pm.filter(b=>pmStand(b)==="Achterstallig").length;
+  const t=dagTekst(d),p=planOpDatum(t),r=p?planRijen(p):[],pm=pmPlan().bonnen.filter(b=>b.datum===t),af=afOp(t),open=r.filter(x=>{const c=zatBon(x.nr);return!c||!KLAAR.includes(c.status)}).length,pmOpen=pm.filter(b=>pmStand(b)==="Achterstallig").length;
   const naam=p?(p.id?p.lijn:"Zaterdag"):"",chip=(k,lang,kort)=>'<span class="agchip '+k+'"><span class="aglang">'+esc(lang)+'</span><span class="agkort">'+esc(kort)+"</span></span>";
   const bij=[];
-  if(p)bij.push(chip(d<nu&&open?"laat":"",(naam?naam+": ":"")+r.length+(r.length===1?" bon":" bonnen"),String(r.length)));
+  /* Een dag zonder bonnen en zonder lijn of naam is leeggehaald en telt niet mee. */
+  if(p&&(r.length||p.lijn||p.naam))bij.push(chip(d<nu&&open?"laat":"",(naam?naam+": ":"")+r.length+(r.length===1?" bon":" bonnen"),String(r.length)));
   if(pm.length)bij.push(chip("pm"+(pmOpen?" laat":""),"PM: "+pm.length,"PM"));
+  if(af.length)bij.push(chip("af","Afgemeld: "+af.length,"✓"+af.length));
   return'<button type="button" class="agcel'+(d.getMonth()!==MAAND.m?" buiten":"")+(+d===+nu?" nu":"")+'" data-agdag="'+t+'" aria-pressed="'+(t===gekozen)+'" aria-label="'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+", "+r.length+" bonnen")+'"><span class="agnr">'+d.getDate()+"</span>"+bij.join("")+"</button>";
 }
 function agendaHtml(){
@@ -1963,6 +1990,16 @@ function agendaHtml(){
   }
   return h+"</div></div>";
 }
+function afDagHtml(t){
+  const r=afOp(t);if(!r.length)return"";
+  const cols=[
+    {k:"n",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr)},
+    {k:"o",l:"Storing",c:"m-main",x:"titel",r:x=>esc(x.omschrijving)},
+    {k:"m",l:"Lijn en machine",w:"26%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))||of(null)},
+    {k:"w",l:"Monteur",w:"130px",c:"m-sub",ml:"Monteur",r:x=>of(x.monteur)},
+    {k:"s",l:"Status",w:"130px",c:"m-status",r:x=>st(x.status)}];
+  return'<section class="deel"><h2>Afgemeld op deze dag<span>'+r.length+"</span></h2>"+vasteTabel(cols,r,cmDetail)+"</section>";
+}
 function pmDagHtml(t){
   const r=pmPlan().bonnen.filter(b=>b.datum===t);if(!r.length)return"";
   const cols=[
@@ -1974,7 +2011,7 @@ function pmDagHtml(t){
   return'<section class="deel"><h2>PM-bonnen<span>'+r.length+"</span></h2>"+vasteTabel(cols,r,pmDetail)+"</section>";
 }
 function vStop(){
-  const s=dagPlan(),d=datum(s.datum),wv=wvMag(),pm=pmDagHtml(s.datum);
+  const s=dagPlan(),d=datum(s.datum),wv=wvMag(),pm=pmDagHtml(s.datum)+afDagHtml(s.datum);
   if(!MAAND)MAAND={j:d.getFullYear(),m:d.getMonth()};
   const boven=kop("Onderhoudsplanning","Klik op een datum om te zien welke bonnen er die dag gedaan worden.",true)+agendaHtml();
   const sub=[s.lijn,s.naam].filter(Boolean).join(". ");
@@ -2015,12 +2052,65 @@ function vPlan(s,o){
   zatBulkTeken();
 }
 
+/* ---- werkvoorbereiding: alle bonnen per status ---- */
+/* Klaar gaat voor alles. Een bon op de agenda is gepland, ook als hij deels gedaan is. Open bestelregels horen bij wachten op bestelling. */
+const bonGroep=c=>GESLOTEN.includes(c.status)?"pafgerond":c.status==="Gepland"||planVanBon(c.nr)?"pgepland":c.status==="Bestellen"||c.status==="Besteld"||zatOnderdelen(c.nr).length?"pbestel":"pgeen";
+function planTel(){document.querySelectorAll("[data-plantel]").forEach(x=>{x.textContent=(D.cm||[]).filter(c=>bonGroep(c)===x.dataset.plantel).length})}
+const isDag=t=>/^\d{2}-\d{2}-\d{4}$/.test(t||"");
+const bonDag=c=>{if(GESLOTEN.includes(c.status))return isDag(c.uitgevoerd_op)?c.uitgevoerd_op:"";const p=planVanBon(c.nr);return p?p.datum:""};
+function datumVeld(c){
+  const t=bonDag(c),los=GESLOTEN.includes(c.status)?(isDag(c.uitgevoerd_op)?"":c.uitgevoerd_op):planVanBon(c.nr)?"":c.uitvoeren;
+  return'<input type="date" class="zatinvoer bondatum" data-bondatum="'+esc(c.nr)+'" value="'+(t?isoTekst(t):"")+'" aria-label="Datum van '+esc(c.nr)+'">'+(los?'<small class="bonlos">'+esc(los)+"</small>":"");
+}
+function delenLabel(c){
+  const alle=(D.bestellijst||[]).filter(x=>x.cm===c.nr),o=alle.filter(x=>x.groep!=="Binnen");
+  if(!alle.length||GESLOTEN.includes(c.status))return"";
+  return o.length?'<span class="zatlet st warn" title="'+esc(o.map(x=>x.onderdeel+": "+x.groep).join(", "))+'"><i></i>'+o.length+(o.length===1?" onderdeel":" onderdelen")+" niet binnen</span>":'<span class="zatlet st ok"><i></i>Onderdelen binnen</span>';
+}
+/* Een datum zet de bon op die dag in de agenda, zonder datum gaat hij er weer af. Bij Afgerond is het de dag van afmelden. */
+async function zetBonDatum(el){
+  const c=D.cm.find(x=>x.nr===el.dataset.bondatum),w=el.value;
+  if(!c||(w&&w<"2000"))return;
+  const oud=bonDag(c),t=w?isoTekst(w):"";
+  if(t===oud)return;
+  el.disabled=true;
+  try{
+    if(GESLOTEN.includes(c.status)){
+      const v={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(c)),{afgemeld:t})};
+      await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},v));pasBonToe(v);
+    }
+    else if(t){const doel=await planVoor(t);pasBonToe(await planZet(c,doel,c.status==="Deels uitgevoerd"?c.status:"Gepland"))}
+    else if(planVanBon(c.nr))pasBonToe(await vanPlan(c,"Open"));
+    laatste="";planTel();SCHERM[HUIDIG]();melder(GESLOTEN.includes(c.status)?c.nr+": afgemeld op "+(t||"onbekend"):t?c.nr+" staat op "+planKort(planVanBon(c.nr)):planMelding(c));
+  }catch(_){el.value=oud?isoTekst(oud):"";el.disabled=false;melder("Datum aanpassen is niet gelukt. Probeer het opnieuw.")}
+}
+let datumKlok=null;
+/* Tijdens het typen is een datum al even geldig, dus er wordt gewacht tot hij af is. */
+document.addEventListener("change",e=>{if(!e.target.matches("[data-bondatum]"))return;clearTimeout(datumKlok);const el=e.target;datumKlok=setTimeout(()=>zetBonDatum(el),1000)});
+function vPlanLijst(id){
+  const g=P_PLAN.find(p=>p.id===id),af=id==="pafgerond",r=D.cm.filter(c=>bonGroep(c)===id),zonder=id==="pgepland"?r.filter(c=>!planVanBon(c.nr)).length:0;
+  lijstScherm({key:id,titel:g.t,sub:g.sub+(zonder?" "+zonder+(zonder===1?" bon heeft":" bonnen hebben")+" nog geen datum.":""),rijen:r,eenheid:["bon","bonnen"],sort:id==="pgepland"?{k:"d",d:1}:af?{k:"d",d:-1}:{k:"nr",d:-1},
+    geen:r.length?"Niets gevonden. Pas de filters aan.":"Hier staan nu geen bonnen.",
+    seg:{get:x=>x.status,o:BONSTATUS},
+    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}],
+    tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.monteur,x.onderdelen,x.opmerking,x.uitvoeren].join(" "),
+    kolommen:[
+      {k:"nr",l:"Bon",w:"88px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
+      {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving)+delenLabel(x),s:x=>norm(x.omschrijving)},
+      {k:"m",l:"Lijn en machine",w:"20%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", "))||of(null),s:x=>norm(x.lijn)+norm(x.machine)},
+      {k:"p",l:"Prio",w:"70px",c:"m-status",r:x=>prio(x.prio),s:x=>x.prio||9},
+      {k:"s",l:"Status",w:"156px",c:"m-sub m-zat",ml:"Status",r:statusVeld,s:x=>x.status},
+      {k:"d",l:af?"Afgemeld op":"Datum",w:"152px",c:"m-sub m-zat",ml:af?"Afgemeld op":"Datum",r:datumVeld,s:x=>+datum(bonDag(x))||0}],
+    detail:cmDetail});
+  planTel();
+}
+
 /* ---- TD-pagina's ---- */
 function vStart(){
   const cm=D.cm,open=cm.filter(isOpen),p1=open.filter(r=>r.prio===1).sort((a,b)=>nummer(a.nr)-nummer(b.nr));
   const todo=D.bestellijst.filter(r=>r.groep==="Nog niet besteld").length,o=D.opnamelijsten,gedaan=o.filter(r=>r.opname_gedaan).length;
   const kpi=(l,w,h,c)=>'<a class="kpi'+(c?" let":"")+'" href="#'+h+'"><span>'+esc(l)+"</span><b>"+esc(w)+"</b></a>";
-  const reeks=[["On hold","var(--crit)"],["Open","var(--none)"],["Deels uitgevoerd","var(--warn2)"],["Besteld","var(--warn)"],["Gepland","var(--info)"]];
+  const reeks=[["On hold","var(--crit)"],["Open","var(--none)"],["Deels uitgevoerd","var(--warn2)"],["Bestellen","var(--warn)"],["Besteld","var(--warn)"],["Gepland","var(--info)"]];
   const groepen=LIJNEN.map(l=>({l,r:open.filter(x=>lijnGroep(x)===l)})).filter(g=>g.r.length);
   const max=Math.max(...groepen.map(g=>g.r.length));
   const balken=groepen.map(g=>'<div class="balk"><span>'+esc(g.l)+'</span><div class="spoor" style="width:'+(g.r.length/max*100)+'%">'+reeks.map(([s,k])=>{const n=g.r.filter(x=>x.status===s).length;return n?'<i style="flex:'+n+";background:"+k+'" title="'+esc(g.l)+", "+esc(s)+": "+n+'"></i>':""}).join("")+'</div><span class="tot">'+g.r.length+"</span></div>").join("");
@@ -2034,7 +2124,7 @@ function vStart(){
     '<section class="deel"><h2>Open met prio 1<span>'+p1.length+"</span></h2>"+vasteTabel(cols,p1,cmDetail)+"</section>";
 }
 /* ---- CM-overzicht als Excel: de site is leidend, dit bestand wordt altijd vers gemaakt ---- */
-const XSTATUS=[["Gepland","FFDDEBF7"],["Deels uitgevoerd","FFFFF2CC"],["Besteld","FFFCE4D6"],["On hold","FFF8CBAD"],["Uitgevoerd","FFE2EFDA"],["Gereed","FFE2EFDA"],["Dubbel","FFEDEDED"],["Vervallen","FFEDEDED"]];
+const XSTATUS=[["Gepland","FFDDEBF7"],["Deels uitgevoerd","FFFFF2CC"],["Bestellen","FFFCE4D6"],["Besteld","FFFCE4D6"],["On hold","FFF8CBAD"],["Uitgevoerd","FFE2EFDA"],["Gereed","FFE2EFDA"],["Dubbel","FFEDEDED"],["Vervallen","FFEDEDED"]];
 const XKOP=[["Nr.","nr",9],["Lijn","lijn",9],["Machine","machine",22],["Omschrijving","omschrijving",44],["Melder","melder",20],["Uitvoeren op","uitvoeren",18],["Onderdelen","onderdelen",28],["Status","status",15],["Prio","prio",6],["Opmerking","opmerking",48],["Uitgevoerd op","uitgevoerd_op",12],["Monteur","monteur",16],["Afgetekend","afgetekend",14]];
 const xe=s=>String(s==null?"":s).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function xCel(k,r,w,s,f){
@@ -2076,7 +2166,7 @@ function vCm(){
   const wacht=NIEUWBON.length?" "+NIEUWBON.length+(NIEUWBON.length===1?" nieuwe bon wordt":" nieuwe bonnen worden")+" bij de volgende run gemaakt.":"";
   lijstScherm({key:"cm",titel:"CM-bonnen",sub:stand("cm")+wacht,rijen:r,eenheid:["bon","bonnen"],sort:{k:"nr",d:-1},
     extra:'<button class="knop" data-cmxlsx>'+ico("download")+"Excel</button>"+(wvMag()?'<button class="knop hoofd" data-nieuwebon>Nieuwe bon</button>':""),
-    seg:{get:x=>x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Besteld","Uitgevoerd","Gereed","Dubbel","Vervallen"]},
+    seg:{get:x=>x.status,o:["On hold","Open","Gepland","Deels uitgevoerd","Bestellen","Besteld","Uitgevoerd","Gereed","Dubbel","Vervallen"]},
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Monteurmelding","Eigen bon"],get:herkomst}]:[]),
     alleen:{l:"Alleen openstaand",test:isOpen,standaard:false},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.onderdelen,x.opmerking,x.monteur].join(" "),
@@ -2153,7 +2243,7 @@ function bonLijst(c){
   const r=D.cm.filter(x=>x.bon&&c.test(x)).reverse();
   lijstScherm({key:c.key,titel:c.titel,sub:c.sub+" De nieuwste staat bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
     geen:r.length?"Niets gevonden. Pas de filters aan.":c.geen,
-    seg:{get:x=>x.status,o:["Open","Gepland","Deels uitgevoerd","Besteld","Uitgevoerd","Gereed","Vervallen"]},
+    seg:{get:x=>x.status,o:["Open","Gepland","Deels uitgevoerd","Bestellen","Besteld","Uitgevoerd","Gereed","Vervallen"]},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.risico,x.opmerking].join(" "),
     kolommen:[
       {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
@@ -2237,7 +2327,7 @@ function vPm(){
       {k:"b",l:"Toestand",w:"100px",r:x=>norm(x.bedrijfstoestand).startsWith("uit")?'<span class="st warn2"><i></i>LOTOTO</span>':'<span class="zacht">In bedrijf</span>',s:x=>norm(x.bedrijfstoestand)}],
     detail:x=>({klein:x.id,titel:x.taak,velden:[["Lijn",x.lijn],["Lijndeel",x.lijndeel],["PM-code",x.pm_code],["Onderdeel",x.onderdeel],["Toestand",x.bedrijfstoestand],["Frequentie",x.frequentie],["Discipline",x.discipline],["Benodigdheden",x.benodigdheden],["Laatst uitgevoerd",pmLaatst(x.id)],["In Ultimo",x.in_ultimo],["Opmerking",x.opmerking]]})});
 }
-const SCHERM={lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
@@ -2272,10 +2362,14 @@ function start(data){
   if(D.niveau==="pm"){pmScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   const pWv=P_WV.concat(alRegels().length?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
-  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[P_RAPPORT],wv?pWv:[]);
+  PAGINAS=P_DAG.concat(P_LIJN,td?P_TD:[P_RAPPORT],wv?P_PLAN.concat(pWv):[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
   const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
-  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+pWv.map(lnk).join("")+"</div>":"");
+  /* De werkvoorbereider heeft de agenda bij zijn eigen pagina's. Andere inloggen zien hem onder Dagstart. */
+  const sub=p=>'<a class="subnav" href="#'+p.id+'" data-v="'+p.id+'"><span>'+esc(p.t)+'</span><small data-plantel="'+p.id+'"></small></a>';
+  const pStop=P_DAG.find(p=>p.id==="stop");
+  $("#nav").innerHTML='<div class="sectie"><span class="kopje">Dagstart</span>'+P_DAG.filter(p=>!wv||p!==pStop).concat(td?[]:[P_RAPPORT]).map(lnk).join("")+"</div>"+(td?'<div class="sectie"><span class="kopje">Technische dienst</span>'+P_TD.map(lnk).join("")+"</div>":"")+(wv?'<div class="sectie"><span class="kopje">Werkvoorbereiding</span>'+lnk(pStop)+P_PLAN.map(sub).join("")+pWv.map(lnk).join("")+"</div>":"");
+  planTel();
   presStappen();
   $("#stand").textContent="Bijgewerkt "+((D.meta&&D.meta.stand)||"");
   $("#menu").innerHTML=ico("menu");
