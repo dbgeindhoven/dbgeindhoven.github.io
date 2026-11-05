@@ -326,6 +326,8 @@ html.present .deelkop .knop{display:none}
 .alkeuze{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
 .alkeuze label{display:inline-flex;align-items:center;gap:6px}
 .alstand{margin:0 0 12px;color:var(--ink2);font-size:.875rem}
+.weekveld{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.weekveld .knop{white-space:normal;line-height:1.2;text-align:center}
 .bonvink{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
 .realis{display:flex;align-items:center;gap:8px}
 .realis .vulbalk{flex:1 1 auto;min-width:40px}
@@ -686,7 +688,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon],[data-pmpdf],.bonvink,select,input,a"))return;
+    if(e.target.closest("[data-bon],[data-pmpdf],[data-weekknop],.bonvink,select,input,a"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -750,7 +752,7 @@ function openPaneel(d){
   if(d.weg)d.weg($("#b_weg"));
 }
 function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",wvMag()?uitvoerVeld(r):r.uitvoeren,wvMag()],["Onderdelen",r.onderdelen],["Bestellen",bestelRegels(r),true],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
+const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",wvMag()?uitvoerVeld(r):r.uitvoeren,wvMag()],["Monteurs",weekKnop(r)||null,true],["Onderdelen",r.onderdelen],["Bestellen",bestelRegels(r),true],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
@@ -849,14 +851,15 @@ async function zetBonStatus(sel){
 }
 document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))zetBonStatus(e.target)});
 /* Een eigen wachtrijbestand per bon, zodat een statuswijziging op dezelfde bon het vinkje niet overschrijft. */
+const weekInhoud=x=>x.week?'<span class="st ok"><i></i>Bij monteurs</span><button type="button" class="tekstknop" data-weekknop="'+esc(x.nr)+'" aria-label="'+esc(x.nr+" van de monteurs halen")+'">Eraf halen</button>':'<button type="button" class="knop hoofd" data-weekknop="'+esc(x.nr)+'" aria-label="'+esc(x.nr+" plannen voor monteurs")+'">Plannen voor monteurs</button>';
+const weekKnop=x=>wvMag()&&isOpen(x)?'<span class="weekveld" data-weekveld="'+esc(x.nr)+'">'+weekInhoud(x)+"</span>":x.week?st("Bij monteurs"):"";
 async function zetWeek(v){
-  const c=D.cm.find(x=>x.nr===v.dataset.weekvink),aan=v.checked,w={nr:"WEEK-"+c.nr,status:"Open",rij:{week:{nr:c.nr,aan,omschrijving:c.omschrijving,lijn:c.lijn,machine:c.machine,onderdelen:c.onderdelen,uitvoeren:c.uitvoeren,prio:c.prio}}};
+  const c=D.cm.find(x=>x.nr===v.dataset.weekknop),aan=!c.week,w={nr:"WEEK-"+c.nr,status:"Open",rij:{week:{nr:c.nr,aan,omschrijving:c.omschrijving,lijn:c.lijn,machine:c.machine,onderdelen:c.onderdelen,uitvoeren:c.uitvoeren,prio:c.prio}}};
   v.disabled=true;
-  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));c.week=aan;melder(aan?c.nr+" staat bij de monteurs":c.nr+" staat niet meer bij de monteurs")}
-  catch(_){v.checked=!aan;melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
-  v.disabled=false;
+  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));c.week=aan;document.querySelectorAll('[data-weekveld="'+c.nr+'"]').forEach(x=>{x.innerHTML=weekInhoud(c)});melder(aan?c.nr+" staat bij de monteurs":c.nr+" staat niet meer bij de monteurs")}
+  catch(_){v.disabled=false;melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
-document.addEventListener("change",e=>{if(e.target.matches("[data-weekvink]"))zetWeek(e.target)});
+document.addEventListener("click",e=>{const k=e.target.closest("[data-weekknop]");if(k)zetWeek(k)});
 /* Uitvoeren op: een zaterdag of stop zet de bon op die lijst, een tekst of datum haalt hem van de lijst af. */
 const UITVOERTEKST=["Volgende dienst","Z.s.m.","In overleg","Na levering","Eerstvolgende onderhoudstop"];
 const planVanBon=nr=>plannen().find(p=>planRijen(p).some(x=>x.nr===nr));
@@ -1301,9 +1304,9 @@ function pmVak(vak,tabs){
     const knoppen='<button data-m="doen" aria-pressed="'+(tab==="doen")+'">Te doen<span>'+(doen.filter(b=>datum(b.datum)<=nu).length+cmDoen.length)+'</span></button><button data-m="af" aria-pressed="'+(tab==="af")+'">Afgemeld<span>'+(af.length+cmAf.length)+"</span></button>";
     if(tabs)tabs.innerHTML=knoppen;
     let h=(onder?'<div class="seg pmsub" data-pmsub role="group" aria-label="Bonnen">'+knoppen+"</div>":"")+'<p class="pmwie">'+esc([pmDag(new Date()),D.naam].filter(Boolean).join(", "))+"</p>"+(PMFOUT?'<p class="pmmelding">Eerder afgemelde bonnen zijn nu niet op te halen. Afmelden kan wel.</p>':"");
-    if(tab==="af"){h+=cmAf.length?cmGroep("CM-bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
+    if(tab==="af"){h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
     else{
-      if(cmDoen.length)h+=cmGroep("CM-bonnen",cmDoen);
+      if(cmDoen.length)h+=cmGroep("Bonnen",cmDoen);
       const laat=doen.filter(b=>datum(b.datum)<nu),nuB=doen.filter(b=>+datum(b.datum)===+nu),later=doen.filter(b=>datum(b.datum)>nu);
       if(laat.length)h+=groep("Achterstallig",laat);
       h+=nuB.length?groep("Vandaag",nuB):'<section class="dag pmdag"><h2>Vandaag</h2><p class="pmgeen">Vandaag staan er geen bonnen meer open.</p></section>';
@@ -2240,13 +2243,13 @@ function vCm(){
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}].concat(r.some(x=>herkomst(x)!=="Eigen bon")?[{k:"herk",l:"Alle herkomst",o:["Monteurmelding","Eigen bon"],get:herkomst}]:[]),
     alleen:{l:"Alleen openstaand",test:isOpen,standaard:false},
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.onderdelen,x.opmerking,x.monteur].join(" "),
-    kolommen:(wvMag()?[{k:"week",l:"Week",w:"76px",c:"m-sub",r:x=>isOpen(x)?'<label class="bonvink"><input type="checkbox" data-weekvink="'+esc(x.nr)+'"'+(x.week?" checked":"")+' aria-label="'+esc(x.nr+" uitvoerbaar deze week")+'"> Week</label>':"",s:x=>x.week?0:1}]:[]).concat([
+    kolommen:[
       {k:"nr",l:"Bon",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
       {k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.omschrijving),s:x=>norm(x.omschrijving)},
       {k:"m",l:"Machine",w:"24%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
       {k:"p",l:"Prio",w:"76px",r:x=>prio(x.prio),s:x=>x.prio||9},
       {k:"s",l:"Status",w:"150px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
-      {k:"u",l:"Uitvoeren op",w:"150px",r:x=>of(x.uitvoeren),s:x=>norm(x.uitvoeren)||"zzz"}]),
+      {k:"u",l:"Uitvoeren op",w:"150px",r:x=>of(x.uitvoeren),s:x=>norm(x.uitvoeren)||"zzz"}].concat(wvMag()?[weekKolom]:[]),
     detail:cmDetail});
 }
 /* Actielijst van het ochtendoverleg: de werkvoorbereider controleert de indeling en zet alles in één keer op het bord. Google geeft de SQDM-nummers. */
@@ -2309,6 +2312,7 @@ async function plaatsActielijst(){
   }catch(_){alTekst="Regel "+n+" is niet gelukt. Klik nogmaals op plaatsen, dan gaat hij daar verder."}
   alBezig=false;laatste="";toon();
 }
+const weekKolom={k:"week",l:"Monteurs",w:"132px",c:"m-sub",r:weekKnop,s:x=>x.week?0:1};
 function bonLijst(c){
   const r=D.cm.filter(x=>x.bon&&c.test(x)).reverse();
   lijstScherm({key:c.key,titel:c.titel,sub:c.sub+" De nieuwste staat bovenaan. Deze pagina zie je alleen met je eigen wachtwoord.",rijen:r,eenheid:["bon","bonnen"],
@@ -2322,6 +2326,7 @@ function bonLijst(c){
     ].concat(c.risico?[{k:"r",l:"Risico",w:"96px",c:"m-sub",ml:"Risico",r:x=>of(x.risico),s:x=>x.risico||"z"}]:[],[
       {k:"w",l:"Melder",w:"110px",r:x=>of(x.melder),s:x=>norm(x.melder)},
       {k:"s",l:"Status",w:"130px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
+      weekKolom,
       {k:"b",l:"Downloaden",w:"110px",c:"m-sub",r:bonKnop}]),
     detail:cmDetail});
 }

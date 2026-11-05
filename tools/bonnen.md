@@ -32,7 +32,7 @@ Een monteur past in het dienstrapport het vervolg van een storing aan of meldt h
 
 Een PM-bon die helemaal is afgemeld staat als `status-PMR-<n>.txt` in dezelfde map, met `rij.pmreg` (`reg`, `nr`, `opmerking`, `door`, `tijd`, `punten` met de bevindingen). `bonnen.py wijzig` maakt daarvan de registratiebon in F.95.602, alleen als PDF, en zet die in `meta.bonnen.pmreg[<nr>]` (`reg`, `naam`, `pdf`). Een Deels uitgevoerd krijgt geen nummer en geen bon.
 
-De werkvoorbereider vinkt op de pagina CM-bonnen bonnen aan voor de monteurs. Dat staat als `status-WEEK-<nr>.txt` met `rij.week` (`nr`, `aan`). Een monteur meldt zo'n bon af als `status-<nr>.txt` met `rij.weekaf` (`tekst`, `door`) en status Uitgevoerd of Deels uitgevoerd. `bonnen.py wijzig` verwerkt beide.
+De werkvoorbereider zet CM- en SQD-bonnen met de knop Plannen voor monteurs bij de monteurs. Dat staat als `status-WEEK-<nr>.txt` met `rij.week` (`nr`, `aan`). Een monteur meldt zo'n bon af als `status-<nr>.txt` met `rij.weekaf` (`tekst`, `door`) en status Uitgevoerd of Deels uitgevoerd. `bonnen.py wijzig` verwerkt beide.
 
 Een afgehandelde melding zet de bon via Apps Script op Uitgevoerd, ook als `status-<nr>.txt`. Een afgesloten bon haalt de site zelf van het SQD-bord: `meta.bonnen.gesloten` bevat de meldingen van afgesloten bonnen.
 
