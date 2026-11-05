@@ -8,7 +8,7 @@ bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
   site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|output|pm]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
-import argparse, base64, copy, json, re, secrets
+import argparse, base64, copy, datetime, json, re, secrets
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -174,8 +174,8 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     if pub.get("sleutel_monteur"):
-        # Alleen de sleutel voor storing melden en het dienstrapport, plus de machinenamen voor het formulier.
-        boxes.append(box({"niveau": "monteur", "machines": data["machines"], "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}, pub["sleutel_monteur"]))
+        # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de CM-bonnen die de werkvoorbereider heeft aangevinkt. Geen bonbestanden.
+        boxes.append(box({"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}, pub["sleutel_monteur"]))
     if pub.get("sleutel_output"):
         # Alleen het webadres en de outputsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "output", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": output_sleutel}}}, pub["sleutel_output"]))
@@ -185,6 +185,19 @@ def build(a):
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
+
+
+def weekbonnen(data, stand):
+    """De aangevinkte bonnen voor de monteurs: alleen de velden voor de kaart. Een afgemelde bon blijft twee weken bij Afgemeld staan."""
+    grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
+    def zicht(r):
+        if r.get("status") not in ("Uitgevoerd", "Gereed", "Dubbel", "Vervallen"):
+            return True
+        try:
+            return r.get("status") in ("Uitgevoerd", "Gereed") and datetime.datetime.strptime(str(r.get("uitgevoerd_op")), "%d-%m-%Y") >= grens
+        except ValueError:
+            return False
+    return [{k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op")} for r in data.get("cm", []) if r.get("week") and zicht(r)]
 
 
 ap = argparse.ArgumentParser()

@@ -435,6 +435,12 @@ def wijzig(a):
         if extra.get("zatkop"):
             zat_kop(data, extra["zatkop"])
             continue
+        if extra.get("week"):
+            rij = next((r for r in data["cm"] if r.get("nr") == extra["week"].get("nr")), None)
+            if rij is not None:
+                rij["week"] = bool(extra["week"].get("aan"))
+                print(rij["nr"], "uitvoerbaar" if rij["week"] else "niet meer uitvoerbaar")
+            continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         if status == "Verwijderd":
             zat_weg(data, nr)
@@ -460,6 +466,14 @@ def wijzig(a):
             if "uitvoeren" in extra:
                 rij["uitvoeren"] = extra["uitvoeren"] or None
                 opnieuw.append(rij)
+            if extra.get("weekaf"):
+                dag, af = str(w.get("tijd"))[:10], extra["weekaf"]
+                tekst = (af.get("tekst") or "").rstrip()
+                regel = "%s, %s: %s." % (dag, af.get("door") or "Monteur", status) + (" " + tekst + ("" if tekst[-1:] in ".!?" else ".") if tekst else "")
+                rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+                if status == "Uitgevoerd" and not any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
+                    rij["uitvoeren"] = "Uitgevoerd op " + dag
+                    opnieuw.append(rij)
             if "afgemeld" in extra:
                 rij["uitgevoerd_op"] = extra["afgemeld"] or None
                 if extra["afgemeld"] and str(rij.get("uitvoeren")).startswith("Uitgevoerd op"):

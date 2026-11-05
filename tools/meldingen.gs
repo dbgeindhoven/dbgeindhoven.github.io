@@ -260,7 +260,10 @@ function doGet(e) {
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
   if (monteur || p.rapport) {
-    return uit_({ rapport: rijen.filter(r => r[2] === 'TD').slice(-500).map(object_) });
+    const rapport = rijen.filter(r => r[2] === 'TD').slice(-500).map(object_);
+    // De monteur ziet aangevinkte en afgemelde bonnen meteen, verder niets uit de wachtrij.
+    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf)) });
+    return uit_({ rapport: rapport });
   }
   return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_() });
 }
@@ -278,7 +281,9 @@ function doPost(e) {
   const pm = d.k === PMSLEUTEL && (d.actie === 'pm' || d.actie === 'pmbev');
   // Elke dienst kan het vervolg van een storing in het dienstrapport aanpassen, verder niets.
   const rapport = d.k === MONTEURSLEUTEL && d.actie === 'rapport';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport) return uit_({ fout: 'geen toegang' });
+  // De monteur meldt een uitvoerbare bon af. Meer dan afmelden kan deze actie niet.
+  const weekbon = d.k === MONTEURSLEUTEL && d.actie === 'weekbon';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon) return uit_({ fout: 'geen toegang' });
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -314,6 +319,11 @@ function doPost(e) {
     if (d.actie === 'rapport') {
       if (!VERVOLG.includes(d.vervolg)) return uit_({ fout: 'onjuiste invoer' });
       return uit_(zetRapport_(b, d));
+    }
+    if (d.actie === 'weekbon') {
+      if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !['Uitgevoerd', 'Deels uitgevoerd'].includes(d.status)) return uit_({ fout: 'onjuiste invoer' });
+      zetBonstatus_(d.nr, d.status, { weekaf: { tekst: String(d.tekst == null ? '' : d.tekst).slice(0, 1000), door: schoon_(d.door) } }, d.door);
+      return uit_({ ok: true, tijd: nu_() });
     }
     if (d.actie === 'verwijder') {
       if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });
