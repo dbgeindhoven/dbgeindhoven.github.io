@@ -73,7 +73,7 @@ Documenten toevoegen:
 Opnieuw toevoegen met dezelfde machine, soort en titel vervangt het bestand op de site. Het oude `.bin`-bestand blijft staan tot je het zelf weghaalt.
 
 ## Bestellijst
-Elke regel in `bestellijst` heeft een vast `id` (`B<n>`), dat `site.py build` uitdeelt. De werkvoorbereider zet op de pagina Bestellijst de `groep` per regel. Dat gaat via de wachtrij als `status-B<n>.txt`.
+Elke regel in `bestellijst` heeft een vast `id` (`B<n>`), dat `site.py build` uitdeelt. De werkvoorbereider zet op de pagina Bestellijst de `groep` per regel. Op Bestellen/wachten op bestelling en in het detailpaneel van een bon vinkt hij per regel Opgevraagd, Besteld of Binnen aan: dat is dezelfde `groep`. Dat gaat via de wachtrij als `status-B<n>.txt`.
 
 De geplande taak zoekt de onderdelen op internet op, want de site kan dat zelf niet (zie "Onderdelen zoeken" in `tools/bonnen.md`). Per regel komt het resultaat in `zoek` (`datum`, `soort` Exact, Vergelijkbaar of Geen, `bij`, `link`, `tekst`). Contactgegevens staan per leverancier één keer in de lijst `leveranciers` (`naam`, `email`, `tel`, `site`), die TD en werkvoorbereider zien. Regels op Besteld of Binnen en regels van afgesloten bonnen worden niet gezocht. De run doet maximaal 8 regels; is er meer, dan zet hij `status-ZOEK.txt` in de wachtrij zodat de volgende run doorgaat. Op de pagina's Bestellijst en Bestellen/wachten op bestelling en in het detailpaneel van een bon staan de link, de leverancier en de contactgegevens. Met Opnieuw zoeken in het detailpaneel haalt de werkvoorbereider `zoek` weg (`rij.bestel.zoek`), de regel komt dan vooraan.
 

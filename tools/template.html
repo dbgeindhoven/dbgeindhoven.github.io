@@ -392,6 +392,9 @@ html.present .gvlak{height:min(46vh,460px)}
 .bonbest span{display:block;color:var(--ink2)}
 .bonbest small{display:block;color:var(--ink2);font-size:.75rem}
 .bonbest a{color:var(--gold-ink)}
+.bonbest .bestkop{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 16px;color:inherit}
+.bonbest .bestvink{display:flex;flex-wrap:wrap;gap:2px 14px;margin-left:auto;color:var(--ink)}
+.bestvink input{margin:0;accent-color:var(--gold)}
 .zatkop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;margin:0 0 12px}
 .zatkop label{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;color:var(--ink2)}
 .zatkop label.breed{grid-column:1/-1}
@@ -1959,6 +1962,7 @@ document.addEventListener("change",e=>{
   if(e.target.matches("[data-zat]"))zatVeld(e.target);
   if(e.target.matches("[data-zatkop]"))zatKopVeld(e.target);
   if(e.target.matches("[data-bestel]"))zetBestel(e.target);
+  if(e.target.matches("[data-bestvink]"))zetBestelVink(e.target);
   if(e.target.matches("[data-zatkies]")){const n=e.target.dataset.zatkies;if(e.target.checked)ZATKIES.add(n);else ZATKIES.delete(n);zatBulkTeken()}
   if(e.target.id==="zat_alles"){document.querySelectorAll("[data-zatkies]").forEach(k=>{k.checked=e.target.checked;if(k.checked)ZATKIES.add(k.dataset.zatkies);else ZATKIES.delete(k.dataset.zatkies)});zatBulkTeken()}
   if(e.target.id==="zat_lijn"){ZATF.lijn=e.target.value;SCHERM[HUIDIG]()}
@@ -2387,10 +2391,26 @@ function zoekTekst(x){
 }
 function bestelHtml(x){
   const z=x.zoek||{},l=levVan(z.bij),u=zoekUrl(x),d=[z.bij?esc(z.bij):"",u?urlHtml(u,"Bekijken"):"",l&&l.tel?telHtml(l.tel):"",l&&l.email?mailHtml(l.email):""].filter(Boolean);
-  return'<span class="bonbest"><b>'+esc(x.onderdeel)+"</b>"+(d.length?"<span>"+d.join(" · ")+"</span>":"")+"<small>"+esc(zoekTekst(x))+"</small></span>";
+  return'<span class="bonbest"><span class="bestkop"><b>'+esc(x.onderdeel)+"</b>"+bestelVink(x)+"</span>"+(d.length?"<span>"+d.join(" · ")+"</span>":"")+"<small>"+esc(zoekTekst(x))+"</small></span>";
 }
 /* Alle openstaande bestelregels van een bon, met waar ze te koop zijn. */
 const bestelRegels=c=>(D.bestellijst||[]).filter(x=>x.cm===c.nr&&x.groep!=="Binnen").map(bestelHtml).join("");
+/* Afvinken wat is opgevraagd, besteld of binnen. Een regel heeft één stand, dus een nieuw vinkje haalt het oude weg. Zonder vinkje gaat de regel terug naar de stand van daarvoor. */
+const BESTVINK=["Opgevraagd","Besteld","Binnen"];
+function bestelVink(x){
+  if(!wvMag()||!x.id)return BESTVINK.includes(x.groep)?"<span>"+esc(x.groep)+"</span>":"";
+  return'<span class="bestvink">'+BESTVINK.map(o=>'<label class="bonvink"><input type="checkbox" data-bestvink="'+esc(x.id)+'" value="'+o+'" aria-label="'+esc(x.onderdeel+": "+o.toLowerCase())+'"'+(x.groep===o?" checked":"")+">"+o+"</label>").join("")+"</span>";
+}
+async function zetBestelVink(v){
+  const r=D.bestellijst.find(x=>x.id===v.dataset.bestvink),oud=r.groep;
+  if(!BESTVINK.includes(oud))r.terug=oud;
+  const groep=v.checked?v.value:r.terug||"Nog niet besteld",w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep}}};
+  /* De lijst loopt meteen mee, dan kun je achter elkaar doorvinken. Het detailpaneel staat buiten de lijst. */
+  const teken=()=>{document.querySelectorAll('[data-bestvink="'+r.id+'"]').forEach(i=>{i.checked=i.value===r.groep});laatste="";planTel();SCHERM[HUIDIG]()};
+  r.groep=groep;teken();
+  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);melder(r.onderdeel+": "+groep)}
+  catch(_){r.groep=oud;teken();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
+}
 async function zoekOpnieuw(k){
   const r=D.bestellijst.find(x=>x.id===k.dataset.bestelzoek),w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:r.groep,zoek:true}}};
   k.disabled=true;
