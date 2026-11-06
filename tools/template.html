@@ -1229,7 +1229,10 @@ let PMAF=null,PMBEV=[],PMFOUT=false,pmTeken=null;
 const pmPlan=()=>D.pmplan||{bonnen:[],taken:{}};
 const pmTaken=b=>b.taken.map(id=>Object.assign({id},pmPlan().taken[id]));
 const pmFreq=b=>{const t=pmTaken(b);return PMFREQ.filter(f=>t.some(x=>x.frequentie===f)).join(" en ")};
-const pmTitel=b=>"Preventief "+pmFreq(b).toLowerCase()+" – "+b.lijndeel+" "+b.lijn.toLowerCase();
+/* Een lijndeel als Inpak lijn 2 of Ompak lijn 3 noemt zijn lijn al. */
+const pmLijnIn=b=>b.lijndeel.toLowerCase().includes(b.lijn.toLowerCase());
+const pmPlek=b=>pmLijnIn(b)?b.lijndeel:b.lijn+", "+b.lijndeel;
+const pmTitel=b=>"Preventief "+pmFreq(b).toLowerCase()+" – "+b.lijndeel+(pmLijnIn(b)?"":" "+b.lijn.toLowerCase());
 const pmDag=d=>hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}));
 const pmNu=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
 const pmGedaan=a=>String(a&&a.taken||"").split(",").filter(Boolean);
@@ -1293,7 +1296,7 @@ function pmVak(vak,tabs){
   const onder=!tabs;
   const kaart=b=>{
     const s=pmStand(b),n=b.taken.length,a=pmAf(b.nr);
-    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.lijn+", "+b.lijndeel)+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.nr,a&&a.reg,pmBevAantal(b.nr)].filter(Boolean).join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
+    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(pmPlek(b))+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.nr,a&&a.reg,pmBevAantal(b.nr)].filter(Boolean).join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
   };
   const groep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.map(kaart).join("")+"</section>";
   const cmKaart=b=>'<button type="button" class="pmkaart" data-weekbon="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.omschrijving)+"</b>"+st(weekStatus(b))+'</span><span class="pmk2">'+esc([b.nr,b.lijn,b.machine,b.prio?"Prio "+b.prio:""].filter(Boolean).join(" · "))+"</span>"+(weekWacht(b.nr)?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
@@ -1481,7 +1484,7 @@ function vPmBonnen(){
     tekst:b=>[b.nr,b.lijn,b.lijndeel,af2(b,"door"),af2(b,"reg"),af2(b,"opmerking")].concat(pmBevVan(b.nr).flatMap(x=>[x.naam,x.opmerking]),pmTaken(b).map(t=>t.taak)).join(" "),
     kolommen:[
       {k:"d",l:"Uitvoeren op",w:"104px",c:"m-nr",x:"nr",r:b=>esc(b.datum),s:b=>+datum(b.datum)},
-      {k:"b",l:"Bon",c:"m-main",x:"titel",r:b=>esc(b.lijn+", "+b.lijndeel),s:b=>norm(b.lijn+b.lijndeel)},
+      {k:"b",l:"Bon",c:"m-main",x:"titel",r:b=>esc(pmPlek(b)),s:b=>norm(b.lijn+b.lijndeel)},
       {k:"t",l:"Taken",w:"64px",n:true,r:b=>String(b.taken.length),s:b=>b.taken.length},
       {k:"st",l:"Status",w:"160px",c:"m-status",r:b=>st(pmStand(b)),s:b=>PMSTAND.indexOf(pmStand(b))},
       {k:"w",l:"Afgemeld door",w:"150px",c:"m-sub",ml:"Afgemeld door",r:b=>of(af2(b,"door")),s:b=>norm(af2(b,"door"))},

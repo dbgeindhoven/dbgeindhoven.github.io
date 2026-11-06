@@ -646,7 +646,7 @@ def pm_spec(b, rijen):
     naam = re.sub(r"[^A-Za-z0-9]+", "_", b["lijn"] + " " + b["lijndeel"]).strip("_")
     return {
         "naam": b["nr"] + "_" + naam, "werkbon_nr": b["nr"], "in_bedrijf": True,
-        "omschrijving": "Preventief %s – %s %s" % (freq, b["lijndeel"], b["lijn"].lower()),
+        "omschrijving": "Preventief %s – %s" % (freq, b["lijndeel"] if b["lijn"].lower() in b["lijndeel"].lower() else b["lijndeel"] + " " + b["lijn"].lower()),
         "uitvoeren_op": WEEKDAGEN[pm.dat(b["datum"]).weekday()] + " " + b["datum"],
         "lijn_machine": b["lijn"] + " / " + b["lijndeel"], "melder": "PM-planning", "installatie": delen[0] if len(delen) == 1 else b["lijndeel"],
         "afdeling": "TD", "onderdelen": ", ".join(nodig)[:120] or None,
