@@ -668,8 +668,8 @@ const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:
 const LIJNEN_OUTPUT=["Lijn 1","Lijn 2","Lijn 3"];
 const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l})).concat([{id:"inpak",t:"Output inpak",kort:"Inpak"},{id:"ompak",t:"Output ompak",kort:"Ompak"}]);
 const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"};
-const P_PRES_ALLES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
-let P_PRES=P_PRES_ALLES;
+/* De agenda toont de zaterdag ook, dus die heeft geen eigen stap. */
+const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"||p.id==="zaterdag"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"},{id:"docs",t:"Machinedocumentatie",i:"lijst"}];
 const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaakte CM-bonnen",i:"download"}];
 const P_PLAN=[{id:"pgepland",t:"Gepland",sub:"Een bon met een datum staat in de onderhoudsplanning."},{id:"pbestel",t:"Bestellen/wachten op bestelling",sub:"Bonnen die besteld moeten worden of op onderdelen wachten. Met een datum gaan ze naar de onderhoudsplanning."},{id:"pgeen",t:"Geen status",sub:"Bonnen zonder vervolg. Geef een status of een datum."},{id:"pafgerond",t:"Afgerond",sub:"De datum is de dag van afmelden en staat ook in de onderhoudsplanning."}];
@@ -891,8 +891,8 @@ function pasBonToe(w){
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
   if(extra.bestel){const r=(D.bestellijst||[]).find(x=>x.id===extra.bestel.id);if(r){r.groep=extra.bestel.groep;if(extra.bestel.zoek)delete r.zoek}return}
   if(extra.zatkop){pasZatKop(extra.zatkop);return}
-  if(extra.stop){if(!stops().some(x=>x.id===extra.stop.id)){D.stops=stops().concat([Object.assign({correctief:[],preventief:[]},extra.stop)]);presStappen()}return}
-  if(extra.stopweg){pasStopWeg(extra.stopweg);presStappen();return}
+  if(extra.stop){if(!stops().some(x=>x.id===extra.stop.id)){D.stops=stops().concat([Object.assign({correctief:[],preventief:[]},extra.stop)])}return}
+  if(extra.stopweg){pasStopWeg(extra.stopweg);return}
   /* Een afgesloten bon haalt zijn melding van het SQD-bord. Gaat de bon weer open, dan komt de melding terug. De dagstart heeft geen CM-overzicht en zoekt de melding op via het nummer. */
   const mid=c?c.melding:b&&Object.keys(b.verwerkt||{}).find(k=>b.verwerkt[k]===w.nr);
   if(mid&&b){b.gesloten=(b.gesloten||[]).filter(x=>x!==mid);if(GESLOTEN.includes(w.status))b.gesloten.push(mid);if(MELDINGEN)MELDINGEN=MELDINGEN.filter(meldZicht)}
@@ -2689,14 +2689,12 @@ function route(){
 }
 function menu(open){$("#side").classList.toggle("open",open);$("#menuwaas").hidden=!open}
 function presenteer(aan){
-  if(aan&&!P_PRES.some(p=>p.id===HUIDIG))location.hash=HUIDIG==="output"?"lijn1":"sqd";
+  if(aan&&!P_PRES.some(p=>p.id===HUIDIG))location.hash=HUIDIG==="output"?"lijn1":HUIDIG==="zaterdag"?"stop":"sqd";
   document.documentElement.classList.toggle("present",aan);
   const el=document.documentElement;
   try{if(aan&&el.requestFullscreen)el.requestFullscreen().catch(()=>{});else if(!aan&&document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(_){}
 }
-/* De presentatie slaat de planning over zolang er geen dag gepland staat. */
 function presStappen(){
-  P_PRES=P_PRES_ALLES.filter(p=>p.id!=="stop"||stops().length);
   $("#stappen").innerHTML=P_PRES.map(p=>'<button data-v="'+p.id+'" aria-current="'+(p.id===HUIDIG)+'">'+esc(p.kort)+"</button>").join("");
 }
 function start(data){
