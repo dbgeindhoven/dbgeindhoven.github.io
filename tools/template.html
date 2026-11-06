@@ -280,8 +280,14 @@ html.present .deelkop .knop{display:none}
 .pmrij:first-child{border-top:0}
 .pmrij:has(input:checked){background:var(--gold-soft)}
 .pmrij .pmtaak,.meldform .pmrij .pmtaak{flex:1;min-width:0;border-top:0;background:none}
-.pmprob{flex:none;width:46px;display:flex;align-items:center;justify-content:center;padding:0;border:0;background:none;color:var(--ink3);cursor:pointer}
-.pmprob:hover,.pmprob:focus-visible,.pmrij:has(+ .pmbev) .pmprob{color:var(--crit-ink)}
+.pmprob{flex:none;align-self:center;display:inline-flex;align-items:center;gap:4px;margin:6px 10px 6px 0;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:none;color:var(--ink2);font:inherit;font-size:.75rem;cursor:pointer}
+.pmprob .i{width:13px;height:13px}
+.pmprob:hover,.pmprob:focus-visible{border-color:var(--crit);color:var(--crit-ink)}
+.pmrij.afg:has(input){background:none;box-shadow:inset 3px 0 0 var(--crit)}
+.pmrij.afg input{display:none}
+.pmrij.afg .pmprob,.pmrij.afg .pmprob:hover{border-color:var(--crit);background:var(--crit);color:var(--bg)}
+.pmx{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:4px;background:var(--crit);color:var(--bg)}
+.pmx .i{width:14px;height:14px}
 .pmbev{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px 10px 44px;border-top:1px solid var(--line);border-left:3px solid var(--crit);font-size:.9375rem}
 .pmbev p{margin:0}
 .pmbev small{color:var(--ink2);font-size:.8125rem}
@@ -1244,11 +1250,12 @@ function pmStand(b){
   return d<nu?"Achterstallig":d>nu?"Gepland":"Vandaag";
 }
 function pmZet(r){PMAF=(PMAF||[]).filter(x=>x.nr!==r.nr).concat([r])}
-/* Een bevinding is een probleem bij een controlepunt: een opmerking, eventueel een foto en eventueel een CM-bon. Hij blijft staan als de bon nog niet is afgemeld. */
+/* Een bevinding is een afgekeurd controlepunt: een opmerking, eventueel een foto en standaard een CM-bon. Het punt telt als nagelopen, dus de PM-bon kan dicht en het vervolg zit in de nieuwe bon. */
 const pmBevVan=(nr,c)=>PMBEV.concat(UIT.filter(x=>x.d.actie==="pmbev").map(x=>Object.assign({},x.d,{foto:"",tijd:x.tijd,wacht:true}))).filter(x=>x.nr===nr&&(!c||x.punt===c));
 const pmBevZet=(d,j)=>{PMBEV=PMBEV.concat([Object.assign({},d,{id:j.id,tijd:j.tijd,foto:j.foto||""})])};
 const pmBevBon=x=>x.bon==="Ja"?bonVan(x.id)||"CM-bon wordt gemaakt":"Geen CM-bon";
-const pmBevAantal=nr=>{const n=pmBevVan(nr).length;return n?n+(n===1?" probleem":" problemen"):""};
+const pmAfgekeurd=nr=>uniek(pmBevVan(nr).map(x=>x.punt)).length;
+const pmBevAantal=nr=>{const n=pmAfgekeurd(nr);return n?n+" afgekeurd":""};
 const pmBevHtml=x=>'<div class="pmbev"><p>'+esc(x.opmerking)+"</p><small>"+esc([x.wacht?"Wacht op bereik":x.door,pmBevBon(x)].filter(Boolean).join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+"</div>";
 function pmLaatst(id){
   const volg=t=>t.slice(6,10)+t.slice(3,5)+t.slice(0,2)+t.slice(11);
@@ -1336,11 +1343,13 @@ function pmVak(vak,tabs){
     }
     vak.innerHTML=h;
   }
+  const PMX='<span class="pmx" aria-hidden="true">'+ico("sluit")+"</span>";
   function taak(t,gedaan,alleen,nr){
     const sub=[t.benodigdheden?"Nodig: "+t.benodigdheden:"",t.discipline==="Operator"?"Operatortaak":""].filter(Boolean).join(" · "),heel=gedaan.includes(t.id);
     const rij=(x,p,c)=>{
-      const wat=x.o||t.onderdeel||t.taak,bev=pmBevVan(nr,c),naam=wat===p?p:wat+": "+p;
-      return'<div class="pmrij" data-punt="'+c+'" data-naam="'+esc(naam)+'" data-mach="'+esc(wat)+'"><label class="pmtaak"><input type="checkbox" value="'+c+'"'+(heel||gedaan.includes(c)||bev.length?" checked":"")+(alleen?" disabled":"")+"><span>"+esc(p)+"</span></label>"+(alleen?"":'<button type="button" class="pmprob" data-pmprob aria-label="'+esc("Probleem melden: "+naam)+'">'+ico("storing")+"</button>")+"</div>"+bev.map(pmBevHtml).join("");
+      const wat=x.o||t.onderdeel||t.taak,bev=pmBevVan(nr,c),naam=wat===p?p:wat+": "+p,afg=bev.length>0;
+      const knop=alleen?(afg?'<span class="pmprob">Afgekeurd</span>':""):'<button type="button" class="pmprob" data-pmprob aria-label="'+esc("Afkeuren: "+naam)+'">'+ico("sluit")+"Afgekeurd</button>";
+      return'<div class="pmrij'+(afg?" afg":"")+'" data-punt="'+c+'" data-naam="'+esc(naam)+'" data-mach="'+esc(wat)+'"><label class="pmtaak"><input type="checkbox" value="'+c+'"'+(heel||gedaan.includes(c)||afg?" checked":"")+(alleen||afg?" disabled":"")+">"+(afg?PMX:"")+"<span>"+esc(p)+"</span></label>"+knop+"</div>"+bev.map(pmBevHtml).join("");
     };
     return'<section class="pmblok"><h3>'+esc(t.onderdeel||t.taak)+"</h3>"+(sub?"<small>"+esc(sub)+"</small>":"")+pmPunten(t).map((x,i)=>'<div class="pmobj">'+(x.o?'<div class="pmokop"><b>'+esc(x.o)+'</b><span class="pmotel"></span>'+(alleen?"":'<button type="button" class="tekstknop" data-pmobj>Alles in orde</button>')+"</div>":"")+'<div class="pmrijen">'+x.p.map((p,j)=>rij(x,p,pmCode(t.id,i,j))).join("")+"</div></div>").join("")+"</section>";
   }
@@ -1354,7 +1363,7 @@ function pmVak(vak,tabs){
     bevDicht();
     bevRij=k.closest(".pmrij");
     let na=bevRij;while(na.nextElementSibling&&na.nextElementSibling.classList.contains("pmbev"))na=na.nextElementSibling;
-    na.insertAdjacentHTML("afterend",'<div class="pmbevform" id="pmbevform"><label>Wat is er aan de hand?<textarea id="pb_tekst"></textarea></label>'+fotoVeld("pb_foto","Foto")+'<label class="vink"><input type="checkbox" id="pb_bon" checked> Maak een CM-bon</label><p class="fout" id="pb_fout" role="alert" hidden></p><div class="rfknoppen"><button type="button" class="knop" data-pbweg>Annuleren</button><button type="button" class="knop hoofd" data-pbop>Opslaan</button></div></div>');
+    na.insertAdjacentHTML("afterend",'<div class="pmbevform" id="pmbevform"><label>Wat is er niet goed?<textarea id="pb_tekst"></textarea></label>'+fotoVeld("pb_foto","Foto")+'<label class="vink"><input type="checkbox" id="pb_bon" checked> Maak een CM-bon</label><p class="fout" id="pb_fout" role="alert" hidden></p><div class="rfknoppen"><button type="button" class="knop" data-pbweg>Annuleren</button><button type="button" class="knop hoofd" data-pbop>Afkeuren</button></div></div>');
     bevFoto=koppelFoto("pb_foto");
     tellen();
     $("#pb_tekst").focus();
@@ -1362,22 +1371,23 @@ function pmVak(vak,tabs){
   }
   async function bevOp(k){
     const f=$("#pb_fout"),opm=$("#pb_tekst").value.trim(),b=pmPlan().bonnen.find(x=>x.nr===open),gekozen=bevFoto();
-    const meld=t=>{f.textContent=t;f.hidden=false;k.disabled=false;k.textContent="Opslaan"};
+    const meld=t=>{f.textContent=t;f.hidden=false;k.disabled=false;k.textContent="Afkeuren"};
     f.hidden=true;
-    if(!opm){meld("Schrijf wat er aan de hand is.");$("#pb_tekst").focus();return}
+    if(!opm){meld("Schrijf wat er niet goed is.");$("#pb_tekst").focus();return}
     if(!pmDoor()){meld("Vul eerst bovenaan je naam in.");return}
     k.disabled=true;k.textContent="Bezig";
     let foto="";
     if(gekozen){try{foto=await verklein(gekozen)}catch(_){meld("Deze foto kan niet worden gelezen. Kies een andere foto of sla op zonder foto.");return}}
     const d={actie:"pmbev",nr:open,punt:bevRij.dataset.punt,naam:bevRij.dataset.naam,lijn:b.lijn,machine:b.lijndeel+" – "+bevRij.dataset.mach,opmerking:opm,bon:$("#pb_bon").checked?"Ja":"Nee",door:pmDoor(),foto};
-    let tekst="Probleem opgeslagen";
+    let tekst="Punt afgekeurd";
     try{pmBevZet(d,await stuur(d))}
     catch(e){
       if(!(e instanceof TypeError||e.name==="TimeoutError"||navigator.onLine===false)){meld("Opslaan is niet gelukt. Probeer het opnieuw.");return}
-      try{await UITBAK.zet({d,tijd:nuTekst()});await leesUitbak();tekst="Geen bereik. Het probleem wordt vanzelf verstuurd."}
+      try{await UITBAK.zet({d,tijd:nuTekst()});await leesUitbak();tekst="Geen bereik. De afkeuring wordt vanzelf verstuurd."}
       catch(_){meld("Opslaan is niet gelukt. Probeer het opnieuw.");return}
     }
-    bevRij.querySelector("input").checked=true;
+    const vak1=bevRij.querySelector("input");vak1.checked=true;vak1.disabled=true;
+    if(!bevRij.classList.contains("afg")){bevRij.classList.add("afg");vak1.insertAdjacentHTML("afterend",PMX)}
     const x=pmBevVan(open,d.punt).pop();
     $("#pmbevform").insertAdjacentHTML("beforebegin",pmBevHtml(x));
     bevDicht();
@@ -1395,7 +1405,7 @@ function pmVak(vak,tabs){
       tellen();
       return;
     }
-    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate>'+pmNaamVeld()+'<div class="pmtaken"><div class="pmtkop"><b>Controlepunten</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div><p class="pmhint">Iets niet in orde? Tik op de driehoek bij het punt voor een opmerking en foto.</p>'+ts.map(t=>taak(t,gedaan,false,nr)).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
+    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate>'+pmNaamVeld()+'<div class="pmtaken"><div class="pmtkop"><b>Controlepunten</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div><p class="pmhint">Vink aan wat goed is. Niet goed? Kies Afgekeurd en schrijf wat er mis is. Daar komt een nieuwe bon van en deze bon kan gewoon dicht.</p>'+ts.map(t=>taak(t,gedaan,false,nr)).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
     const vinken=()=>[...vak.querySelectorAll(".pmtaak input")],knop=$("#pm_knop");
     const tel=()=>{const n=vinken().filter(x=>x.checked).length,m=vinken().length;knop.textContent=!n||n===m?"Afmelden":"Deels afmelden ("+n+" van "+m+")";tellen()};
     tel();
@@ -1453,10 +1463,10 @@ async function haalRegistratie(k){
 function pmDetail(b){
   const a=pmAf(b.nr),g=pmGedaan(a),bev=pmBevVan(b.nr);
   const regel=t=>{
-    const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),mis=alle.filter(y=>!g.includes(y.c));
-    return"<li"+(vol?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
+    const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),afg=alle.filter(y=>bev.some(x=>x.punt===y.c)),mis=alle.filter(y=>!g.includes(y.c)&&!afg.includes(y));
+    return"<li"+(vol&&!afg.length?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol&&mis.length?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+(afg.length?"<small>Afgekeurd: "+esc(afg.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
   };
-  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Registratie",regVeld(b),true],["Opmerking",a&&a.opmerking],["Problemen",bev.length?'<ul class="pmbevlijst">'+bev.map(x=>"<li><b>"+esc(x.naam)+"</b>"+esc(x.opmerking)+"<small>"+esc([x.door,x.tijd,pmBevBon(x)].join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+"</li>").join("")+"</ul>":null,true]]};
+  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Registratie",regVeld(b),true],["Opmerking",a&&a.opmerking],["Afgekeurd",bev.length?'<ul class="pmbevlijst">'+bev.map(x=>"<li><b>"+esc(x.naam)+"</b>"+esc(x.opmerking)+"<small>"+esc([x.door,x.tijd,pmBevBon(x)].join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+"</li>").join("")+"</ul>":null,true]]};
 }
 function vPmBonnen(){
   /* Bonnen met een registratiebon blijven altijd staan, andere gaan na 8 weken uit de planning. De telling kijkt daarom alleen naar die 8 weken. */
@@ -1476,7 +1486,7 @@ function vPmBonnen(){
       {k:"st",l:"Status",w:"160px",c:"m-status",r:b=>st(pmStand(b)),s:b=>PMSTAND.indexOf(pmStand(b))},
       {k:"w",l:"Afgemeld door",w:"150px",c:"m-sub",ml:"Afgemeld door",r:b=>of(af2(b,"door")),s:b=>norm(af2(b,"door"))},
       {k:"r",l:"Registratie",w:"100px",c:"m-sub",ml:"Registratie",r:b=>regVeld(b)||of(null),s:b=>Number(String(af2(b,"reg")||"").replace(/\D/g,""))},
-      {k:"p",l:"Problemen",w:"92px",n:true,c:"m-sub",ml:"Problemen",r:b=>of(pmBevVan(b.nr).length||null),s:b=>pmBevVan(b.nr).length},
+      {k:"p",l:"Afgekeurd",w:"92px",n:true,c:"m-sub",ml:"Afgekeurd",r:b=>of(pmAfgekeurd(b.nr)||null),s:b=>pmAfgekeurd(b.nr)},
       {k:"o",l:"Opmerking",w:"20%",c:"m-sub",ml:"Opmerking",r:b=>of(af2(b,"opmerking")),s:b=>norm(af2(b,"opmerking"))}],
     detail:pmDetail});
 }

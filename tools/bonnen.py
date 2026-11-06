@@ -705,9 +705,10 @@ def pm_registratie(data, r, wm):
         return
     spec = pm_spec(bon, {x["id"]: x for x in data.get("pm", [])})
     dag = str(r.get("tijd"))[:10]
-    regels = ["Registratie van PM-bon %s, gepland op %s." % (r["nr"], bon["datum"]), "Alle taken en controlepunten afgetekend door %s op %s." % (r.get("door"), r.get("tijd"))]
     punten = r.get("punten") or []
-    extra = (["Opmerking monteur: " + r["opmerking"].rstrip(". ") + "."] if r.get("opmerking") else []) + (["Bevindingen: " + "; ".join(p["naam"] + " – " + p["opmerking"] for p in punten) + "."] if punten else [])
+    afgekeurd = len({p["naam"] for p in punten})
+    regels = ["Registratie van PM-bon %s, gepland op %s." % (r["nr"], bon["datum"]), ("Alle taken en controlepunten nagelopen door %s op %s, %d afgekeurd." % (r.get("door"), r.get("tijd"), afgekeurd)) if punten else "Alle taken en controlepunten afgetekend door %s op %s." % (r.get("door"), r.get("tijd"))]
+    extra = (["Opmerking monteur: " + r["opmerking"].rstrip(". ") + "."] if r.get("opmerking") else []) + (["Afgekeurd: " + "; ".join(p["naam"] + " – " + p["opmerking"] for p in punten) + "."] if punten else [])
     if extra:
         regels += textwrap.wrap(" ".join(" ".join(extra).split()), 112, max_lines=2, placeholder=" … zie TD Hub")
     spec.update(
