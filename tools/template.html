@@ -358,6 +358,15 @@ html.present .deelkop .knop{display:none}
 .grafiek{padding-bottom:40px;margin-bottom:12px}
 .gvlak{position:relative;height:280px;margin:0 8px 0 56px;border-bottom:1px solid var(--line2)}
 html.present .gvlak{height:min(46vh,460px)}
+html.present #view:has(.okpis) .gvlak{height:25vh}
+html.present #view:has(.ografieken) .gvlak{height:23vh}
+html.present #view:has(.okpis) .head p{display:none}
+html.present #view:has(.okpis) .grafiek{padding-bottom:calc(1.875rem + 8px);margin-bottom:4px}
+html.present #view:has(.okpis) .glegenda{margin-bottom:6px}
+html.present #view:has(.okpis) .tbl th,html.present #view:has(.okpis) .tbl td{padding-top:3px;padding-bottom:3px}
+html.present .okpis .kpi{padding:6px 16px}
+html.present .okpis .kpi b{font-size:1.375rem}
+html.present .okpis{margin-bottom:0}
 .glijn{position:absolute;left:0;right:0;height:1px;background:var(--line)}
 .glijn span{position:absolute;right:calc(100% + 8px);top:0;transform:translateY(-50%);color:var(--ink3);font-size:.75rem;white-space:nowrap}
 .gkolommen{position:absolute;inset:0;display:flex}
@@ -367,9 +376,34 @@ html.present .gvlak{height:min(46vh,460px)}
 .gstapel i{display:flex;align-items:center;justify-content:center;min-height:1px;overflow:hidden;font-style:normal;font-size:.75rem;font-weight:500;color:#fff;white-space:nowrap}
 .gstapel i.gdonker{color:#1D2023}
 .gplan{position:absolute;left:8%;right:8%;height:2px;background:var(--ink);box-shadow:0 0 0 1px var(--bg)}
+.gtot{position:absolute;left:50%;transform:translateX(-50%);padding:0 3px;border-radius:3px;background:var(--bg);color:var(--ink);font-size:.75rem;font-weight:500;line-height:1.3;white-space:nowrap}
+.gstapel.loopt{opacity:.5}
+.ograftitel{margin:14px 0 2px;font-size:.9375rem;font-weight:500}
+.ografieken{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px}
+.okpis{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:6px}
+.kpi.vast:hover{background:none}
+.kpi small{display:block;margin-top:3px;color:var(--ink2);font-size:.8125rem}
+.kpi.goed b{color:var(--ok)}
+.ovoor{color:var(--ok)}.oachter{color:var(--crit-ink)}
+.vulbalk i.goed{background:var(--ok)}
+.tbl .num{font-variant-numeric:tabular-nums}
+.tbl th.gs,.tbl td.gs{border-left:1px solid var(--line2)}
+.tbl tr.groep th{padding-bottom:0;border-bottom:0;color:var(--ink);text-align:center}
+.tbl tfoot td{border-top:1px solid var(--line2);border-bottom:0;font-weight:600}
+.otabel{width:100%;border-collapse:collapse;font-size:.8125rem;font-variant-numeric:tabular-nums}
+.otabel th,.otabel td{padding:3px 0 3px 8px;text-align:right;font-weight:400;white-space:nowrap}
+.otabel th:first-child{padding-left:0;text-align:left;color:var(--ink2)}
+.otabel thead th{color:var(--ink2)}
+.otabel b{font-weight:600}
+.orapport{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.orapport b{font-weight:500}
+.orapport .st{margin-left:8px}
+.orapport p{margin:2px 0 0;color:var(--ink2);font-size:.8125rem}
 .gx{position:absolute;top:calc(100% + 6px);left:0;right:0;text-align:center;color:var(--ink2);font-size:.75rem;line-height:1.25}
 .gtip{display:none;position:absolute;z-index:5;top:0;left:50%;transform:translateX(-50%);width:172px;padding:8px 10px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);box-shadow:0 4px 14px var(--shadow);font-size:.8125rem}
 .gkol:hover .gtip,.gkol:focus .gtip{display:block}
+.gkol:first-child .gtip{left:0;transform:none}
+.gkol:last-child .gtip{left:auto;right:0;transform:none}
 .gtip b{display:block;margin-bottom:3px;font-weight:500}
 .gtip span{display:flex;justify-content:space-between;gap:10px;color:var(--ink2)}
 .gtip span span{gap:0;align-items:center}
@@ -500,6 +534,14 @@ html.present .page{max-width:none}
   .bord{grid-template-columns:minmax(0,1fr)}
   .pijler + .pijler{border-left:0;border-top:1px solid var(--line)}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .okpis{grid-template-columns:minmax(0,1fr)}
+  .okpis .kpi + .kpi{border-left:0;border-top:1px solid var(--line)}
+  .ografieken{grid-template-columns:minmax(0,1fr)}
+  .ovak .tbl tr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ovak .tbl .m-main{grid-column:1/-1}
+  .ovak .tbl .m-sub{grid-column:auto}
+  .ovak .tbl tfoot td{border:0}
+  .ovak .tbl tfoot tr{border-top:1px solid var(--line2)}
   .kpi:nth-child(3){border-left:0}
   .kpi:nth-child(n+3){border-top:1px solid var(--line)}
 }
@@ -518,7 +560,7 @@ html.present .page{max-width:none}
   .headknoppen{flex:1 1 100%;flex-wrap:wrap}
   .zoek{flex:1 1 100%}
   .tbl thead{display:none}
-  .tbl,.tbl tbody{display:block}
+  .tbl,.tbl tbody,.tbl tfoot{display:block}
   .tbl tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;padding:11px 12px;border-bottom:1px solid var(--line)}
   .tbl td{display:block;padding:0;border:0}
   .tbl .m-nr{grid-column:1;grid-row:1}
@@ -624,7 +666,7 @@ const ICON={
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
 const P_DAG=[{id:"sqd",t:"SQD-overzicht",i:"bord",kort:"SQD"},{id:"meldingen",t:"Meldingen",i:"bel",kort:"Meldingen"},{id:"storingen",t:"Lopende storingen",i:"storing",kort:"Storingen"},{id:"output",t:"Output per lijn",i:"output",kort:"Output"},{id:"zaterdag",t:"Zaterdagwerk",i:"kalender",kort:"Zaterdag"},{id:"stop",t:"Onderhoudsplanning",i:"agenda",kort:"Planning"}];
 const LIJNEN_OUTPUT=["Lijn 1","Lijn 2","Lijn 3"];
-const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l}));
+const P_LIJN=LIJNEN_OUTPUT.map((l,i)=>({id:"lijn"+(i+1),t:"Output "+l.toLowerCase(),kort:l})).concat([{id:"inpak",t:"Output inpak",kort:"Inpak"},{id:"ompak",t:"Output ompak",kort:"Ompak"}]);
 const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"};
 const P_PRES_ALLES=P_DAG.flatMap(p=>p.id==="meldingen"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 let P_PRES=P_PRES_ALLES;
@@ -633,7 +675,7 @@ const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"cmbonnen",t:"Aangemaak
 const P_PLAN=[{id:"pgepland",t:"Gepland",sub:"Een bon met een datum staat in de onderhoudsplanning."},{id:"pbestel",t:"Bestellen/wachten op bestelling",sub:"Bonnen die besteld moeten worden of op onderdelen wachten. Met een datum gaan ze naar de onderhoudsplanning."},{id:"pgeen",t:"Geen status",sub:"Bonnen zonder vervolg. Geef een status of een datum."},{id:"pafgerond",t:"Afgerond",sub:"De datum is de dag van afmelden en staat ook in de onderhoudsplanning."}];
 
 /* ---- kleine bouwstenen ---- */
-const STATUS={"Achterstallig":"crit","Vandaag":"warn","Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Bestellen":"warn","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
+const STATUS={"Stilstand":"crit","Halve capaciteit":"warn","Achterstallig":"crit","Vandaag":"warn","Onderdeel bestellen":"warn","Plannen voor onderhoudstop":"info","Nieuw":"info","Op SQD-bord":"warn","Open":"","Gepland":"info","Bestellen":"warn","Besteld":"warn","In bestelling":"warn","Deels uitgevoerd":"warn2","On hold":"crit","Uitgevoerd":"ok","Gereed":"ok","Dubbel":"leeg","Vervallen":"leeg","Binnen":"ok","Opgevraagd":"warn2","Nog niet besteld":"","Eerst opmeten of checken":"warn2"};
 const st=s=>s?'<span class="st '+(STATUS[s]||"")+'"><i></i>'+esc(s)+"</span>":"";
 const prio=p=>p?'<span class="p p'+esc(p)+'">Prio '+esc(p)+"</span>":'<span class="zacht">–</span>';
 const leeg=v=>v==null||v==="";
@@ -665,9 +707,14 @@ function kop(titel,sub,dagstart,extra){
 
 /* ---- tabel met zoeken, filteren, sorteren en detail ---- */
 function tabelKop(cols,sort){
-  return"<thead><tr>"+cols.map(c=>{
-    const a=sort&&sort.k===c.k?'<span class="pijl">'+(sort.d>0?"↑":"↓")+"</span>":"";
-    return"<th"+(c.s?' data-k="'+c.k+'"':"")+(c.n?' class="num"':"")+(c.w?' style="width:'+c.w+'"':"")+">"+esc(c.l)+a+"</th>";
+  /* Kolommen met dezelfde g krijgen samen een kop erboven. */
+  const blokken=[];
+  cols.forEach(c=>{const l=blokken[blokken.length-1];if(l&&l.g===(c.g||""))l.n++;else blokken.push({g:c.g||"",n:1})});
+  const scheid=c=>/\bgs\b/.test(c.x||"");
+  const groepen=cols.some(c=>c.g)?'<tr class="groep">'+blokken.map(b=>"<th"+(b.g?' class="gs"':"")+' colspan="'+b.n+'">'+esc(b.g)+"</th>").join("")+"</tr>":"";
+  return"<thead>"+groepen+"<tr>"+cols.map(c=>{
+    const a=sort&&sort.k===c.k?'<span class="pijl">'+(sort.d>0?"↑":"↓")+"</span>":"",k=[c.n?"num":"",scheid(c)?"gs":""].filter(Boolean).join(" ");
+    return"<th"+(c.s?' data-k="'+c.k+'"':"")+(k?' class="'+k+'"':"")+(c.w?' style="width:'+c.w+'"':"")+">"+esc(c.l)+a+"</th>";
   }).join("")+"</tr></thead>";
 }
 function rij(r,cols,i,detail,extra){
@@ -723,10 +770,12 @@ function lijstScherm(cfg){
   tb.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-i]")){e.preventDefault();const d=cfg.detail(zicht[+e.target.dataset.i]);if(d)openPaneel(d)}});
   teken();
 }
-function vasteTabel(cols,rijen,detail,klasse){
+function vasteTabel(cols,rijen,detail,klasse,voet){
   const id="t"+Math.random().toString(36).slice(2,8);
   (vasteTabel.reg=vasteTabel.reg||{})[id]={rijen,detail};
-  return'<div class="tblwrap" data-t="'+id+'"><table class="tbl">'+tabelKop(cols,null)+"<tbody>"+rijen.map((r,i)=>rij(r,cols,i,!!detail,klasse?klasse(r):"")).join("")+"</tbody></table></div>";
+  /* Met voet komt er een regel met totalen onder: elke kolom geeft die met v. */
+  const onder=voet?"<tfoot>"+rij(voet,cols.map(c=>Object.assign({},c,{r:c.v||(()=>"")})),0,false,"")+"</tfoot>":"";
+  return'<div class="tblwrap" data-t="'+id+'"><table class="tbl">'+tabelKop(cols,null)+"<tbody>"+rijen.map((r,i)=>rij(r,cols,i,!!detail,klasse?klasse(r):"")).join("")+"</tbody>"+onder+"</table></div>";
 }
 document.addEventListener("click",e=>{
   const w=e.target.closest("[data-t]"),tr=e.target.closest("tr[data-i]");
@@ -945,7 +994,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{planTel();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"].concat(P_PLAN.concat(P_SUB).map(p=>p.id))).includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{planTel();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","cm","sqdbonnen","cmbonnen","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")?[]:["zaterdag","stop","pmbonnen"].concat(P_PLAN.concat(P_SUB).map(p=>p.id))).includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -1676,38 +1725,137 @@ document.addEventListener("change",e=>{if(e.target.matches("[data-lsbon]"))zetBo
 const PLOEGEN=[["ochtend","Ochtend","05:50-13:50"],["middag","Middag","13:50-21:50"],["nacht a","Nacht a","21:50-24:00"],["nacht b","Nacht b","00:00-05:50"]];
 const kgTekst=n=>n==null?"–":Math.round(n).toLocaleString("nl-NL");
 const dagTotaal=r=>PLOEGEN.reduce((s,p)=>s+(r.ploeg[p[0]]||0),0);
-function outputDagen(lijn){
-  const o=D.output||{},d={},nu=new Date();
+const TABS_OUTPUT=LIJNEN_OUTPUT.concat(["Inpak","Ompak"]);
+const dagNaam=k=>datum(k).toLocaleDateString("nl-NL",{weekday:"short"});
+const dagKort=k=>hoofd(dagNaam(k))+" "+k.slice(0,5);
+const eenDecimaal=n=>n.toLocaleString("nl-NL",{minimumFractionDigits:1,maximumFractionDigits:1});
+const uurTekst=n=>n?eenDecimaal(n)+" uur":"–";
+const pctTekst=(a,b)=>b?eenDecimaal(a/b*100)+"%":"–";
+const somVan=(a,f)=>a.reduce((s,r)=>s+(f(r)||0),0);
+const nulStreep=n=>n?kgTekst(n):"–";
+/* Een productieweek begint op zondag, net als in het dienstrapport: de zondag telt mee met de maandag erna. */
+function prodWeek(d){
+  const t=new Date(d);
+  t.setDate(t.getDate()+(t.getDay()===0?1:0));
+  t.setDate(t.getDate()+3-(t.getDay()+6)%7);
+  const j=new Date(t.getFullYear(),0,4);
+  return 1+Math.round(((t-j)/864e5-3+(j.getDay()+6)%7)/7);
+}
+const weekVan=k=>prodWeek(datum(k));
+function outputAlle(lijn){
+  const o=D.output||{},d={},nu=new Date(),tot=datum(o.tot);
   const dag=k=>d[k]||(d[k]={datum:k,ploeg:{},plan:null,opm:[]});
   (o.dagen||[]).filter(x=>x.lijn===lijn).forEach(x=>{dag(x.datum).ploeg[x.ploeg]=x.kg});
   (o.plan||[]).filter(x=>x.lijn===lijn).forEach(x=>{dag(x.datum).plan=x.kg});
   OUTPUT.filter(x=>x.lijn===lijn).forEach(x=>{const r=dag(x.datum);r.ploeg[x.ploeg]=Number(x.output);if(x.opmerking)r.opm.push(x.opmerking)});
-  return Object.values(d).filter(r=>{const t=datum(r.datum);return t&&t<=nu}).sort((a,b)=>datum(a.datum)-datum(b.datum)).slice(-7);
+  /* Een dag na de laatste boeking heeft alleen een plan en hoort er nog niet bij. */
+  return Object.values(d).filter(r=>{const t=datum(r.datum);return t&&t<=nu&&(!tot||t<=tot||dagTotaal(r)>0)}).sort((a,b)=>datum(a.datum)-datum(b.datum));
 }
-function outputGrafiek(rijen,lijn){
-  const top=Math.max(1,...rijen.map(r=>Math.max(dagTotaal(r),r.plan||0))),stap=[1000,2000,5000,10000,20000,50000].find(s=>top/s<=5)||100000,max=Math.ceil(top/stap)*stap;
+/* De dag van de laatste boeking is nog niet af, dus die telt niet mee in de realisatie. */
+const dagLoopt=r=>{const t=datum((D.output||{}).tot);return!!t&&datum(r.datum)>=t};
+const oRapport=(w,k)=>((D.output||{}).rapport||[]).filter(x=>x.waar===w&&(!k||x.datum===k));
+const stilUren=(w,k)=>somVan(oRapport(w,k).filter(x=>x.stil==="Ja"),x=>x.uren);
+function rapportHtml(w,k){
+  const r=oRapport(w,k);
+  return r.length?'<ul class="orapport">'+r.map(x=>"<li><b>"+esc([x.dienst,x.machine,x.uren?uurTekst(x.uren):""].filter(Boolean).join(", "))+"</b>"+(x.stil==="Ja"?st("Stilstand"):x.stil==="Halve capaciteit"?st("Halve capaciteit"):"")+"<p>"+esc(x.tekst)+"</p></li>").join("")+"</ul>":"";
+}
+/* Gestapelde kolommen per dag, met het totaal erboven. De namen staan in de laatste volle dag, de legenda geldt voor de rest. De cijfers staan ook in de tabel. */
+function stapelGrafiek(c){
+  const plan=c.plan||(()=>null),loopt=c.loopt||(()=>false),waarde=(r,p)=>c.waarde(r,p[0])||0,tot=r=>somVan(c.reeks,p=>waarde(r,p));
+  const top=Math.max(1,...c.rijen.map(r=>Math.max(tot(r),plan(r)||0))),m=10**Math.floor(Math.log10(top));
+  const stap=Math.max(1,[.1,.2,.5,1,2].map(x=>x*m).find(s=>top/s<=5)||2*m),max=Math.ceil(top*1.1/stap)*stap;
   const pc=n=>(n/max*100).toFixed(2)+"%",lijnen=[];
   for(let w=stap;w<=max;w+=stap)lijnen.push('<div class="glijn" style="bottom:'+pc(w)+'"><span>'+kgTekst(w)+"</span></div>");
-  /* De namen staan in de laatste volle dag, de legenda geldt voor de rest. */
-  const benoemd=rijen.slice().reverse().find(r=>Object.keys(r.ploeg).length>=3)||rijen[rijen.length-1];
+  const benoemd=c.rijen.slice().reverse().find(r=>!loopt(r)&&c.reeks.filter(p=>waarde(r,p)).length>=Math.min(3,c.reeks.length))||c.rijen[c.rijen.length-1];
+  const kleur=i=>"background:var(--s"+(i+1)+")";
   const kol=r=>{
-    const t=datum(r.datum),tot=dagTotaal(r),dg=t.toLocaleDateString("nl-NL",{weekday:"short"});
-    const tip='<div class="gtip"><b>'+esc(hoofd(dg)+" "+r.datum)+"</b>"+PLOEGEN.map((p,i)=>'<span><span><i style="background:var(--s'+(i+1)+')"></i>'+p[1]+"</span>"+kgTekst(r.ploeg[p[0]])+"</span>").join("")+"<span><span>Totaal</span>"+kgTekst(tot)+"</span><span><span>Plan</span>"+kgTekst(r.plan)+"</span></div>";
-    return'<div class="gkol" tabindex="0" aria-label="'+esc(r.datum+": "+kgTekst(tot)+" kilo")+'"><div class="gstapel" style="height:'+pc(tot)+'">'+PLOEGEN.map((p,i)=>r.ploeg[p[0]]?'<i'+(i>1?' class="gdonker"':"")+' style="flex:'+r.ploeg[p[0]]+' 0 0;background:var(--s'+(i+1)+')">'+(r===benoemd&&r.ploeg[p[0]]/max>.065?p[1]:"")+"</i>":"").join("")+"</div>"+(r.plan?'<div class="gplan" style="bottom:'+pc(r.plan)+'"></div>':"")+'<div class="gx">'+esc(dg)+"<br>"+esc(r.datum.slice(0,5))+"</div>"+tip+"</div>";
+    const t=tot(r),p=plan(r);
+    const tip='<div class="gtip"><b>'+esc(dagKort(r.datum)+(loopt(r)?", loopt nog":""))+"</b>"+c.reeks.map((s,i)=>'<span><span><i style="'+kleur(i)+'"></i>'+esc(s[1])+"</span>"+kgTekst(waarde(r,s))+"</span>").join("")+"<span><span>Totaal</span>"+kgTekst(t)+"</span>"+(c.plan?"<span><span>Plan</span>"+kgTekst(p)+"</span>":"")+"</div>";
+    return'<div class="gkol" tabindex="0" aria-label="'+esc(r.datum+": "+kgTekst(t)+" "+c.eenheid)+'"><div class="gstapel'+(loopt(r)?" loopt":"")+'" style="height:'+pc(t)+'">'+c.reeks.map((s,i)=>waarde(r,s)?'<i'+(i>1?' class="gdonker"':"")+' style="flex:'+waarde(r,s)+" 0 0;"+kleur(i)+'">'+(r===benoemd&&waarde(r,s)/max>.065?esc(s[1]):"")+"</i>":"").join("")+"</div>"+(p?'<div class="gplan" style="bottom:'+pc(p)+'"></div>':"")+(t?'<div class="gtot" style="bottom:calc('+pc(t)+' + 3px)">'+kgTekst(t)+"</div>":"")+'<div class="gx">'+esc(dagNaam(r.datum))+"<br>"+esc(r.datum.slice(0,5))+"</div>"+tip+"</div>";
   };
-  return'<p class="glegenda">'+PLOEGEN.map((p,i)=>'<span><i style="background:var(--s'+(i+1)+')"></i>'+p[1]+"</span>").join("")+'<span><i class="gp"></i>Plan</span></p><div class="grafiek" role="group" aria-label="'+esc("Output "+lijn+" per dag in kilo, per ploeg, met het plan. De cijfers staan ook in de tabel.")+'"><div class="gvlak">'+lijnen.join("")+'<div class="gkolommen">'+rijen.map(kol).join("")+"</div></div></div>";
+  return(c.titel?'<h2 class="ograftitel">'+esc(c.titel)+"</h2>":"")+'<p class="glegenda">'+c.reeks.map((s,i)=>'<span><i style="'+kleur(i)+'"></i>'+esc(s[1])+"</span>").join("")+(c.plan?'<span><i class="gp"></i>Plan</span>':"")+'</p><div class="grafiek" role="group" aria-label="'+esc(c.naam+" De cijfers staan ook in de tabel.")+'"><div class="gvlak">'+lijnen.join("")+'<div class="gkolommen">'+c.rijen.map(kol).join("")+"</div></div></div>";
+}
+/* De bron eindigt op de stand: stand 06-11-2026 06:23 of t/m 05-11-2026. */
+const outStand=b=>b.bron?", "+b.bron.split(", ").pop():"";
+const tegel=(l,w,s,k)=>'<div class="kpi vast'+(k?" "+k:"")+'"><span>'+esc(l)+"</span><b>"+esc(w)+"</b>"+(s?"<small>"+esc(s)+"</small>":"")+"</div>";
+const tegels=t=>'<div class="kpis okpis">'+t.join("")+"</div>";
+const outTabel=(cols,rijen,detail)=>'<div class="ovak">'+vasteTabel(cols,rijen.slice().reverse(),detail,null,{})+"</div>";
+function outLijn(lijn){
+  const alle=outputAlle(lijn),rijen=alle.slice(-7),o=D.output||{};
+  const sub="Kilo per ploeg tegen het plan"+outStand(o)+".";
+  if(!rijen.length)return{sub,html:'<div class="leegmelding">Nog geen output voor deze lijn.</div>'};
+  const af=alle.filter(r=>!dagLoopt(r)),g=af[af.length-1]||rijen[rijen.length-1],wk=weekVan(g.datum),week=af.filter(r=>weekVan(r.datum)===wk);
+  const opm=rijen.some(r=>r.opm.length),pct=r=>r.plan?Math.round(dagTotaal(r)/r.plan*100):null;
+  const kort=(a,p)=>p?Math.round(a/p*100)+"% van plan "+kgTekst(p):"Geen plan";
+  const weekKg=somVan(week,dagTotaal),weekPlan=somVan(week,r=>r.plan);
+  const stil=oRapport(lijn).filter(x=>weekVan(x.datum)===wk&&x.stil==="Ja"),perMachine={};
+  stil.forEach(x=>{perMachine[x.machine]=(perMachine[x.machine]||0)+x.uren});
+  const meest=Object.keys(perMachine).sort((a,b)=>perMachine[b]-perMachine[a])[0];
+  const kop=tegels([tegel(dagKort(g.datum),kgTekst(dagTotaal(g))+" kg",kort(dagTotaal(g),g.plan),g.plan&&dagTotaal(g)>=g.plan?"goed":""),tegel("Week "+wk+" tot nu",kgTekst(weekKg)+" kg",kort(weekKg,weekPlan),weekPlan&&weekKg>=weekPlan?"goed":""),tegel("Stilstand week "+wk,uurTekst(somVan(stil,x=>x.uren)),meest?"Meeste: "+meest+", "+uurTekst(perMachine[meest]):"")]);
+  const hele=rijen.filter(r=>!dagLoopt(r)),som={p:somVan(hele,r=>r.plan),t:somVan(hele,dagTotaal),s:somVan(hele,r=>stilUren(lijn,r.datum))};
+  const verschil=n=>'<span class="'+(n<0?"oachter":"ovoor")+'">'+(n>0?"+":"")+kgTekst(n)+"</span>";
+  const balk=(a,p)=>{const n=Math.round(a/p*100);return'<div class="realis"><div class="vulbalk"><i'+(n>=100?' class="goed"':"")+' style="width:'+Math.min(100,n)+'%"></i></div><span>'+n+"%</span></div>"};
+  const cols=[{k:"d",l:"Datum",w:"96px",c:"m-main",x:"titel nowrap",r:r=>esc(dagKort(r.datum)),v:()=>hele.length?"T/m "+esc(dagNaam(hele[hele.length-1].datum))+" "+hele[hele.length-1].datum.slice(0,5):""}].concat(PLOEGEN.map(p=>({k:p[0],l:p[1],n:1,c:"m-sub",ml:p[1],r:r=>kgTekst(r.ploeg[p[0]]),v:()=>kgTekst(somVan(hele,r=>r.ploeg[p[0]]))})),[
+    {k:"t",l:"Totaal",n:1,c:"m-sub",x:"gs",ml:"Totaal",r:r=>"<b>"+kgTekst(dagTotaal(r))+"</b>",v:()=>kgTekst(som.t)},
+    {k:"p",l:"Plan",n:1,c:"m-sub",ml:"Plan",r:r=>kgTekst(r.plan),v:()=>kgTekst(som.p)},
+    {k:"v",l:"Verschil",n:1,c:"m-sub",ml:"Verschil",r:r=>r.plan&&!dagLoopt(r)?verschil(dagTotaal(r)-r.plan):"–",v:()=>som.p?verschil(som.t-som.p):"–"},
+    {k:"r",l:"Realisatie",w:"132px",c:"m-sub",ml:"Realisatie",r:r=>dagLoopt(r)?'<span class="zacht">Loopt nog</span>':r.plan?balk(dagTotaal(r),r.plan):"–",v:()=>som.p?balk(som.t,som.p):"–"},
+    {k:"s",l:"Stilstand",n:1,c:"m-sub",x:"gs nowrap",ml:"Stilstand",r:r=>uurTekst(stilUren(lijn,r.datum)),v:()=>uurTekst(som.s)}],opm?[{k:"o",l:"Opmerking",c:"m-sub",ml:"Opmerking",r:r=>of(r.opm.join(" "),"")}]:[]);
+  const detail=r=>({klein:lijn,titel:dagKort(r.datum),velden:PLOEGEN.map(p=>[p[1],kgTekst(r.ploeg[p[0]])]).concat([["Totaal",kgTekst(dagTotaal(r))],["Plan",kgTekst(r.plan)],["Realisatie",dagLoopt(r)?"Loopt nog":r.plan?pct(r)+"%":null],["Stilstand",uurTekst(stilUren(lijn,r.datum))],["Opmerking",r.opm.join(" ")],["Dienstrapport",rapportHtml(lijn,r.datum),true]])});
+  return{sub,html:kop+stapelGrafiek({rijen,reeks:PLOEGEN,waarde:(r,k)=>r.ploeg[k],plan:r=>r.plan,loopt:dagLoopt,eenheid:"kilo",naam:"Output "+lijn+" per dag in kilo, per ploeg, met het plan."})+outTabel(cols,rijen,detail)};
+}
+/* Inpak en ompak staan per dag, dienst en lijn in het dienstrapport. */
+function ioDagen(){
+  const d={},nu=new Date();
+  (((D.output||{}).io||{}).dagen||[]).forEach(x=>{(d[x.datum]=d[x.datum]||{datum:x.datum,rij:[]}).rij.push(x)});
+  return Object.values(d).filter(r=>datum(r.datum)&&datum(r.datum)<=nu).sort((a,b)=>datum(a.datum)-datum(b.datum));
+}
+const ioSom=(r,k,l,ds)=>somVan(r.rij.filter(x=>(!l||x.lijn===l)&&(!ds||x.dienst===ds)),x=>x[k]);
+const DIENSTEN=["Ochtend","Middag","Nacht"],REEKS_LIJN=LIJNEN_OUTPUT.map(l=>[l,l]);
+/* Per dienst en per lijn, voor het detailpaneel. */
+function dienstTabel(r,cel,tot){
+  const kol=LIJNEN_OUTPUT.map(l=>"<th>"+esc(l)+"</th>").join("");
+  return'<table class="otabel"><thead><tr><th></th>'+kol+"<th>Totaal</th></tr></thead><tbody>"+DIENSTEN.map(d=>"<tr><th>"+d+"</th>"+LIJNEN_OUTPUT.map(l=>"<td>"+cel(l,d)+"</td>").join("")+"<td><b>"+tot(d)+"</b></td></tr>").join("")+"</tbody></table>";
+}
+function outInpak(){
+  const io=(D.output||{}).io||{},alle=ioDagen(),rijen=alle.slice(-7);
+  const sub="Gereed en uitval in kilo per lijn"+outStand(io)+".";
+  if(!rijen.length)return{sub,html:'<div class="leegmelding">Nog geen cijfers voor inpak.</div>'};
+  const g=rijen[rijen.length-1],wk=weekVan(g.datum),week=alle.filter(r=>weekVan(r.datum)===wk);
+  const som=(a,k,l)=>somVan(a,r=>ioSom(r,k,l)),uitvalTekst=(u,k)=>pctTekst(u,k)+" uitval, "+kgTekst(u)+" kg";
+  const slechtst=LIJNEN_OUTPUT.slice().sort((a,b)=>som(week,"uitval",b)/(som(week,"kg",b)||1)-som(week,"uitval",a)/(som(week,"kg",a)||1))[0];
+  const kop=tegels([tegel(dagKort(g.datum),kgTekst(ioSom(g,"kg"))+" kg",uitvalTekst(ioSom(g,"uitval"),ioSom(g,"kg"))),tegel("Week "+wk+" tot nu",kgTekst(som(week,"kg"))+" kg",uitvalTekst(som(week,"uitval"),som(week,"kg"))),tegel("Meeste uitval week "+wk,slechtst,uitvalTekst(som(week,"uitval",slechtst),som(week,"kg",slechtst)))]);
+  const paar=(l,gs)=>[
+    {k:"k"+l,l:"Gereed",g:l,n:1,c:"m-sub",x:gs?"gs":"",ml:l+" gereed",r:r=>nulStreep(ioSom(r,"kg",l)),v:()=>kgTekst(som(rijen,"kg",l))},
+    {k:"u"+l,l:"Uitval",g:l,n:1,c:"m-sub",ml:l+" uitval",r:r=>pctTekst(ioSom(r,"uitval",l),ioSom(r,"kg",l)),v:()=>pctTekst(som(rijen,"uitval",l),som(rijen,"kg",l))}];
+  const cols=[{k:"d",l:"Datum",w:"96px",c:"m-main",x:"titel nowrap",r:r=>esc(dagKort(r.datum)),v:()=>"7 dagen"}].concat(...LIJNEN_OUTPUT.map(l=>paar(l,true)),[
+    {k:"t",l:"Gereed",g:"Totaal",n:1,c:"m-sub",x:"gs",ml:"Totaal gereed",r:r=>"<b>"+kgTekst(ioSom(r,"kg"))+"</b>",v:()=>kgTekst(som(rijen,"kg"))},
+    {k:"x",l:"Uitval kg",g:"Totaal",n:1,c:"m-sub",ml:"Totaal uitval",r:r=>kgTekst(ioSom(r,"uitval")),v:()=>kgTekst(som(rijen,"uitval"))},
+    {k:"y",l:"Uitval",g:"Totaal",n:1,c:"m-sub",ml:"Uitval",r:r=>"<b>"+pctTekst(ioSom(r,"uitval"),ioSom(r,"kg"))+"</b>",v:()=>pctTekst(som(rijen,"uitval"),som(rijen,"kg"))}]);
+  const detail=r=>({klein:"Inpak",titel:dagKort(r.datum),velden:[["Gereed in kilo",dienstTabel(r,(l,d)=>nulStreep(ioSom(r,"kg",l,d)),d=>nulStreep(ioSom(r,"kg",null,d))),true],["Uitval in kilo",dienstTabel(r,(l,d)=>nulStreep(ioSom(r,"uitval",l,d)),d=>nulStreep(ioSom(r,"uitval",null,d))),true],["Dienstrapport",rapportHtml("Inpak",r.datum),true]]});
+  const grafiek=(k,titel,naam)=>stapelGrafiek({titel,rijen,reeks:REEKS_LIJN,waarde:(r,l)=>ioSom(r,k,l),eenheid:"kilo",naam});
+  return{sub,html:kop+'<div class="ografieken"><div>'+grafiek("kg","Gereed in kilo","Inpak gereed per dag in kilo, per lijn.")+"</div><div>"+grafiek("uitval","Uitval in kilo","Inpak uitval per dag in kilo, per lijn.")+"</div></div>"+outTabel(cols,rijen,detail)};
+}
+function outOmpak(){
+  const io=(D.output||{}).io||{},alle=ioDagen(),rijen=alle.slice(-7);
+  const sub="Gereed in pallets per lijn"+outStand(io)+".";
+  if(!rijen.length)return{sub,html:'<div class="leegmelding">Nog geen cijfers voor ompak.</div>'};
+  const g=rijen[rijen.length-1],wk=weekVan(g.datum),week=alle.filter(r=>weekVan(r.datum)===wk);
+  const som=(a,l)=>somVan(a,r=>ioSom(r,"pallets",l)),diensten=a=>somVan(a,r=>DIENSTEN.filter(d=>ioSom(r,"pallets",null,d)).length);
+  const gem=a=>diensten(a)?"Gemiddeld "+Math.round(som(a)/diensten(a))+" per dienst":"";
+  const storing=somVan(oRapport("Ompak").filter(x=>weekVan(x.datum)===wk),x=>x.uren);
+  const kop=tegels([tegel(dagKort(g.datum),kgTekst(som([g]))+" pallets",gem([g])),tegel("Week "+wk+" tot nu",kgTekst(som(week))+" pallets",gem(week)),tegel("Storing ompak week "+wk,uurTekst(storing),"")]);
+  const opmVan=k=>(io.opm||[]).filter(x=>x.datum===k);
+  const cols=[{k:"d",l:"Datum",w:"96px",c:"m-main",x:"titel nowrap",r:r=>esc(dagKort(r.datum)),v:()=>"7 dagen"}].concat(LIJNEN_OUTPUT.map((l,i)=>({k:"p"+i,l,n:1,c:"m-sub",x:i?"":"gs",ml:l,r:r=>nulStreep(ioSom(r,"pallets",l)),v:()=>kgTekst(som(rijen,l))})),[
+    {k:"t",l:"Totaal pallets",n:1,c:"m-sub",x:"gs",ml:"Totaal pallets",r:r=>"<b>"+kgTekst(ioSom(r,"pallets"))+"</b>",v:()=>kgTekst(som(rijen))},
+    {k:"s",l:"Storing",n:1,c:"m-sub",x:"gs nowrap",ml:"Storing",r:r=>uurTekst(somVan(oRapport("Ompak",r.datum),x=>x.uren)),v:()=>uurTekst(somVan(rijen,r=>somVan(oRapport("Ompak",r.datum),x=>x.uren)))}]);
+  const detail=r=>({klein:"Ompak",titel:dagKort(r.datum),velden:[["Gereed in pallets",dienstTabel(r,(l,d)=>nulStreep(ioSom(r,"pallets",l,d)),d=>nulStreep(ioSom(r,"pallets",null,d))),true],["Toelichting",opmVan(r.datum).map(x=>x.dienst+": "+x.tekst).join(". ")],["Dienstrapport",rapportHtml("Ompak",r.datum),true]]});
+  return{sub,html:kop+stapelGrafiek({titel:"Gereed in pallets",rijen,reeks:REEKS_LIJN,waarde:(r,l)=>ioSom(r,"pallets",l),eenheid:"pallets",naam:"Ompak gereed per dag in pallets, per lijn."})+outTabel(cols,rijen,detail)};
 }
 function vOutput(vast){
-  const s=mem.output||(mem.output={lijn:"Lijn 1"}),lijn=vast||s.lijn,rijen=outputDagen(lijn),o=D.output||{};
-  const pct=r=>r.plan?Math.round(dagTotaal(r)/r.plan*100):null;
-  const opm=rijen.some(r=>r.opm.length);
-  const cols=[{k:"d",l:"Datum",w:"120px",c:"m-main",x:"titel",r:r=>esc(r.datum)}].concat(PLOEGEN.map(p=>({k:p[0],l:p[1],w:"92px",n:1,c:"m-sub",ml:p[1],r:r=>kgTekst(r.ploeg[p[0]])})),[
-    {k:"t",l:"Totaal",w:"92px",n:1,c:"m-sub",ml:"Totaal",r:r=>"<b>"+kgTekst(dagTotaal(r))+"</b>"},
-    {k:"p",l:"Plan",w:"92px",n:1,c:"m-sub",ml:"Plan",r:r=>kgTekst(r.plan)},
-    {k:"v",l:"Verschil",w:"92px",n:1,c:"m-sub",ml:"Verschil",r:r=>r.plan?(dagTotaal(r)>r.plan?"+":"")+kgTekst(dagTotaal(r)-r.plan):"–"},
-    {k:"r",l:"Realisatie",w:"120px",c:"m-sub",ml:"Realisatie",r:r=>r.plan?'<div class="realis"><div class="vulbalk"><i style="width:'+Math.min(100,pct(r))+'%"></i></div><span>'+pct(r)+"%</span></div>":"–"}],opm?[{k:"o",l:"Opmerking",c:"m-sub",ml:"Opmerking",r:r=>of(r.opm.join(" "),"")}]:[]);
-  const tabs=vast?"":'<div class="seg" id="lijnkeuze" role="group" aria-label="Kies een lijn">'+LIJNEN_OUTPUT.map(l=>'<button data-lijn="'+l+'" aria-pressed="'+(l===lijn)+'">'+l+"</button>").join("")+"</div>";
-  $("#view").innerHTML=kop(vast?"Output "+lijn.toLowerCase():"Output per lijn","In kilo per ploeg. Het plan komt uit de productieorders, op Due Date.",true)+tabs+(rijen.length?outputGrafiek(rijen,lijn)+vasteTabel(cols,rijen.slice().reverse()):'<div class="leegmelding">Nog geen output voor deze lijn.</div>');
+  const s=mem.output||(mem.output={lijn:"Lijn 1"}),tab=vast||s.lijn,v=tab==="Inpak"?outInpak():tab==="Ompak"?outOmpak():outLijn(tab);
+  const tabs=vast?"":'<div class="seg" id="lijnkeuze" role="group" aria-label="Kies een lijn">'+TABS_OUTPUT.map(l=>'<button data-lijn="'+l+'" aria-pressed="'+(l===tab)+'">'+l+"</button>").join("")+"</div>";
+  $("#view").innerHTML=kop(vast?"Output "+tab.toLowerCase():"Output per lijn",v.sub,true)+tabs+v.html;
   if(!vast)$("#lijnkeuze").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.lijn=b.dataset.lijn;vOutput()}});
 }
 function outputScherm(){
@@ -2523,7 +2671,7 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={docs:vDocs,cpgepland:()=>vPlanLijst("cpgepland"),cpbestel:()=>vPlanLijst("cpbestel"),cpgeen:()=>vPlanLijst("cpgeen"),cpafgerond:()=>vPlanLijst("cpafgerond"),spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={docs:vDocs,cpgepland:()=>vPlanLijst("cpgepland"),cpbestel:()=>vPlanLijst("cpbestel"),cpgeen:()=>vPlanLijst("cpgeen"),cpafgerond:()=>vPlanLijst("cpafgerond"),spgepland:()=>vPlanLijst("spgepland"),spbestel:()=>vPlanLijst("spbestel"),spgeen:()=>vPlanLijst("spgeen"),spafgerond:()=>vPlanLijst("spafgerond"),pgepland:()=>vPlanLijst("pgepland"),pbestel:()=>vPlanLijst("pbestel"),pgeen:()=>vPlanLijst("pgeen"),pafgerond:()=>vPlanLijst("pafgerond"),lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,cmbonnen:vCmBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,zaterdag:vZaterdag,stop:vStop,start:vStart,cm:vCm,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- navigatie ---- */
 function route(){
