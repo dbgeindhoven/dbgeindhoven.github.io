@@ -206,6 +206,7 @@ def build(a):
     mld.pop("sleutel_wv", None)
     td["meta"].pop("actielijst", None)
     td["meta"].pop("levbestand", None)  # met inkoopbedragen, alleen voor de werkvoorbereider
+    td["meta"].pop("gezien", None)  # Te doen is alleen voor de werkvoorbereider
     td["meta"]["bonnen"] = {"verwerkt": verwerkt, "gesloten": gesloten}
     for r in td.get("cm", []):
         r.pop("bon", None)

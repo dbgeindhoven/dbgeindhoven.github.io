@@ -481,6 +481,18 @@ def zoek(a):
     bewaar(a.site, data)
 
 
+def gezien_opruimen(data, dagen=120):
+    """Gezien van Te doen bewaren tot de regel allang niet meer kan terugkomen."""
+    gezien = data["meta"].get("gezien") or {}
+    grens = datetime.date.today() - datetime.timedelta(days=dagen)
+    for k, v in list(gezien.items()):
+        try:
+            if datetime.datetime.strptime(v, "%d-%m-%Y").date() < grens:
+                del gezien[k]
+        except ValueError:
+            pass
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
@@ -489,6 +501,14 @@ def wijzig(a):
         nr, status = w["nr"], w["status"]
         extra = w.get("rij") or {}
         if extra.get("zoekmeer"):
+            continue
+        if extra.get("gezien"):
+            # Te doen: de werkvoorbereider zette een regel op Gezien, of terug.
+            gezien = data["meta"].setdefault("gezien", {})
+            if extra.get("terug"):
+                gezien.pop(extra["gezien"], None)
+            else:
+                gezien[extra["gezien"]] = str(w.get("tijd"))[:10]
             continue
         if extra.get("vervolg"):
             vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
@@ -551,6 +571,8 @@ def wijzig(a):
                 tekst = (af.get("tekst") or "").rstrip()
                 regel = "%s, %s: %s." % (dag, af.get("door") or "Monteur", status) + (" " + tekst + ("" if tekst[-1:] in ".!?" else ".") if tekst else "")
                 rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+                # Te doen toont de laatste afmelding: Deels uitgevoerd, of afgemeld met een opmerking.
+                rij["weekaf"] = {"door": af.get("door") or "Monteur", "tijd": str(w.get("tijd"))[:16], "status": status, "tekst": tekst}
                 if status == "Uitgevoerd" and not any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
                     rij["uitvoeren"] = "Uitgevoerd op " + dag
                     opnieuw.append(rij)
@@ -563,6 +585,7 @@ def wijzig(a):
                 data["bestellijst"].append(bestelregel(nr, rij.get("onderdelen"), "Uit de onderhoudsplanning van " + str(w.get("tijd"))[:10] + "."))
     for rij in {r["nr"]: r for r in opnieuw}.values():
         bon_uitvoeren(data, rij, Path(a.map) / "uitvoeren")
+    gezien_opruimen(data)
     stops_samen(data)
     # Een dag zonder bonnen en zonder lijn of naam is leeggehaald: die hoeft niet in de agenda te blijven.
     data["stops"] = [s for s in data.get("stops") or [] if zat_rijen(s) or s.get("lijn") or s.get("naam")]
