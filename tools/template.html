@@ -570,6 +570,22 @@ html.present .page{max-width:none}
 .tdweglijst li span{flex:1;min-width:0;color:var(--ink2)}
 .tdlet{margin:0 0 12px;color:var(--warn-ink);font-size:.875rem}
 .tdstand{margin-top:40px}
+/* Menu indelen */
+.mivak{padding:12px 20px 24px}
+.mihint{margin:0 0 14px;color:var(--ink2);font-size:.875rem}
+.mikop{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.mikopbalk{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.mikopbalk .zatinvoer{flex:1;min-width:0;font-weight:600}
+.mikopbalk b{flex:1;font-size:.875rem}
+.mikop .toggle{font-size:.8125rem;color:var(--ink2)}
+.mikop ul{margin:6px 0 0;padding:0;list-style:none}
+.mirij{display:flex;align-items:center;gap:4px;padding:5px 0;border-top:1px solid var(--line);font-size:.875rem}
+.mirij span{flex:1;min-width:0;overflow-wrap:anywhere}
+.mirij select{max-width:46%;padding:4px 6px;border:1px solid var(--line2);border-radius:6px;background:var(--bg);font-size:.8125rem}
+.mirij .icoonknop,.mikopbalk .icoonknop{width:30px;justify-content:center;font-weight:700}
+.mileeg{padding:6px 0;color:var(--ink3);font-size:.8125rem;border-top:1px solid var(--line)}
+.miknoppen{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+nav .klapgroep .klapkop .i:first-child{display:none}
 /* CM-bonnen en SQD-bonnen: lijn en machine onder de omschrijving, rustige knoppen in de regel. */
 .bonplek{display:block;margin-top:2px;color:var(--ink2);font-size:.8125rem;font-weight:400}
 .tbl .m-bon .bonknoppen{display:flex;flex-wrap:wrap;gap:2px 10px;white-space:nowrap}
@@ -695,6 +711,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const norm=s=>String(s==null?"":s).toLowerCase();
 const uniek=a=>[...new Set(a.filter(x=>x!=null&&x!==""))];
 const ICON={
+  pen:'<path d="M4 20h4L19.5 8.5l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   inbox:'<path d="M4 13h4.5l1.5 2.5h4l1.5-2.5H20"/><path d="M6.5 5h11L20 13v5.5H4V13z"/>',
   bord:'<rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5" rx="1.5"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/>',
   storing:'<path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
@@ -845,6 +862,7 @@ document.addEventListener("click",e=>{
   if(w&&tr&&!e.target.closest("input,select,button,label,a")){const t=vasteTabel.reg[w.dataset.t];if(t&&t.detail){const d=t.detail(t.rijen[+tr.dataset.i]);if(d)openPaneel(d)}}
   if(e.target.closest("[data-present]"))presenteer(true);
   if(e.target.closest("[data-uitlog]"))uitloggen();
+  if(e.target.closest("[data-menuindelen]")){menu(false);openMenuIndelen()}
   if(e.target.closest("[data-storing]"))openStoring();
   const rf=e.target.closest("[data-rfoto]");if(rf)toonFoto(rf);
   const bon=e.target.closest("[data-bon]");if(bon)haalBon(bon);
@@ -899,7 +917,7 @@ function openPaneel(d){
   $("#psl").addEventListener("click",sluitPaneel);
   if(d.weg)d.weg($("#b_weg"));
 }
-function sluitPaneel(){$("#paneel").hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
+function sluitPaneel(){const p=$("#paneel");p.onclick=p.onchange=p.oninput=null;p.hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
 /* Wat de monteur bij de opname noteerde, met de foto. De specificaties staan ook op de bestellijst. */
 const opnameHtml=r=>{
   const o=r.opname;if(!o)return null;
@@ -981,6 +999,7 @@ function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{},oudKlaar=c&&KLAAR.includes(c.status);
   if(extra.pmreg||extra.zoekmeer)return;
   if(extra.gezien!==undefined){GEZIEN_LIVE[extra.gezien]=!extra.terug;return}
+  if(extra.menu!==undefined){const oud=JSON.stringify(MENU_LIVE===undefined?null:MENU_LIVE);MENU_LIVE=extra.menu;if(MENU_WV&&JSON.stringify(MENU_LIVE)!==oud)bouwMenu();return}
   if(extra.week){const v=(D.cm||[]).find(x=>x.nr===extra.week.nr);if(v){v.week=!!extra.week.aan;if(v.week&&extra.week.soort)v.weeksoort=extra.week.soort;else delete v.weeksoort}return}
   if(extra.opname){pasOpnameToe(extra.opname,w);return}
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
@@ -3025,6 +3044,99 @@ function vDocs(){
 }
 const SCHERM={tedoen:vTeDoen,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
+/* ---- menu ---- */
+/* De werkvoorbereider deelt zijn menu zelf in met Menu indelen. Dat geldt ook voor de kijkinlog, die hetzelfde deel leest.
+   De indeling gaat via de wachtrij als status-MENU.txt met rij.menu en komt daarna in meta.menu. Te doen blijft bovenaan, bij de kijkinlog het Overzicht.
+   Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
+const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+let MENU_LIVE,MENU_TD=false,MENU_WV=false;
+const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
+const menuPagina=id=>PAGINAS.find(p=>p.id===id);
+/* Alle pagina's die in deze inlog onder een kopje kunnen: niet Te doen of het Overzicht bovenaan, en niet de stappen per lijn. */
+const menuPaginas=()=>PAGINAS.filter(p=>!["tedoen","start"].includes(p.id)&&!P_LIJN.includes(p)).map(p=>p.id);
+function menuKopjes(m){
+  m=m||menuIndeling();
+  const kan=new Set(menuPaginas()),al=new Set(),weg=new Set(m.weg||[]);
+  const kopjes=(m.kopjes||[]).map(k=>({t:String(k.t||"Kopje"),dicht:!!k.dicht,p:(k.p||[]).filter(id=>kan.has(id)&&!al.has(id)&&al.add(id))}));
+  MENU_STANDAARD.kopjes.forEach(s=>s.p.forEach(id=>{
+    if(!kan.has(id)||al.has(id)||weg.has(id))return;
+    let doel=kopjes.find(k=>k.t===s.t)||kopjes[kopjes.length-1];
+    if(!doel){doel={t:s.t,dicht:false,p:[]};kopjes.push(doel)}
+    doel.p.push(id);al.add(id);
+  }));
+  kan.forEach(id=>{if(!al.has(id)&&!weg.has(id)){if(!kopjes.length)kopjes.push({t:"Pagina's",dicht:false,p:[]});kopjes[kopjes.length-1].p.push(id)}});
+  return kopjes;
+}
+function markeerMenu(){
+  document.querySelectorAll("#nav a").forEach(a=>a.dataset.v===HUIDIG?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+  document.querySelectorAll("#nav .klapgroep").forEach(g=>{if(g.dataset.groep.split(" ").includes(HUIDIG)){g.classList.add("open");g.querySelector("[data-navklap]").setAttribute("aria-expanded","true")}});
+}
+function bouwMenu(){
+  const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
+  const sec=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie">'+(k?'<span class="kopje">'+esc(k)+"</span>":"")+a.map(lnk).join("")+"</div>":""};
+  const klap=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie"><div class="klapgroep" data-groep="'+a.map(p=>p.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico("lijst")+"<span>"+esc(k)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+a.map(lnk).join("")+"</div></div></div>":""};
+  let h;
+  if(MENU_WV){
+    const boven=tdMag()?'<div class="sectie"><a href="#tedoen" data-v="tedoen">'+ico("inbox")+'Te doen<span class="tdtel" id="tdtel" hidden></span></a></div>':sec("",[menuPagina("start")]);
+    h=boven+menuKopjes().map(k=>(k.dicht?klap:sec)(k.t,k.p.map(menuPagina))).join("");
+  }else h=sec("Dagstart",P_DAG.concat(MENU_TD?[]:[P_RAPPORT]))+(MENU_TD?sec("Technische dienst",["start","cm","bestel","rapport"].map(menuPagina))+sec("Ultimo voorbereiding",P_ULTIMO.map(menuPagina)):"");
+  $("#nav").innerHTML=h;markeerMenu();tdTel();
+}
+/* Menu indelen: een kopie van de indeling bewerken en pas bij Opslaan versturen. */
+function openMenuIndelen(){
+  if($("#paneel").hidden)terug=document.activeElement;
+  const p=$("#paneel"),naam=id=>(menuPagina(id)||{}).t||id,uit=m=>({kopjes:m.map(k=>({t:k.t,dicht:!!k.dicht,p:k.p.slice()})),weg:menuPaginas().filter(id=>!m.some(k=>k.p.includes(id)))});
+  let m=uit(menuKopjes());
+  const waar=id=>{const k=m.kopjes.findIndex(x=>x.p.includes(id));return k<0?"weg":k};
+  const haalWeg=id=>{m.kopjes.forEach(k=>{k.p=k.p.filter(x=>x!==id)});m.weg=m.weg.filter(x=>x!==id)};
+  function teken(focus){
+    const opties=sel=>m.kopjes.map((k,i)=>'<option value="'+i+'"'+(sel===i?" selected":"")+">"+esc(k.t||"Kopje "+(i+1))+"</option>").join("")+'<option value="weg"'+(sel==="weg"?" selected":"")+">Niet in het menu</option>";
+    const pijl=(soort,ki,pi,l)=>'<button type="button" class="icoonknop" data-mzet="'+soort+'" data-k="'+ki+'" data-p="'+pi+'" aria-label="'+esc(l)+'">'+(soort==="op"?"↑":"↓")+"</button>";
+    const rij=(id,ki,pi)=>'<li class="mirij"><span>'+esc(naam(id))+"</span>"+pijl("op",ki,pi,naam(id)+" omhoog")+pijl("neer",ki,pi,naam(id)+" omlaag")+'<select data-mnaar="'+esc(id)+'" aria-label="Kopje voor '+esc(naam(id))+'">'+opties(ki)+"</select></li>";
+    const kop=(k,ki)=>'<section class="mikop"><div class="mikopbalk"><input class="zatinvoer" data-mtitel="'+ki+'" value="'+esc(k.t)+'" maxlength="40" aria-label="Naam van het kopje"><button type="button" class="icoonknop" data-mkop="op" data-k="'+ki+'" aria-label="Kopje omhoog">↑</button><button type="button" class="icoonknop" data-mkop="neer" data-k="'+ki+'" aria-label="Kopje omlaag">↓</button></div><label class="toggle"><input type="checkbox" data-mdicht="'+ki+'"'+(k.dicht?" checked":"")+"> Inklapbaar in het menu</label><ul>"+
+      (k.p.length?k.p.map((id,pi)=>rij(id,ki,pi)).join(""):'<li class="mileeg">Nog leeg. Kies bij een pagina dit kopje, of <button type="button" class="tekstknop gevaar" data-mkop="weg" data-k="'+ki+'">haal het kopje weg</button>.</li>')+"</ul></section>";
+    p.innerHTML='<div class="pkopbalk"><div><small>Werkvoorbereiding</small><h2 id="ptitel">Menu indelen</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div>'+
+      '<div class="mivak"><p class="mihint">Zet een pagina onder een ander kopje, hoger of lager, of haal hem uit het menu. Dit geldt op je telefoon en je pc, en ook voor de inlog van de bakkerijmanager. Te doen blijft bovenaan.</p>'+
+      m.kopjes.map(kop).join("")+
+      (m.weg.length?'<section class="mikop"><div class="mikopbalk"><b>Niet in het menu</b></div><ul>'+m.weg.map(id=>'<li class="mirij"><span>'+esc(naam(id))+'</span><select data-mnaar="'+esc(id)+'" aria-label="Kopje voor '+esc(naam(id))+'">'+opties("weg")+"</select></li>").join("")+"</ul></section>":"")+
+      '<div class="miknoppen"><button type="button" class="knop" data-mnieuw>Kopje toevoegen</button><button type="button" class="tekstknop" data-mstandaard>Standaard terugzetten</button></div>'+
+      '<p class="fout" id="mi_fout" hidden></p><div class="miknoppen"><button type="button" class="knop hoofd" data-mbewaar>Opslaan</button><button type="button" class="knop" data-mannuleer>Annuleren</button></div></div>';
+    $("#psl").addEventListener("click",sluitPaneel);
+    if(focus)p.querySelector(focus)&&p.querySelector(focus).focus();
+  }
+  async function bewaar(k){
+    const kopjes=m.kopjes.filter(x=>x.p.length).map(x=>({t:String(x.t||"").trim().slice(0,40)||"Kopje",p:x.p,dicht:!!x.dicht}));
+    const standaard=uit(menuKopjes(MENU_STANDAARD)),gelijk=JSON.stringify(kopjes)===JSON.stringify(standaard.kopjes.map(x=>({t:x.t,p:x.p,dicht:false})))&&!m.weg.length;
+    const nieuw=gelijk?null:{kopjes,weg:m.weg};
+    k.disabled=true;k.textContent="Bezig";
+    try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"MENU",status:"Open",rij:{menu:nieuw},door:wvDoor()});MENU_LIVE=nieuw;laatste="";sluitPaneel();bouwMenu();melder(gelijk?"Het standaardmenu staat terug":"Menu opgeslagen")}
+    catch(_){k.disabled=false;k.textContent="Opslaan";const f=$("#mi_fout");f.textContent="Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.";f.hidden=false}
+  }
+  p.onclick=e=>{
+    const z=e.target.closest("[data-mzet]");
+    if(z){const ki=+z.dataset.k,pi=+z.dataset.p,l=m.kopjes[ki].p,id=l[pi];
+      if(z.dataset.mzet==="op"){if(pi>0){l.splice(pi,1);l.splice(pi-1,0,id)}else if(ki>0){l.splice(pi,1);m.kopjes[ki-1].p.push(id)}}
+      else{if(pi<l.length-1){l.splice(pi,1);l.splice(pi+1,0,id)}else if(ki<m.kopjes.length-1){l.splice(pi,1);m.kopjes[ki+1].p.unshift(id)}}
+      teken('[data-mnaar="'+id+'"]');return}
+    const k=e.target.closest("[data-mkop]");
+    if(k){const ki=+k.dataset.k,s=k.dataset.mkop;
+      if(s==="weg"){m.kopjes.splice(ki,1);teken();return}
+      const j=s==="op"?ki-1:ki+1;if(j<0||j>=m.kopjes.length)return;const x=m.kopjes[ki];m.kopjes[ki]=m.kopjes[j];m.kopjes[j]=x;teken('[data-mtitel="'+j+'"]');return}
+    if(e.target.closest("[data-mnieuw]")){m.kopjes.push({t:"Nieuw kopje",dicht:false,p:[]});teken('[data-mtitel="'+(m.kopjes.length-1)+'"]');return}
+    if(e.target.closest("[data-mstandaard]")){m=uit(menuKopjes(MENU_STANDAARD));teken();return}
+    if(e.target.closest("[data-mannuleer]")){sluitPaneel();return}
+    const b=e.target.closest("[data-mbewaar]");if(b)bewaar(b);
+  };
+  p.onchange=e=>{
+    const s=e.target.closest("[data-mnaar]");
+    if(s){const id=s.dataset.mnaar;haalWeg(id);if(s.value==="weg")m.weg.push(id);else m.kopjes[+s.value].p.push(id);teken('[data-mnaar="'+id+'"]');return}
+    const d=e.target.closest("[data-mdicht]");if(d)m.kopjes[+d.dataset.mdicht].dicht=d.checked;
+  };
+  p.oninput=e=>{const i=e.target.closest("[data-mtitel]");if(i){m.kopjes[+i.dataset.mtitel].t=i.value;p.querySelectorAll('option[value="'+i.dataset.mtitel+'"]').forEach(o=>{o.textContent=i.value||"Kopje"})}};
+  teken();p.hidden=false;$("#paneelwaas").hidden=false;p.focus();
+}
+
 /* ---- navigatie ---- */
 function route(){
   let h=location.hash.replace("#","");
@@ -3034,8 +3146,7 @@ function route(){
     h=n;history.replaceState(null,"","#"+n);
   }
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:tdMag()?"tedoen":"sqd";
-  document.querySelectorAll("#nav a").forEach(a=>a.dataset.v===HUIDIG?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
-  document.querySelectorAll("#nav .klapgroep").forEach(g=>{if(g.dataset.groep.split(" ").includes(HUIDIG)){g.classList.add("open");g.querySelector("[data-navklap]").setAttribute("aria-expanded","true")}});
+  markeerMenu();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
   menu(false);
@@ -3064,18 +3175,13 @@ function start(data){
   const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst",i:"lijst"}]:[]);
   PAGINAS=(tdMag()?[P_TEDOEN]:[]).concat(P_DAG,P_LIJN,td?P_TD.filter(p=>!(tdMag()&&p.id==="start")):[P_RAPPORT],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
-  const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+"</a>";
-  /* Te doen staat bovenaan, alleen voor de werkvoorbereider; de kijkinlog heeft daar het Overzicht. De werkvoorbereider heeft de agenda bij zijn eigen pagina's, andere inloggen onder Dagstart. */
-  const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"],pg=id=>PAGINAS.find(p=>p.id===id),sec=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie">'+(k?'<span class="kopje">'+esc(k)+"</span>":"")+a.map(lnk).join("")+"</div>":""};
-  const boven=tdMag()?'<div class="sectie"><a href="#tedoen" data-v="tedoen">'+ico("inbox")+'Te doen<span class="tdtel" id="tdtel" hidden></span></a></div>':alleenKijken()?sec("",[pg("start")]):"";
-  $("#nav").innerHTML=boven+sec("Dagstart",P_DAG.filter(p=>!wv||p.id!=="stop").concat(td?[]:[P_RAPPORT]))+
-    (wv?sec("Werkvoorbereiding",["stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"].map(pg)):td?sec("Technische dienst",["start","cm","bestel","rapport"].map(pg)):"")+
-    (td?sec("Ultimo voorbereiding",P_ULTIMO.map(pg)):"");
+  MENU_TD=td;MENU_WV=wv;bouwMenu();
+  if(wvMag())document.querySelector(".sidefoot").insertAdjacentHTML("afterbegin",'<button class="uitlog" type="button" data-menuindelen>'+ico("pen")+"Menu indelen</button>");
   $("#nav").addEventListener("click",e=>{const k=e.target.closest("[data-navklap]");if(!k)return;e.preventDefault();const g=k.closest(".klapgroep");g.classList.toggle("open");k.setAttribute("aria-expanded",String(g.classList.contains("open")))});
   planTel();
   presStappen();
   $("#stand").textContent=(alleenKijken()?"Alleen bekijken. ":"")+"Bijgewerkt "+((D.meta&&D.meta.stand)||"");
-  $("#menu").innerHTML=ico("menu")+(tdMag()?'<span class="tdstip" id="tdstip" hidden></span>':"");
+  $("#menu").innerHTML=ico("menu")+(tdMag()?'<span class="tdstip" id="tdstip" hidden></span>':"");tdTel();
   $("#pdatum").textContent="Dagstart, "+new Date().toLocaleDateString("nl-NL",{day:"numeric",month:"long"});
   $("#menu").addEventListener("click",()=>menu(true));
   $("#menuwaas").addEventListener("click",()=>menu(false));

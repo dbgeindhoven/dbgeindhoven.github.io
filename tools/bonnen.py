@@ -502,6 +502,18 @@ def wijzig(a):
         extra = w.get("rij") or {}
         if extra.get("zoekmeer"):
             continue
+        if "menu" in extra:
+            # Menu indelen: de indeling van de werkvoorbereider, of terug naar het standaardmenu.
+            m = extra.get("menu")
+            if isinstance(m, dict) and isinstance(m.get("kopjes"), list):
+                data["meta"]["menu"] = {
+                    "kopjes": [{"t": str(k.get("t") or "Kopje")[:40], "p": [x for x in k.get("p") or [] if isinstance(x, str)][:40], "dicht": bool(k.get("dicht"))} for k in m["kopjes"][:12] if isinstance(k, dict)],
+                    "weg": [x for x in m.get("weg") or [] if isinstance(x, str)][:40],
+                }
+            else:
+                data["meta"].pop("menu", None)
+            print("menu", "aangepast" if data["meta"].get("menu") else "standaard")
+            continue
         if extra.get("gezien"):
             # Te doen: de werkvoorbereider zette een regel op Gezien, of terug.
             gezien = data["meta"].setdefault("gezien", {})
