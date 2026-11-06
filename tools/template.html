@@ -2208,6 +2208,7 @@ function vPlanLijst(id){
   const deel=id[0]!=="p",soort=deel?id.slice(1):id,g=P_PLAN.find(p=>p.id===soort),af=soort==="pafgerond",r=D.cm.filter(c=>inGroep(c,id)),zonder=soort==="pgepland"?r.filter(c=>!planVanBon(c.nr)).length:0;
   lijstScherm({key:id,titel:(deel?(id[0]==="s"?"SQD-bonnen: ":"CM-bonnen: "):"")+g.t,sub:g.sub+(zonder?" "+zonder+(zonder===1?" bon heeft":" bonnen hebben")+" nog geen datum.":""),rijen:r,eenheid:["bon","bonnen"],sort:soort==="pgepland"?{k:"d",d:1}:af?{k:"d",d:-1}:{k:"nr",d:-1},
     geen:r.length?"Niets gevonden. Pas de filters aan.":"Hier staan nu geen bonnen.",
+    alleen:soort==="pbestel"?{l:"Nog te bestellen ("+r.filter(nogBestellen).length+")",test:nogBestellen,standaard:false}:null,
     seg:{get:x=>x.status,o:BONSTATUS},
     selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep},{k:"prio",l:"Alle prio's",o:["1","2","3"],get:x=>x.prio==null?"":String(x.prio)}],
     tekst:x=>[x.nr,x.lijn,x.machine,x.omschrijving,x.melder,x.monteur,x.onderdelen,x.opmerking,x.uitvoeren].join(" "),
@@ -2397,6 +2398,8 @@ function bestelHtml(x){
 const bestelRegels=c=>(D.bestellijst||[]).filter(x=>x.cm===c.nr&&x.groep!=="Binnen").map(bestelHtml).join("");
 /* Afvinken wat is opgevraagd, besteld of binnen. Een regel heeft één stand, dus een nieuw vinkje haalt het oude weg. Zonder vinkje gaat de regel terug naar de stand van daarvoor. */
 const BESTVINK=["Opgevraagd","Besteld","Binnen"];
+/* Nog iets te doen: een regel zonder vinkje. Een bon op Bestellen zonder regels telt ook mee, die regel maakt de geplande taak nog. */
+const nogBestellen=c=>{const a=(D.bestellijst||[]).filter(x=>x.cm===c.nr);return a.length?a.some(x=>!BESTVINK.includes(x.groep)):c.status==="Bestellen"};
 function bestelVink(x){
   if(!wvMag()||!x.id)return BESTVINK.includes(x.groep)?"<span>"+esc(x.groep)+"</span>":"";
   return'<span class="bestvink">'+BESTVINK.map(o=>'<label class="bonvink"><input type="checkbox" data-bestvink="'+esc(x.id)+'" value="'+o+'" aria-label="'+esc(x.onderdeel+": "+o.toLowerCase())+'"'+(x.groep===o?" checked":"")+">"+o+"</label>").join("")+"</span>";
