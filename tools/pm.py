@@ -28,10 +28,10 @@ def tekst(d):
 
 
 def groepen(data):
-    """De taken van de planning per lijndeel."""
+    """De taken van de planning per lijndeel. Een taak met niet_plannen blijft op de lijst, maar komt niet op een bon."""
     uit = {}
     for r in data.get("pm", []):
-        if r.get("bedrijfstoestand") == TOESTAND and r.get("frequentie") in FREQ:
+        if r.get("bedrijfstoestand") == TOESTAND and r.get("frequentie") in FREQ and not r.get("niet_plannen"):
             uit.setdefault(r["lijn"] + " | " + r["lijndeel"], []).append(r)
     return uit
 

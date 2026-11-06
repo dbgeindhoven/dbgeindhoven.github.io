@@ -47,7 +47,7 @@ De werkvoorbereider zet een bon op een dag met Bon toevoegen op die dag, met Uit
 ## PM-bonnen
 `pmplan` is de planning van de preventieve taken: `start` (maandag waarop de cyclus begon), `vast_tot`, `vak` (per lijndeel een vaste `week` 1 t/m 4 en `dag` 1 t/m 5), `bonnen` (`nr` als `PM-JJMMDD-n`, `datum`, `lijn`, `lijndeel`, `taken`) en `taken` (de tekst per taak-id). `tools/pm.py` werkt dit bij bij elke bouw: bonnen tot en met vandaag liggen vast, latere worden opnieuw berekend. Oudere bonnen dan 8 weken verdwijnen, behalve bonnen met een registratiebon. Niet met de hand aanpassen. Wekelijkse taken komen elke week op de dag van het lijndeel, maandelijkse elke 4 weken in de week van het lijndeel. Zo staat er elke werkdag een set klaar zonder geplande taak.
 
-Voorlopig staan alleen taken in bedrijf in de planning (wekelijks, 2-wekelijks en maandelijks). Operatortaken staan er bewust bij om te inventariseren. Uit bedrijf volgt later.
+Voorlopig staan alleen taken in bedrijf in de planning (wekelijks, 2-wekelijks en maandelijks). Operatortaken staan er bewust bij om te inventariseren. Uit bedrijf volgt later. Een regel in `pm` met `niet_plannen: true` blijft op de pagina PM-taken maar komt niet op een bon; zet de reden in `opmerking`.
 
 `pmpunten` geeft per taak-id de controlepunten: een lijst met `o` (het onderdeel, zoals `Band 104`, of leeg) en `p` (de punten). `tools/pm.py` zet ze bij de taak in `pmplan.taken`. Een taak zonder punten heeft de taaktekst als enige punt. Komt er een taak in de planning bij, geef hem dan ook punten: splits de taaktekst, verzin geen eisen.
 
