@@ -8,7 +8,7 @@ bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
   site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|output|pm]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
-import argparse, base64, copy, datetime, json, re, secrets
+import argparse, base64, copy, datetime, hashlib, hmac, json, re, secrets
 from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -128,6 +128,41 @@ def machines(data):
     return uit
 
 
+def kopie_kenmerk(b, soort, pad):
+    """Naam en sleutel van een kopie volgen uit de bon, zodat elke bouw hetzelfde bestand vindt. Uit de sleutel van een kopie is de sleutel van de bonnen niet terug te rekenen."""
+    return hmac.new(base64.b64decode(b["sleutel"]), (soort + ":" + pad).encode("utf-8"), hashlib.sha256).digest()
+
+
+def opname_kopieen(data):
+    """De monteurs hebben de sleutel van de bonnen niet. Een opnamebon krijgt daarom een eigen kopie van de originele bon,
+    met een eigen sleutel die alleen in het monteursdeel staat. Gaat de bon van de lijst, dan verdwijnt de kopie."""
+    b, map_, uit = data["meta"].get("bonnen") or {}, TOOLS.parent, {}
+    if not b.get("sleutel"):
+        return uit
+    bron = AESGCM(base64.b64decode(b["sleutel"]))
+    for r in data.get("cm", []):
+        bon = r.get("bon") or {}
+        if not bon.get("pdf"):
+            continue
+        sleutel = kopie_kenmerk(b, "sleutel", bon["pdf"])
+        paden = {s: "bonnen/%s.bin" % kopie_kenmerk(b, "bestand", bon[s])[:8].hex() for s in ("pdf", "beeld") if bon.get(s)}
+        if not (r.get("week") and r.get("weeksoort") == "opname"):
+            for p in paden.values():
+                (map_ / p).unlink(missing_ok=True)
+            continue
+        try:
+            for s, p in paden.items():
+                if not (map_ / p).exists():
+                    x = (map_ / bon[s]).read_bytes()
+                    iv = secrets.token_bytes(12)
+                    (map_ / p).write_bytes(iv + AESGCM(sleutel).encrypt(iv, bron.decrypt(x[:12], x[12:], None), None))
+        except OSError as e:
+            print(r["nr"], "geen kopie voor de monteurs:", e)
+            continue
+        uit[r["nr"]] = {"naam": bon.get("naam") or r["nr"], "sleutel": b64(sleutel), **paden}
+    return uit
+
+
 def box(tekst, sleutel):
     iv = secrets.token_bytes(12)
     ct = AESGCM(base64.b64decode(sleutel)).encrypt(iv, json.dumps(tekst, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), None)
@@ -169,6 +204,7 @@ def build(a):
     wv = copy.deepcopy(td)
     mld.pop("sleutel_wv", None)
     td["meta"].pop("actielijst", None)
+    td["meta"].pop("levbestand", None)  # met inkoopbedragen, alleen voor de werkvoorbereider
     td["meta"]["bonnen"] = {"verwerkt": verwerkt, "gesloten": gesloten}
     for r in td.get("cm", []):
         r.pop("bon", None)
@@ -181,7 +217,7 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de bonnen die de werkvoorbereider heeft ingepland. Geen bonbestanden.
-    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
+    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
     if pub.get("sleutel_monteur"):
         boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
     for wie, sleutel in (pub.get("monteurs") or {}).items():
@@ -198,17 +234,41 @@ def build(a):
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
 
 
-def weekbonnen(data, stand):
-    """De aangevinkte bonnen voor de monteurs: alleen de velden voor de kaart. Een afgemelde bon blijft twee weken bij Afgemeld staan."""
+def weekbonnen(data, stand, kopie):
+    """De aangevinkte bonnen voor de monteurs: alleen de velden voor de kaart. Een afgemelde bon blijft twee weken bij Afgemeld staan.
+    Een opnamebon heeft ook de onderdelen die nog opgenomen moeten worden en de kopie van de originele bon."""
     grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
-    def zicht(r):
-        if r.get("status") not in ("Uitgevoerd", "Gereed", "Dubbel", "Vervallen"):
-            return True
+
+    def dag(v):
         try:
-            return r.get("status") in ("Uitgevoerd", "Gereed") and datetime.datetime.strptime(str(r.get("uitgevoerd_op")), "%d-%m-%Y") >= grens
+            return datetime.datetime.strptime(str(v)[:10], "%d-%m-%Y")
         except ValueError:
-            return False
-    return [{k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op")} for r in data.get("cm", []) if r.get("week") and zicht(r)]
+            return None
+
+    def zicht(r):
+        if r.get("status") not in GESLOTEN:
+            return True
+        d = dag(r.get("uitgevoerd_op"))
+        return r.get("status") in ("Uitgevoerd", "Gereed") and d is not None and d >= grens
+
+    uit = []
+    for r in data.get("cm", []):
+        o = r.get("opname") or {}
+        klaar = o.get("klaar") and (dag(o.get("tijd")) or grens) >= grens
+        aan = r.get("week") and zicht(r)
+        if not (aan or klaar):
+            continue
+        x = {k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op")}
+        if aan and r.get("weeksoort") == "opname":
+            x["soort"] = "opname"
+            al = {y.get("onderdeel"): y.get("spec") for y in o.get("regels") or []}  # wat bij Deels uitgevoerd al is ingevuld
+            x["regels"] = [{**{k: b.get(k) for k in ("id", "onderdeel", "specificatie", "aantal", "toelichting")}, "spec": al.get(b.get("onderdeel"))} for b in data.get("bestellijst", []) if b.get("cm") == r["nr"] and b.get("groep") not in ("Binnen", "Besteld")]
+            if r["nr"] in kopie:
+                x["bon"] = kopie[r["nr"]]
+        elif not aan:
+            x.update(soort="opname", klaar=True, af={k: o.get(k) for k in ("door", "tijd", "tekst")})
+        uit.append(x)
+    return uit
 
 
 ap = argparse.ArgumentParser()

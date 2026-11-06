@@ -11,7 +11,7 @@
   bonnen.py zaterdag   <site.json> <werkmap>        Werkt de bonnen van de zaterdaglijst en de onderhoudsstops bij en maakt per plan de PDF om te printen.
   bonnen.py pmdag      <site.json> <werkmap> --datum DD-MM-JJJJ   Maakt de PM-bonnen van die dag en zet ze samen in 1 PDF.
   bonnen.py zatbon     <site.json> <werkmap> <nr>   Maakt de Word- en PDF-bon voor een bestaande bon zonder bestanden, uit <nr>.json.
-  bonnen.py zoekwerk   <site.json> [--aantal 8]     Geeft de bestelregels die opgezocht moeten worden.
+  bonnen.py zoekwerk   <site.json> [--aantal 8]     Geeft de bestelregels die opgezocht moeten worden en de leveranciers uit het leveranciersbestand.
   bonnen.py zoek       <site.json> <zoek.json>      Zet de zoekresultaten op de bestellijst.
 
 In de werkmap staat werk.json: een lijst met de inhoud van de wachtrijbestanden, elk aangevuld
@@ -366,10 +366,66 @@ def vervolg_wijzig(data, v, w, opnieuw):
             opnieuw.append(rij)
 
 
+def opname_wijzig(data, o, w, opnieuw):
+    """Een monteur heeft een opnamebon afgemeld. De specificaties komen op de bestellijst en de regels gaan vooraan bij het zoeken.
+    Is de opname klaar, dan gaat de bon op Bestellen en van de monteurs en de agenda af. Deels uitgevoerd laat de bon bij de monteurs staan."""
+    nr, klaar, dag = o.get("nr"), w["status"] == "Bestellen", str(w.get("tijd"))[:10]
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None:
+        print(nr, "staat niet in het overzicht, opname overgeslagen")
+        return
+    regels = []
+    for x in o.get("regels") or []:
+        spec = str(x.get("spec") or "").strip()
+        r = next((b for b in data["bestellijst"] if x.get("id") and b.get("id") == x["id"]), None)
+        if r is None:
+            if not (spec or x.get("onderdeel")):
+                continue
+            r = bestelregel(nr, x.get("onderdeel") or rij.get("onderdelen"), "Uit de opname van " + dag + ", monteur " + str(o.get("door")) + ".")
+            # Meteen een nummer, anders neemt dezelfde run de regel niet mee bij het zoeken.
+            r["id"] = "B%d" % (max([int(b["id"][1:]) for b in data["bestellijst"] if re.fullmatch(r"B\d+", str(b.get("id") or ""))] + [0]) + 1)
+            data["bestellijst"].append(r)
+        if spec:
+            r["specificatie"] = spec
+            if x.get("aantal"):
+                r["aantal"] = x["aantal"]
+            r["toelichting"] = None
+            r.pop("zoek", None)
+            r["zoekeerst"] = True
+            if r.get("groep") == "Eerst opmeten of checken":
+                r["groep"], r["status"] = "Nog niet besteld", BESTELSTATUS["Nog niet besteld"]
+            regels.append({"onderdeel": r.get("onderdeel"), "spec": spec, "aantal": x.get("aantal") or None})
+    oud = rij.get("opname") or {}
+    fotos = (oud.get("fotos") or []) + ([o["foto"]] if o.get("foto") else [])
+    tekst = (o.get("tekst") or "").rstrip()
+    rij["opname"] = {"door": o.get("door"), "tijd": w.get("tijd"), "tekst": tekst, "fotos": fotos, "regels": regels or oud.get("regels") or [], "klaar": klaar}
+    delen = ["%s: %s%s" % (x["onderdeel"], x["spec"], ", %s stuks" % x["aantal"] if x["aantal"] else "") for x in regels]
+    regel = "%s, %s: Opname %s." % (dag, o.get("door") or "Monteur", "gedaan" if klaar else "deels gedaan") + "".join(" " + x.rstrip(". ") + "." for x in delen + [tekst] if x)
+    rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+    print(nr, "opname", "klaar" if klaar else "deels", "; ".join(delen))
+    if rij.get("status") in KLAAR or rij.get("status") in ("Dubbel", "Vervallen"):
+        return
+    if not klaar:
+        rij["status"] = w["status"]
+        return
+    rij["week"] = False
+    rij.pop("weeksoort", None)
+    if rij.get("status") != "Besteld":
+        rij["status"] = "Bestellen"
+    # Net als op de site: een bon op Bestellen staat niet op de agenda.
+    if any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
+        zat_weg(data, nr)
+        rij["uitvoeren"] = "Na levering"
+        opnieuw.append(rij)
+    if not any(r.get("cm") == nr for r in data["bestellijst"]):
+        data["bestellijst"].append(bestelregel(nr, rij.get("onderdelen"), "Uit de opname van " + dag + "."))
+
+
 def volgorde(w):
-    """Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn. Het vervolg uit het dienstrapport als laatste, op tijd: het nummer eindigt op het moment van de wijziging."""
+    """Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn. Het vervolg uit het dienstrapport en de opnames als laatste, op tijd: het nummer eindigt op het moment van de wijziging."""
     extra = w.get("rij") or {}
-    return (not extra.get("stop"), bool(extra.get("vervolg")), w["nr"] if extra.get("vervolg") else "")
+    laatst = bool(extra.get("vervolg") or extra.get("opname"))
+    return (not extra.get("stop"), laatst, w["nr"] if laatst else "")
 
 
 ZOEKSOORT = ("Exact", "Vergelijkbaar", "Geen")
@@ -384,7 +440,9 @@ def zoekwerk(a):
     dicht = ("Uitgevoerd", "Gereed", "Dubbel", "Vervallen")
     rijen = [r for r in data.get("bestellijst", []) if r.get("id") and not r.get("zoek") and r.get("groep") not in ("Binnen", "Besteld") and (cm.get(r.get("cm")) or {}).get("status") not in dicht]
     rijen.sort(key=lambda r: (not r.get("zoekeerst"), (cm.get(r.get("cm")) or {}).get("prio") or 9, int(r["id"][1:])))
-    print(json.dumps({"rest": max(0, len(rijen) - a.aantal), "regels": [{k: r.get(k) for k in ZOEKVELDEN} for r in rijen[:a.aantal]], "leveranciers": [x["naam"] for x in data.get("leveranciers") or []]}, ensure_ascii=False, indent=1))
+    # Het leveranciersbestand zonder inkoopbedragen: wie past bij het onderdeel, de leveranciers van Eindhoven eerst.
+    bestand = sorted((data["meta"].get("levbestand") or {}).get("lijst") or [], key=lambda x: "Eindhoven" not in (x.get("locaties") or []))
+    print(json.dumps({"rest": max(0, len(rijen) - a.aantal), "regels": [{k: r.get(k) for k in ZOEKVELDEN} for r in rijen[:a.aantal]], "leveranciers": [x["naam"] for x in data.get("leveranciers") or []], "bestand": [x["naam"] + (" | " + x["categorie"] if x.get("categorie") else "") + (" | Eindhoven" if "Eindhoven" in (x.get("locaties") or []) else "") for x in bestand] if rijen else []}, ensure_ascii=False, indent=1))
 
 
 def zoek_goed(k, w):
@@ -454,7 +512,14 @@ def wijzig(a):
             rij = next((r for r in data["cm"] if r.get("nr") == extra["week"].get("nr")), None)
             if rij is not None:
                 rij["week"] = bool(extra["week"].get("aan"))
-                print(rij["nr"], "uitvoerbaar" if rij["week"] else "niet meer uitvoerbaar")
+                if rij["week"] and extra["week"].get("soort") == "opname":
+                    rij["weeksoort"] = "opname"
+                else:
+                    rij.pop("weeksoort", None)
+                print(rij["nr"], rij.get("weeksoort") or "uitvoerbaar" if rij["week"] else "niet meer uitvoerbaar")
+            continue
+        if extra.get("opname"):
+            opname_wijzig(data, extra["opname"], w, opnieuw)
             continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         if status == "Verwijderd":
@@ -628,6 +693,10 @@ def zaterdag(a):
         klaar[s["id"]] = plan_print(data, s, wm / s["id"], klaar.get(s["id"]) or {})
     for k in [k for k in klaar if not plan_van(data, k)]:
         plan_print_weg(klaar.pop(k))
+    # Een opnamebon toont de monteur de originele bon, dus die moet er zijn.
+    zonder = [r["nr"] for r in data.get("cm", []) if r.get("week") and r.get("weeksoort") == "opname" and not (r.get("bon") or {}).get("pdf")]
+    if zonder:
+        print("Geen bonbestand:", ", ".join(zonder))
     bewaar(a.site, data)
 
 
