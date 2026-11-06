@@ -5,7 +5,7 @@ De gegevens staan NIET in deze repository. Ze staan leesbaar in de privépagina
 bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
 
   site.py extract <privepagina.html> <site.json>
-  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|output|pm]
+  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|kijk|output|pm]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
 import argparse, base64, copy, datetime, hashlib, hmac, json, re, secrets
@@ -60,7 +60,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen) of output (alleen het outputformulier)."""
+    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), kijk (alles van wv, alleen lezen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen) of output (alleen het outputformulier)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -76,7 +76,7 @@ def setkey(a):
         pub.setdefault("monteurs", {})[a.naam] = b64(key)
         p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
         return
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "output": "sleutel_output", "pm": "sleutel_pm"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "kijk": "sleutel_kijk", "output": "sleutel_output", "pm": "sleutel_pm"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -194,6 +194,7 @@ def build(a):
     monteur_sleutel = mld.pop("sleutel_monteur", None)
     output_sleutel = mld.pop("sleutel_output", None)
     pm_sleutel = mld.pop("sleutel_pm", None)
+    kijk_sleutel = mld.pop("sleutel_kijk", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
@@ -209,8 +210,15 @@ def build(a):
     for r in td.get("cm", []):
         r.pop("bon", None)
     boxes = [box(td, pub["sleutel"])]
+    # Werkvoorbereider en kijkinlog lezen hetzelfde grote deel, anders wordt de pagina een derde zwaarder.
+    # Per inlog verschillen alleen de sleutels: de kijksleutel kan in Apps Script alleen lezen.
+    wv_meld = wv["meta"].pop("meldingen", None)
+    deel_sleutel = b64(secrets.token_bytes(32))
+    deel = box(wv, deel_sleutel)
     if pub.get("sleutel_wv"):
-        boxes.append(box(wv, pub["sleutel_wv"]))
+        boxes.append(box({"deel": deel_sleutel, "meldingen": wv_meld}, pub["sleutel_wv"]))
+    if pub.get("sleutel_kijk"):
+        boxes.append(box({"deel": deel_sleutel, "niveau": "kijk", "meldingen": {"url": mld.get("url"), "sleutel": kijk_sleutel}}, pub["sleutel_kijk"]))
     if pub.get("sleutel_dagstart"):
         boxes.append(box(dagstart, pub["sleutel_dagstart"]))
     if pub.get("sleutel_melden"):
@@ -229,7 +237,7 @@ def build(a):
     if pub.get("sleutel_pm"):
         # Alleen de PM-bonnen en een sleutel die niets anders kan dan die bonnen afmelden.
         boxes.append(box({"niveau": "pm", "naam": data["meta"].get("pm_monteur") or "Monteur", "pmplan": pm.monteur_deel(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": pm_sleutel}}}, pub["sleutel_pm"]))
-    inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes}, separators=(",", ":"))
+    inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes, "deel": deel}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
 
@@ -274,7 +282,7 @@ def weekbonnen(data, stand, kopie):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "output", "pm"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

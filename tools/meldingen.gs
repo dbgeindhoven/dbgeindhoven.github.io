@@ -5,6 +5,7 @@ const SLEUTEL = '__SLEUTEL__';
 const MELDSLEUTEL = '__MELDSLEUTEL__';
 const MONTEURSLEUTEL = '__MONTEURSLEUTEL__';
 const WVSLEUTEL = '__WVSLEUTEL__';
+const KIJKSLEUTEL = '__KIJKSLEUTEL__';
 const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
 const PMSLEUTEL = '__PMSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
@@ -290,7 +291,8 @@ function doGet(e) {
   if (p.k === OUTPUTSLEUTEL) return uit_({ output: outputRijen_() });
   const pm = p.k === PMSLEUTEL;
   if (pm && !p.foto) return uit_({ pm: pmRijen_(), bevindingen: bevRijen_() });
-  if (p.k !== SLEUTEL && !monteur && !pm) return uit_({ fout: 'geen toegang' });
+  // De kijkinlog leest hetzelfde als de TD-sleutel. In doPost bestaat deze sleutel niet, dus opslaan kan niet.
+  if (p.k !== SLEUTEL && p.k !== KIJKSLEUTEL && !monteur && !pm) return uit_({ fout: 'geen toegang' });
   const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
     // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive. De PM-inlog ziet alleen foto's van bevindingen.
