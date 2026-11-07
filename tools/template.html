@@ -790,6 +790,15 @@ const meldTijd=x=>{const m=x.melder==="Ochtendoverleg"&&/ingevoerd (\d{2}-\d{2}-
 const herkomst=r=>isSqd(r)?"Productiemelding":r.herkomst==="Monteur"?"Monteurmelding":"Eigen bon";
 const stand=k=>(D.meta&&D.meta.standen&&D.meta.standen[k])||"";
 const datum=s=>{const m=/^(\d{2})-(\d{2})-(\d{4})/.exec(s||"");return m?new Date(+m[3],+m[2]-1,+m[1]):null};
+/* Een tijd uit de Sheet kan als datum terugkomen, zoals "Fri Nov 06 2026 20:35:00 GMT+0100 (...)" of "2026-11-06T19:35:00.000Z". Dan wordt het weer DD-MM-JJJJ UU:MM. */
+const MAANDEN_EN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const tijdTekst=t=>{
+  const s=String(t==null?"":t),m=/^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4}) (\d{2}):(\d{2})/.exec(s),i=m?MAANDEN_EN.indexOf(m[1]):-1,twee=n=>String(n).padStart(2,"0");
+  if(i>=0)return m[2]+"-"+twee(i+1)+"-"+m[3]+" "+m[4]+":"+m[5];
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)){const d=new Date(s);if(!isNaN(d))return twee(d.getDate())+"-"+twee(d.getMonth()+1)+"-"+d.getFullYear()+" "+twee(d.getHours())+":"+twee(d.getMinutes())}
+  return s;
+};
+const tijdNorm=x=>x&&x.tijd!=null?Object.assign({},x,{tijd:tijdTekst(x.tijd)}):x;
 const langeDatum=d=>d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 const hoofd=s=>s.charAt(0).toUpperCase()+s.slice(1);
 function verlopen(d){
@@ -1190,7 +1199,7 @@ async function haalMeldingen(){
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
     MELDFOUT=false;const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[],j.pm||[],j.bevindingen||[]]);
-    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=j.pm||[];PMBEV=j.bevindingen||[];(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
+    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;if(!fout)herteken()}
 }
 async function stuur(d){
@@ -1507,7 +1516,7 @@ function pmLaatst(id){
 }
 async function haalPm(){
   const m=MELD();if(!m)return;
-  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel_pm||m.sleutel)),j=await r.json();if(j.fout)throw 0;PMFOUT=false;PMAF=j.pm||[];PMBEV=j.bevindingen||[]}
+  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel_pm||m.sleutel)),j=await r.json();if(j.fout)throw 0;PMFOUT=false;PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm)}
   catch(_){PMFOUT=true}
   if(pmTeken)pmTeken();
 }
