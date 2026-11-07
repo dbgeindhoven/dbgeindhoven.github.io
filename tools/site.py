@@ -169,6 +169,17 @@ def box(tekst, sleutel):
     return {"iv": b64(iv), "ct": b64(ct)}
 
 
+
+def kort_rapport(output, dagen):
+    """Het productierapport in site.json bewaart ruim een jaar (output.py). De site krijgt alleen de laatste dagen: zo blijft index.html licht."""
+    o = dict(output or {})
+    r = o.get("rapport") or []
+    if r:
+        dag = lambda x: datetime.datetime.strptime(x["datum"], "%d-%m-%Y").date()
+        grens = max(dag(x) for x in r) - datetime.timedelta(days=dagen)
+        o["rapport"] = [x for x in r if dag(x) > grens]
+    return o
+
 def build(a):
     data = json.loads(Path(a.site).read_text("utf-8"))
     data["meta"]["stand"] = a.stand
@@ -188,6 +199,8 @@ def build(a):
     Path(a.plain).write_text(fill(tpl, "plain", json.dumps(data, ensure_ascii=False, separators=(",", ":"))), "utf-8")
 
     td = copy.deepcopy(data)
+    # 31 dagen voor het RCA-signaal (regels over 30 dagen), de dagstart heeft genoeg aan 14.
+    td["output"] = kort_rapport(td.get("output"), 31)
     pub = td["meta"].pop("publiek")
     mld = td["meta"].get("meldingen") or {}
     meld_sleutel = mld.pop("sleutel_melden", None)
@@ -200,7 +213,7 @@ def build(a):
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
     verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
     monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}
-    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": data.get("output", {}), "zaterdag": data.get("zaterdag", {}), "stops": data.get("stops", [])}
+    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": kort_rapport(data.get("output", {}), 14), "zaterdag": data.get("zaterdag", {}), "stops": data.get("stops", [])}
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
     mld.pop("sleutel_wv", None)

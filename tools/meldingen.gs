@@ -24,6 +24,9 @@ const PMSTATUS = ['Uitgevoerd', 'Deels uitgevoerd'];
 const BEVKOP = ['id', 'nr', 'punt', 'naam', 'opmerking', 'foto', 'bon', 'door', 'tijd'];
 const OPNAMEKOP = ['nr', 'status', 'regels', 'opmerking', 'foto', 'door', 'tijd'];
 const OPNAMESTATUS = ['Bestellen', 'Deels uitgevoerd'];
+const LOGKOP = ['tijd', 'door', 'van', 'nr', 'status', 'rij'];
+// Welke sleutel de wijziging stuurde: wv, td, monteur, pm, output of melden. Komt in elk wachtrijbestand en in het logboek, nooit uit wat de browser invult.
+let VAN_ = '';
 
 function blad_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
@@ -93,13 +96,56 @@ function naarWachtrij_(b) {
 }
 
 // Een bonstatus staat tot de geplande taak hem verwerkt als status-<nr>.txt in de wachtrijmap.
-// Een nieuwere wijziging voor dezelfde bon vervangt de oude.
+// Een nieuwere wijziging voor dezelfde bon vult de oude aan: wat alleen in de oude stond blijft bewaard.
+// Zo verdwijnt een afmelding van een monteur niet als de werkvoorbereider daarna de status aanpast. Een verwijderde bon blijft verwijderd.
+// Alleen bonnen (CM- en SQDM-nummers) worden zo aangevuld. Andere bestanden, zoals STOP- met stop of stopweg, vervangen het oude bestand.
 function zetBonstatus_(nr, status, rij, door) {
   const map = DriveApp.getFolderById(WACHTRIJ);
   const naam = 'status-' + nr + '.txt';
-  const oud = map.getFilesByName(naam);
-  while (oud.hasNext()) oud.next().setTrashed(true);
-  map.createFile(naam, JSON.stringify({ nr: nr, status: status, rij: rij || null, tijd: nu_(), door: schoon_(door) }), MimeType.PLAIN_TEXT);
+  const isBon = /^(CM\d+|SQDM-\d+)$/.test(String(nr));
+  const nieuw = rij && typeof rij === 'object' && !Array.isArray(rij) ? rij : null;
+  const oud = [];
+  const f = map.getFilesByName(naam);
+  while (f.hasNext()) {
+    const x = f.next();
+    if (x.isTrashed()) continue;
+    let o = null;
+    try {
+      o = JSON.parse(x.getBlob().getDataAsString());
+    } catch (e) {
+      console.error(e);
+    }
+    oud.push({ bestand: x, inhoud: o });
+  }
+  if (isBon && status !== 'Verwijderd' && oud.some(x => x.inhoud && x.inhoud.status === 'Verwijderd')) {
+    log_(nr, 'Genegeerd: al verwijderd', nieuw, door);
+    return;
+  }
+  let samen = nieuw;
+  if (isBon && status !== 'Verwijderd') oud.forEach(x => {
+    const r = x.inhoud && x.inhoud.rij;
+    if (r && typeof r === 'object' && !Array.isArray(r)) samen = Object.assign({}, r, samen || {});
+  });
+  else if (status === 'Verwijderd') samen = null;
+  oud.forEach(x => x.bestand.setTrashed(true));
+  map.createFile(naam, JSON.stringify({ nr: nr, status: status, rij: samen, tijd: nu_(), door: schoon_(door), van: VAN_ }), MimeType.PLAIN_TEXT);
+  log_(nr, status, nieuw, door);
+}
+
+// Het logboek vult alleen aan: tijd, door, welke sleutel, nummer, status en de wijziging zelf. Een fout hier mag een wijziging nooit tegenhouden.
+function log_(nr, status, rij, door) {
+  try {
+    const s = SpreadsheetApp.openById(SHEET_ID);
+    let t = s.getSheetByName('Logboek');
+    if (!t) {
+      t = s.insertSheet('Logboek', s.getNumSheets());
+      t.getRange('A:F').setNumberFormat('@');
+      t.getRange(1, 1, 1, LOGKOP.length).setValues([LOGKOP]);
+    }
+    t.appendRow([nu_(), schoon_(door), VAN_, schoon_(nr), schoon_(status), rij ? JSON.stringify(rij).slice(0, 5000) : '']);
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 // Wijzigingen die nog niet in het overzicht staan. Zo ziet iedereen een nieuwe status meteen.
@@ -304,7 +350,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     const rapport = rijen.filter(r => r[2] === 'TD').slice(-500).map(object_);
     // De monteur ziet aangevinkte en afgemelde bonnen meteen, verder niets uit de wachtrij.
-    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname)) });
+    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname } })) });
     return uit_({ rapport: rapport });
   }
   return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_() });
@@ -328,6 +374,7 @@ function doPost(e) {
   // De monteur meldt een opnamebon af: specificaties en foto, meer niet.
   const opname = d.k === MONTEURSLEUTEL && d.actie === 'opname';
   if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname) return uit_({ fout: 'geen toegang' });
+  VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : 'melden';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -366,7 +413,7 @@ function doPost(e) {
     }
     if (d.actie === 'weekbon') {
       if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !['Uitgevoerd', 'Deels uitgevoerd'].includes(d.status)) return uit_({ fout: 'onjuiste invoer' });
-      zetBonstatus_(d.nr, d.status, { weekaf: { tekst: String(d.tekst == null ? '' : d.tekst).slice(0, 1000), door: schoon_(d.door) } }, d.door);
+      zetBonstatus_(d.nr, d.status, { weekaf: { tekst: String(d.tekst == null ? '' : d.tekst).slice(0, 1000), door: schoon_(d.door), status: d.status, tijd: nu_() } }, d.door);
       return uit_({ ok: true, tijd: nu_() });
     }
     if (d.actie === 'opname') {
@@ -401,8 +448,8 @@ function doPost(e) {
         if (ids[i][0] === d.id) {
           if (d.actie === 'gereed') {
             b.getRange(i + 1, 11, 1, 3).setValues([['Afgehandeld', nu_(), schoon_(d.door)]]);
-            // De bon hoort bij de melding en gaat tegelijk op Uitgevoerd.
-            if (d.bon && /^[A-Za-z0-9-]{1,20}$/.test(d.bon)) zetBonstatus_(d.bon, 'Uitgevoerd', d.rij, d.door);
+            // De bon hoort bij de melding en gaat tegelijk op Uitgevoerd. Alleen de status: wat er al in de wachtrij stond, blijft bewaard.
+            if (d.bon && /^[A-Za-z0-9-]{1,20}$/.test(d.bon)) zetBonstatus_(d.bon, 'Uitgevoerd', null, d.door);
           }
           else if (d.actie === 'verplaats') b.getRange(i + 1, 3).setValue(['S', 'Q', 'D'].includes(d.letter) ? d.letter : '');
           else {

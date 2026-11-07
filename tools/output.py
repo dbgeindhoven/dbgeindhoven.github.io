@@ -23,7 +23,7 @@ import openpyxl
 warnings.filterwarnings("ignore")
 
 CIJFERS_DAGEN = 21  # kilo's en pallets, genoeg voor de lopende week en 7 productiedagen
-RAPPORT_DAGEN = 14  # teksten uit het dienstrapport
+RAPPORT_DAGEN = 400  # teksten uit het dienstrapport: ruim een jaar blijft in site.json bewaard; de site zelf krijgt minder (site.py)
 TEKENS = 240
 DIENSTEN = ("Ochtend", "Middag", "Nacht")
 PLOEGEN = ("ochtend", "middag", "nacht a", "nacht b")
@@ -194,11 +194,16 @@ def main():
     if a.inpak:
         o["io"] = lees_inpak(a.inpak, vandaag)
     # Het dienstrapport hoort bij de cijfers: een bestand dat niet is meegegeven houdt zijn eigen regels.
-    oud = [r for r in o.get("rapport", []) if (r["waar"].startswith("Lijn") and not a.productie) or (not r["waar"].startswith("Lijn") and not a.inpak)]
+    # Regels van vóór de eerste dag in het nieuwe bestand blijven ook staan: zo groeit de geschiedenis, ook als het Excel minder dagen bevat.
+    vervangen = lambda r: (r["waar"].startswith("Lijn") and a.productie) or (not r["waar"].startswith("Lijn") and a.inpak)
     nieuw = (lees_productie(a.productie, vandaag) if a.productie else []) + (lees_io(a.inpak, vandaag) if a.inpak else [])
     if nieuw:
+        vroegst = min(x[0] for x in nieuw)
         grens = max(x[0] for x in nieuw) - datetime.timedelta(days=RAPPORT_DAGEN)
-        o["rapport"] = oud + [x[2] for x in sorted(nieuw, key=lambda x: (x[0], x[1])) if x[0] >= grens]
+        dag_van = lambda r: datetime.datetime.strptime(r["datum"], "%d-%m-%Y").date()
+        oud = [r for r in o.get("rapport", []) if not vervangen(r) or grens <= dag_van(r) < vroegst]
+        regels = [(dag_van(r), DIENSTEN.index(r["dienst"]) if r.get("dienst") in DIENSTEN else 9, r) for r in oud] + [x for x in nieuw if x[0] >= grens]
+        o["rapport"] = [x[2] for x in sorted(regels, key=lambda x: (x[0], x[1]))]
     json.dump(data, open(a.site, "w", encoding="utf-8"), ensure_ascii=False)
     print("Output:", len(o.get("dagen", [])), "regels, plan", len(o.get("plan", [])), "| inpak en ompak:", len((o.get("io") or {}).get("dagen", [])), "| dienstrapport:", len(o.get("rapport", [])))
 

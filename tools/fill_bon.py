@@ -250,11 +250,16 @@ def zet_zaterdag(inhoud, prio, uitvoerder, uitvoeren):
     return schrijf_zip(delen)
 
 
-def zet_uitvoeren(inhoud, uitvoeren):
-    """Geeft een Word-bon terug met deze tekst bij Uitvoeren op."""
+def zet_uitvoeren(inhoud, uitvoeren, prio=False):
+    """Geeft een Word-bon terug met deze tekst bij Uitvoeren op, en met prio als die is meegegeven ("" is geen prio)."""
     delen = lees_zip(inhoud)
     root = etree.fromstring(delen["word/document.xml"])
     zet_veld(root, "Uitvoeren op", uitvoeren)
+    if prio is not False:
+        try:
+            zet_prio(root, prio)
+        except StopIteration:
+            pass
     delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
     return schrijf_zip(delen)
 

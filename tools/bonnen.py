@@ -327,7 +327,7 @@ def bon_uitvoeren(data, rij, wm):
     b = stand(data)
     wm.mkdir(parents=True, exist_ok=True)
     docx = wm / (bon["naam"] + ".docx")
-    docx.write_bytes(fill_bon.zet_uitvoeren(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), rij["uitvoeren"]))
+    docx.write_bytes(fill_bon.zet_uitvoeren(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), rij["uitvoeren"], rij.get("prio") or ""))
     naar_pdf([docx], wm)
     pdf = docx.with_suffix(".pdf")
     for k in ("docx", "pdf", "beeld"):
@@ -526,6 +526,10 @@ def wijzig(a):
             vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
             continue
         if extra.get("pmreg"):
+            # Een registratie is bewijs voor de audit: alleen de PM-inlog maakt die. Oude bestanden zonder van komen van voor dit veld.
+            if w.get("van") not in (None, "", "pm"):
+                print(nr, "registratie geweigerd: niet van de PM-inlog maar van", w.get("van"))
+                continue
             pm_registratie(data, extra["pmreg"], Path(a.map) / "pmreg")
             continue
         if extra.get("stop"):
@@ -578,16 +582,37 @@ def wijzig(a):
             if "uitvoeren" in extra:
                 rij["uitvoeren"] = extra["uitvoeren"] or None
                 opnieuw.append(rij)
-            if extra.get("weekaf"):
-                dag, af = str(w.get("tijd"))[:10], extra["weekaf"]
-                tekst = (af.get("tekst") or "").rstrip()
-                regel = "%s, %s: %s." % (dag, af.get("door") or "Monteur", status) + (" " + tekst + ("" if tekst[-1:] in ".!?" else ".") if tekst else "")
-                rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
-                # Te doen toont de laatste afmelding: Deels uitgevoerd, of afgemeld met een opmerking.
-                rij["weekaf"] = {"door": af.get("door") or "Monteur", "tijd": str(w.get("tijd"))[:16], "status": status, "tekst": tekst}
-                if status == "Uitgevoerd" and not any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
-                    rij["uitvoeren"] = "Uitgevoerd op " + dag
+            zat = extra.get("zat") or {}
+            if "prioset" in extra and (not zat or zat.get("weg")):
+                # Prio van een bon die niet op een plan staat, bijvoorbeeld uit het prio-voorstel op Te doen. Op een plan gaat de prio via rij.zat.
+                # Een eigen veld: rij.prio hoort bij de regel voor Lopende storingen en kan van een oudere pagina komen.
+                # Apps Script vult een oud bestand aan, dus naast prioset kan een eerdere zat staan; alleen weghalen van een plan gaat samen met prioset.
+                p = str(extra.get("prioset") or "")
+                nieuw_prio = int(p) if p in ("1", "2", "3") else None
+                if nieuw_prio != rij.get("prio"):
+                    rij["prio"] = nieuw_prio
+                    print(nr, "prio", nieuw_prio)
                     opnieuw.append(rij)
+            if extra.get("weekaf"):
+                af = extra["weekaf"]
+                # Wat de monteur koos en wanneer staat in de afmelding zelf: Apps Script vult een oud bestand aan met een latere wijziging van de werkvoorbereider.
+                # Oudere afmeldingen hebben nog geen eigen tijd of status, dan geldt die van het bestand.
+                af_tijd = str(af.get("tijd") or w.get("tijd"))[:16]
+                dag = af_tijd[:10]
+                af_status = af.get("status") or status
+                tekst = (af.get("tekst") or "").rstrip()
+                weekaf = {"door": af.get("door") or "Monteur", "tijd": af_tijd, "status": af_status, "tekst": tekst}
+                if rij.get("weekaf") == weekaf:
+                    # Dezelfde afmelding kwam al eerder langs, bijvoorbeeld in een aangevuld bestand dat binnenkwam terwijl de taak liep.
+                    print(nr, "afmelding al verwerkt")
+                else:
+                    regel = "%s, %s: %s." % (dag, weekaf["door"], af_status) + (" " + tekst + ("" if tekst[-1:] in ".!?" else ".") if tekst else "")
+                    rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+                    # Te doen toont de laatste afmelding: Deels uitgevoerd, of afgemeld met een opmerking.
+                    rij["weekaf"] = weekaf
+                    if status == "Uitgevoerd" and not any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
+                        rij["uitvoeren"] = "Uitgevoerd op " + dag
+                        opnieuw.append(rij)
             if "afgemeld" in extra:
                 rij["uitgevoerd_op"] = extra["afgemeld"] or None
                 if extra["afgemeld"] and str(rij.get("uitvoeren")).startswith("Uitgevoerd op"):
