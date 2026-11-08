@@ -768,6 +768,24 @@ button.krwat:hover{text-decoration:underline;text-underline-offset:2px}
 .alpkop .volgende{color:var(--ink2);font-size:.9375rem}
 .alblok{border:1px solid #474747;border-radius:12px;overflow:hidden;background:#2F2F2F}
 .alpkop .altel{display:none}
+.avt.wit{color:var(--ink)}
+.altel .w{color:var(--ink);font-weight:600}
+.kr .meta .wie{color:var(--ink);font-weight:600}
+.kr.rood .meta .wie,.kr.goud .meta .wie{color:#fff}
+.alnoot{margin:0 0 18px;color:var(--ink2);font-size:.8125rem}
+/* Het SQD-overzicht: een venster per letter. De grote letter en het randje zijn rood (iets te laat), goud (iets deze week) of groen (niets). */
+.meldpaneel.sqd{grid-template-columns:repeat(4,minmax(0,1fr))}
+.av.sv{flex-direction:row;align-items:center;gap:16px;padding:14px 16px 12px}
+.svl{flex:none;min-width:1.2em;font:700 3.25rem/1 var(--kop);color:var(--c);text-align:center}
+.svl.dir{min-width:0;font-size:1.375rem}
+.av.sv[style*="transparent"] .svl{color:var(--ink3)}
+.svr{display:flex;flex-direction:column;min-width:0}
+.sv .avtel{margin-top:10px}
+.sqdpunten{margin:12px 0 0;color:var(--ink2);font-size:.8125rem}
+.sqdpunten b{color:var(--ink)}
+.kastmodus .actiestrook{border-color:#474747;background:#2F2F2F;color:var(--ink)}
+.kastmodus .actiestrook:hover{background:#363636}
+.kastmodus .actiestrook .knop{background:transparent;border-color:#6E6E6E;color:var(--ink)}
 html.present .kastmodus .tdkop{display:none}
 html.present .meldpaneel.al .avtot{display:none}
 html.present .meldpaneel.al .av{padding:11px 12px 9px}
@@ -796,6 +814,11 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
   .krwat{font-size:.875rem}
   .alpkop h2{font-size:1.375rem}
   /* Presenteren op de telefoon: alleen de persoon in beeld, de vensters zouden het hele scherm vullen. */
+  .meldpaneel.sqd{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .av.sv{gap:10px;padding:10px 10px 8px}
+  .svl{font-size:2.25rem}
+  .svl.dir{font-size:1rem}
+  .sv .avtot{display:none}
   html.present .meldpaneel.al,html.present .alpkop .volgende{display:none}
   html.present .alpkop .altel{display:flex}
   html.present .pstap{font-size:.75rem}
@@ -1167,11 +1190,11 @@ document.addEventListener("click",e=>{
   const na=e.target.closest("[data-actie]");if(na&&MELD()&&!alleenKijken())openActie(na.dataset.actie,na.dataset.wie||"");
   const av=e.target.closest("[data-alvenster]");if(av)alVenster(av.dataset.alvenster);
   const ald=e.target.closest("[data-allade]");if(ald)alLade(ald.dataset.allade);
-  const aa=e.target.closest("[data-alalles]");if(aa){AL_OPEN=new Set(aa.dataset.alalles==="1"?alPersonen(alActies()).map(x=>x.k):[]);alOpenBewaar();vActies()}
+  const aa=e.target.closest("[data-alalles]");if(aa){AL_OPEN=new Set(aa.dataset.alalles==="1"?alPersonen(alLijst()).map(x=>x.k):[]);alOpenBewaar();vActies()}
   const ao=e.target.closest("[data-alopen]");if(ao){const m=(MELDINGEN||[]).find(x=>x.id===ao.dataset.alopen);if(m)openDetailMelding(m)}
   const ag=e.target.closest("[data-algereed]");if(ag)alGereed(ag);
-  if(e.target.closest("[data-alnee]")){AL_GEREED=null;vActies()}
-  const klap=e.target.closest("[data-klap]");if(klap){UITGEKLAPT[klap.dataset.klap]=!UITGEKLAPT[klap.dataset.klap];vSqd();return}
+  if(e.target.closest("[data-alnee]")){AL_GEREED=null;SCHERM[HUIDIG]()}
+  const sv=e.target.closest("[data-sqdvenster]");if(sv){const el=document.getElementById("sqd-"+sv.dataset.sqdvenster);if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"})}
   const bestaand=e.target.closest("[data-melding]");if(bestaand){const m=(MELDINGEN||[]).find(x=>x.id===bestaand.dataset.melding);if(m)openDetailMelding(m)}
 });
 document.addEventListener("keydown",e=>{
@@ -1484,7 +1507,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["sqd","meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties"]).includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd"]).includes(HUIDIG))SCHERM[HUIDIG]()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -2197,29 +2220,38 @@ function openDetailMelding(m){
 }
 // Meldingen van deze actiehouders staan bij de directie-acties in plaats van in S, Q of D. De namen staan in sqdc.directie_actiehouders.
 const isDirectie=x=>["S","Q","D"].includes(x.letter)&&((D.sqdc||{}).directie_actiehouders||[]).some(n=>n.toLowerCase()===String(x.actiehouder||"").trim().toLowerCase());
-// Per letter staan de eerste meldingen op prio direct in beeld; de rest klapt uit.
-const MAX_BORD=5;let UITGEKLAPT={};
+/* Het SQD-overzicht: dezelfde kast als de actielijst. Hier staan de acties die te laat zijn of deze week aflopen (tot en met zaterdag), per letter.
+   De rest staat in de actielijst. Een actie staat op één plek en schuift vanzelf door op zijn deadline. */
+function sqdVensterHtml(v,live){
+  const laat=alLaat(v.l),week=alWeek(v.l),k=laat?"rood":week?"goud":live?"groen":"",c={rood:"var(--al-rood)",goud:"var(--al-goud)",groen:"var(--k-groen)","":"transparent"}[k];
+  const t=(n,soort,lang,kort)=>'<span class="avt '+soort+(n?"":" nul")+'">'+seg7(n,30,true)+'<small><span class="lang">'+lang+'</span><span class="kort">'+kort+"</span></small></span>";
+  return'<button type="button" class="av sv" style="--c:'+c+'" data-sqdvenster="'+v.g+'" aria-label="'+esc(v.naam+": "+laat+" te laat, "+week+" deze week")+'"><span class="svl'+(v.g==="DIR"?" dir":"")+'" aria-hidden="true">'+(v.g==="DIR"?"Dir.":v.g)+'</span><span class="svr"><span class="avnaam">'+esc(v.naam)+'</span><span class="avtot">'+(v.l.length?alAantal(v.l.length):"niets deze week")+'</span><span class="avtel">'+t(laat,"rood","te laat","laat")+t(week,"goud","deze week","week")+"</span></span></button>";
+}
 function vSqd(){
-  const s=D.sqdc||{},m=MELD(),live=m&&MELDINGEN&&!MELDFOUT,kan=m&&!alleenKijken();
-  const bord=(s.vakken||[]).map(v=>{
-    const open=(MELDINGEN||[]).filter(x=>x.letter===v.letter&&!isDirectie(x)).sort((a,b)=>(+a.prio||9)-(+b.prio||9));
-    const kleur=open.length?"rood":(v.kleur||(live?"groen":""));
-    const lbl=open.length?'<span class="st crit"><i></i>'+open.length+(open.length===1?" open melding":" open meldingen")+"</span>":kleur==="groen"?'<span class="st ok"><i></i>'+(live?"Geen open meldingen":"Groen")+"</span>":kleur==="rood"?'<span class="st crit"><i></i>Rood</span>':'<span class="st"><i></i>'+(m&&MELDFOUT?"Meldingen niet bereikbaar":"Nog niet gemeld")+"</span>";
-    const pt=(v.punten||[]).length?'<ul class="punten">'+v.punten.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"";
-    const zicht=UITGEKLAPT[v.letter]?open:open.slice(0,MAX_BORD),meer=open.length-MAX_BORD;
-    const lijst=open.length?'<div class="meldingen">'+zicht.map(x=>'<button class="melding'+(x.prio?" prio"+esc(x.prio):"")+'" data-melding="'+esc(x.id)+'"><b>'+esc(x.melding)+'</b><span class="mvoet"><span>'+(x.actiehouder?"Actiehouder: "+esc(x.actiehouder):"Nog geen actiehouder")+"</span><span>Gemeld: "+esc(meldTijd(x).slice(0,10))+"</span></span></button>").join("")+"</div>"+(meer>0?'<button class="tekstknop klapknop" data-klap="'+esc(v.letter)+'" aria-expanded="'+!!UITGEKLAPT[v.letter]+'">'+(UITGEKLAPT[v.letter]?"Minder tonen":"Nog "+meer+" tonen")+"</button>":""):"";
-    const geen=!pt&&!lijst?'<p class="geenpunten">Geen bijzonderheden gemeld.</p>':"";
-    return'<section class="pijler '+esc(kleur)+'"><div class="pkop"><span class="letter" aria-hidden="true">'+esc(v.letter)+"</span><div><h2>"+esc(v.naam)+"</h2>"+lbl+"</div>"+(kan?'<button type="button" class="tekstknop plus" data-actie="'+esc(v.letter)+'">+ Actie</button>':"")+"</div>"+pt+lijst+geen+"</section>";
-  }).join("");
-  let html=kop("SQD-overzicht",hoofd(langeDatum(new Date())),true,kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+'<p class="prioregel"><span class="prio1">Prio 1</span><span class="prio2">Prio 2</span><span class="prio3">Prio 3</span><span>Geen prio</span></p><div class="bord">'+bord+"</div>";
-  /* De directie-acties staan in de actielijst. Hier alleen de stand, met een knop erheen. */
-  if(live){const l=alActies(),laat=alLaat(l),week=alWeek(l);html+='<a class="actiestrook" href="#acties"><span><b>Actielijst</b><span class="tel"><span><i class="rood"></i>'+laat+' te laat</span><span><i class="goud"></i>'+week+' deze week</span><span><i class="blank"></i>'+(l.length-laat-week)+' met nog tijd</span></span></span><span class="knop">Naar de actielijst</span></a>'}
-  $("#view").innerHTML=html;
+  const s=D.sqdc||{},m=MELD(),kan=m&&!alleenKijken(),l=alActies(),op=alSqd(l),rest=l.filter(a=>!alOpSqd(a)),live=!!(m&&MELDINGEN&&!MELDFOUT);
+  const vakken=AL_GROEP.map(([g,naam])=>({g,naam,l:op.filter(a=>a.g===g),punten:((s.vakken||[]).find(v=>v.letter===g)||{}).punten||[]}));
+  const laat=alLaat(op),sub=hoofd(langeDatum(new Date()))+". "+(!MELDINGEN?"":op.length?alAantal(op.length)+" te laat of deze week, waarvan "+laat+" te laat.":"Niets te laat en niets dat deze week afloopt.");
+  let h='<div class="tdkop"><div><h1>SQD-overzicht</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
+  if(!m)h+='<div class="alleeg">Het SQD-overzicht werkt met de meldingen uit de Sheet. Die staan nog niet aan.</div>';
+  else if(!MELDINGEN)h+='<div class="alleeg">'+(MELDFOUT?"De acties konden niet worden opgehaald. Controleer je verbinding.":"Acties ophalen.")+"</div>";
+  else{
+    if(MELDFOUT)h+='<p class="tdlet">De Sheet is nu niet bereikbaar. Je ziet de acties van de laatste keer ophalen.</p>';
+    h+='<section class="meldpaneel sqd" aria-label="Safety, Quality, Delivery en Directie">'+vakken.map(v=>sqdVensterHtml(v,live)).join("")+"</section>"+
+      '<div class="kleg"><span><i class="rood"></i>Rood: de deadline is voorbij</span><span><i class="goud"></i>Goud: de deadline valt deze week, tot en met zaterdag</span><span>Wat later moet of nog geen deadline heeft, staat in de actielijst</span></div>';
+    const punten=vakken.filter(v=>v.punten.length).map(v=>'<p class="sqdpunten"><b>'+esc(v.naam)+"</b> "+v.punten.map(esc).join(". ")+"</p>").join("");
+    h+=op.length?'<div class="alblok">'+alBlok(alVolgorde(op),true,"sqd-")+"</div>":'<div class="alleeg">Niets te laat en niets dat deze week afloopt.'+(kan?" Met Actie toevoegen zet je er een op.":"")+"</div>";
+    h+=punten;
+    const later=rest.filter(a=>datum(a.datum)).length,geen=rest.length-later;
+    h+='<a class="actiestrook" href="#acties"><span><b>Actielijst</b><span class="tel"><span>'+alAantal(later)+" met een latere deadline</span><span>"+alAantal(geen)+' zonder deadline</span></span></span><span class="knop">Naar de actielijst</span></a>';
+  }
+  $("#view").innerHTML=h;
+  presLabel();alTel();
 }
 
 /* ---- actielijst ---- */
-/* De acties van het SQD-overzicht per actiehouder, en per actiehouder op S, Q, D en de directie. Een actie is een open melding op het bord (S, Q, D) of een directie-actie (DIR, of een actiehouder uit sqdc.directie_actiehouders).
-   Rood is de deadline voorbij, goud is deze week tot en met zaterdag (de productieweek), geen kleur is nog genoeg tijd. Bezig staat in de kolom voortgang van de Sheet. */
+/* Een actie is een open melding op het bord (S, Q, D) of een directie-actie (DIR, of een actiehouder uit sqdc.directie_actiehouders). Elke actie staat op één plek:
+   te laat (rood) of deze week tot en met zaterdag (goud, de productieweek) op het SQD-overzicht, per letter; later of zonder deadline in de actielijst, per actiehouder.
+   Een actie schuift vanzelf door op zijn deadline. Bezig staat in de kolom voortgang van de Sheet. */
 const AL_GROEP=[["S","Safety"],["Q","Quality"],["D","Delivery"],["DIR","Directie"]];
 const AL_C={rood:"var(--al-rood)",goud:"var(--al-goud)","":"transparent"};
 const AL_LADEN="td-hub-actieladen";
@@ -2247,6 +2279,15 @@ function alWanneer(a){
 const alLaat=l=>l.filter(a=>alKleur(a)==="rood").length,alWeek=l=>l.filter(a=>alKleur(a)==="goud").length;
 const alErg=l=>alLaat(l)?"rood":alWeek(l)?"goud":"";
 const alAantal=n=>n+(n===1?" actie":" acties");
+const alOpSqd=a=>alKleur(a)!=="",alSqd=l=>(l||alActies()).filter(alOpSqd),alLijst=()=>alActies().filter(a=>!alOpSqd(a));
+const alVolgorde=l=>{const v=a=>{const d=datum(a.datum);return d?d.getTime():9e15};return l.slice().sort((x,y)=>v(x)-v(y)||(+x.prio||9)-(+y.prio||9))};
+/* Volgende week: de productieweek na deze, van zondag tot en met zaterdag. */
+function alVolgend(a){
+  const d=datum(a.datum);if(!d)return false;
+  const zat=alVandaag();zat.setDate(zat.getDate()+6-zat.getDay());const na=new Date(zat);na.setDate(zat.getDate()+7);
+  return d>zat&&d<=na;
+}
+const alGeen=a=>!datum(a.datum);
 /* Een actiehouder die op twee manieren is geschreven, zoals jan en Jan, komt bij één naam. Zonder actiehouder staat onderaan. Per persoon de vroegste deadline eerst. */
 function alPersonen(l){
   const per=new Map(),volg=a=>{const d=datum(a.datum);return d?d.getTime():9e15};
@@ -2262,56 +2303,56 @@ function alOpenBewaar(){try{localStorage.setItem(AL_LADEN,JSON.stringify([...AL_
 const alIndex=n=>{if(AL_I<0||AL_I>=n)AL_I=Math.max(n-1,0);return AL_I};
 const alMag=a=>!!(a.m&&MELD()&&!alleenKijken());
 function alVensterHtml(p,huidig){
-  const laat=alLaat(p.l),week=alWeek(p.l),t=(n,soort,lang,kort)=>'<span class="avt '+soort+(n?"":" nul")+'">'+seg7(n,30,true)+'<small><span class="lang">'+lang+'</span><span class="kort">'+kort+"</span></small></span>";
-  return'<button type="button" class="av'+(huidig?" huidig":"")+'" style="--c:'+AL_C[alErg(p.l)]+'" data-alvenster="'+esc(p.k)+'" aria-label="'+esc(p.naam+": "+laat+" te laat, "+week+" deze week, "+alAantal(p.l.length))+'"'+(huidig?' aria-current="true"':"")+'><span class="avnaam">'+esc(p.naam)+'</span><span class="avtot">'+alAantal(p.l.length)+'</span><span class="avtel">'+t(laat,"rood","te laat","laat")+t(week,"goud","deze week","week")+"</span></button>";
+  const volg=p.l.filter(alVolgend).length,geen=p.l.filter(alGeen).length,t=(n,lang,kort)=>'<span class="avt wit'+(n?"":" nul")+'">'+seg7(n,30,true)+'<small><span class="lang">'+lang+'</span><span class="kort">'+kort+"</span></small></span>";
+  return'<button type="button" class="av'+(huidig?" huidig":"")+'" style="--c:transparent" data-alvenster="'+esc(p.k)+'" aria-label="'+esc(p.naam+": "+volg+" volgende week, "+geen+" zonder deadline, "+alAantal(p.l.length))+'"'+(huidig?' aria-current="true"':"")+'><span class="avnaam">'+esc(p.naam)+'</span><span class="avtot">'+alAantal(p.l.length)+'</span><span class="avtel">'+t(volg,"volgende week","volgend")+t(geen,"zonder deadline","geen")+"</span></button>";
 }
-function alRij(a){
+function alRij(a,metWie){
   const kleur=alKleur(a),mag=alMag(a),bon=a.m?bonVan(a.m.id):"",c=bon&&(D.cm||[]).find(x=>x.nr===bon);
-  const meta=[a.prio?prio(a.prio):"",a.code?"<span>"+esc(a.code)+"</span>":"",a.plek?"<span>"+esc(a.plek)+"</span>":"",bon?"<span>Bon "+esc(bon)+(c?": "+esc(stTekst(c)):"")+"</span>":""].join("");
+  const meta=[a.prio?prio(a.prio):"",metWie?'<span class="wie">'+(a.wie?esc(a.wie):"Nog geen actiehouder")+"</span>":"",a.code?"<span>"+esc(a.code)+"</span>":"",a.plek?"<span>"+esc(a.plek)+"</span>":"",bon?"<span>Bon "+esc(bon)+(c?": "+esc(stTekst(c)):"")+"</span>":""].join("");
   const iso=datum(a.datum)?a.datum.split("-").reverse().join("-"):"",st=a.bezig?"Bezig":"Open";
   const dag=mag?'<input type="date" class="kveld" data-aldatum="'+esc(a.id)+'" value="'+esc(iso)+'" aria-label="'+esc("Deadline: "+a.wat)+'">':'<span class="kvast">'+(a.datum?esc(a.datum):"Geen deadline")+"</span>";
   const stat=AL_GEREED===a.id?'<div class="krja"><button type="button" class="knop hoofd" data-algereed="'+esc(a.id)+'">Gereed melden</button><button type="button" class="knop" data-alnee>Annuleren</button></div>':
     mag?'<select class="kveld" data-alstatus="'+esc(a.id)+'" aria-label="'+esc("Status: "+a.wat)+'">'+["Open","Bezig","Gereed"].map(s=>"<option"+(s===st?" selected":"")+">"+s+"</option>").join("")+"</select>":'<span class="kvast">'+st+"</span>";
   return'<div class="kr '+kleur+'"><div class="wat">'+(a.m?'<button type="button" class="krwat" data-alopen="'+esc(a.id)+'">'+esc(a.wat)+"</button>":'<span class="krwat">'+esc(a.wat)+"</span>")+(meta?'<span class="meta">'+meta+"</span>":"")+'</div><div class="wanneer">'+dag+"<small>"+esc(alWanneer(a))+"</small></div><div>"+stat+"</div></div>";
 }
-function alBlok(l){
+function alBlok(l,metWie,id){
   return AL_GROEP.map(([g,naam])=>{
     const r=l.filter(a=>a.g===g);if(!r.length)return"";
     const plaat=g==="DIR"?'<div class="kplaat dir"><b><span class="lang">Directie</span><span class="kort">Dir.</span></b></div>':'<div class="kplaat"><b>'+g+"</b><small>"+naam+"</small></div>";
-    return'<div class="kgrp">'+plaat+"<div>"+r.map(alRij).join("")+"</div></div>";
+    return'<div class="kgrp"'+(id?' id="'+id+g+'"':"")+">"+plaat+"<div>"+r.map(a=>alRij(a,metWie)).join("")+"</div></div>";
   }).join("");
 }
 const alId=k=>"al-"+encodeURIComponent(k||"-").replace(/[^A-Za-z0-9-]/g,"_");
 function alLadeHtml(p,open){
-  const laat=alLaat(p.l),week=alWeek(p.l),tel=(laat?'<span class="r">'+laat+" te laat</span>":"")+(week?'<span class="g">'+week+" deze week</span>":"")+'<span class="t">'+alAantal(p.l.length)+"</span>";
+  const volg=p.l.filter(alVolgend).length,geen=p.l.filter(alGeen).length,tel=(volg?'<span class="w">'+volg+" volgende week</span>":"")+(geen?'<span class="w">'+geen+" zonder deadline</span>":"")+'<span class="t">'+alAantal(p.l.length)+"</span>";
   const plus=MELD()&&!alleenKijken()?'<div class="kplus"><button type="button" class="knop" data-actie="" data-wie="'+esc(p.k?p.naam:"")+'">+ Actie voor '+esc(p.k?p.naam:"iemand anders")+"</button></div>":"";
-  return'<section class="lade al'+(open?" open":"")+'" id="'+alId(p.k)+'" style="--c:'+AL_C[alErg(p.l)]+'"><h2 class="ladekop"><button type="button" class="ladeknop" data-allade="'+esc(p.k)+'" aria-expanded="'+open+'"><span class="strip"></span><span class="alnaam"><span class="naam">'+esc(p.naam)+'</span><span class="altel">'+tel+'</span></span><span class="hendel" aria-hidden="true">'+ico("omlaag")+"</span></button></h2>"+
+  return'<section class="lade al'+(open?" open":"")+'" id="'+alId(p.k)+'" style="--c:transparent"><h2 class="ladekop"><button type="button" class="ladeknop" data-allade="'+esc(p.k)+'" aria-expanded="'+open+'"><span class="strip"></span><span class="alnaam"><span class="naam">'+esc(p.naam)+'</span><span class="altel">'+tel+'</span></span><span class="hendel" aria-hidden="true">'+ico("omlaag")+"</span></button></h2>"+
     '<div class="ladeinhoud">'+(open?alBlok(p.l)+plus:"")+"</div></section>";
 }
-/* In het menu staat bij de actielijst hoeveel acties te laat zijn. */
+/* In het menu staat bij het SQD-overzicht hoeveel acties te laat zijn. */
 function alTel(){
   const t=$("#altel");if(!t)return;
   const n=MELDINGEN?alLaat(alActies()):0;
   t.textContent=n;t.hidden=!n;t.setAttribute("aria-label",n+(n===1?" actie":" acties")+" te laat");
 }
 function vActies(){
-  const l=alActies(),p=alPersonen(l),pres=document.documentElement.classList.contains("present"),m=MELD(),kan=m&&!alleenKijken();
-  if(!alOpen()){const e=p.find(x=>alLaat(x.l))||p[0];AL_OPEN=new Set(e?[e.k]:[])}
-  const laat=alLaat(l),week=alWeek(l),nu=new Date();
-  const sub=hoofd(nu.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+". "+(l.length?alAantal(l.length)+" bij "+p.length+(p.length===1?" actiehouder":" actiehouders")+", "+laat+" te laat en "+week+" deze week.":"Er staan geen open acties.");
+  const l=alLijst(),p=alPersonen(l),pres=document.documentElement.classList.contains("present"),m=MELD(),kan=m&&!alleenKijken();
+  if(!alOpen()){const e=p.find(x=>x.l.some(alVolgend))||p[0];AL_OPEN=new Set(e?[e.k]:[])}
+  const volg=l.filter(alVolgend).length,geen=l.filter(alGeen).length,nu=new Date();
+  const sub=hoofd(nu.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+". "+(l.length?alAantal(l.length)+" bij "+p.length+(p.length===1?" actiehouder":" actiehouders")+", "+volg+" volgende week en "+geen+" zonder deadline.":"Er staan geen acties voor later.");
   let h='<div class="tdkop"><div><h1>Actielijst</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+(p.length>1?'<button type="button" class="knop" data-alalles="1">Alles open</button><button type="button" class="knop" data-alalles="0">Alles dicht</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
   if(!m)h+='<div class="alleeg">De actielijst werkt met de meldingen uit de Sheet. Die staan nog niet aan.</div>';
   else if(!MELDINGEN)h+='<div class="alleeg">'+(MELDFOUT?"De acties konden niet worden opgehaald. Controleer je verbinding.":"Acties ophalen.")+"</div>";
-  else if(!p.length)h+='<div class="alleeg">Er staan geen open acties.'+(kan?" Met Actie toevoegen zet je er een op het SQD-overzicht en in deze lijst.":"")+"</div>";
+  else if(!p.length)h+='<div class="alleeg">Er staan geen acties voor later. Wat te laat is of deze week afloopt, staat op het SQD-overzicht.</div>';
   else{
     if(MELDFOUT)h+='<p class="tdlet">De Sheet is nu niet bereikbaar. Je ziet de acties van de laatste keer ophalen.</p>';
     if(pres){
       const k=alIndex(p.length),x=p[k],i=P_PRES.findIndex(q=>q.id==="acties"),na=P_PRES[i+1];
       h+='<section class="meldpaneel al" aria-label="Actiehouders">'+p.map((y,j)=>alVensterHtml(y,j===k)).join("")+"</section>"+
-        '<div class="alpkop"><h2>'+esc(x.naam)+"<span>"+(k+1)+" van "+p.length+'</span></h2><span class="altel">'+(alLaat(x.l)?'<span class="r">'+alLaat(x.l)+" te laat</span>":"")+(alWeek(x.l)?'<span class="g">'+alWeek(x.l)+" deze week</span>":"")+'<span class="t">'+alAantal(x.l.length)+'</span></span><span class="volgende">'+(p[k+1]?"Volgende: "+esc(p[k+1].naam):na?"Hierna: "+esc(na.t):"")+"</span></div>"+
+        '<div class="alpkop"><h2>'+esc(x.naam)+"<span>"+(k+1)+" van "+p.length+'</span></h2><span class="altel">'+(x.l.filter(alVolgend).length?'<span class="w">'+x.l.filter(alVolgend).length+" volgende week</span>":"")+(x.l.filter(alGeen).length?'<span class="w">'+x.l.filter(alGeen).length+" zonder deadline</span>":"")+'<span class="t">'+alAantal(x.l.length)+'</span></span><span class="volgende">'+(p[k+1]?"Volgende: "+esc(p[k+1].naam):na?"Hierna: "+esc(na.t):"")+"</span></div>"+
         '<div class="alblok">'+alBlok(x.l)+"</div>";
     }else h+='<section class="meldpaneel al" aria-label="Actiehouders">'+p.map(y=>alVensterHtml(y,false)).join("")+"</section>"+
-      '<div class="kleg"><span><i class="rood"></i>Rood: de deadline is voorbij</span><span><i class="goud"></i>Goud: de deadline valt deze week, tot en met zaterdag</span><span><i class="blank"></i>Geen kleur: nog genoeg tijd</span></div>'+
+      '<p class="alnoot">Hier staan de acties met een deadline na deze week en de acties zonder deadline. Wat te laat is of deze week afloopt, staat op het SQD-overzicht en schuift daar vanzelf heen.</p>'+
       '<div class="laden">'+p.map(y=>alLadeHtml(y,AL_OPEN.has(y.k))).join("")+"</div>";
   }
   $("#view").innerHTML=h;
@@ -2319,7 +2360,7 @@ function vActies(){
 }
 /* Een venster opent de lade van die actiehouder en springt erheen. In de presentatie zet het die actiehouder in beeld. */
 function alVenster(k){
-  if(document.documentElement.classList.contains("present")){const i=alPersonen(alActies()).findIndex(p=>p.k===k);if(i>=0){AL_I=i;vActies()}return}
+  if(document.documentElement.classList.contains("present")){const i=alPersonen(alLijst()).findIndex(p=>p.k===k);if(i>=0){AL_I=i;vActies()}return}
   (alOpen()||(AL_OPEN=new Set())).add(k);alOpenBewaar();vActies();
   const el=document.getElementById(alId(k));if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }
@@ -2332,10 +2373,10 @@ const alVan=id=>alActies().find(a=>a.id===id);
 /* Bezig of weer Open: een eigen actie in Apps Script (vanaf versie 21), los van de opvolging. Gereed vraagt eerst om bevestiging. */
 async function alStatus(sel){
   const a=alVan(sel.dataset.alstatus);if(!a||!alMag(a))return;
-  if(sel.value==="Gereed"){AL_GEREED=a.id;vActies();const k=$('[data-algereed="'+CSS.escape(a.id)+'"]');if(k)k.focus();return}
+  if(sel.value==="Gereed"){AL_GEREED=a.id;SCHERM[HUIDIG]();const k=$('[data-algereed="'+CSS.escape(a.id)+'"]');if(k)k.focus();return}
   const v=sel.value==="Bezig"?"Bezig":"";
   sel.disabled=true;
-  try{await stuur({actie:"voortgang",id:a.id,voortgang:v});a.m.voortgang=v;laatste="";vActies();melder(v?"Op Bezig gezet":"Weer op Open gezet")}
+  try{await stuur({actie:"voortgang",id:a.id,voortgang:v});a.m.voortgang=v;laatste="";SCHERM[HUIDIG]();melder(v?"Op Bezig gezet":"Weer op Open gezet")}
   catch(e){sel.disabled=false;sel.value=a.bezig?"Bezig":"Open";melder(/onbekende actie/.test(e.message||"")?"Bezig opslaan kan pas met versie 21 van het script in Apps Script.":"Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
 /* Gereed haalt de actie van het bord en uit de lijst. Hoort er een bon bij, dan gaat die op Uitgevoerd, net als bij Markeer als afgehandeld. */
@@ -2343,7 +2384,7 @@ async function alGereed(k){
   const a=alVan(k.dataset.algereed);if(!a||!alMag(a))return;
   const x=a.m,dir=x.letter==="DIR",bon=dir?"":bonVan(x.id)||"",rij=bon?metZat(bon,null):null;
   k.disabled=true;
-  try{await stuur(Object.assign({actie:"gereed",id:x.id,door:naam()},bon?{bon,rij}:{}));MELDINGEN=MELDINGEN.filter(y=>y.id!==x.id);if(bon)pasBonToe({nr:bon,status:"Uitgevoerd",rij});AL_GEREED=null;laatste="";vActies();melder(bon?"Gereed, bon "+bon+" staat op Uitgevoerd":"Actie gereed")}
+  try{await stuur(Object.assign({actie:"gereed",id:x.id,door:naam()},bon?{bon,rij}:{}));MELDINGEN=MELDINGEN.filter(y=>y.id!==x.id);if(bon)pasBonToe({nr:bon,status:"Uitgevoerd",rij});AL_GEREED=null;laatste="";SCHERM[HUIDIG]();melder(bon?"Gereed, bon "+bon+" staat op Uitgevoerd":"Actie gereed")}
   catch(_){k.disabled=false;melder("Gereed melden is niet gelukt. Probeer het opnieuw.")}
 }
 /* De deadline gaat met de opvolging mee (bijwerken), met de velden zoals ze nu zijn. Even wachten tot de datum helemaal is ingetikt. */
@@ -2352,7 +2393,7 @@ async function alDatum(inp){
   const x=a.m,nieuw=inp.value?inp.value.split("-").reverse().join("-"):"";
   if(nieuw===a.datum)return;
   inp.disabled=true;
-  try{await stuur({actie:"bijwerken",id:x.id,prio:x.prio||"",oplossing:x.oplossing||"",lijn:x.lijn||"",machine:x.machine||"",actiehouder:x.actiehouder||"",datum:nieuw,bon_nodig:x.bon_nodig==="Ja"});x.datum=nieuw;laatste="";vActies();melder(nieuw?"Deadline "+nieuw+" opgeslagen":"Deadline weggehaald")}
+  try{await stuur({actie:"bijwerken",id:x.id,prio:x.prio||"",oplossing:x.oplossing||"",lijn:x.lijn||"",machine:x.machine||"",actiehouder:x.actiehouder||"",datum:nieuw,bon_nodig:x.bon_nodig==="Ja"});x.datum=nieuw;laatste="";SCHERM[HUIDIG]();melder(nieuw?"Deadline "+nieuw+" opgeslagen"+(alOpSqd({datum:nieuw})?(HUIDIG==="sqd"?"":", hij staat nu op het SQD-overzicht"):(HUIDIG==="acties"?"":", hij staat nu in de actielijst")):"Deadline weggehaald, hij staat nu in de actielijst")}
   catch(_){inp.disabled=false;inp.value=a.datum?a.datum.split("-").reverse().join("-"):"";melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
 document.addEventListener("change",e=>{
@@ -2374,7 +2415,7 @@ function openActie(letter,wie){
     '<p class="hulp" id="a_hulp"></p><p class="fout" id="a_fout" hidden></p><button class="knop hoofd" id="a_knop" type="submit">Actie toevoegen</button></form>';
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   const f=$("#actieform"),gekozen=()=>(f.querySelector('input[name="a_bij"]:checked')||{}).value||"";
-  const hulp=()=>{const g=gekozen();$("#a_bonvak").hidden=g==="DIR";$("#a_hulp").textContent=g==="DIR"?"Een directie-actie staat in de actielijst, niet op het bord.":"De actie krijgt een SQDM-nummer en staat meteen op het SQD-overzicht en in de actielijst."};
+  const hulp=()=>{const g=gekozen();$("#a_bonvak").hidden=g==="DIR";$("#a_hulp").textContent=(g==="DIR"?"Een directie-actie heeft geen nummer. ":"De actie krijgt een SQDM-nummer. ")+"Is de deadline deze week of eerder, dan staat hij op het SQD-overzicht, anders in de actielijst. Hij schuift vanzelf door."};
   hulp();f.addEventListener("change",hulp);$("#a_tekst").focus();
   f.addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#a_knop"),fout=$("#a_fout"),g=gekozen(),w=id=>$(id).value.trim();fout.hidden=true;k.disabled=true;
@@ -2388,7 +2429,7 @@ function openActie(letter,wie){
     MELDINGEN=(MELDINGEN||[]).concat([Object.assign({},d,{letter:l,id:j.id,tijd:j.tijd,code:j.code||"",status:"Open",bon_nodig:d.bon_nodig?"Ja":"Nee",voortgang:""})]);
     const sl=(alPersonen(alActies()).find(x=>x.k===d.actiehouder.toLowerCase())||{}).k;if(sl!==undefined&&alOpen())AL_OPEN.add(sl);
     laatste="";sluitPaneel();SCHERM[HUIDIG]();
-    melder(mis?"Opgeslagen als melding"+(j.code?" "+j.code:"")+", maar nog niet op het bord. Zet hem door op de pagina Meldingen.":"Actie toegevoegd"+(j.code?": "+j.code:""));
+    melder(mis?"Opgeslagen als melding"+(j.code?" "+j.code:"")+", maar nog niet op het bord. Zet hem door op de pagina Meldingen.":"Actie toegevoegd"+(j.code?": "+j.code:"")+(alOpSqd({datum:d.datum})?", op het SQD-overzicht":", in de actielijst"));
   });
 }
 
@@ -3745,7 +3786,7 @@ function markeerMenu(){
   document.querySelectorAll("#nav .klapgroep").forEach(g=>{if(g.dataset.groep.split(" ").includes(HUIDIG)){g.classList.add("open");g.querySelector("[data-navklap]").setAttribute("aria-expanded","true")}});
 }
 function bouwMenu(){
-  const lnk=p=>p.id==="tedoen"?'<a href="#tedoen" data-v="tedoen">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div>':'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="acties"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
+  const lnk=p=>p.id==="tedoen"?'<a href="#tedoen" data-v="tedoen">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div>':'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="sqd"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
   const sec=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie">'+(k?'<span class="kopje">'+esc(k)+"</span>":"")+a.map(lnk).join("")+"</div>":""};
   const klap=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie"><div class="klapgroep" data-groep="'+a.map(p=>p.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico("lijst")+"<span>"+esc(k)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+a.map(lnk).join("")+"</div></div></div>":""};
   let h;
@@ -3819,7 +3860,7 @@ function route(){
   }
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();
-  document.querySelector(".shell").classList.toggle("kastmodus",HUIDIG==="tedoen"||HUIDIG==="acties");
+  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd"].includes(HUIDIG));
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
@@ -3845,7 +3886,7 @@ function presStappen(){
 }
 /* Verder of terug in de presentatie: met de pijlen, de toetsen of door te vegen. Bij Acties eerst persoon voor persoon, na de laatste persoon naar de volgende stap. */
 function presStap(r){
-  if(HUIDIG==="acties"){const n=alPersonen(alActies()).length,k=alIndex(n)+r;if(n&&k>=0&&k<n){AL_I=k;vActies();return}}
+  if(HUIDIG==="acties"){const n=alPersonen(alLijst()).length,k=alIndex(n)+r;if(n&&k>=0&&k<n){AL_I=k;vActies();return}}
   const l=P_PRES.map(p=>p.id),j=l.indexOf(HUIDIG)+r;
   if(j<0||j>=l.length)return;
   if(l[j]==="acties")AL_I=r>0?0:-1;
@@ -3856,7 +3897,7 @@ function presLabel(){
   const v=$("#pstap");if(!v)return;
   const i=P_PRES.findIndex(p=>p.id===HUIDIG);if(i<0){v.textContent="";return}
   let t=P_PRES[i].kort,sub="Stap "+(i+1)+" van "+P_PRES.length,eerste=i===0,laatste=i===P_PRES.length-1;
-  if(HUIDIG==="acties"&&MELDINGEN){const p=alPersonen(alActies());if(p.length){const k=alIndex(p.length);t+=": "+p[k].naam;sub+=", persoon "+(k+1)+" van "+p.length}}
+  if(HUIDIG==="acties"&&MELDINGEN){const p=alPersonen(alLijst());if(p.length){const k=alIndex(p.length);t+=": "+p[k].naam;sub+=", persoon "+(k+1)+" van "+p.length}}
   v.innerHTML="<b>"+esc(t)+"</b><span>"+esc(sub)+"</span>";
   $("#pvorige").disabled=eerste;$("#pvolgende").disabled=laatste;
 }
