@@ -2633,6 +2633,7 @@ function vStart(){
    (rij.terug zet hem terug), zodat het meteen op elk apparaat geldt. De geplande taak zet het daarna in meta.gezien. De regels staan ook in CLAUDE.md. */
 const TD_DAGEN=14,P_TEDOEN={id:"tedoen",t:"Te doen",i:"inbox"};
 const TDGROEP=[
+  {id:"beoordelen",t:"Zelf beoordelen",k:"var(--warn)",u:"apart gezet, beslis per bon wat ermee moet",l:"Beoordelen"},
   {id:"opname",t:"Opname gedaan",k:"var(--wacht)",u:"bestel wat de monteur heeft opgenomen",l:"Opname gedaan"},
   {id:"afgekeurd",t:"Afgekeurd bij PM",k:"var(--crit)",u:"er is een CM-bon van gemaakt, plan hem of geef hem een status",l:"Afgekeurd bij PM"},
   {id:"deels",t:"Deels uitgevoerd",k:"var(--warn2)",u:"plan in wat nog moet gebeuren",l:"Deels uitgevoerd"},
@@ -2754,6 +2755,8 @@ function tdItems(alles){
     else if(w&&w.tijd&&KLAAR.includes(w.status)&&w.tekst&&tdRecent(w.tijd))zet("afgemeld","wka:"+c.nr+":"+w.tijd,{c,tijd:w.tijd,door:w.door,tekst:w.tekst});
     if(isOpen(c)&&c.status!=="Gepland"&&!planVanBon(c.nr)&&r.length&&r.every(x=>x.groep==="Binnen"))zet("binnen","bin:"+c.nr,{c,tijd:""});
     if(/Concept: nog controleren/.test(c.opmerking||"")&&zonderPrio(c)&&!bevIds.has(c.melding))zet("nieuw","con:"+c.nr,{c,tijd:tdGemaakt(c)});
+    /* Apart gezet om zelf te beoordelen (cm[].beoordelen). Een datum of een andere status dan Open haalt hem hier weg. */
+    if(c.beoordelen&&c.status==="Open"&&!planVanBon(c.nr))zet("beoordelen","bo:"+c.nr,{c,tijd:"",tekst:c.beoordelen});
   });
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
   bev.forEach(x=>{const nr=bonVan(x.id),c=nr?(D.cm||[]).find(y=>y.nr===nr)||null:null;if(c?zonderPrio(c):tdRecent(x.tijd))zet("afgekeurd","bev:"+x.id,{c,bev:x,b:tdPm(x.nr),tijd:x.tijd,door:x.door,tekst:x.opmerking})});
@@ -2818,6 +2821,7 @@ const tdOmsKol=()=>({k:"o",l:"Omschrijving",c:"m-main",x:"titel",r:x=>esc(x.c.om
 const tdGzKol=t=>({k:"g",l:"",w:"130px",c:"m-sub",r:x=>'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">'+(t||"Gezien")+"</button>"});
 /* Groepen met veel regels staan in een tabel. Een klik op een regel opent de bon, of bij een RCA-signaal de regels uit het dienstrapport. */
 const TDTABEL={
+  beoordelen:()=>[tdBonKol(),tdOmsKol(),{k:"w",l:"Waarom apart",w:"24%",c:"m-sub",r:x=>esc(x.tekst)},{k:"s",l:"Status",w:"150px",c:"m-sub",r:x=>statusVeld(x.c)},{k:"d",l:"Datum",w:"150px",c:"m-sub",r:x=>datumVeld(x.c)},tdGzKol("Beoordeeld")],
   nieuw:()=>[tdBonKol(),tdOmsKol(),{k:"w",l:"Gemeld",w:"130px",c:"m-sub",ml:"Gemeld",r:x=>of([x.c.melder,x.tijd?tdWanneer(x.tijd):""].filter(Boolean).join(", "))},{k:"v",l:"Voorstel",w:"300px",c:"m-sub",r:x=>pvCel(x.c)},tdGzKol("Gecontroleerd")],
   klopt:()=>[tdBonKol(),tdOmsKol(),{k:"w",l:"Wat klopt niet",w:"26%",c:"m-sub",r:x=>esc(x.tekst)},{k:"s",l:"Status",w:"150px",c:"m-sub",r:x=>statusVeld(x.c)},{k:"d",l:"Datum",w:"150px",c:"m-sub",r:x=>datumVeld(x.c)},tdGzKol()],
   prio:()=>[tdBonKol(),tdOmsKol(),{k:"s",l:"Status",w:"140px",c:"m-sub",r:x=>st(x.c.status)},{k:"v",l:"Voorstel",w:"300px",c:"m-sub",r:x=>pvCel(x.c)},tdGzKol()],
@@ -3307,7 +3311,7 @@ function route(){
     if(h==="zaterdag")naarZaterdag();
     h=n;history.replaceState(null,"","#"+n);
   }
-  HUIDIG=PAGINAS.some(p=>p.id===h)?h:tdMag()?"tedoen":"sqd";
+  HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
