@@ -804,11 +804,14 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
   .pslt{display:none}
   html.present #psluit{padding:7px 9px}
 }
-/* Op Te doen en de actielijst loopt het menu van wit langzaam over in het grijs van de kast, met dezelfde schuine lijntjes doorlopend over de hele breedte.
-   De achtergrond ligt dan op #app, zodat de lijntjes van menu en kast precies op elkaar aansluiten. Het verloop zit rechts in het menu, waar geen tekst staat.
+/* Op Te doen en de actielijst loopt het menu van lichtgrijs langzaam over in het grijs van de kast, met dezelfde schuine lijntjes doorlopend over de hele breedte.
+   De achtergrond ligt dan op #app, zodat de lijntjes van menu en kast precies op elkaar aansluiten. De tekst in het menu is dan donkerder, zodat hij op het grijs leesbaar blijft.
    Alleen op een breed scherm met het menu ernaast: op de telefoon en in de presentatie houdt de kast zijn eigen achtergrond. */
 @media (min-width:981px){
-  html:not(.present) #app.kastapp{background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(128,128,128,.1) 8px 10px),linear-gradient(90deg,#FFFFFF 0,#FAFAFA 110px,#E6E6E6 175px,#A8A8A8 212px,#585858 240px,#2B2B2B 262px)}
+  html:not(.present) #app.kastapp{background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(128,128,128,.1) 8px 10px),linear-gradient(90deg,#D2D2D2 0,#C4C4C4 90px,#AEAEAE 160px,#8C8C8C 205px,#545454 238px,#2B2B2B 262px)}
+  html:not(.present) #app.kastapp nav a:not([aria-current="page"]),html:not(.present) #app.kastapp .klapkop,html:not(.present) #app.kastapp .uitlog{color:#15181D}
+  html:not(.present) #app.kastapp nav .kopje,html:not(.present) #app.kastapp .brand small,html:not(.present) #app.kastapp .sidefoot,html:not(.present) #app.kastapp .sidefoot .merk,html:not(.present) #app.kastapp nav a.tdsub.stil em{color:#2A2E33}
+  html:not(.present) #app.kastapp nav a:not([aria-current="page"]):hover,html:not(.present) #app.kastapp .uitlog:hover{background:rgba(255,255,255,.45)}
   html:not(.present) #app.kastapp .side{background:transparent;border-right-color:transparent}
   html:not(.present) #app.kastapp .shell.kastmodus{background:transparent}
 }
@@ -3726,15 +3729,15 @@ const SCHERM={tedoen:vTeDoen,acties:vActies,docs:vDocs,leveranciers:vLeverancier
 
 /* ---- menu ---- */
 /* De werkvoorbereider deelt zijn menu zelf in met Menu indelen. Dat geldt ook voor de kijkinlog, die hetzelfde deel leest.
-   De indeling gaat via de wachtrij als status-MENU.txt met rij.menu en komt daarna in meta.menu. Te doen blijft bovenaan, bij de kijkinlog het Overzicht.
+   De indeling gaat via de wachtrij als status-MENU.txt met rij.menu en komt daarna in meta.menu. Te doen staat standaard bovenaan Werkvoorbereiding; bij de kijkinlog staat het Overzicht bovenaan.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
-/* Alle pagina's die in deze inlog onder een kopje kunnen: niet Te doen of het Overzicht bovenaan, en niet de stappen per lijn. */
-const menuPaginas=()=>PAGINAS.filter(p=>!["tedoen","start"].includes(p.id)&&!P_LIJN.includes(p)).map(p=>p.id);
+/* Alle pagina's die in deze inlog onder een kopje kunnen: niet het Overzicht bovenaan en niet de stappen per lijn. */
+const menuPaginas=()=>PAGINAS.filter(p=>p.id!=="start"&&!P_LIJN.includes(p)).map(p=>p.id);
 function menuKopjes(m){
   m=m||menuIndeling();
   const kan=new Set(menuPaginas()),al=new Set(),weg=new Set(m.weg||[]);
@@ -3753,12 +3756,12 @@ function markeerMenu(){
   document.querySelectorAll("#nav .klapgroep").forEach(g=>{if(g.dataset.groep.split(" ").includes(HUIDIG)){g.classList.add("open");g.querySelector("[data-navklap]").setAttribute("aria-expanded","true")}});
 }
 function bouwMenu(){
-  const lnk=p=>'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="acties"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
+  const lnk=p=>p.id==="tedoen"?'<a href="#tedoen" data-v="tedoen">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div>':'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="acties"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
   const sec=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie">'+(k?'<span class="kopje">'+esc(k)+"</span>":"")+a.map(lnk).join("")+"</div>":""};
   const klap=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie"><div class="klapgroep" data-groep="'+a.map(p=>p.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico("lijst")+"<span>"+esc(k)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+a.map(lnk).join("")+"</div></div></div>":""};
   let h;
   if(MENU_WV){
-    const boven=tdMag()?'<div class="sectie"><a href="#tedoen" data-v="tedoen">'+ico("inbox")+'Te doen<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div></div>':sec("",[menuPagina("start")]);
+    const boven=tdMag()?"":sec("",[menuPagina("start")]);
     h=boven+menuKopjes().map(k=>(k.dicht?klap:sec)(k.t,k.p.map(menuPagina))).join("");
   }else h=sec("Dagstart",P_DAG.concat(MENU_TD?[]:[P_RAPPORT]))+(MENU_TD?sec("Technische dienst",["start","cm","bestel","rapport"].map(menuPagina))+sec("Ultimo voorbereiding",P_ULTIMO.map(menuPagina)):"");
   $("#nav").innerHTML=h;markeerMenu();tdTel();alTel();
@@ -3777,7 +3780,7 @@ function openMenuIndelen(){
     const kop=(k,ki)=>'<section class="mikop"><div class="mikopbalk"><input class="zatinvoer" data-mtitel="'+ki+'" value="'+esc(k.t)+'" maxlength="40" aria-label="Naam van het kopje"><button type="button" class="icoonknop" data-mkop="op" data-k="'+ki+'" aria-label="Kopje omhoog">↑</button><button type="button" class="icoonknop" data-mkop="neer" data-k="'+ki+'" aria-label="Kopje omlaag">↓</button></div><label class="toggle"><input type="checkbox" data-mdicht="'+ki+'"'+(k.dicht?" checked":"")+"> Inklapbaar in het menu</label><ul>"+
       (k.p.length?k.p.map((id,pi)=>rij(id,ki,pi)).join(""):'<li class="mileeg">Nog leeg. Kies bij een pagina dit kopje, of <button type="button" class="tekstknop gevaar" data-mkop="weg" data-k="'+ki+'">haal het kopje weg</button>.</li>')+"</ul></section>";
     p.innerHTML='<div class="pkopbalk"><div><small>Werkvoorbereiding</small><h2 id="ptitel">Menu indelen</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div>'+
-      '<div class="mivak"><p class="mihint">Zet een pagina onder een ander kopje, hoger of lager, of haal hem uit het menu. Dit geldt op je telefoon en je pc, en ook voor de inlog van de bakkerijmanager. Te doen blijft bovenaan.</p>'+
+      '<div class="mivak"><p class="mihint">Zet een pagina onder een ander kopje, hoger of lager, of haal hem uit het menu. Dit geldt op je telefoon en je pc, en ook voor de inlog van de bakkerijmanager.</p>'+
       m.kopjes.map(kop).join("")+
       (m.weg.length?'<section class="mikop"><div class="mikopbalk"><b>Niet in het menu</b></div><ul>'+m.weg.map(id=>'<li class="mirij"><span>'+esc(naam(id))+'</span><select data-mnaar="'+esc(id)+'" aria-label="Kopje voor '+esc(naam(id))+'">'+opties("weg")+"</select></li>").join("")+"</ul></section>":"")+
       '<div class="miknoppen"><button type="button" class="knop" data-mnieuw>Kopje toevoegen</button><button type="button" class="tekstknop" data-mstandaard>Standaard terugzetten</button></div>'+
