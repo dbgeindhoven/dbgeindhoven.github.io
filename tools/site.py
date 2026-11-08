@@ -81,7 +81,7 @@ def setkey(a):
 
 
 def storingen(data):
-    """Lopende storingen: open bonnen uit het CM-overzicht. Gereed verdwijnt vanzelf."""
+    """Lopende storingen: open bonnen uit het CM-overzicht. Gereed verdwijnt vanzelf. Dezelfde regels als storingRij in de site."""
     besteld = {r.get("cm") for r in data.get("bestellijst", []) if r.get("groep") == "Besteld"}
     uit = []
     for r in data.get("cm", []):
@@ -89,7 +89,7 @@ def storingen(data):
             continue
         if r.get("status") == "Gepland":
             st = "Gepland"
-        elif r.get("status") == "Besteld" or r.get("nr") in besteld:
+        elif r.get("status") in ("Besteld", "Leverdatum", "In bestelling") or r.get("nr") in besteld:
             st = "In bestelling"
         else:
             st = "Open"
@@ -259,8 +259,10 @@ def build(a):
 
 def weekbonnen(data, stand, kopie):
     """De aangevinkte bonnen voor de monteurs: alleen de velden voor de kaart. Een afgemelde bon blijft twee weken bij Afgemeld staan.
-    Een opnamebon heeft ook de onderdelen die nog opgenomen moeten worden en de kopie van de originele bon."""
+    Een opnamebon heeft ook de onderdelen die nog opgenomen moeten worden en de kopie van de originele bon.
+    Staat de bon in de onderhoudsplanning, dan krijgt hij de dag mee (dag): de monteur ziet wanneer hij gepland is."""
     grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
+    plan_dag = {r.get("nr"): z.get("datum") for z in [data.get("zaterdag") or {}] + list(data.get("stops") or []) if z.get("datum") for r in (z.get("correctief") or []) + (z.get("preventief") or [])}
 
     def dag(v):
         try:
@@ -282,6 +284,8 @@ def weekbonnen(data, stand, kopie):
         if not (aan or klaar):
             continue
         x = {k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op")}
+        if plan_dag.get(r["nr"]):
+            x["dag"] = plan_dag[r["nr"]]
         if aan and r.get("weeksoort") == "opname":
             x["soort"] = "opname"
             al = {y.get("onderdeel"): y.get("spec") for y in o.get("regels") or []}  # wat bij Deels uitgevoerd al is ingevuld

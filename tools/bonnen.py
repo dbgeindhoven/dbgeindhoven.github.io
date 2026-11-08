@@ -34,7 +34,23 @@ TEMPLATE = "template.bin"
 LIJST = "zaterdaglijst.bin"
 WEEKDAGEN = ("Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag")
 KLAAR = ("Uitgevoerd", "Gereed")
-LEEG = {"melder": None, "uitvoeren": None, "onderdelen": None, "opmerking": None, "uitgevoerd_op": None, "monteur": None, "afgetekend": None, "prio": None}
+# De statussen van een bon. Besteld en Leverdatum hebben een eigen datum (besteld_op, leverdatum), Gepland de dag van zijn plan.
+BONSTATUS = ("Open", "Te plannen", "Uitzoeken voor bestelling", "Besteld", "Leverdatum", "Gepland", "Uitgevoerd", "Vervallen")
+# Oudere statussen uit een oude pagina of een oud wachtrijbestand. Deels uitgevoerd is ook wat de monteur kiest bij het afmelden.
+OUDSTATUS = {"Bestellen": "Uitzoeken voor bestelling", "In bestelling": "Besteld", "Deels uitgevoerd": "Te plannen", "On hold": "Open", "Gereed": "Uitgevoerd", "Dubbel": "Vervallen"}
+BESTELFASE = ("Uitzoeken voor bestelling", "Besteld", "Leverdatum")
+# Bij deze statussen hoort een bon niet op de agenda. Uitgevoerd blijft op zijn dag staan. De site gebruikt dezelfde lijst (VAN_AGENDA).
+VAN_AGENDA = ("Open", "Te plannen", "Uitzoeken voor bestelling", "Besteld", "Leverdatum", "Vervallen")
+LEEG ={"melder": None, "uitvoeren": None, "onderdelen": None, "opmerking": None, "uitgevoerd_op": None, "monteur": None, "afgetekend": None, "prio": None}
+
+
+def status_norm(s):
+    return OUDSTATUS.get(s, s) or "Open"
+
+
+def plan_datum(p):
+    d, m, j = map(int, str(p["datum"]).split("-"))
+    return datetime.date(j, m, d)
 
 
 def laad(p):
@@ -288,7 +304,7 @@ def stops_samen(data):
 
 
 def stop_weg(data, k):
-    """De bonnen blijven bestaan. Wat nog niet klaar is staat daarna nergens meer op."""
+    """De bonnen blijven bestaan. Wat nog niet klaar is staat daarna nergens meer op: Gepland wordt Te plannen."""
     s = plan_van(data, k)
     if not k or not s:
         return
@@ -298,7 +314,7 @@ def stop_weg(data, k):
         if c and c.get("status") not in KLAAR:
             c["uitvoeren"] = None
             if c.get("status") == "Gepland":
-                c["status"] = "Open"
+                c["status"] = "Te plannen"
     data["stops"].remove(s)
     print("Stop verwijderd:", plan_naam(s))
 
@@ -368,7 +384,8 @@ def vervolg_wijzig(data, v, w, opnieuw):
 
 def opname_wijzig(data, o, w, opnieuw):
     """Een monteur heeft een opnamebon afgemeld. De specificaties komen op de bestellijst en de regels gaan vooraan bij het zoeken.
-    Is de opname klaar, dan gaat de bon op Bestellen en van de monteurs en de agenda af. Deels uitgevoerd laat de bon bij de monteurs staan."""
+    Is de opname klaar, dan gaat de bon op Uitzoeken voor bestelling en van de monteurs en de agenda af. Deels uitgevoerd laat de bon bij de monteurs staan.
+    In het bestand betekent status Bestellen: opname klaar. Dat blijft zo, zodat oude telefoons met een afmelding in de wachtrij blijven werken."""
     nr, klaar, dag = o.get("nr"), w["status"] == "Bestellen", str(w.get("tijd"))[:10]
     rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
     if rij is None:
@@ -405,14 +422,17 @@ def opname_wijzig(data, o, w, opnieuw):
     print(nr, "opname", "klaar" if klaar else "deels", "; ".join(delen))
     if rij.get("status") in KLAAR or rij.get("status") in ("Dubbel", "Vervallen"):
         return
+    rij["status"] = status_norm(rij.get("status"))
     if not klaar:
-        rij["status"] = w["status"]
+        # Nog bezig met uitzoeken: de bon blijft bij de monteurs.
+        if rij["status"] in ("Open", "Te plannen"):
+            rij["status"] = "Uitzoeken voor bestelling"
         return
     rij["week"] = False
     rij.pop("weeksoort", None)
-    if rij.get("status") != "Besteld":
-        rij["status"] = "Bestellen"
-    # Net als op de site: een bon op Bestellen staat niet op de agenda.
+    if rij["status"] not in ("Besteld", "Leverdatum"):
+        rij["status"] = "Uitzoeken voor bestelling"
+    # Net als op de site: een bon die op onderdelen wacht staat niet op de agenda.
     if any(r.get("nr") == nr for z in plannen(data) for r in zat_rijen(z)):
         zat_weg(data, nr)
         rij["uitvoeren"] = "Na levering"
@@ -558,6 +578,10 @@ def wijzig(a):
             opname_wijzig(data, extra["opname"], w, opnieuw)
             continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+        # Deels uitgevoerd is wat de monteur koos. De bon is dan niet klaar en moet opnieuw worden gepland.
+        deels = status == "Deels uitgevoerd"
+        if status != "Verwijderd":
+            status = status_norm(status)
         if status == "Verwijderd":
             zat_weg(data, nr)
         elif (w.get("rij") or {}).get("zat"):
@@ -573,16 +597,37 @@ def wijzig(a):
             print(nr, "verwijderd")
         else:
             klaar = ("Uitgevoerd", "Gereed")
+            zat = extra.get("zat") or {}
+            plan = next((z for z in plannen(data) if any(r.get("nr") == nr for r in zat_rijen(z))), None)
+            if deels and rij.get("status") not in klaar:
+                # Een plan op een latere dag blijft staan: daar gebeurt de rest. Een plan van vandaag of eerder vervalt.
+                dag = datetime.datetime.strptime(str(w.get("tijd"))[:10], "%d-%m-%Y").date() if re.match(r"\d{2}-\d{2}-\d{4}", str(w.get("tijd"))) else datetime.date.today()
+                if plan and plan_datum(plan) > dag:
+                    status = "Gepland"
+                elif plan:
+                    zat_weg(data, nr)
+                    plan = None
+                    rij["uitvoeren"] = "In overleg"
+                    opnieuw.append(rij)
+            elif plan and status in VAN_AGENDA and not (zat and not zat.get("weg")):
+                # Een status zonder dag haalt de bon van de agenda. De site stuurt dat zelf mee; dit vangt oude pagina's op.
+                zat_weg(data, nr)
+                plan = None
+                rij["uitvoeren"] = "Na levering" if status in BESTELFASE else "In overleg"
+                opnieuw.append(rij)
             if status in klaar and not rij.get("uitgevoerd_op"):
                 rij["uitgevoerd_op"] = str(w.get("tijd"))[:10]
             elif rij.get("status") in klaar and status not in klaar:
                 rij["uitgevoerd_op"] = None
             rij["status"] = status
-            print(nr, status)
+            for k in ("besteld_op", "leverdatum"):
+                # Besteld (datum) en Leverdatum (datum). Het veld blijft bij een volgende status staan, als geschiedenis.
+                if k in extra and (extra[k] is None or re.fullmatch(r"\d{2}-\d{2}-\d{4}", str(extra[k]))):
+                    rij[k] = extra[k] or None
+            print(nr, status, *(rij.get(k) for k in ("besteld_op", "leverdatum") if status in BESTELFASE and rij.get(k)))
             if "uitvoeren" in extra:
                 rij["uitvoeren"] = extra["uitvoeren"] or None
                 opnieuw.append(rij)
-            zat = extra.get("zat") or {}
             if "prioset" in extra and (not zat or zat.get("weg")):
                 # Prio van een bon die niet op een plan staat, bijvoorbeeld uit het prio-voorstel op Te doen. Op een plan gaat de prio via rij.zat.
                 # Een eigen veld: rij.prio hoort bij de regel voor Lopende storingen en kan van een oudere pagina komen.
@@ -618,7 +663,7 @@ def wijzig(a):
                 if extra["afgemeld"] and str(rij.get("uitvoeren")).startswith("Uitgevoerd op"):
                     rij["uitvoeren"] = "Uitgevoerd op " + extra["afgemeld"]
                     opnieuw.append(rij)
-            if status == "Bestellen" and not any(r.get("cm") == nr for r in data["bestellijst"]):
+            if status == "Uitzoeken voor bestelling" and not any(r.get("cm") == nr for r in data["bestellijst"]):
                 data["bestellijst"].append(bestelregel(nr, rij.get("onderdelen"), "Uit de onderhoudsplanning van " + str(w.get("tijd"))[:10] + "."))
     for rij in {r["nr"]: r for r in opnieuw}.values():
         bon_uitvoeren(data, rij, Path(a.map) / "uitvoeren")

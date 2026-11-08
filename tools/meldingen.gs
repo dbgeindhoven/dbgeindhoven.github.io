@@ -13,7 +13,8 @@ const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'ac
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
-const BONSTATUS = ['Open', 'Gepland', 'Bestellen', 'Besteld', 'Deels uitgevoerd', 'On hold', 'Uitgevoerd', 'Gereed', 'Dubbel', 'Vervallen'];
+// De statussen van een bon. De oude statussen blijven geldig voor een pagina die nog open staat: de site en de geplande taak zetten ze om.
+const BONSTATUS = ['Open', 'Te plannen', 'Uitzoeken voor bestelling', 'Besteld', 'Leverdatum', 'Gepland', 'Uitgevoerd', 'Vervallen', 'Bestellen', 'Deels uitgevoerd', 'On hold', 'Gereed', 'Dubbel'];
 const VERVOLG = ['Gereed', 'Overdragen aan volgende dienst', 'Onderdeel bestellen', 'Plannen voor onderhoudstop'];
 
 const PLOEGEN = ['ochtend', 'middag', 'nacht a', 'nacht b'];
