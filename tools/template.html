@@ -804,17 +804,6 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
   .pslt{display:none}
   html.present #psluit{padding:7px 9px}
 }
-/* Op Te doen en de actielijst loopt het menu van lichtgrijs langzaam over in het grijs van de kast, met dezelfde schuine lijntjes doorlopend over de hele breedte.
-   De achtergrond ligt dan op #app, zodat de lijntjes van menu en kast precies op elkaar aansluiten. De tekst in het menu is dan donkerder, zodat hij op het grijs leesbaar blijft.
-   Alleen op een breed scherm met het menu ernaast: op de telefoon en in de presentatie houdt de kast zijn eigen achtergrond. */
-@media (min-width:981px){
-  html:not(.present) #app.kastapp{background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(128,128,128,.1) 8px 10px),linear-gradient(90deg,#D2D2D2 0,#C4C4C4 90px,#AEAEAE 160px,#8C8C8C 205px,#545454 238px,#2B2B2B 262px)}
-  html:not(.present) #app.kastapp nav a:not([aria-current="page"]),html:not(.present) #app.kastapp .klapkop,html:not(.present) #app.kastapp .uitlog{color:#15181D}
-  html:not(.present) #app.kastapp nav .kopje,html:not(.present) #app.kastapp .brand small,html:not(.present) #app.kastapp .sidefoot,html:not(.present) #app.kastapp .sidefoot .merk,html:not(.present) #app.kastapp nav a.tdsub.stil em{color:#2A2E33}
-  html:not(.present) #app.kastapp nav a:not([aria-current="page"]):hover,html:not(.present) #app.kastapp .uitlog:hover{background:rgba(255,255,255,.45)}
-  html:not(.present) #app.kastapp .side{background:transparent;border-right-color:transparent}
-  html:not(.present) #app.kastapp .shell.kastmodus{background:transparent}
-}
 /* SQD-overzicht: een actie toevoegen vanaf het bord, en onderaan de stand van de actielijst. */
 .pkop .plus{margin-left:auto;align-self:flex-start;white-space:nowrap}
 .actiestrook{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;margin-top:16px;padding:14px 18px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none}
@@ -3831,7 +3820,6 @@ function route(){
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();
   document.querySelector(".shell").classList.toggle("kastmodus",HUIDIG==="tedoen"||HUIDIG==="acties");
-  $("#app").classList.toggle("kastapp",HUIDIG==="tedoen"||HUIDIG==="acties");
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
