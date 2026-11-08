@@ -1,4 +1,4 @@
-// TD Hub meldingen: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 21: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
 const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
@@ -9,7 +9,8 @@ const KIJKSLEUTEL = '__KIJKSLEUTEL__';
 const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
 const PMSLEUTEL = '__PMSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
-const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio'];
+// voortgang (kolom 21, vanaf versie 21): Bezig of leeg, voor een actie op het SQD-bord en in de actielijst.
+const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio', 'voortgang'];
 const ZONE = 'Europe/Amsterdam';
 const MAP = "TD Hub foto's";
 const MAX_FOTO = 8000000;
@@ -442,6 +443,18 @@ function doPost(e) {
         if (i > 0) b.getRange(i + 1, 20).setValue(prio_(x.prio));
       });
       return uit_({ ok: true });
+    }
+    // Een actie staat op Bezig of weer op Open. Alleen deze kolom verandert, de opvolging blijft zoals hij is.
+    if (d.actie === 'voortgang') {
+      const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
+      for (let i = 1; i < ids.length; i++) {
+        if (ids[i][0] === d.id) {
+          b.getRange(1, 1, 1, KOP.length).setValues([KOP]);
+          b.getRange(i + 1, 21).setValue(d.voortgang === 'Bezig' ? 'Bezig' : '');
+          return uit_({ ok: true });
+        }
+      }
+      return uit_({ fout: 'melding niet gevonden' });
     }
     if (d.actie === 'gereed' || d.actie === 'verplaats' || d.actie === 'bijwerken') {
       const ids = b.getRange(1, 1, b.getLastRow(), 1).getDisplayValues();
