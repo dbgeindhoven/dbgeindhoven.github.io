@@ -673,6 +673,13 @@ svg.seg7{display:block;overflow:visible}
 .tdweglijst li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:7px 0;border-top:1px solid var(--line)}
 .tdweglijst li span{flex:1;min-width:0;color:var(--ink2)}
 .tdstand{margin-top:34px}
+.tdr.rca .tdr-info{grid-template-columns:minmax(0,1fr) auto}
+.tdr.rca .tdr-titel b{font-weight:600}
+.tdr.rca .tdr-waarom{color:var(--crit-ink);font-weight:500}
+.tdr.rca .tdr-plek{margin-top:4px}
+.tdr.rca .tdr-plek .tekstknop{font-size:.8125rem}
+.tdr.rca .tdr-bedien{margin-left:0}
+.rcauitleg{max-width:80ch;margin:22px 0 0;color:var(--ink3);font-size:.8125rem}
 .tdstand .kpis{border-color:#474747;background:#2F2F2F}
 .tdleeg{padding:28px 18px;border:1px dashed #555555;border-radius:12px;color:var(--ink2);text-align:center}
 @media (max-width:1100px){.meldpaneel{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -1023,7 +1030,7 @@ const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"
 /* De agenda toont de zaterdag ook, dus die heeft geen eigen stap. */
 const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"||p.id==="zaterdag"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"},{id:"docs",t:"Machinedocumentatie",i:"lijst"}];
-const P_WV=[{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
+const P_WV=[{id:"rca",t:"RCA-signalen",i:"zoek"},{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
 /* Oude adressen blijven werken: ze openen de pagina die ervoor in de plaats kwam, op het juiste tabblad. */
 const OUD={zaterdag:["stop"],cmbonnen:["cm",""],pgeen:["cm","Open"],pbestel:["cm","Bestellen en leveren"],pgepland:["cm","Gepland"],pafgerond:["cm","Afgerond"],cpgeen:["cm","Open"],cpbestel:["cm","Bestellen en leveren"],cpgepland:["cm","Gepland"],cpafgerond:["cm","Afgerond"],spgeen:["sqdbonnen","Open"],spbestel:["sqdbonnen","Bestellen en leveren"],spgepland:["sqdbonnen","Gepland"],spafgerond:["sqdbonnen","Afgerond"],start:["tedoen"]};
 
@@ -1169,8 +1176,14 @@ document.addEventListener("click",e=>{
   if(ta){const aan=ta.dataset.tdalles==="1";TDOPEN=new Set(aan?TDGROEP.map(g=>g.id):[]);tdOpenBewaar();vTeDoen()}
   const tn=e.target.closest("[data-tdnaar]");
   if(tn){e.preventDefault();menu(false);if(HUIDIG==="tedoen")tdLade(tn.dataset.tdnaar,true,true)}
-  const trc=e.target.closest("[data-tdrca]");
-  if(trc){const x=tdItems(true).find(y=>y.key===trc.dataset.tdrca);if(x&&x.s)openPaneel(rcaDetail(x.s))}
+  const rl=e.target.closest("[data-rcalade]");if(rl)rcaKies(rl.dataset.rcalade);
+  const rv=e.target.closest("[data-rcavenster]");
+  if(rv){const w=rv.dataset.rcavenster;if(w==="weg"){RCAOUD=true;vRca();const el=$("#rcaweg");if(el)el.scrollIntoView({block:"start"})}else rcaKies(w,true,true)}
+  const ra=e.target.closest("[data-rcaalles]");
+  if(ra){RCAOPEN=new Set(ra.dataset.rcaalles==="1"?rcaPer(rcaItems().filter(x=>!x.gezien)).map(x=>x.w):[]);rcaOpenBewaar();vRca()}
+  if(e.target.closest("[data-rcaoud]")){RCAOUD=!RCAOUD;vRca()}
+  const rr=e.target.closest("[data-rcaregels]");if(rr){const x=rcaItems().find(y=>y.key===rr.dataset.rcaregels);if(x)openPaneel(rcaDetail(x.s))}
+  const rn=e.target.closest("[data-rcanaar]");if(rn){e.preventDefault();menu(false);if(HUIDIG==="rca")rcaKies(rn.dataset.rcanaar,true,true)}
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   const zb=e.target.closest("[data-zatbon]");if(zb)zatBonHaal(zb);
@@ -3108,7 +3121,8 @@ function vStart(){
   const todo=D.bestellijst.filter(r=>r.groep==="Nog niet besteld").length,o=D.opnamelijsten,gedaan=o.filter(r=>r.opname_gedaan).length;
   const kpi=(l,w,h,c)=>'<a class="kpi'+(c?" let":"")+'" href="#'+h+'"><span>'+esc(l)+"</span><b>"+esc(w)+"</b></a>";
   const reeks=[["Open","var(--none)"],["Te plannen","color-mix(in srgb,var(--info) 45%,var(--bg))"],["Uitzoeken voor bestelling","color-mix(in srgb,var(--wacht) 45%,var(--bg))"],["Besteld","var(--wacht)"],["Leverdatum","color-mix(in srgb,var(--wacht) 75%,var(--ink))"],["Gepland","var(--info)"]];
-  const rca=rcaSignalen().map(x=>({s:x}));
+  /* Wat de werkvoorbereider met Gezien wegzette, staat hier ook niet. TD heeft meta.gezien niet en ziet alle signalen. */
+  const rca=rcaItems().filter(x=>!x.gezien);
   const groepen=LIJNEN.map(l=>({l,r:open.filter(x=>lijnGroep(x)===l)})).filter(g=>g.r.length);
   const max=Math.max(...groepen.map(g=>g.r.length));
   const balken=groepen.map(g=>'<div class="balk"><span>'+esc(g.l)+'</span><div class="spoor" style="width:'+(g.r.length/max*100)+'%">'+reeks.map(([s,k])=>{const n=g.r.filter(x=>x.status===s).length;return n?'<i style="flex:'+n+";background:"+k+'" title="'+esc(g.l)+", "+esc(s)+": "+n+'"></i>':""}).join("")+'</div><span class="tot">'+g.r.length+"</span></div>").join("");
@@ -3136,7 +3150,6 @@ const TDGROEP=[
   {id:"deels",t:"Deels uitgevoerd",c:"oranje",kort:"plan de rest in",leeg:"alles is afgemaakt",u:"Niet alles is gedaan. Plan in wat nog moet gebeuren.",l:"Deels uitgevoerd"},
   {id:"afgemeld",t:"Afgemeld met opmerking",c:"groen",kort:"lees wat er staat",leeg:"geen opmerkingen",u:"Lees wat de monteur schreef: misschien is er een vervolg nodig.",l:"Afgemeld met opmerking"},
   {id:"pmopm",t:"Opmerking bij PM-bon",c:"wit",kort:"beslis wat ermee moet",leeg:"geen opmerkingen",u:"Er is geen bon van gemaakt. Beslis wat ermee moet.",l:""},
-  {id:"rca",t:"RCA-signaal",c:"rood",kort:"zoek de oorzaak",leeg:"geen herhaling",u:"Herhaling of veel stilstand in het dienstrapport. Zoek de oorzaak.",l:""},
   {id:"binnen",t:"Onderdelen binnen",c:"groen",kort:"geef een dag",leeg:"niets binnengekomen",u:"Alles is binnen. Kies Gepland en een dag.",l:"Onderdelen binnen"},
   {id:"klopt",t:"Klopt niet",c:"oranje",kort:"zet dag of status recht",leeg:"alles klopt",u:"Geef een nieuwe dag of de juiste status.",l:"Klopt niet"},
   {id:"nieuw",t:"Nieuwe bonnen controleren",c:"wit",kort:"nog niet gecontroleerd",leeg:"alles gecontroleerd",u:"Automatisch gemaakt en nog niet gecontroleerd.",l:"Nog controleren",gz:"Gecontroleerd"},
@@ -3246,6 +3259,61 @@ const rcaKolommen=gezien=>[
   {k:"m",l:"Machine",c:"m-main",x:"titel",r:x=>esc(x.s.machine||"Regels zonder machine")+'<span class="bonplek">'+esc(x.s.waar)+"</span>"},
   {k:"w",l:"Waarom",w:"34%",c:"m-sub",r:x=>esc(x.s.w.join(", "))},
   {k:"l",l:"Laatste",w:"80px",c:"m-sub",ml:"Laatste",r:x=>esc(x.s.laatste.slice(0,5))}].concat(gezien?[{k:"g",l:"",w:"120px",c:"m-sub",r:x=>'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>'}]:[]);
+/* ---- RCA-signalen: een eigen pagina met een eigen menutje, los van Te doen ----
+   Per lijn een venster en een lade, met per machine waarom er een signaal is, de open bonnen en de regels uit het dienstrapport.
+   Gezien werkt zoals op Te doen, met dezelfde sleutel (rca:lijn|machine|laatste dag|aantal regels): een nieuwe regel in het dienstrapport maakt het signaal weer zichtbaar.
+   Alleen de werkvoorbereider zet weg; de kijkinlog ziet dezelfde lijst. In het menu staat het aantal signalen, en op deze pagina eronder de lijnen. */
+const RCA_WAAR=["Lijn 1","Lijn 2","Lijn 3","Inpak","Ompak"],RCA_LADEN="td-hub-rcaladen";
+let RCAOPEN,RCAOUD=false;
+const rcaItems=()=>rcaSignalen().map(s=>{const key="rca:"+s.waar+"|"+s.machine+"|"+s.laatste+"|"+s.r.length;return{key,s,gezien:tdGezien(key)}});
+const rcaPer=r=>RCA_WAAR.concat(uniek(r.map(x=>x.s.waar)).filter(w=>!RCA_WAAR.includes(w))).map(w=>({w,l:r.filter(x=>x.s.waar===w)}));
+const rcaId=w=>"rca-"+norm(w).replace(/[^a-z0-9]+/g,"-");
+function rcaOpen(){
+  if(RCAOPEN===undefined){let l=null;try{l=JSON.parse(localStorage.getItem(RCA_LADEN)||"null")}catch(_){}RCAOPEN=Array.isArray(l)?new Set(l):null}
+  return RCAOPEN;
+}
+function rcaOpenBewaar(){try{localStorage.setItem(RCA_LADEN,JSON.stringify([...RCAOPEN]))}catch(_){}}
+function rcaTel(){
+  const t=$("#rcatel"),v=$("#rcasub");if(!t&&!v)return;
+  const open=rcaItems().filter(x=>!x.gezien);
+  if(t){t.textContent=open.length;t.hidden=!open.length}
+  if(v){const per=HUIDIG==="rca"?rcaPer(open).filter(x=>x.l.length):[];v.hidden=!per.length;v.innerHTML=per.map(({w,l})=>'<a href="#rca" class="tdsub" data-rcanaar="'+esc(w)+'" style="--c:var(--crit)"><i></i>'+esc(w)+"<em>"+l.length+"</em></a>").join("")}
+}
+function rcaRegel(x){
+  const s=x.s,b=rcaBonnen(s);
+  const bonnen=b.length?(b.length===1?"Open bon: ":"Open bonnen: ")+b.map(c=>'<button type="button" class="tekstknop" data-tdcm="'+esc(c.nr)+'">'+esc(c.nr)+"</button>").join(", "):"Nog geen open bon voor deze machine";
+  return'<article class="tdr rca"><div class="tdr-info"><div><span class="tdr-titel"><b>'+esc(s.machine||"Regels zonder machine")+'</b></span><span class="tdr-waarom">'+esc(hoofd(s.w.join(", ")))+'</span><span class="tdr-plek">'+bonnen+'</span></div><div class="tdr-rechts"><span>Laatste op '+esc(s.laatste.slice(0,5))+"</span></div></div>"+
+    '<div class="tdr-bedien"><div class="acties"><button type="button" class="knop" data-rcaregels="'+esc(x.key)+'">Bekijk de regels</button>'+(tdMag()?'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>':"")+"</div></div></article>";
+}
+function rcaLade(w,l,open){
+  const id=rcaId(w),x=l[0],vb=open?"Herhaling of veel stilstand in het dienstrapport. Zoek de oorzaak.":"<b>"+esc(x.s.machine||"Zonder machine")+"</b> "+esc(x.s.w.join(", "))+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
+  return'<section class="lade'+(open?" open":"")+'" id="'+id+'" style="--c:'+TDKLEUR.rood+'"><h2 class="ladekop"><button type="button" class="ladeknop" data-rcalade="'+esc(w)+'" aria-expanded="'+open+'" aria-controls="'+id+'-in"><span class="strip"></span><span class="led"></span><span class="naam">'+esc(w)+'</span><span class="uitlees" aria-hidden="true">'+seg7(l.length,22)+'</span><span class="ladevb">'+vb+'</span><span class="hendel" aria-hidden="true">'+ico("omlaag")+'</span><span class="vh">, '+l.length+(l.length===1?" signaal":" signalen")+"</span></button></h2>"+
+    '<div class="ladeinhoud" id="'+id+'-in">'+(open?l.map(rcaRegel).join(""):"")+"</div></section>";
+}
+function vRca(){
+  const r=rcaItems(),open=r.filter(x=>!x.gezien),weg=r.filter(x=>x.gezien),per=rcaPer(open),kan=tdMag();
+  if(!rcaOpen()){const e=per.find(x=>x.l.length);RCAOPEN=new Set(e?[e.w]:[])}
+  const met=per.filter(x=>x.l.length),leeg=per.filter(x=>!x.l.length);
+  const sub="Herhaling of veel stilstand in het dienstrapport van productie, de laatste "+RCA_DAGEN+" dagen. "+(open.length?(open.length===1?"1 signaal":open.length+" signalen")+(met.length>1?" bij "+met.length+" lijnen.":"."):"Er is nu geen signaal.");
+  let h='<div class="tdkop"><div><h1>RCA-signalen</h1><p>'+esc(sub)+"</p></div>"+(met.length>1?'<div class="headknoppen"><button type="button" class="knop" data-rcaalles="1">Alles open</button><button type="button" class="knop" data-rcaalles="0">Alles dicht</button></div>':"")+"</div>";
+  h+='<section class="meldpaneel" aria-label="Lijnen">'+per.map(({w,l})=>{const aan=l.length>0;return'<button type="button" class="venster'+(aan?" aan":"")+'" style="--c:'+TDKLEUR.rood+'" data-rcavenster="'+esc(w)+'" aria-label="'+esc(w+": "+l.length)+'"'+(aan?"":" disabled")+'><span><span class="leg">'+esc(w)+'</span><span class="sub">'+esc(aan?(l.length===1?"1 machine":l.length+" machines"):"geen herhaling")+'</span></span><span class="cijfer">'+seg7(l.length,40)+"</span></button>"}).join("")+
+    (kan?'<button type="button" class="venster terug" data-rcavenster="weg" aria-label="Weggezet: '+weg.length+'"'+(weg.length?"":" disabled")+'><span><span class="leg">Weggezet</span><span class="sub">met Gezien, terugzetten kan</span></span><span class="cijfer">'+seg7(weg.length,40)+"</span></button>":"")+"</section>";
+  h+=met.length?'<div class="laden">'+met.map(({w,l})=>rcaLade(w,l,RCAOPEN.has(w))).join("")+"</div>":'<div class="tdleeg">Er is nu geen herhaling of lange stilstand in het dienstrapport.</div>';
+  if(met.length&&leeg.length)h+='<p class="legeregel"><span class="led"></span>Geen signaal bij '+esc(lijstTekst(leeg.map(x=>x.w)))+".</p>";
+  if(kan&&weg.length)h+='<section class="tdweg" id="rcaweg"><button type="button" class="tekstknop" data-rcaoud aria-expanded="'+RCAOUD+'">'+(RCAOUD?"Verbergen wat je hebt weggezet":"Weggezet met Gezien ("+weg.length+")")+"</button>"+(RCAOUD?'<ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(x.s.waar+", "+(x.s.machine||"zonder machine")+": "+x.s.w.join(", "))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul>":"")+"</section>";
+  h+='<p class="rcauitleg">Een signaal komt bij 3 storingen aan dezelfde machine, meer dan 4 uur stilstand of één stilstand van meer dan 2 uur in '+RCA_DAGEN+" dagen. Veiligheid en voedselveiligheid geven altijd een signaal."+(kan?" Met Gezien verdwijnt een signaal tot er een nieuwe regel bij komt.":"")+"</p>";
+  $("#view").innerHTML=h;
+}
+/* Een lade openen of dicht doen. Een venster of een lijn in het menu opent zijn lade en springt erheen. */
+function rcaKies(w,stand,spring){
+  const o=rcaOpen()||(RCAOPEN=new Set());
+  if(stand===undefined)stand=!o.has(w);
+  if(stand)o.add(w);else o.delete(w);
+  rcaOpenBewaar();vRca();
+  const el=document.getElementById(rcaId(w));
+  if(spring&&el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  const k=[...document.querySelectorAll("[data-rcalade]")].find(x=>x.dataset.rcalade===w);if(k&&!spring)k.focus();
+}
 function tdItems(alles){
   if(!tdMag())return[];
   const uit=[],bev=PMBEV||[],bevIds=new Set(bev.map(x=>x.id)),zonderPrio=c=>c.status==="Open"&&!c.prio;
@@ -3263,7 +3331,6 @@ function tdItems(alles){
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
   bev.forEach(x=>{const nr=bonVan(x.id),c=nr?(D.cm||[]).find(y=>y.nr===nr)||null:null;if(c?zonderPrio(c):tdRecent(x.tijd))zet("afgekeurd","bev:"+x.id,{c,bev:x,b:tdPm(x.nr),tijd:x.tijd,door:x.door,tekst:x.opmerking})});
   (PMAF||[]).forEach(a=>{const b=tdPm(a.nr);if(a.status==="Deels uitgevoerd")zet("deels","pmd:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking});else if(a.opmerking&&tdRecent(a.tijd))zet("pmopm","pmo:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking})});
-  rcaSignalen().forEach(x=>zet("rca","rca:"+x.waar+"|"+x.machine+"|"+x.laatste+"|"+x.r.length,{s:x,tijd:x.laatste}));
   /* Een bon die al in een andere groep staat, komt niet nog eens bij Klopt niet of het prio-voorstel. */
   const al=new Set(uit.filter(x=>x.c&&!x.gezien).map(x=>x.c.nr));
   (D.cm||[]).forEach(c=>{if(al.has(c.nr))return;const w=kloptNiet(c);if(w.length){const d=knDag(c);zet("klopt","kn:"+c.nr+":"+(d?d.t:"")+":"+c.status,{c,tijd:"",tekst:w.join(". ")});al.add(c.nr)}});
@@ -3272,6 +3339,7 @@ function tdItems(alles){
 }
 const tdSleutels=r=>(MELDFOUT?"!":"")+(r||tdItems(true)).map(x=>x.key+(x.gezien?"*":"")).join("|");
 function tdTel(){
+  rcaTel();
   if(!tdMag())return;
   const r=tdItems(),n=r.filter(x=>x.groep!=="prio").length,t=$("#tdtel"),s=$("#tdstip");
   TDMAP={};r.forEach(x=>{if(x.c&&!TDMAP[x.c.nr])TDMAP[x.c.nr]=x.groep});
@@ -3290,7 +3358,7 @@ function tdMenu(r){
 const tdLabel=c=>{const g=tdMag()&&TDMAP[c.nr],x=g&&TDGROEP.find(y=>y.id===g);return x&&x.l?'<span class="tdlabel">'+esc(x.l)+"</span>":""};
 const tdPlek=x=>x.c?[x.c.lijn,x.c.machine].filter(Boolean).join(", "):x.b?pmPlek(x.b):"";
 const tdReg=x=>{const nr=x.a?x.a.nr:x.bev?x.bev.nr:"";return nr?(pmAf(nr)||{}).reg||"":""};
-const tdKopTekst=x=>{const g=TDGROEP.find(y=>y.id===x.groep);return[g.t,x.s?x.s.waar+", "+(x.s.machine||"zonder machine"):x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||"",x.s?x.s.w.join(", "):x.c?x.c.omschrijving:x.tekst].filter(Boolean).join(" · ")};
+const tdKopTekst=x=>{const g=TDGROEP.find(y=>y.id===x.groep);return[g.t,x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||"",x.c?x.c.omschrijving:x.tekst].filter(Boolean).join(" · ")};
 /* ---- Te doen als controlepaneel ---- */
 /* Zevensegmentcijfers zoals op een paneelmeter: onverlichte segmenten blijven vaag zichtbaar. */
 const SEG7={a:[30,6,"h"],b:[53,28,"v"],c:[53,72,"v"],d:[30,94,"h"],e:[7,72,"v"],f:[7,28,"v"],g:[30,50,"h"]},CIJFER7={"0":"abcdef","1":"bc","2":"abged","3":"abgcd","4":"fgbc","5":"afgcd","6":"afgedc","7":"abc","8":"abcdefg","9":"abfgcd"," ":""};
@@ -3313,8 +3381,8 @@ const lijstTekst=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" en "+a[a.le
 /* Dicht laat een lade in één regel zien wat het eerst aandacht vraagt. */
 function tdVoorbeeld(g,l,open){
   if(open)return esc(g.u);
-  const x=l[0],nr=x.s?x.s.machine||x.s.waar:x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"";
-  const tekst=x.s?(x.s.machine?x.s.waar+": ":"")+x.s.w.join(", "):x.bev?x.bev.opmerking||x.bev.naam:x.c?(["beoordelen","klopt","deels","afgemeld"].includes(g.id)&&x.tekst?x.c.omschrijving+". "+x.tekst:x.c.omschrijving):x.tekst||"";
+  const x=l[0],nr=x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"";
+  const tekst=x.bev?x.bev.opmerking||x.bev.naam:x.c?(["beoordelen","klopt","deels","afgemeld"].includes(g.id)&&x.tekst?x.c.omschrijving+". "+x.tekst:x.c.omschrijving):x.tekst||"";
   return(nr?"<b>"+esc(nr)+"</b> ":"")+esc(tekst)+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
 }
 /* De bediening van een bon: status met de kalender, prio en de monteursapp. Dezelfde velden en dezelfde wachtrij als op CM-bonnen en in de planning. */
@@ -3323,8 +3391,7 @@ function tdRegel(x,g){
   const c=x.c,b=x.b,id=g.id,reg=tdReg(x),feit=[],knop=[];
   let nr=c?c.nr:reg||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"",titel=c?c.omschrijving:x.tekst||"",plek=tdPlek(x),waarom="",best="",fotos=[];
   const wie=[[x.door,x.tijd?tdWanneer(x.tijd):""].filter(Boolean).join(", "),c&&reg?reg:""].filter(Boolean).join(" · ");
-  if(id==="rca"){nr=x.s.waar;titel=x.s.machine||"Regels zonder machine";plek="";waarom=hoofd(x.s.w.join(", "))+". Laatste op "+x.s.laatste.slice(0,5)+".";knop.push(["Bekijk de regels","data-tdrca",x.key])}
-  else if(id==="beoordelen"||id==="klopt")waarom=x.tekst;
+  if(id==="beoordelen"||id==="klopt")waarom=x.tekst;
   else if(id==="opname"){
     const o=c.opname||{};
     feit.push(["Opgenomen",(o.regels||[]).length?"<ul>"+o.regels.map(y=>"<li>"+esc([y.onderdeel,y.spec].filter(Boolean).join(": ")+(y.aantal?" ("+y.aantal+" st.)":""))+"</li>").join("")+"</ul>":of(null)]);
@@ -3402,7 +3469,7 @@ function tdFotos(){document.querySelectorAll("#view [data-tdfoto]").forEach(k=>{
 async function tdZet(key,terug){
   const oud=GEZIEN_LIVE[key],her=()=>{tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]()};
   GEZIEN_LIVE[key]=!terug;her();
-  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";melder(terug?"Staat weer bij Te doen":"Weggezet. Terugzetten kan onderaan Te doen.")}
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";const plek=key.startsWith("rca:")?"RCA-signalen":"Te doen";melder(terug?"Staat weer bij "+plek:"Weggezet. Terugzetten kan onderaan "+plek+".")}
   catch(_){if(oud===undefined)delete GEZIEN_LIVE[key];else GEZIEN_LIVE[key]=oud;her();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
 /* Bon maken vult Nieuwe bon met de lijn, het lijndeel en de opmerking. Na het versturen staat de regel op Gezien. */
@@ -3754,14 +3821,14 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={tedoen:vTeDoen,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={tedoen:vTeDoen,rca:vRca,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- menu ---- */
 /* De werkvoorbereider deelt zijn menu zelf in met Menu indelen. Dat geldt ook voor de kijkinlog, die hetzelfde deel leest.
    De indeling gaat via de wachtrij als status-MENU.txt met rij.menu en komt daarna in meta.menu. Te doen staat standaard bovenaan Werkvoorbereiding; bij de kijkinlog staat het Overzicht bovenaan.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","rca","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
@@ -3785,7 +3852,7 @@ function markeerMenu(){
   document.querySelectorAll("#nav .klapgroep").forEach(g=>{if(g.dataset.groep.split(" ").includes(HUIDIG)){g.classList.add("open");g.querySelector("[data-navklap]").setAttribute("aria-expanded","true")}});
 }
 function bouwMenu(){
-  const lnk=p=>p.id==="tedoen"?'<a href="#tedoen" data-v="tedoen">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div>':'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="sqd"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
+  const lnk=p=>p.id==="tedoen"?'<a href="#tedoen" data-v="tedoen">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="tdtel" hidden></span></a><div id="tdsub" hidden></div>':p.id==="rca"?'<a href="#rca" data-v="rca">'+ico(p.i)+esc(p.t)+'<span class="tdtel" id="rcatel" hidden></span></a><div id="rcasub" hidden></div>':'<a href="#'+p.id+'" data-v="'+p.id+'">'+ico(p.i)+esc(p.t)+(p.id==="sqd"?'<span class="tdtel" id="altel" hidden></span>':"")+"</a>";
   const sec=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie">'+(k?'<span class="kopje">'+esc(k)+"</span>":"")+a.map(lnk).join("")+"</div>":""};
   const klap=(k,l)=>{const a=l.filter(Boolean);return a.length?'<div class="sectie"><div class="klapgroep" data-groep="'+a.map(p=>p.id).join(" ")+'"><button type="button" class="klapkop" data-navklap aria-expanded="false">'+ico("lijst")+"<span>"+esc(k)+"</span>"+ico("omlaag")+'</button><div class="klapsub">'+a.map(lnk).join("")+"</div></div></div>":""};
   let h;
@@ -3859,7 +3926,7 @@ function route(){
   }
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();
-  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd"].includes(HUIDIG));
+  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca"].includes(HUIDIG));
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
