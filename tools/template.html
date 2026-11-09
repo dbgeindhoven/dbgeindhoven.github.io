@@ -3403,7 +3403,9 @@ function tdVoorbeeld(g,l,open){
   return(nr?"<b>"+esc(nr)+"</b> ":"")+esc(tekst)+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
 }
 /* De bediening van een bon: status met de kalender, prio en de monteursapp. Dezelfde velden en dezelfde wachtrij als op CM-bonnen en in de planning. */
-const bonBediening=(c,g)=>'<div class="bdl"><span>Status</span>'+statusVeld(c)+"</div>"+(isOpen(c)?'<div class="bdl"><span>Prio</span>'+prioKeuze(c)+'</div><div class="bdl"><span>Monteursapp</span>'+weekKnop(c)+"</div>":"")+(g.id==="prio"||g.id==="nieuw"&&!c.prio?'<div class="bdl"><span>Voorstel</span>'+pvCel(c)+"</div>":"");
+/* Plannen op: een dag uit de kalender zet de bon op die dag in de onderhoudsplanning en op Gepland, ook als de status nog Open of Te plannen is. Een bon die al gepland is, verschuif je met de dag bij de status. */
+const planDagVeld=c=>wvMag()&&isOpen(c)&&c.status!=="Gepland"?'<div class="bdl"><span>Plannen op</span><input type="date" class="zatinvoer stdatum" data-stdatum="'+esc(c.nr)+'" data-stnieuw="Gepland" min="'+n0()+'" aria-label="'+esc("Plannen op voor "+c.nr)+'"></div>':"";
+const bonBediening=(c,g)=>'<div class="bdl"><span>Status</span>'+statusVeld(c)+"</div>"+planDagVeld(c)+(isOpen(c)?'<div class="bdl"><span>Prio</span>'+prioKeuze(c)+'</div><div class="bdl"><span>Monteursapp</span>'+weekKnop(c)+"</div>":"")+(g.id==="prio"||g.id==="nieuw"&&!c.prio?'<div class="bdl"><span>Voorstel</span>'+pvCel(c)+"</div>":"");
 function tdRegel(x,g){
   const c=x.c,b=x.b,id=g.id,reg=tdReg(x),feit=[],knop=[];
   let nr=c?c.nr:reg||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"",titel=c?c.omschrijving:x.tekst||"",plek=tdPlek(x),waarom="",best="",fotos=[];
