@@ -1546,17 +1546,18 @@ function cDagKies(el){
   if(el.dataset.stnieuw){if(t){cBonSt(c,"Gepland",t);cTekenBon(c.nr,{opnieuw:true,dag:true,bron:el})}return}
   cBonSt(c,cStatus(c),t);cTekenBon(c.nr,{bron:el});
 }
-/* Bij een bon op een plan staat de prio ook op de regel van het plan (zatPrio). */
-function cPrioKies(nr,waarde){
+/* Vergelijk met wat het veld toonde: het prioveld van een bon toont de prio van de bon, de regel in de planning de prio van het plan (zatPrio, bij een melding die van het SQD-bord).
+   Die kunnen verschillen; vergelijken met de verkeerde liet een gekozen prio terugspringen naar Geen prio. */
+function cPrioKies(nr,waarde,opPlan){
   const c=zatBon(nr);if(!c)return;
   const op=planVanBon(nr),r=op?planRijen(op).find(x=>x.nr===nr):null;
-  cZet("bon",nr,{prio:waarde?Number(waarde):null},{prio:r?zatPrio(r):c.prio||null});
+  cZet("bon",nr,{prio:waarde?Number(waarde):null},{prio:opPlan&&r?zatPrio(r):c.prio||null});
   cVeldenBon(nr);
 }
 /* Uren en uitvoerder op een regel van de planning. */
 function cZatKies(v){
   const nr=v.dataset.nr,soort=v.dataset.zat,r=zatRijen().find(x=>x.nr===nr);if(!r)return;
-  if(soort==="prio"){cPrioKies(nr,v.value);return}
+  if(soort==="prio"){cPrioKies(nr,v.value,true);return}
   if(soort==="uren"){
     const u=v.value.trim().replace(",","."),n=u===""?null:Number(u);
     if(u!==""&&!(n>=0&&n<=100)){const p=cv("bon",nr);v.value=urenTekst("uren" in p?p.uren:r.uren);melder("Vul de uren in als getal, bijvoorbeeld 1,5.");return}
@@ -1635,9 +1636,11 @@ function cVeldenBestel(id){
 /* Opslaan: per bon eerst de status met de dag, dan prio, uren en uitvoerder. Dezelfde stappen en dezelfde wachtrij als toen elk veld meteen opsloeg. */
 async function cBonOpslaan(x){
   const c=zatBon(x.id),p=x.v;if(!c)return;
+  let prioMee=false;
   if("status" in p||"dag" in p){
     const s=statusNorm(p.status||c.status),dag="dag" in p?p.dag:undefined;
-    if(s==="Gepland"){if(!(c.status==="Gepland"&&bonDag(c)===dag))pasBonToe(await planZet(c,await planVoor(dag),"Gepland"))}
+    /* Plannen neemt een gekozen prio meteen mee: één bestand minder. */
+    if(s==="Gepland"){if(!(c.status==="Gepland"&&bonDag(c)===dag)){pasBonToe(await planZet(c,await planVoor(dag),"Gepland","prio" in p?p.prio:undefined));prioMee="prio" in p}}
     else if(KLAAR.includes(s)&&s===c.status){if(dag!==undefined&&dag!==stDag(c))await bonDatumZet(c,dag)}
     else if(s!==c.status||(dag!==undefined&&dag!==stDag(c)))await bonStatusZet(c,s,dag||"");
   }
@@ -1646,7 +1649,8 @@ async function cBonOpslaan(x){
     const r=planRijen(op).find(y=>y.nr===c.nr),o=ZATOPEN[c.nr]||{},oud={prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren};
     const z=Object.assign(o.nieuw?{nieuw:o.nieuw}:{},op.id?{plan:op.id}:{},{datum:op.datum},oud);
     ["prio","uren","uitvoerder"].forEach(f=>{if(f in p)z[f]=p[f]});
-    if(!cGelijk(z.prio,oud.prio)||!cGelijk(z.uren,oud.uren)||z.uitvoerder!==oud.uitvoerder){pasBonToe(await zatStuur(r,z));c.prio=z.prio}
+    /* Een gekozen prio gaat altijd mee: de prio van de melding kan al gelijk zijn terwijl de bon en de regel er nog geen hebben. */
+    if(("prio" in p&&!prioMee)||!cGelijk(z.uren,oud.uren)||z.uitvoerder!==oud.uitvoerder){pasBonToe(await zatStuur(r,z));c.prio=z.prio}
     if("prio" in p)zatPrioNaarMelding(c.nr,z.prio);
   }else if("prio" in p&&!cGelijk(p.prio,c.prio)){
     const w={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(Object.assign({},c,{prio:p.prio}))),{prioset:p.prio?String(p.prio):""})};
@@ -1783,6 +1787,30 @@ document.addEventListener("keydown",e=>{
   if(!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||String(e.key).toLowerCase()!=="s"||$("#app").hidden)return;
   e.preventDefault();cOpslaan();
 });
+/* Het SQD-bord is leidend. De prio van een melding met code SQDM-n geldt ook voor de bon met dat nummer: de site toont hem meteen bij iedereen,
+   en bij de werkvoorbereider gaat hij als bonstatus (door SQD-bord) de wachtrij in, zodat de geplande taak hem op de bon en het plan zet.
+   Andersom zet een prio die de werkvoorbereider kiest ook het bord (zatPrioNaarMelding); zo'n bon slaat dit 3 minuten over, tot het bord bij is.
+   Een lege prio op het bord laat de bon zoals hij is. Een prio die nog klaarstaat gaat voor. */
+const BORDSYNC={},PRIOVERS={};
+function bordPrio(){
+  if(!MELDINGEN||!(D.cm||[]).length)return;
+  const sturen=[];
+  MELDINGEN.forEach(m=>{
+    const p=String(m.prio||"");if(!["1","2","3"].includes(p)||!m.code||["TD","CM"].includes(m.letter))return;
+    const c=zatBon(m.code);if(!c||GESLOTEN.includes(c.status)||cIn("bon",c.nr,"prio")||Date.now()-(PRIOVERS[c.nr]||0)<18e4)return;
+    const n=Number(p),op=planVanBon(c.nr),r=op?planRijen(op).find(x=>x.nr===c.nr):null;
+    if(c.prio===n&&(!r||r.prio===n))return;
+    c.prio=n;if(r)r.prio=n;
+    if(wvMag()&&!alleenKijken()&&BORDSYNC[c.nr]!==n){BORDSYNC[c.nr]=n;sturen.push(c)}
+  });
+  sturen.forEach(bordPrioStuur);
+}
+function bordPrioStuur(c){
+  const n=c.prio,op=planVanBon(c.nr),r=op?planRijen(op).find(x=>x.nr===c.nr):null,o=ZATOPEN[c.nr]||{};
+  const w=r?{nr:c.nr,status:c.status,rij:Object.assign({},storingRij(c),{zat:Object.assign(o.nieuw?{nieuw:o.nieuw}:{},op.id?{plan:op.id}:{},{datum:op.datum,prio:n,uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren})})}
+    :{nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(c)),{prioset:String(n)})};
+  zatKeten=zatKeten.then(()=>stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:"SQD-bord"},w))).then(()=>{pasBonToe(w);weekSync(c)}).catch(()=>{if(BORDSYNC[c.nr]===n)delete BORDSYNC[c.nr]});
+}
 /* Naar een andere pagina: de lijst en de vraag gaan dicht, wat klaarstaat blijft. */
 addEventListener("hashchange",()=>{if(C_LIJST||C_VRAAG){C_LIJST=C_VRAAG=false;cBalk()}});
 addEventListener("beforeunload",e=>{if(CONCEPT.size){e.preventDefault();e.returnValue=""}});
@@ -1850,7 +1878,7 @@ async function haalMeldingen(){
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
     MELDFOUT=false;LIVE_TIJD=new Date();standTeken();const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[],j.pm||[],j.bevindingen||[]]);
-    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
+    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);bordPrio();NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;standTeken();if(!fout)herteken()}
 }
 async function stuur(d){
@@ -2536,7 +2564,7 @@ function openDetailMelding(m){
     if(opl.length>MAX_ACTIE){f.textContent="De acties zijn te lang om op te slaan. Maak de tekst korter.";f.hidden=false;return}
     k.disabled=true;
     const d={id:m.id,prio:$("#o_prio").value,oplossing:opl,lijn:$("#o_lijn").value,machine:$("#o_mach").value.trim(),actiehouder:$("#o_actie").value.trim(),datum:$("#o_dat").value.split("-").reverse().join("-"),bon_nodig:$("#o_bon").checked};
-    try{await stuur(Object.assign({actie:"bijwerken"},d));Object.assign(m,d,{bon_nodig:d.bon_nodig?"Ja":"Nee"});laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Opvolging opgeslagen")}
+    try{await stuur(Object.assign({actie:"bijwerken"},d));Object.assign(m,d,{bon_nodig:d.bon_nodig?"Ja":"Nee"});bordPrio();laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Opvolging opgeslagen")}
     catch(_){$("#m_fout").hidden=false;k.disabled=false}
   });
   if($("#m_bord"))$("#m_bord").addEventListener("click",async e=>{
@@ -3018,9 +3046,9 @@ function pasZatToe(nr,z){
 }
 /* Op volgorde versturen: een latere wijziging aan dezelfde bon vervangt de eerdere. */
 /* Zet een bon op een lijst. Staat hij al op een andere lijst, dan gaan prio, uren en uitvoerder mee. */
-function planZet(c,s,status){
+function planZet(c,s,status,prio){
   const oud=plannen().flatMap(planRijen).find(x=>x.nr===c.nr),nieuw={lijst:/^preventief/i.test(c.omschrijving||"")?"preventief":"correctief",werkzaamheid:oud?oud.werkzaamheid:c.omschrijving,lijn_machine:oud?oud.lijn_machine:[c.lijn,c.machine].filter(Boolean).join(" / ")};
-  return zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw}),null,status);
+  return zatStuur({nr:c.nr},Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,prio:prio!==undefined?prio:c.prio||null,uitvoerder:oud&&oud.uitvoerder||"",uren:oud&&oud.uren!=null?oud.uren:null,nieuw}),null,status);
 }
 function zatStuur(r,z,extra,eigen){
   if(z.nieuw)delete UITOPEN[r.nr];
@@ -3032,7 +3060,7 @@ function zatStuur(r,z,extra,eigen){
 }
 function zatPrioNaarMelding(nr,p){
   const m=zatMelding(nr);if(!m||String(m.prio||"")===String(p||""))return;
-  m.prio=p?String(p):"";laatste="";
+  m.prio=p?String(p):"";laatste="";PRIOVERS[nr]=Date.now();
   zatKeten=zatKeten.then(()=>stuur({actie:"prio",lijst:[{id:m.id,prio:p||""}]})).catch(()=>{melder("De prio op het SQD-bord is niet aangepast. Probeer het opnieuw.")});
 }
 function zatTotaalHtml(){
@@ -3807,7 +3835,7 @@ async function bewaarPrio(){
   alBezig=true;alTekst="Prio's opslaan.";vActielijst();
   try{
     await stuur({actie:"prio",lijst:l.map(y=>({id:y.m.id,prio:alPrio(y.x,y.m)}))});
-    l.forEach(y=>{y.m.prio=alPrio(y.x,y.m)});
+    l.forEach(y=>{y.m.prio=alPrio(y.x,y.m)});bordPrio();
     alTekst="";melder("Prio's opgeslagen");
   }catch(_){alTekst="Prio's opslaan is niet gelukt. Staat het nieuwe script er al? Probeer het daarna opnieuw."}
   alBezig=false;laatste="";if(HUIDIG==="actielijst"&&$("#paneel").hidden)vActielijst();
