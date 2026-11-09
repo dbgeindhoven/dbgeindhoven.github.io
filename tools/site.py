@@ -60,7 +60,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), kijk (alles van wv, alleen lezen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen) of output (alleen het outputformulier)."""
+    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), kijk (alles van wv, alleen lezen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen), output (alleen het outputformulier) of productie (alleen de productie-app, pilot)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -76,7 +76,7 @@ def setkey(a):
         pub.setdefault("monteurs", {})[a.naam] = b64(key)
         p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
         return
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "kijk": "sleutel_kijk", "output": "sleutel_output", "pm": "sleutel_pm"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "kijk": "sleutel_kijk", "output": "sleutel_output", "pm": "sleutel_pm", "productie": "sleutel_productie"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -125,6 +125,36 @@ def machines(data):
         uit.setdefault(r.get("lijn") or "Overig", []).append(r["machine"])
     for lijn, namen in (data["meta"].get("machines_extra") or {}).items():
         uit.setdefault(lijn, []).extend(n for n in namen if n not in uit.get(lijn, []))
+    return uit
+
+
+PROD_ALGEMEEN = re.compile(r"^(l ?\d|lijn ?\d|inpak/ompak|inpak|ompak|-)?$", re.I)
+
+
+def prod_machines(data):
+    """Productie-app (pilot): de machines per lijn en voor inpak en ompak zoals ze in het dienstrapport staan, zodat een storing dezelfde naam krijgt.
+    Algemene namen (L1, L2, L3, Inpak/ompak) tellen niet. Bij verschillende schrijfwijzen wint de vaakst gebruikte."""
+    tel = {}
+    for r in (data.get("output") or {}).get("rapport") or []:
+        m = str(r.get("machine") or "").strip()
+        if r.get("waar") not in ("Lijn 1", "Lijn 2", "Lijn 3", "Inpak", "Ompak") or PROD_ALGEMEEN.match(m):
+            continue
+        w = tel.setdefault(r["waar"], {}).setdefault(m.lower(), {})
+        w[m] = w.get(m, 0) + 1
+    return {waar: sorted((max(v, key=v.get) for v in namen.values()), key=str.lower) for waar, namen in tel.items()}
+
+
+def prod_plan(data, stand):
+    """De planning per lijn uit de productieorders, van een week terug tot twee weken vooruit. De app toont hem bij de output."""
+    nu = datetime.datetime.strptime(stand, "%d-%m-%Y")
+    uit = []
+    for r in (data.get("output") or {}).get("plan") or []:
+        try:
+            d = datetime.datetime.strptime(r.get("datum") or "", "%d-%m-%Y")
+        except ValueError:
+            continue
+        if -7 <= (d - nu).days <= 14:
+            uit.append({k: r.get(k) for k in ("datum", "lijn", "kg")})
     return uit
 
 
@@ -207,6 +237,7 @@ def build(a):
     monteur_sleutel = mld.pop("sleutel_monteur", None)
     output_sleutel = mld.pop("sleutel_output", None)
     pm_sleutel = mld.pop("sleutel_pm", None)
+    productie_sleutel = mld.pop("sleutel_productie", None)
     kijk_sleutel = mld.pop("sleutel_kijk", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
@@ -218,6 +249,7 @@ def build(a):
     wv = copy.deepcopy(td)
     # RCA analyse: de feiten en het effect van een maatregel kijken verder terug dan het RCA-signaal.
     wv["output"] = kort_rapport(data.get("output"), 120)
+    wv["prodmachines"] = prod_machines(data)  # productie (pilot): voor Verbeteren op de pagina Diensten
     td.pop("rca", None)  # RCA analyse is voor werkvoorbereider en kijkinlog
     mld.pop("sleutel_wv", None)
     td["meta"].pop("actielijst", None)
@@ -255,6 +287,9 @@ def build(a):
     if pub.get("sleutel_pm"):
         # Alleen de PM-bonnen en een sleutel die niets anders kan dan die bonnen afmelden.
         boxes.append(box({"niveau": "pm", "naam": data["meta"].get("pm_monteur") or "Monteur", "pmplan": pm.monteur_deel(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": pm_sleutel}}}, pub["sleutel_pm"]))
+    if pub.get("sleutel_productie") and productie_sleutel:
+        # Productie-app (pilot): de machines uit het dienstrapport en de planning. Geen andere lijsten; de sleutel kan alleen het tabblad Productie lezen en schrijven.
+        boxes.append(box({"niveau": "productie", "machines": prod_machines(data), "plan": prod_plan(data, a.stand), "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": productie_sleutel}}}, pub["sleutel_productie"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes, "deel": deel}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
@@ -304,7 +339,7 @@ def weekbonnen(data, stand, kopie):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm", "productie"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

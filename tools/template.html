@@ -262,6 +262,113 @@ html.present .deelkop .knop{display:none}
 #minhoud{flex:1;min-width:0;padding:16px;border-radius:24px;background:var(--glas);border:1px solid var(--glas-rand);box-shadow:var(--glas-schaduw)}
 #minhoud .meldform{padding:0}
 #monteurscherm .merk{text-align:center}
+/* Productie-app (pilot): hetzelfde glas als de monteurs-app. Eén lange pagina met per onderdeel een blok en bovenaan de stand van dat blok. */
+#prodscherm{min-height:100vh;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#prodscherm .merk{text-align:center}
+#pinhoud{flex:1;min-width:0;padding:16px;border-radius:24px;background:var(--glas);border:1px solid var(--glas-rand);box-shadow:var(--glas-schaduw)}
+#pinhoud .meldform{padding:0}
+.pa-form input[type=time],.pa-form input[type=number]{width:100%;font-size:16px;font-weight:400;padding:9px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:7px}
+.pa-keus{display:flex;flex-direction:column;gap:5px;font-size:.8125rem;font-weight:500}
+.pa-seg{display:flex;margin:0;max-width:none}
+.pa-seg button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 6px;font-size:.875rem;line-height:1.2;white-space:normal}
+.pa-seg button small{color:inherit;opacity:.7;font-size:.6875rem;font-weight:400}
+.pa-staat{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px 12px;border-radius:12px;background:var(--sunken);color:var(--ink2);font-size:.8125rem;line-height:1.4}
+.pa-staat .i{width:16px;height:16px;flex:none;margin-top:1px}
+.pa-staat.info{background:var(--info-soft);color:var(--ink)}
+.pa-staat.ok{background:var(--ok-soft);color:var(--ink)}
+.pa-staat.ok .i{color:var(--ok)}
+.pa-staat.wacht{background:var(--wacht-soft);color:var(--ink)}
+.pa-sec{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;background:rgba(255,255,255,.72);border:1px solid var(--line)}
+.pa-sec h3{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 10px;margin:0;font-size:1rem;font-weight:600}
+.pa-sec h3 small{color:var(--ink2);font-size:.75rem;font-weight:500}
+.pa-hint{margin:0;color:var(--ink2);font-size:.8125rem}
+.pa-lijn{display:flex;flex-direction:column;gap:3px}
+.pa-lijn label{display:grid!important;grid-template-columns:70px minmax(0,1fr);align-items:center;gap:10px!important}
+.pa-lijn label span{font-weight:600;font-size:.875rem}
+.pa-lijn small{padding-left:80px;color:var(--ink3);font-size:.75rem}
+.pa-rij{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--sunken)}
+.pa-rij>b{font-size:.875rem}
+.pa-rij input,.pa-rij select,.pa-rij textarea{background:#fff!important}
+.pa-r2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pa-r3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 64px;gap:10px;align-items:end}
+.pa-pallets{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pa-duur{padding-bottom:11px;color:var(--ink2);font-size:.8125rem;font-weight:600;white-space:nowrap}
+.pa-stil div{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.pa-stil span{padding:9px 4px!important;font-size:.8125rem;background:#fff}
+.pa-stil legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pa-weg{align-self:flex-start}
+.pa-plus{align-self:flex-start}
+.pa-plus .i{width:15px;height:15px}
+.pa-stuur{padding:13px 18px;font-size:.9375rem}
+.pa-vraag{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--warn-soft)}
+.pa-vraag p{margin:0;font-size:.875rem;font-weight:500}
+.pa-vraag .acties{display:flex;flex-wrap:wrap;gap:8px}
+.pa-mijn{display:flex;flex-direction:column;gap:8px}
+.pa-kaart{margin:0}
+.pa-lees{display:flex;flex-direction:column;gap:6px}
+/* Pagina Diensten bij de werkvoorbereider: per afdeling en dienst een rij, per dag een kolom. */
+.pd-week{align-items:center}
+.pd-week b{min-width:74px;text-align:center;font-size:.875rem}
+.pd-week .knop{padding:5px 12px;font-size:1rem;line-height:1.2}
+.pd-let{margin:0 0 14px;padding:10px 14px;border-radius:14px;background:var(--info-soft);font-size:.8125rem;line-height:1.7}
+.pd-tblw{overflow-x:auto}
+.pd-roosterw{padding:4px;border-radius:20px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
+.pd-rooster{width:100%;min-width:860px;border-collapse:separate;border-spacing:4px;table-layout:fixed}
+.pd-rooster thead th{padding:4px 2px 2px;color:var(--ink2);font-size:.8125rem;font-weight:500;text-align:center}
+.pd-rooster thead th span{font-weight:600;color:var(--ink)}
+.pd-rooster thead th.vandaag span{padding:1px 7px;border-radius:999px;background:var(--gold);color:var(--on-gold)}
+.pd-rooster thead th:first-child{width:128px}
+.pd-afd th{padding:10px 4px 2px;text-align:left;font-size:.875rem;font-weight:600}
+.pd-dienst{padding:4px;text-align:left;vertical-align:middle}
+.pd-dienst b{display:block;font-size:.8125rem;font-weight:600}
+.pd-dienst small{color:var(--ink3);font-size:.6875rem;font-weight:400}
+.pd-rooster td{padding:0;vertical-align:top}
+.pd-cel{display:flex;flex-direction:column;justify-content:center;gap:1px;width:100%;min-height:50px;padding:6px 8px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.85);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.pd-cel:hover{box-shadow:0 0 0 2px var(--ink)}
+.pd-cel b{font-size:.75rem;font-weight:600}
+.pd-cel small{overflow:hidden;color:var(--ink2);font-size:.6875rem;white-space:nowrap;text-overflow:ellipsis}
+.pd-cel.ok{border-color:color-mix(in srgb,var(--ok) 35%,transparent);background:var(--ok-soft)}
+.pd-cel.ok b{color:var(--ok)}
+.pd-cel.info{border-color:color-mix(in srgb,var(--info) 30%,transparent);background:var(--info-soft)}
+.pd-cel.info b{color:var(--info)}
+.pd-cel.warn{border-color:color-mix(in srgb,var(--warn2) 45%,transparent);background:var(--warn-soft)}
+.pd-cel.warn b{color:var(--warn-ink)}
+.pd-cel.nu{border:1.5px dashed var(--info);background:rgba(255,255,255,.6)}
+.pd-cel.leeg{background:rgba(255,255,255,.45);color:var(--ink3)}
+.pd-cel.leeg b{font-weight:500}
+.pd-cel.toekomst{min-height:50px;border:1px dashed var(--line);background:none;cursor:default}
+.pd-chip{--c:var(--ink3)}
+.pd-chip.ok{--c:var(--ok)}.pd-chip.info{--c:var(--info)}.pd-chip.warn{--c:var(--warn)}.pd-chip.wacht{--c:var(--wacht)}.pd-chip.nu{--c:var(--info)}
+.pd-paneel{display:flex;flex-direction:column;gap:6px;padding:16px 20px 24px}
+.pd-st{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.8125rem;color:var(--ink2)}
+.pd-h3{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:12px 0 4px;font-size:.875rem;font-weight:600}
+.pd-h3 small{color:var(--ink2);font-size:.75rem;font-weight:500}
+.pd-tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.pd-tbl th{padding:4px 8px 4px 0;border-bottom:1px solid var(--line2);color:var(--ink3);font-size:.75rem;font-weight:600;text-align:left;white-space:nowrap}
+.pd-tbl td{padding:5px 8px 5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.pd-tbl td.nw{white-space:nowrap}
+.pd-geen{margin:0;color:var(--ink3);font-size:.8125rem}
+.pd-lijst{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.pd-lijst li{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:12px;background:var(--sunken)}
+.pd-sk{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;font-size:.8125rem}
+.pd-sk span{color:var(--ink2)}
+.pd-lijst p{margin:0;font-size:.875rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.pd-actie span{color:var(--ink2)}
+.pd-tekst{margin:0;font-size:.875rem;white-space:pre-wrap}
+.pd-knoppen{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pd-log{margin:0;padding-left:18px;color:var(--ink2);font-size:.75rem;line-height:1.5}
+.pd-form{padding:16px 20px 24px}
+/* Schuift het rooster, dan blijven de diensten links staan. */
+@media (max-width:1100px){
+  .pd-rooster thead th:first-child,.pd-dienst{position:sticky;left:0;z-index:1;background:#FAFAF9;box-shadow:0 0 0 4px #FAFAF9}
+  .pd-afd th span{position:sticky;left:4px}
+}
+@media (max-width:520px){
+  .pa-r3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .pa-r3 .pa-duur{grid-column:1/-1;padding:0}
+  .pa-pallets{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pa-lijn small{padding-left:0}
+}
 .keuzes{margin:0;padding:0;border:0;min-width:0;display:flex;flex-direction:column;gap:6px}
 .keuzes legend{padding:0;margin-bottom:5px;font-size:.8125rem;font-weight:500}
 .meldform .keuzes label{position:relative;display:block;cursor:pointer}
@@ -1289,6 +1396,13 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
   <span class="merk">Muller Technical Solutions</span>
 </div>
 
+<div id="prodscherm" hidden>
+  <header class="mkop"><span class="mark" aria-hidden="true">TD</span><div><b>Productie</b><small>Pilot, Dutch Bakery Group Eindhoven</small></div><button class="uitlog bovenaan" data-uitlog hidden>Uitloggen</button></header>
+  <div class="seg mtabs" id="ptabs" role="group" aria-label="Schermen"><button data-p="invullen" aria-pressed="true">Dienst invullen</button><button data-p="mijn" aria-pressed="false">Mijn diensten</button></div>
+  <main id="pinhoud"></main>
+  <span class="merk">Muller Technical Solutions</span>
+</div>
+
 <div id="app" hidden>
   <header class="topglas" id="topglas">
     <span class="mark" aria-hidden="true">TD</span>
@@ -2218,7 +2332,8 @@ const UITBAK={
 };
 /* Een PM-afmelding en een storing kunnen op dezelfde telefoon wachten, maar elke inlog verstuurt alleen zijn eigen regels. */
 const pmActie=d=>d.actie==="pm"||d.actie==="pmbev";
-const uitbakVanMij=x=>D.niveau==="monteur"&&!!(MELD()||{}).sleutel_pm||pmActie(x.d)===(D.niveau==="pm");
+/* De productie-app verstuurt alleen zijn eigen diensten, de andere inloggen nooit een dienst. */
+const uitbakVanMij=x=>D.niveau==="productie"?x.d.actie==="productie":x.d.actie!=="productie"&&(D.niveau==="monteur"&&!!(MELD()||{}).sleutel_pm||pmActie(x.d)===(D.niveau==="pm"));
 async function leesUitbak(){try{UIT=(await UITBAK.alles()).filter(uitbakVanMij)}catch(_){UIT=[]}if(rteken)rteken()}
 async function verzendUitbak(){
   if(verzendt||!MELD())return;
@@ -2227,13 +2342,14 @@ async function verzendUitbak(){
     for(const x of (await UITBAK.alles()).filter(uitbakVanMij)){
       let j;
       /* Een regel die intussen is verwijderd mag de rest niet tegenhouden. */
-      try{j=await stuur(x.d)}catch(e){if(x.d.actie!=="rapport"||e.message!=="melding niet gevonden")throw e;await UITBAK.weg(x.n);continue}
+      try{j=await stuur(x.d)}catch(e){if(x.d.actie==="productie"&&["gecontroleerd","onjuiste invoer"].includes(e.message)){await UITBAK.weg(x.n);continue}if(x.d.actie!=="rapport"||e.message!=="melding niet gevonden")throw e;await UITBAK.weg(x.n);continue}
       await UITBAK.weg(x.n);
       if(x.d.actie==="pm")pmZet(Object.assign({},x.d,{tijd:j.tijd,reg:j.reg||""}));
       else if(x.d.actie==="rapport")rapportZet(x.d,j);
       else if(x.d.actie==="weekbon")weekAf(x.d.nr,x.d.status,x.d.door,j.tijd,x.d.tekst);
       else if(x.d.actie==="opname")opnameAf(x.d,x.d.status,j.tijd);
       else if(x.d.actie==="pmbev")pmBevZet(x.d,j);
+      else if(x.d.actie==="productie")prodPasToe(x.d,j);
       else{RAPPORT=(RAPPORT||[]).concat([Object.assign({},x.d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste=""}
     }
   }catch(_){}
@@ -4327,7 +4443,7 @@ function tdItems(alles){
 }
 const tdSleutels=r=>(MELDFOUT?"!":"")+(r||tdItems(true)).map(x=>x.key+(x.gezien?"*":"")).join("|");
 function tdTel(){
-  rcaTel();
+  rcaTel();prodTel();
   if(tdMag()){
     const r=tdItems(),n=r.filter(x=>x.groep!=="prio").length;
     TDMAP={};r.forEach(x=>{if(x.c&&!TDMAP[x.c.nr])TDMAP[x.c.nr]=x.groep});
@@ -4792,7 +4908,362 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={tedoen:vTeDoen,rca:vRca,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+
+/* ---- Productie (pilot) ----
+   De teamleider productie vult per dienst in op de telefoon: inlog productie, voorlopig één testaccount waarin hij zijn naam invult.
+   De werkvoorbereider ziet de diensten op de pagina Diensten in het kopje Productie, verbetert ze en zet ze op Gecontroleerd.
+   Alles staat live op het tabblad Productie in de Sheet (actie productie, Apps Script vanaf versie 22). Per datum, dienst en afdeling is er één dienst.
+   Pilot: de diensten tellen nog niet mee op Output per lijn, bij de RCA en in de dagstart. Een Nacht hoort bij de datum waarop hij begint. */
+const PROD_DIENST=[{d:"Ochtend",van:"05:50",tot:"13:50"},{d:"Middag",van:"13:50",tot:"21:50"},{d:"Nacht",van:"21:50",tot:"05:50"}];
+const PROD_AFD=["Bakkerij","Inpak en ompak"],PROD_LIJN=["Lijn 1","Lijn 2","Lijn 3"];
+const PROD_STIL=[["Ja","Stilstand"],["Halve capaciteit","Halve capaciteit"],["Nee","Geen stilstand"]];
+const PROD_CONCEPT="td-hub-prodconcept",PROD_AFDKEUZE="td-hub-prodafd";
+let PROD=null,PRODFOUT=false,PRODWK=0,PA=null,PAVRAAG=false,PDBEWERK=null;
+const prodSleutel=(t,dienst,afd)=>t+"|"+dienst+"|"+afd;
+const prodRij=(t,dienst,afd)=>(PROD||[]).find(r=>r.datum===t&&r.dienst===dienst&&r.afdeling===afd);
+const prodDienst=n=>PROD_DIENST.find(x=>x.d===n)||PROD_DIENST[0];
+/* De dienst die nu loopt: voor 05:50 is het nog de nacht van gisteren. */
+function prodNu(){
+  const n=new Date(),m=n.getHours()*60+n.getMinutes(),d=new Date(n);let dienst="Nacht";
+  if(m<350)d.setDate(d.getDate()-1);else if(m<830)dienst="Ochtend";else if(m<1310)dienst="Middag";
+  return{datum:dagTekst(d),dienst};
+}
+function prodTijden(t,dienst){
+  const d=datum(t);if(!d)return null;
+  const[u,m]=prodDienst(dienst).van.split(":").map(Number),van=new Date(d);van.setHours(u,m,0,0);
+  return{van,eind:new Date(+van+8*36e5)};
+}
+const prodMin=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||"");return m?+m[1]*60+ +m[2]:null};
+const prodDuur=(van,tot)=>{const a=prodMin(van),b=prodMin(tot);return a==null||b==null?0:(b-a+1440)%1440};
+const prodUur=n=>Math.floor(n/60)+":"+String(n%60).padStart(2,"0");
+const prodGetal=v=>v===""||v==null||isNaN(+v)?null:+v;
+const prodKg=v=>prodGetal(v)==null?"–":kgTekst(+v)+" kg";
+const prodPct=p=>p==null?"":p.toLocaleString("nl-NL",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
+const prodUitval=(kg,u)=>{kg=prodGetal(kg);u=prodGetal(u);return kg&&u!=null?u/kg*100:null};
+const prodMach=()=>(D.niveau==="productie"?D.machines:D.prodmachines)||{};
+const prodPlan=(t,lijn)=>{const l=(D.niveau==="productie"?D.plan:(D.output||{}).plan||[])||[];const x=l.filter(p=>p.datum===t&&p.lijn===lijn);return x.length?somVan(x,p=>p.kg):null};
+const prodDagTekst=t=>{const d=datum(t);return d?d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}):t};
+const prodTitel=r=>r.afdeling+", "+prodDagTekst(r.datum)+", "+r.dienst.toLowerCase();
+const prodTijd=t=>(/\d{1,2}:\d{2}$/.exec(t||"")||[""])[0];
+function prodLeeg(afd){return afd==="Bakkerij"?{output:{},storingen:[],bijzonderheden:""}:{gereed:{},ompak:{},uitzoeken:{},pallets:{},palletsVerklaring:"",blokkades:[],storingen:[],bijzonderheden:""}}
+function prodVul(afd,g){
+  const o=Object.assign(prodLeeg(afd),g&&typeof g==="object"?JSON.parse(JSON.stringify(g)):{});
+  ["storingen","blokkades"].forEach(k=>{if(k in o&&!Array.isArray(o[k]))o[k]=[]});
+  return o;
+}
+/* Wat nog ontbreekt voor Ingevuld. Een lege dienst mag wel, dan heet hij Onvolledig. */
+function prodMist(afd,g){
+  const mist=[];
+  if(afd==="Bakkerij")PROD_LIJN.forEach(l=>{if(prodGetal((g.output||{})[l])==null)mist.push("output "+l.toLowerCase())});
+  else{
+    PROD_LIJN.forEach(l=>{if(prodGetal(((g.gereed||{})[l]||{}).kg)==null)mist.push("gereed "+l.toLowerCase())});
+    PROD_LIJN.forEach(l=>{if(prodGetal((g.pallets||{})[l])==null)mist.push("pallets "+l.toLowerCase())});
+  }
+  return mist;
+}
+const prodStil=g=>somVan((g.storingen||[]).filter(x=>x.stil==="Ja"),x=>prodDuur(x.van,x.tot));
+/* De dag tot nu: alle diensten van die datum en afdeling samen, met wat nu in het formulier staat voor deze dienst. */
+function prodDagKg(t,afd,lijn,dienst,nu){
+  return(PROD||[]).filter(r=>r.datum===t&&r.afdeling===afd&&r.dienst!==dienst).reduce((s,r)=>s+(prodGetal(afd==="Bakkerij"?((r.gegevens||{}).output||{})[lijn]:(((r.gegevens||{}).gereed||{})[lijn]||{}).kg)||0),prodGetal(nu)||0);
+}
+function prodConcept(k,g){
+  let o={};try{o=JSON.parse(localStorage.getItem(PROD_CONCEPT)||"{}")||{}}catch(_){}
+  if(g===undefined)return o[k]?o[k].g:undefined;
+  if(g===null)delete o[k];else o[k]={g,tijd:Date.now()};
+  Object.keys(o).forEach(x=>{if(Date.now()-(o[x].tijd||0)>10*864e5)delete o[x]});
+  try{localStorage.setItem(PROD_CONCEPT,JSON.stringify(o))}catch(_){}
+}
+function prodPasToe(d,j){
+  PROD=PROD||[];
+  const r={id:j.id||"",datum:d.datum,dienst:d.dienst,afdeling:d.afdeling,status:j.status||d.status,gegevens:d.gegevens,door:j.door||d.door,tijd:j.verstuurd||j.tijd||nuTekst(),gecontroleerd_door:j.gecontroleerd_door||"",gecontroleerd_op:j.gecontroleerd_op||"",log:j.log||""};
+  const i=PROD.findIndex(x=>x.datum===r.datum&&x.dienst===r.dienst&&x.afdeling===r.afdeling);
+  if(i>=0)PROD[i]=r;else PROD.push(r);
+  prodTel();
+}
+const prodNetwerk=e=>e instanceof TypeError||e.name==="TimeoutError"||navigator.onLine===false;
+async function haalProd(){
+  const m=MELD();if(!m)return;
+  const k=D.niveau==="productie"?m.sleutel:m.sleutel_wv;if(!k)return;
+  try{
+    const r=await fetch(m.url+"?k="+encodeURIComponent(k)+(D.niveau==="productie"?"":"&productie=1")),j=await r.json();
+    if(!Array.isArray(j.productie))throw new Error(j.fout||"geen productie");
+    const oud=JSON.stringify(PROD);PROD=j.productie;PRODFOUT=false;prodTel();
+    if(JSON.stringify(PROD)!==oud){
+      if(D.niveau==="productie"){if(paTeken)paTeken(true)}
+      else if(HUIDIG==="prod"&&$("#paneel").hidden)vProd();
+    }
+  }catch(_){PRODFOUT=true;if(D.niveau!=="productie"&&HUIDIG==="prod"&&!PROD&&$("#paneel").hidden)vProd()}
+}
+function prodTel(){if(D.niveau==="productie")return;TEL.prod=PAGINAS.some(p=>p.id==="prod")?(PROD||[]).filter(r=>r.status!=="Gecontroleerd"&&(pmNu()-datum(r.datum))/864e5<=14).length:0;if(typeof telMenu==="function"&&MODEL.length)telMenu()}
+
+/* ---- het formulier van een dienst: dezelfde velden in de app en bij Verbeteren ---- */
+const paVeld=(p,v,attr)=>'<input'+(attr||' type="text"')+' data-pa="'+esc(p)+'" value="'+esc(v==null?"":v)+'">';
+const paGetal=(p,v)=>paVeld(p,v,' type="number" inputmode="decimal" min="0" step="any"');
+const paTekst=(p,v,ph)=>'<textarea data-pa="'+esc(p)+'" rows="2" placeholder="'+esc(ph||"")+'">'+esc(v||"")+"</textarea>";
+const paKeus=(p,v,opties,leeg)=>'<select data-pa="'+esc(p)+'">'+(leeg!=null?'<option value="">'+esc(leeg)+"</option>":"")+opties.map(o=>{const[w,t]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(w)+'"'+(v===w?" selected":"")+">"+esc(t)+"</option>"}).join("")+"</select>";
+const paLijst=(id,namen)=>'<datalist id="'+id+'">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>";
+const paSec=(id,titel,staat,inh)=>'<section class="pa-sec" id="pa-'+id+'"><h3>'+esc(titel)+'<small data-pastaat="'+id+'">'+esc(staat)+"</small></h3>"+inh+"</section>";
+function paStaten(afd,g){
+  const s={},n=l=>l.filter(x=>x).length,sl=g.storingen||[];
+  if(afd==="Bakkerij"){
+    const k=n(PROD_LIJN.map(l=>prodGetal((g.output||{})[l])!=null));s.output=k===3?"Alle lijnen ingevuld":k+" van de 3 lijnen ingevuld";
+    s.storingen=sl.length?(sl.length===1?"1 regel":sl.length+" regels")+(prodStil(g)?", "+prodUur(prodStil(g))+" uur stil":", geen stilstand"):"Geen storingen";
+  }else{
+    const k=n(PROD_LIJN.map(l=>prodGetal(((g.gereed||{})[l]||{}).kg)!=null));s.gereed=k===3?"Alle lijnen ingevuld":k+" van de 3 lijnen ingevuld";
+    const p=n(PROD_LIJN.map(l=>prodGetal((g.pallets||{})[l])!=null));s.pallets=p===3?"Alle lijnen ingevuld":p+" van de 3 lijnen ingevuld";
+    const b=g.blokkades||[];s.blokkades=b.length?(b.length===1?"1 blokkade":b.length+" blokkades")+", "+kgTekst(somVan(b,x=>prodGetal(x.pallets)||0))+" pallets":"Geen blokkades";
+    s.storingen=sl.length?(sl.length===1?"1 regel":sl.length+" regels")+", "+prodUur(somVan(sl,x=>prodDuur(x.van,x.tot)))+" uur":"Geen storingen";
+  }
+  s.bijz=(g.bijzonderheden||"").trim()?"Ingevuld":"Mag leeg blijven";
+  return s;
+}
+function paStoringen(afd,g){
+  const m=prodMach(),inpak=afd!=="Bakkerij",lijnen=inpak?PROD_LIJN.concat(["Ompak"]):PROD_LIJN,st=g.storingen||[];
+  const lijsten=lijnen.map((l,i)=>paLijst("pam"+i,(inpak?(l==="Ompak"?m.Ompak:m.Inpak):m[l])||[])).join("");
+  return lijsten+st.map((x,i)=>{const li=Math.max(0,lijnen.indexOf(x.lijn)),d=prodDuur(x.van,x.tot);
+    return'<div class="pa-rij"><div class="pa-r2"><label>Lijn'+paKeus("storingen."+i+".lijn",x.lijn||"",lijnen,"Kies")+'</label><label>Machine'+paVeld("storingen."+i+".machine",x.machine,' type="text" list="pam'+li+'" autocomplete="off"')+"</label></div>"+
+      '<div class="pa-r3"><label>Van'+paVeld("storingen."+i+".van",x.van,' type="time"')+"</label><label>Tot"+paVeld("storingen."+i+".tot",x.tot,' type="time"')+'</label><span class="pa-duur" data-paduur="'+i+'">'+(d?prodUur(d)+" uur":"")+"</span></div>"+
+      (inpak?"":'<fieldset class="risico pa-stil"><legend>Lijn</legend><div>'+PROD_STIL.map(([w,t])=>'<label><input type="radio" name="pastil'+i+'" value="'+w+'" data-pa="storingen.'+i+'.stil"'+(x.stil===w?" checked":"")+"><span>"+t+"</span></label>").join("")+"</div></fieldset>")+
+      "<label>Omschrijving"+paTekst("storingen."+i+".tekst",x.tekst,"Wat gebeurde er, wat is gedaan?")+"</label>"+
+      '<button type="button" class="tekstknop gevaar pa-weg" data-paweg="storingen.'+i+'">Regel weghalen</button></div>'}).join("")+
+    '<button type="button" class="knop pa-plus" data-paplus="storingen">'+ico("plus")+"Storing toevoegen</button>";
+}
+function paBakkerij(c,g){
+  const s=paStaten("Bakkerij",g);
+  return paSec("output","Output per lijn",s.output,'<p class="pa-hint">Kilo\'s gereed in deze dienst.</p>'+PROD_LIJN.map(l=>{const plan=prodPlan(c.datum,l),dag=prodDagKg(c.datum,"Bakkerij",l,c.dienst,(g.output||{})[l]);
+      return'<div class="pa-lijn"><label><span>'+l+"</span>"+paGetal("output."+l,(g.output||{})[l])+'</label><small data-padag="'+esc(l)+'">'+(plan?"Planning hele dag "+kgTekst(plan)+" kg. Dag tot nu "+kgTekst(dag)+" kg, "+Math.round(dag/plan*100)+"%.":"Geen planning voor deze dag.")+"</small></div>"}).join(""))+
+    paSec("storingen","Stilstand en storingen",s.storingen,paStoringen("Bakkerij",g))+
+    paSec("bijz","Bijzonderheden",s.bijz,paTekst("bijzonderheden",g.bijzonderheden,"Wat moet de volgende dienst of de TD weten?"));
+}
+function paInpak(c,g){
+  const s=paStaten("Inpak en ompak",g),ge=g.gereed||{};
+  const lijn=l=>{const x=ge[l]||{},p=prodUitval(x.kg,x.uitval);return'<div class="pa-rij pa-gereed"><b>'+l+'</b><div class="pa-r3"><label>Gereed in kg'+paGetal("gereed."+l+".kg",x.kg)+"</label><label>Uitval in kg"+paGetal("gereed."+l+".uitval",x.uitval)+'</label><span class="pa-duur" data-papct="'+esc(l)+'">'+(p!=null?prodPct(p):"")+"</span></div><label>Verklaring uitval"+paVeld("gereed."+l+".verklaring",x.verklaring,' type="text" placeholder="Mag leeg"')+"</label></div>"};
+  return paSec("gereed","Gereed en uitval",s.gereed,'<p class="pa-hint">Uitval in procenten is uitval gedeeld door gereed, net als in het dienstrapport.</p>'+PROD_LIJN.map(lijn).join("")+
+      '<div class="pa-rij"><b>Ompak</b><div class="pa-r2"><label>Uitval in kg'+paGetal("ompak.uitval",(g.ompak||{}).uitval)+"</label><label>Verklaring"+paVeld("ompak.verklaring",(g.ompak||{}).verklaring,' type="text" placeholder="Mag leeg"')+"</label></div></div>"+
+      '<div class="pa-rij"><b>Uitzoeken</b><div class="pa-r2"><label>Kilo\'s'+paGetal("uitzoeken.kg",(g.uitzoeken||{}).kg)+"</label></div></div>")+
+    paSec("pallets","Pallets",s.pallets,'<div class="pa-r3 pa-pallets">'+PROD_LIJN.map(l=>"<label>"+l+paGetal("pallets."+l,(g.pallets||{})[l])+"</label>").join("")+"</div><label>Verklaring"+paVeld("palletsVerklaring",g.palletsVerklaring,' type="text" placeholder="Mag leeg"')+"</label>")+
+    paSec("blokkades","Blokkades",s.blokkades,(g.blokkades||[]).map((x,i)=>'<div class="pa-rij"><div class="pa-r2"><label>Lijn'+paKeus("blokkades."+i+".lijn",x.lijn||"",PROD_LIJN.concat(["Ompak"]),"Kies")+"</label><label>Pallets"+paGetal("blokkades."+i+".pallets",x.pallets)+"</label></div><label>Reden"+paTekst("blokkades."+i+".reden",x.reden,"Waarom geblokkeerd?")+"</label><label>Actie"+paTekst("blokkades."+i+".actie",x.actie,"Wat is er gedaan, wie is ingelicht?")+'</label><button type="button" class="tekstknop gevaar pa-weg" data-paweg="blokkades.'+i+'">Regel weghalen</button></div>').join("")+'<button type="button" class="knop pa-plus" data-paplus="blokkades">'+ico("plus")+"Blokkade toevoegen</button>")+
+    paSec("storingen","Storingen",s.storingen,paStoringen("Inpak en ompak",g))+
+    paSec("bijz","Bijzonderheden",s.bijz,paTekst("bijzonderheden",g.bijzonderheden,"Wat moet de volgende dienst of de TD weten?"));
+}
+const paVelden=(c,g)=>c.afdeling==="Bakkerij"?paBakkerij(c,g):paInpak(c,g);
+/* Wat in het formulier staat. Een lijst (storingen, blokkades) heeft per regel een nummer in het pad. */
+function paLees(vak,basis){
+  const g=JSON.parse(JSON.stringify(basis));
+  vak.querySelectorAll("[data-pa]").forEach(el=>{
+    const p=el.dataset.pa;
+    if(el.type==="radio"){if(el.checked)rcaZetPad(g,p,el.value);return}
+    rcaZetPad(g,p,el.type==="number"?(el.value===""?null:+el.value):el.value);
+  });
+  return g;
+}
+/* Tijdens het typen: de kopjes, de duur, het uitvalpercentage en de dag tot nu bijwerken, zonder opnieuw te tekenen. */
+function paBij(vak,c,g){
+  const s=paStaten(c.afdeling,g);
+  vak.querySelectorAll("[data-pastaat]").forEach(el=>{el.textContent=s[el.dataset.pastaat]||""});
+  vak.querySelectorAll("[data-paduur]").forEach(el=>{const x=(g.storingen||[])[+el.dataset.paduur]||{},d=prodDuur(x.van,x.tot);el.textContent=d?prodUur(d)+" uur":""});
+  vak.querySelectorAll("[data-papct]").forEach(el=>{const x=(g.gereed||{})[el.dataset.papct]||{},p=prodUitval(x.kg,x.uitval);el.textContent=p!=null?prodPct(p):""});
+  vak.querySelectorAll("[data-padag]").forEach(el=>{const l=el.dataset.padag,plan=prodPlan(c.datum,l),dag=prodDagKg(c.datum,"Bakkerij",l,c.dienst,(g.output||{})[l]);if(plan)el.textContent="Planning hele dag "+kgTekst(plan)+" kg. Dag tot nu "+kgTekst(dag)+" kg, "+Math.round(dag/plan*100)+"%."});
+}
+/* Een regel erbij of eraf: opnieuw tekenen, met de focus op de nieuwe regel. */
+function paLijstKlik(e,vak,c,teken){
+  const plus=e.target.closest("[data-paplus]"),weg=e.target.closest("[data-paweg]");if(!plus&&!weg)return false;
+  c.g=paLees(vak,c.g);
+  if(plus){const l=plus.dataset.paplus,a=c.g[l]=c.g[l]||[];a.push(l==="storingen"?{lijn:"",machine:"",van:"",tot:"",stil:"",tekst:""}:{lijn:"",pallets:null,reden:"",actie:""});teken();const v=vak.querySelector('[data-pa="'+l+"."+(a.length-1)+'.lijn"]');if(v)v.focus()}
+  else{const[l,i]=weg.dataset.paweg.split(".");c.g[l].splice(+i,1);teken();const k=vak.querySelector('[data-paplus="'+l+'"]');if(k)k.focus({preventScroll:true})}
+  return true;
+}
+
+/* ---- leesvorm: wat een dienst bevat, voor het paneel bij de werkvoorbereider en een gecontroleerde dienst in de app ---- */
+function prodLeesHtml(r){
+  const g=prodVul(r.afdeling,r.gegevens),tabel=(kop,rijen)=>'<div class="pd-tblw"><table class="pd-tbl"><thead><tr>'+kop.map(k=>"<th>"+esc(k)+"</th>").join("")+"</tr></thead><tbody>"+rijen.join("")+"</tbody></table></div>",td=v=>"<td>"+v+"</td>",tdn=v=>'<td class="nw">'+v+"</td>";
+  const sto=(g.storingen||[]).filter(x=>x.lijn||x.machine||x.tekst),bak=r.afdeling==="Bakkerij";
+  /* Storingen en blokkades als kaartjes onder elkaar: de omschrijving is het belangrijkst en past zo ook op de telefoon. */
+  const kaart=(kop,sub,extra,tekst)=>'<li><div class="pd-sk"><b>'+esc(kop)+"</b>"+(sub?"<span>"+esc(sub)+"</span>":"")+(extra||"")+"</div>"+(tekst||"")+"</li>";
+  const storingen=sto.length?'<ul class="pd-lijst">'+sto.map(x=>{const d=prodDuur(x.van,x.tot);return kaart([x.lijn,x.machine].filter(Boolean).join(", ")||"Zonder lijn",(x.van||"")+(x.tot?"–"+x.tot:"")+(d?(x.van?", ":"")+prodUur(d)+" uur":""),bak?(x.stil==="Ja"?st("Stilstand"):x.stil==="Halve capaciteit"?st("Halve capaciteit"):x.stil==="Nee"?'<span>geen stilstand</span>':""):"",x.tekst?"<p>"+esc(x.tekst)+"</p>":"")}).join("")+"</ul>":'<p class="pd-geen">Geen storingen.</p>';
+  let h="";
+  if(bak){
+    h+='<h3 class="pd-h3">Output per lijn</h3>'+tabel(["Lijn","Deze dienst","Dag tot nu","Planning dag"],PROD_LIJN.map(l=>{const plan=prodPlan(r.datum,l),dag=prodDagKg(r.datum,"Bakkerij",l,r.dienst,(g.output||{})[l]);return"<tr>"+tdn(l)+td(prodKg((g.output||{})[l]))+td(kgTekst(dag)+" kg")+td(plan?kgTekst(plan)+" kg, "+Math.round(dag/plan*100)+"%":"–")+"</tr>"}));
+    h+='<h3 class="pd-h3">Stilstand en storingen<small>'+esc(prodStil(g)?prodUur(prodStil(g))+" uur stil":"geen stilstand")+"</small></h3>"+storingen;
+  }else{
+    const ge=g.gereed||{};
+    h+='<h3 class="pd-h3">Gereed en uitval</h3>'+tabel(["Lijn","Gereed","Uitval","Uitval %","Verklaring"],PROD_LIJN.map(l=>{const x=ge[l]||{};return"<tr>"+tdn(l)+td(prodKg(x.kg))+td(prodKg(x.uitval))+td(prodPct(prodUitval(x.kg,x.uitval)))+td(esc(x.verklaring||""))+"</tr>"}).concat(["<tr>"+td("Ompak")+td("")+td(prodKg((g.ompak||{}).uitval))+td("")+td(esc((g.ompak||{}).verklaring||""))+"</tr>","<tr>"+td("Uitzoeken")+td(prodKg((g.uitzoeken||{}).kg))+td("")+td("")+td("")+"</tr>"]));
+    h+='<h3 class="pd-h3">Pallets</h3>'+tabel(PROD_LIJN.concat(["Verklaring"]),["<tr>"+PROD_LIJN.map(l=>td(prodGetal((g.pallets||{})[l])==null?"–":kgTekst(+g.pallets[l]))).join("")+td(esc(g.palletsVerklaring||""))+"</tr>"]);
+    const b=(g.blokkades||[]).filter(x=>x.lijn||x.reden);
+    h+='<h3 class="pd-h3">Blokkades</h3>'+(b.length?'<ul class="pd-lijst">'+b.map(x=>kaart(x.lijn||"Zonder lijn",prodGetal(x.pallets)==null?"":kgTekst(+x.pallets)+(+x.pallets===1?" pallet":" pallets"),"",(x.reden?"<p>"+esc(x.reden)+"</p>":"")+(x.actie?'<p class="pd-actie"><span>Actie:</span> '+esc(x.actie)+"</p>":""))).join("")+"</ul>":'<p class="pd-geen">Geen blokkades.</p>');
+    h+='<h3 class="pd-h3">Storingen</h3>'+storingen;
+  }
+  h+='<h3 class="pd-h3">Bijzonderheden</h3>'+(g.bijzonderheden&&g.bijzonderheden.trim()?'<p class="pd-tekst">'+esc(g.bijzonderheden)+"</p>":'<p class="pd-geen">Geen.</p>');
+  return h;
+}
+const prodStatusChip=s=>s?'<span class="chip pd-chip '+({Gecontroleerd:"ok",Ingevuld:"info",Onvolledig:"warn","Wacht op bereik":"wacht","Loopt nu":"nu"}[s]||"")+'">'+esc(s)+"</span>":"";
+
+/* ---- de app voor de teamleider ---- */
+let paTeken=null;
+function prodScherm(){
+  $("#lock").hidden=true;$("#prodscherm").hidden=false;document.title="Productie";
+  const vak=$("#pinhoud");
+  if(!MELD()){vak.innerHTML='<div class="leegmelding">De productie-app staat nog niet aan.</div>';return}
+  const nu=prodNu();let afd="Bakkerij";try{afd=localStorage.getItem(PROD_AFDKEUZE)||afd}catch(_){}
+  PA={tab:"invullen",datum:nu.datum,dienst:nu.dienst,afdeling:PROD_AFD.includes(afd)?afd:"Bakkerij",g:null,klaar:null};
+  function laad(){
+    const k=prodSleutel(PA.datum,PA.dienst,PA.afdeling),r=prodRij(PA.datum,PA.dienst,PA.afdeling),c=prodConcept(k);
+    if(r&&r.status==="Gecontroleerd"){prodConcept(k,null);PA.g=prodVul(PA.afdeling,r.gegevens);PA.bron="gecontroleerd"}
+    else if(c){PA.g=prodVul(PA.afdeling,c);PA.bron="concept"}
+    else if(r){PA.g=prodVul(PA.afdeling,r.gegevens);PA.bron="server"}
+    else{PA.g=prodLeeg(PA.afdeling);PA.bron="leeg"}
+  }
+  function staat(){
+    const r=prodRij(PA.datum,PA.dienst,PA.afdeling),w=UIT.some(x=>x.d.actie==="productie"&&prodSleutel(x.d.datum,x.d.dienst,x.d.afdeling)===prodSleutel(PA.datum,PA.dienst,PA.afdeling));
+    if(PA.bron==="gecontroleerd")return'<p class="pa-staat ok">'+ico("afvink")+"<span>Gecontroleerd door "+esc(r.gecontroleerd_door||"productie")+(r.gecontroleerd_op?" op "+esc(r.gecontroleerd_op):"")+". Aanpassen kan niet meer.</span></p>";
+    if(w)return'<p class="pa-staat wacht">'+ico("klok")+"<span>Staat klaar op deze telefoon en gaat vanzelf zodra er bereik is.</span></p>";
+    if(PA.bron==="concept")return'<p class="pa-staat">'+ico("pen")+"<span>"+(r?"Je wijzigingen zijn nog niet verstuurd. Verstuurd was: "+esc(r.status.toLowerCase())+" door "+esc(r.door)+" om "+esc(prodTijd(r.tijd))+".":"Nog niet verstuurd. Wat je invult blijft op deze telefoon staan.")+"</span></p>";
+    if(r)return'<p class="pa-staat info">'+ico("afvink")+"<span>Verstuurd door "+esc(r.door)+" om "+esc(prodTijd(r.tijd))+(r.status==="Onvolledig"?", nog niet alles ingevuld":"")+". Aanpassen kan tot productie hem heeft gecontroleerd.</span></p>";
+    return'<p class="pa-staat">'+ico("pen")+"<span>Nog niet verstuurd.</span></p>";
+  }
+  const keuze=(naamV,v,opties)=>'<div class="seg pa-seg" role="radiogroup">'+opties.map(([w,t,s])=>'<button type="button" role="radio" data-pakies="'+naamV+'" data-w="'+esc(w)+'" aria-checked="'+(v===w)+'" aria-pressed="'+(v===w)+'">'+esc(t)+(s?"<small>"+esc(s)+"</small>":"")+"</button>").join("")+"</div>";
+  function formulier(houd){
+    const y=window.scrollY,ro=PA.bron==="gecontroleerd";
+    let h='<form class="meldform pa-form" id="paform" novalidate><label>Je naam<input type="text" id="pa_naam" required autocomplete="name" value="'+esc(naam())+'"></label>'+
+      '<label>Datum<input type="date" id="pa_datum" required value="'+isoTekst(PA.datum)+'"></label>'+
+      '<div class="pa-keus"><span>Dienst</span>'+keuze("dienst",PA.dienst,PROD_DIENST.map(x=>[x.d,x.d,x.van+" tot "+x.tot]))+"</div>"+
+      '<div class="pa-keus"><span>Afdeling</span>'+keuze("afdeling",PA.afdeling,PROD_AFD.map(a=>[a,a]))+"</div>"+staat();
+    if(ro)h+='<div class="pa-lees">'+prodLeesHtml(prodRij(PA.datum,PA.dienst,PA.afdeling))+"</div>";
+    else h+=paVelden(PA,PA.g)+'<p class="fout" id="pa_fout" hidden></p>'+
+      (PAVRAAG?'<div class="pa-vraag" role="alert"><p>Nog niet alles is ingevuld: '+esc(lijstTekst(prodMist(PA.afdeling,PA.g)))+'.</p><div class="acties"><button type="button" class="knop hoofd" id="pa_toch">Toch versturen</button><button type="button" class="knop" id="pa_verder">Verder invullen</button></div></div>':'<button class="knop hoofd pa-stuur" id="pa_knop" type="submit">Dienst versturen</button>')+
+      '<p class="pa-hint">Na het versturen kun je nog aanpassen tot productie hem heeft gecontroleerd. De TD en de dagstart zien de pilot nog niet.</p>';
+    vak.innerHTML=h+"</form>";
+    if(houd)window.scrollTo(0,y);
+  }
+  function mijn(){
+    const wacht=UIT.filter(x=>x.d.actie==="productie").map(x=>({datum:x.d.datum,dienst:x.d.dienst,afdeling:x.d.afdeling,status:"Wacht op bereik",door:x.d.door,tijd:x.tijd}));
+    const al=new Set(wacht.map(r=>prodSleutel(r.datum,r.dienst,r.afdeling)));
+    const volg=r=>tdVolg(r.datum)+PROD_DIENST.findIndex(x=>x.d===r.dienst);
+    const lijst=wacht.concat((PROD||[]).filter(r=>!al.has(prodSleutel(r.datum,r.dienst,r.afdeling)))).sort((a,b)=>volg(b).localeCompare(volg(a)));
+    vak.innerHTML='<div class="pa-mijn"><p class="pa-hint">De diensten van de laatste drie weken. Tik op een dienst om hem te bekijken of aan te passen.</p>'+
+      (PRODFOUT&&!PROD?'<p class="pa-staat wacht">'+ico("klok")+"<span>De verstuurde diensten konden niet worden opgehaald. Controleer je bereik.</span></p>":"")+
+      (lijst.length?lijst.map(r=>'<button type="button" class="pmkaart pa-kaart" data-paopen="'+esc(prodSleutel(r.datum,r.dienst,r.afdeling))+'"><span class="pmk1"><b>'+esc(hoofd(prodDagTekst(r.datum))+", "+r.dienst.toLowerCase())+"</b>"+prodStatusChip(r.status)+'</span><span class="pmk2">'+esc(r.afdeling+(r.door?", "+r.door:"")+(r.tijd?" om "+prodTijd(r.tijd):""))+"</span></button>").join(""):'<p class="pmgeen">Nog geen diensten verstuurd.</p>')+"</div>";
+  }
+  function toon(t,houd){
+    PA.tab=t;document.querySelectorAll("#ptabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.p===t)));
+    if(t==="mijn")mijn();else{if(!PA.g)laad();formulier(houd)}
+  }
+  paTeken=(vers)=>{if(PA.tab==="mijn"){mijn();return}if(vers){const fo=document.activeElement;if(fo&&fo.closest&&fo.closest("#paform")&&fo.matches("input,textarea,select"))return;if(PA.bron!=="concept"){laad();formulier(true)}}};
+  rteken=()=>{if(PA.tab==="mijn")mijn()};
+  function bewaar(){PA.g=paLees(vak,PA.g);prodConcept(prodSleutel(PA.datum,PA.dienst,PA.afdeling),PA.g);if(PA.bron!=="concept"){PA.bron="concept";const s=vak.querySelector(".pa-staat");if(s)s.outerHTML=staat()}paBij(vak,PA,PA.g)}
+  function wissel(w,v){
+    if(w==="naam")return;
+    if(PA.tab==="invullen"&&PA.bron!=="gecontroleerd"&&vak.querySelector("#paform"))PA.g=paLees(vak,PA.g);
+    PA[w]=v;PAVRAAG=false;if(w==="afdeling")try{localStorage.setItem(PROD_AFDKEUZE,v)}catch(_){}
+    laad();formulier();
+  }
+  async function verstuur(toch){
+    const f=$("#pa_fout"),k=$("#pa_knop")||$("#pa_toch"),wie=$("#pa_naam").value.trim();f.hidden=true;
+    if(!wie){f.textContent="Vul je naam in.";f.hidden=false;$("#pa_naam").focus();return}
+    naam(wie);PA.g=paLees(vak,PA.g);
+    const mist=prodMist(PA.afdeling,PA.g);
+    if(mist.length&&!toch){PAVRAAG=true;formulier(true);const t=$("#pa_toch");if(t)t.focus();return}
+    PAVRAAG=false;
+    const d={actie:"productie",datum:PA.datum,dienst:PA.dienst,afdeling:PA.afdeling,status:mist.length?"Onvolledig":"Ingevuld",gegevens:PA.g,door:wie},sl=prodSleutel(d.datum,d.dienst,d.afdeling);
+    if(k){k.disabled=true;k.textContent="Versturen"}
+    try{const j=await stuur(d);prodPasToe(d,j);prodConcept(sl,null);PA.bron="server";formulier();window.scrollTo(0,0);melder("Dienst verstuurd"+(d.status==="Onvolledig"?", nog niet alles ingevuld":""))}
+    catch(e){
+      if(e.message==="gecontroleerd"){prodConcept(sl,null);await haalProd();laad();formulier();window.scrollTo(0,0);melder("Deze dienst is al gecontroleerd. Aanpassen kan niet meer.");return}
+      if(prodNetwerk(e)){try{await UITBAK.zet({d,tijd:nuTekst()});prodConcept(sl,null);await leesUitbak();PA.bron="server";formulier();window.scrollTo(0,0);melder("Geen bereik. De dienst wordt vanzelf verstuurd.");return}catch(_){}}
+      formulier(true);const f2=$("#pa_fout");if(f2){f2.textContent=e.message==="geen toegang"?"De Sheet kent de productie-app nog niet. Vraag de werkvoorbereider het script bij te werken.":"Versturen is niet gelukt. Probeer het opnieuw.";f2.hidden=false}
+    }
+  }
+  $("#ptabs").addEventListener("click",e=>{const b=e.target.closest("button");if(b){if(PA.tab==="invullen"&&vak.querySelector("#paform")&&PA.bron!=="gecontroleerd")PA.g=paLees(vak,PA.g);toon(b.dataset.p)}});
+  vak.addEventListener("click",e=>{
+    const kies=e.target.closest("[data-pakies]");if(kies){wissel(kies.dataset.pakies,kies.dataset.w);return}
+    const o=e.target.closest("[data-paopen]");if(o){const[t,dienst,afdeling]=o.dataset.paopen.split("|");Object.assign(PA,{datum:t,dienst,afdeling});PAVRAAG=false;laad();toon("invullen");window.scrollTo(0,0);return}
+    if(e.target.closest("#pa_toch")){verstuur(true);return}
+    if(e.target.closest("#pa_verder")){PAVRAAG=false;formulier(true);return}
+    if(paLijstKlik(e,vak,PA,()=>{prodConcept(prodSleutel(PA.datum,PA.dienst,PA.afdeling),PA.g);PA.bron="concept";formulier(true)}))return;
+  });
+  vak.addEventListener("input",e=>{if(e.target.id==="pa_naam"){naam(e.target.value.trim());return}if(e.target.closest("[data-pa]"))bewaar()});
+  vak.addEventListener("change",e=>{
+    if(e.target.id==="pa_datum"){const v=e.target.value;if(v&&v>="2000")wissel("datum",isoTekst(v));return}
+    if(e.target.closest("[data-pa]"))bewaar();
+  });
+  vak.addEventListener("submit",e=>{e.preventDefault();verstuur(false)});
+  toon("invullen");
+  haalProd();uitbakAan();setInterval(()=>{if(!document.hidden)haalProd()},60000);
+}
+
+/* ---- de pagina Diensten bij de werkvoorbereider ---- */
+function prodWeekDagen(){const z=rcaZondag(pmNu());z.setDate(z.getDate()+7*PRODWK);return Array.from({length:7},(_,i)=>{const d=new Date(z);d.setDate(d.getDate()+i);return d})}
+function prodCel(t,dienst,afd){
+  const r=prodRij(t,dienst,afd),tt=prodTijden(t,dienst),nu=new Date();
+  if(r)return'<button type="button" class="pd-cel '+({Gecontroleerd:"ok",Ingevuld:"info",Onvolledig:"warn"}[r.status]||"")+'" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'" aria-label="'+esc(prodTitel({datum:t,dienst,afdeling:afd})+": "+r.status)+'"><b>'+esc(r.status)+"</b><small>"+esc((r.door||"")+(r.tijd?" "+prodTijd(r.tijd):""))+"</small></button>";
+  if(tt&&nu>=tt.van&&nu<tt.eind)return'<button type="button" class="pd-cel nu" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Loopt nu</b><small>Nog niet verstuurd</small></button>';
+  if(tt&&nu>=tt.eind)return'<button type="button" class="pd-cel leeg" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Niet ingevuld</b></button>';
+  return'<span class="pd-cel toekomst" aria-hidden="true"></span>';
+}
+function vProd(){
+  const dagen=prodWeekDagen(),vandaag=dagTekst(pmNu()),wk=prodWeek(dagen[0]);
+  const open=(PROD||[]).filter(r=>r.status!=="Gecontroleerd").sort((a,b)=>tdVolg(a.datum).localeCompare(tdVolg(b.datum))||PROD_DIENST.findIndex(x=>x.d===a.dienst)-PROD_DIENST.findIndex(x=>x.d===b.dienst));
+  let h='<div class="tdkop"><div><h1>Diensten</h1><p>Pilot: wat de teamleiders per dienst invullen in de productie-app. Telt nog niet mee op Output per lijn, bij de RCA en in de dagstart.</p></div>'+
+    '<div class="headknoppen pd-week"><button type="button" class="knop" data-pdwk="-1" aria-label="Vorige week">‹</button><b>Week '+wk+'</b><button type="button" class="knop" data-pdwk="1" aria-label="Volgende week">›</button>'+(PRODWK?'<button type="button" class="tekstknop" data-pdwk="0">Deze week</button>':"")+"</div></div>";
+  if(!PROD){$("#view").innerHTML=h+'<div class="tdleeg">'+(PRODFOUT?"De diensten konden niet worden opgehaald. Staat versie 22 van het script in Apps Script?":"Diensten ophalen.")+"</div>";return}
+  if(open.length)h+='<p class="pd-let">'+(open.length===1?"1 dienst wacht":open.length+" diensten wachten")+" op controle: "+open.slice(0,6).map(r=>'<button type="button" class="tekstknop" data-pdopen="'+esc(prodSleutel(r.datum,r.dienst,r.afdeling))+'">'+esc(dagKort(r.datum)+" "+r.dienst.toLowerCase()+", "+r.afdeling.toLowerCase())+"</button>").join(", ")+(open.length>6?" en nog "+(open.length-6):"")+".</p>";
+  h+='<div class="pd-tblw pd-roosterw" data-wk="'+wk+'"><table class="pd-rooster"><thead><tr><th></th>'+dagen.map(d=>{const t=dagTekst(d);return'<th class="'+(t===vandaag?"vandaag":"")+'"><span>'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"short"})))+"</span> "+d.getDate()+"</th>"}).join("")+"</tr></thead><tbody>"+
+    PROD_AFD.map(afd=>'<tr class="pd-afd"><th colspan="8"><span>'+esc(afd)+"</span></th></tr>"+PROD_DIENST.map(x=>'<tr><th class="pd-dienst"><b>'+x.d+"</b><small>"+x.van+" tot "+x.tot+"</small></th>"+dagen.map(d=>"<td>"+prodCel(dagTekst(d),x.d,afd)+"</td>").join("")+"</tr>").join("")).join("")+"</tbody></table></div>";
+  h+='<p class="rcauitleg">De teamleider vult zijn dienst in op de telefoon, met de inlog Productie test. Verstuurd is meteen hier te zien. Klik op een dienst om hem te bekijken, te verbeteren of op Gecontroleerd te zetten. Daarna kan de teamleider hem niet meer aanpassen.</p>';
+  /* Op een smal scherm schuift het rooster: bij opnieuw tekenen blijft het staan waar het stond, anders staat vandaag in beeld. */
+  const oud=$("#view .pd-roosterw"),oudL=oud&&oud.dataset.wk===String(wk)?oud.scrollLeft:null;
+  $("#view").innerHTML=h;
+  const w=$("#view .pd-roosterw"),v=w&&w.querySelector("th.vandaag");
+  if(w&&w.scrollWidth>w.clientWidth){if(oudL!=null)w.scrollLeft=oudL;else if(v)w.scrollLeft=Math.max(0,v.offsetLeft-w.querySelector("thead th").offsetWidth-8)}
+}
+/* Het paneel van een dienst: lezen, Verbeteren en Gecontroleerd. Verbeteren slaat op met een eigen knop, zoals Nieuwe bon. */
+function prodPaneel(sl,bewerk){
+  const[t,dienst,afdeling]=sl.split("|"),r=prodRij(t,dienst,afdeling),p=$("#paneel"),c={datum:t,dienst,afdeling};
+  if($("#paneel").hidden)terug=document.activeElement;
+  PDBEWERK=bewerk?{sl,datum:t,dienst,afdeling,g:prodVul(afdeling,r&&r.gegevens)}:null;
+  const kop='<div class="pkopbalk"><div><small>Productie, pilot</small><h2 id="ptitel">'+esc(hoofd(prodTitel(c)))+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+"</button></div>";
+  let h;
+  if(bewerk){
+    h=kop+'<form class="meldform pa-form pd-form" id="pdform" novalidate>'+(r?"":'<p class="pa-hint">Deze dienst is nog niet ingevuld. Wat je opslaat, staat als ingevuld door jou.</p>')+paVelden(c,PDBEWERK.g)+'<p class="fout" id="pd_fout" hidden></p><div class="acties pd-knoppen"><button class="knop hoofd" id="pd_opslaan" type="submit">Opslaan</button><button type="button" class="knop" data-pdterug>Annuleren</button></div></form>';
+  }else{
+    const log=r&&r.log?String(r.log).split("\n").filter(Boolean).reverse():[];
+    h=kop+'<div class="pd-paneel"><div class="pd-st">'+(r?prodStatusChip(r.status)+"<span>Verstuurd door "+esc(r.door||"")+" op "+esc(r.tijd||"")+(r.status==="Gecontroleerd"&&r.gecontroleerd_door?". Gecontroleerd door "+esc(r.gecontroleerd_door)+" op "+esc(r.gecontroleerd_op):"")+"</span>":"<span>Nog niet ingevuld.</span>")+"</div>"+
+      (r?prodLeesHtml(r):"")+
+      '<div class="acties pd-knoppen">'+(r&&r.status!=="Gecontroleerd"?'<button type="button" class="knop hoofd" data-pdcontrole="1">'+ico("afvink")+"Gecontroleerd</button>":"")+'<button type="button" class="knop" data-pdbewerk>'+ico("pen")+(r?"Verbeteren":"Invullen")+"</button>"+(r&&r.status==="Gecontroleerd"?'<button type="button" class="knop" data-pdcontrole="0">Controle terugdraaien</button>':"")+"</div>"+
+      '<p class="fout" id="pd_fout" hidden></p>'+(log.length?'<h3 class="pd-h3">Logboek</h3><ul class="pd-log">'+log.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"")+"</div>";
+  }
+  p.innerHTML=h;p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
+  if(bewerk){const f=$("#pdform");f.addEventListener("input",e=>{if(e.target.closest("[data-pa]")){PDBEWERK.g=paLees(f,PDBEWERK.g);paBij(f,PDBEWERK,PDBEWERK.g)}});f.addEventListener("change",e=>{if(e.target.closest("[data-pa]")){PDBEWERK.g=paLees(f,PDBEWERK.g);paBij(f,PDBEWERK,PDBEWERK.g)}});f.addEventListener("submit",e=>{e.preventDefault();prodOpslaan(null)});const v=f.querySelector("input,select,textarea");if(v)v.focus()}
+  else p.focus();
+}
+async function prodOpslaan(controle){
+  const b=PDBEWERK,sl=b?b.sl:prodPaneelSl,[t,dienst,afdeling]=sl.split("|"),r=prodRij(t,dienst,afdeling),f=$("#pd_fout"),knop=controle!=null?$('[data-pdcontrole="'+(controle?1:0)+'"]'):$("#pd_opslaan");
+  let g=b?paLees($("#pdform"),b.g):prodVul(afdeling,r&&r.gegevens);
+  const status=controle===true?"Gecontroleerd":controle===false||!r||r.status!=="Gecontroleerd"?(prodMist(afdeling,g).length?"Onvolledig":"Ingevuld"):"Gecontroleerd";
+  const d={k:MELD().sleutel_wv,actie:"productie",datum:t,dienst,afdeling,status,gegevens:g,door:wvDoor()};
+  if(f)f.hidden=true;if(knop)knop.disabled=true;
+  try{const j=await stuur(d);prodPasToe(d,j);prodPaneel(sl,false);vProdHerteken();melder(controle===true?"Dienst staat op Gecontroleerd":controle===false?"De controle is teruggedraaid":"Dienst opgeslagen")}
+  catch(e){if(knop)knop.disabled=false;const f2=$("#pd_fout");if(f2){f2.textContent=e.message==="geen toegang"||e.message==="onbekende actie"?"De Sheet kent de productie-app nog niet. Zet versie 22 van het script in Apps Script.":"Opslaan is niet gelukt. Controleer je verbinding en probeer het opnieuw.";f2.hidden=false}}
+}
+let prodPaneelSl="";
+function vProdHerteken(){if(HUIDIG==="prod"){const y=window.scrollY;vProd();window.scrollTo(0,y)}}
+document.addEventListener("click",e=>{
+  if(!D||D.niveau==="productie")return;
+  const w=e.target.closest("[data-pdwk]");if(w){PRODWK=w.dataset.pdwk==="0"?0:PRODWK+ +w.dataset.pdwk;vProd();return}
+  const o=e.target.closest("[data-pdopen]");if(o){prodPaneelSl=o.dataset.pdopen;prodPaneel(prodPaneelSl,!prodRij(...prodPaneelSl.split("|")));return}
+  if(e.target.closest("[data-pdbewerk]")){prodPaneel(prodPaneelSl,true);return}
+  if(e.target.closest("[data-pdterug]")){prodPaneel(prodPaneelSl,false);return}
+  const c=e.target.closest("[data-pdcontrole]");if(c){PDBEWERK=null;prodOpslaan(c.dataset.pdcontrole==="1");return}
+  const pl=e.target.closest("#pdform")&&PDBEWERK?$("#pdform"):null;if(pl)paLijstKlik(e,pl,PDBEWERK,()=>{const y=$("#paneel").scrollTop;prodPaneelVelden();$("#paneel").scrollTop=y});
+});
+/* Een regel erbij of eraf in Verbeteren: alleen de velden opnieuw tekenen, het paneel blijft staan. */
+function prodPaneelVelden(){
+  const f=$("#pdform");if(!f||!PDBEWERK)return;
+  f.querySelectorAll(".pa-sec").forEach(s=>s.remove());
+  const tmp=document.createElement("div");tmp.innerHTML=paVelden(PDBEWERK,PDBEWERK.g);
+  const voor=f.querySelector("#pd_fout");[...tmp.children].forEach(x=>f.insertBefore(x,voor));
+}
 
 /* ---- menu ---- */
 /* De werkvoorbereider deelt zijn menu zelf in met Menu indelen. Dat geldt ook voor de kijkinlog, die hetzelfde deel leest.
@@ -4800,7 +5271,7 @@ const SCHERM={tedoen:vTeDoen,rca:vRca,acties:vActies,docs:vDocs,leveranciers:vLe
    RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
@@ -4822,8 +5293,8 @@ function menuKopjes(m){
 /* De kopjes staan links als ronde knoppen (rail), de pagina's van het kopje onderin (dock), zoals in het voorbeeld met het glas.
    Een klik op een kopje opent de pagina waar je in dat kopje het laatst was (td-hub-kopjes). Onderin staat ook de + voor iets nieuws.
    Op de telefoon kies je het kopje bovenin (kiezer) en staan alle pagina's per kopje in de kiezer. De getallen staan bij de pagina en opgeteld bij het kopje. */
-const KORT={sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
-const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
+const KORT={sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
+const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Productie":"output","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
 const TEL={},KOPLAATST="td-hub-kopjes";
 let KOPJE=null,MODEL=[];
 function kopLaatst(t,id){
@@ -5014,7 +5485,7 @@ function route(){
   }
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();groetTeken();
-  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca"].includes(HUIDIG));
+  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca","prod"].includes(HUIDIG));
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
@@ -5061,11 +5532,14 @@ function start(data){
   if(D.niveau==="monteur"){monteurScherm();return}
   if(D.niveau==="output"){outputScherm();return}
   if(D.niveau==="pm"){pmScherm();return}
+  if(D.niveau==="productie"){prodScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
-  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[]);
+  /* Productie (pilot): alleen de werkvoorbereider, nog niet de kijkinlog. */
+  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[],!alleenKijken()?[{id:"prod",t:"Diensten",i:"output"}]:[]);
   PAGINAS=(tdMag()?[P_TEDOEN]:[]).concat(P_DAG,P_LIJN,td?P_TD.filter(p=>!(tdMag()&&p.id==="start")):[P_RAPPORT],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];D.rca=(D.rca||[]).map(rcaVolledig);
   MENU_TD=td;MENU_WV=wv;bouwMenu();
+  if(PAGINAS.some(p=>p.id==="prod")){haalProd();setInterval(()=>{if(!document.hidden)haalProd()},60000)}
   planTel();
   presStappen();
   groetTeken();standTeken();zoekAan();

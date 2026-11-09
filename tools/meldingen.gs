@@ -1,4 +1,5 @@
-// TD Hub meldingen, versie 21: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 22: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// Versie 22: het tabblad Productie voor de productie-app (pilot), met een eigen sleutel.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
 const SHEET_ID = '__SHEET_ID__';
 const SLEUTEL = '__SLEUTEL__';
@@ -8,6 +9,7 @@ const WVSLEUTEL = '__WVSLEUTEL__';
 const KIJKSLEUTEL = '__KIJKSLEUTEL__';
 const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
 const PMSLEUTEL = '__PMSLEUTEL__';
+const PRODUCTIESLEUTEL = '__PRODUCTIESLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
 // voortgang (kolom 21, vanaf versie 21): Bezig of leeg, voor een actie op het SQD-bord en in de actielijst.
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio', 'voortgang'];
@@ -27,7 +29,13 @@ const BEVKOP = ['id', 'nr', 'punt', 'naam', 'opmerking', 'foto', 'bon', 'door', 
 const OPNAMEKOP = ['nr', 'status', 'regels', 'opmerking', 'foto', 'door', 'tijd'];
 const OPNAMESTATUS = ['Bestellen', 'Deels uitgevoerd'];
 const LOGKOP = ['tijd', 'door', 'van', 'nr', 'status', 'rij'];
-// Welke sleutel de wijziging stuurde: wv, td, monteur, pm, output of melden. Komt in elk wachtrijbestand en in het logboek, nooit uit wat de browser invult.
+// Productie-app (pilot): per datum, dienst en afdeling één regel. De gegevens van de dienst staan als JSON in de kolom gegevens.
+const PRODKOP = ['id', 'datum', 'dienst', 'afdeling', 'status', 'gegevens', 'door', 'tijd', 'gecontroleerd_door', 'gecontroleerd_op', 'log'];
+const PRODDIENST = ['Ochtend', 'Middag', 'Nacht'];
+const PRODAFDELING = ['Bakkerij', 'Inpak en ompak'];
+const PRODSTATUS = ['Ingevuld', 'Onvolledig', 'Gecontroleerd'];
+const PRODMAX = 45000;
+// Welke sleutel de wijziging stuurde: wv, td, monteur, pm, output, productie of melden. Komt in elk wachtrijbestand en in het logboek, nooit uit wat de browser invult.
 let VAN_ = '';
 
 function blad_() {
@@ -333,10 +341,64 @@ function zetPm_(d) {
   return { tijd: tijd, reg: reg };
 }
 
+// Productie-app (pilot). De teamleider vult per dienst in, de werkvoorbereider verbetert en zet hem op Gecontroleerd.
+// Een gecontroleerde dienst kan de productiesleutel niet meer aanpassen. Het logboek vult alleen aan.
+function prodBlad_() {
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const b = s.getSheetByName('Productie') || s.insertSheet('Productie', s.getNumSheets());
+  b.getRange('A:K').setNumberFormat('@');
+  b.getRange(1, 1, 1, PRODKOP.length).setValues([PRODKOP]);
+  return b;
+}
+function prodDag_(t) {
+  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(String(t || ''));
+  return m ? new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])) : null;
+}
+function prodRijen_(dagen) {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Productie');
+  if (!b || b.getLastRow() < 2) return [];
+  const grens = new Date(Date.now() - dagen * 864e5);
+  return b.getRange(2, 1, b.getLastRow() - 1, PRODKOP.length).getDisplayValues().filter(r => {
+    const d = prodDag_(r[1]);
+    return d && d >= grens;
+  }).map(r => {
+    const o = {};
+    PRODKOP.forEach((k, i) => { o[k] = r[i]; });
+    try { o.gegevens = JSON.parse(r[5] || '{}'); } catch (f) { o.gegevens = {}; }
+    return o;
+  });
+}
+function zetProductie_(d) {
+  const wv = d.k === WVSLEUTEL;
+  const tekst = JSON.stringify(d.gegevens && typeof d.gegevens === 'object' && !Array.isArray(d.gegevens) ? d.gegevens : {});
+  if (!prodDag_(d.datum) || !PRODDIENST.includes(d.dienst) || !PRODAFDELING.includes(d.afdeling) || !PRODSTATUS.includes(d.status) || tekst.length > PRODMAX) return { fout: 'onjuiste invoer' };
+  if (d.status === 'Gecontroleerd' && !wv) return { fout: 'geen toegang' };
+  const b = prodBlad_();
+  const n = b.getLastRow();
+  const rijen = n > 1 ? b.getRange(2, 1, n - 1, PRODKOP.length).getDisplayValues() : [];
+  const i = rijen.findIndex(r => r[1] === d.datum && r[2] === d.dienst && r[3] === d.afdeling);
+  const oud = i >= 0 ? rijen[i] : null;
+  if (oud && oud[4] === 'Gecontroleerd' && !wv) return { fout: 'gecontroleerd', status: 'Gecontroleerd' };
+  const tijd = nu_();
+  const door = schoon_(d.door).slice(0, 100);
+  const wat = d.status === 'Gecontroleerd' ? (oud && oud[4] === 'Gecontroleerd' ? 'paste de gecontroleerde dienst aan' : 'zette de dienst op Gecontroleerd') : wv ? (oud && oud[4] === 'Gecontroleerd' ? 'haalde de controle weg' : 'verbeterde de dienst') : oud ? 'paste de dienst aan' : 'verstuurde de dienst';
+  const log = ((oud ? oud[10] + '\n' : '') + tijd + ' ' + (door || (wv ? 'Werkvoorbereider' : 'Productie')) + ' ' + wat + (d.status === 'Onvolledig' ? ' (onvolledig)' : '') + '.').slice(-5000);
+  const gecontroleerd = d.status === 'Gecontroleerd' ? [oud && oud[4] === 'Gecontroleerd' ? oud[8] : door, oud && oud[4] === 'Gecontroleerd' ? oud[9] : tijd] : ['', ''];
+  const id = oud ? oud[0] : Utilities.getUuid().slice(0, 8);
+  // Wie de dienst verstuurde blijft staan als de werkvoorbereider verbetert.
+  const rij = [id, d.datum, d.dienst, d.afdeling, d.status, tekst, wv && oud ? oud[6] : door, wv && oud ? oud[7] : tijd, gecontroleerd[0], gecontroleerd[1], log];
+  if (oud) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
+  else b.appendRow(rij);
+  return { ok: true, id: id, tijd: tijd, status: d.status, log: log, door: rij[6], verstuurd: rij[7], gecontroleerd_door: rij[8], gecontroleerd_op: rij[9] };
+}
+
 function doGet(e) {
   const p = e.parameter || {};
   const monteur = p.k === MONTEURSLEUTEL;
   if (p.k === OUTPUTSLEUTEL) return uit_({ output: outputRijen_() });
+  // Productie-app: de diensten van de laatste drie weken. De werkvoorbereider leest ze los van de rest, met zijn eigen sleutel.
+  if (p.k === PRODUCTIESLEUTEL) return uit_({ productie: prodRijen_(21) });
+  if (p.k === WVSLEUTEL && p.productie) return uit_({ productie: prodRijen_(70) });
   const pm = p.k === PMSLEUTEL;
   if (pm && !p.foto) return uit_({ pm: pmRijen_(), bevindingen: bevRijen_() });
   // De kijkinlog leest hetzelfde als de TD-sleutel. In doPost bestaat deze sleutel niet, dus opslaan kan niet.
@@ -375,8 +437,10 @@ function doPost(e) {
   const weekbon = d.k === MONTEURSLEUTEL && d.actie === 'weekbon';
   // De monteur meldt een opnamebon af: specificaties en foto, meer niet.
   const opname = d.k === MONTEURSLEUTEL && d.actie === 'opname';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname) return uit_({ fout: 'geen toegang' });
-  VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : 'melden';
+  // Productie-app: de teamleider vult zijn dienst in. De werkvoorbereider verbetert en zet hem op Gecontroleerd.
+  const productie = (d.k === PRODUCTIESLEUTEL || d.k === WVSLEUTEL) && d.actie === 'productie';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !productie) return uit_({ fout: 'geen toegang' });
+  VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : d.k === PRODUCTIESLEUTEL ? 'productie' : 'melden';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -401,6 +465,7 @@ function doPost(e) {
       if (!/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PLOEGEN.includes(d.ploeg) || !LIJNEN.includes(d.lijn) || d.output === '' || !(kg >= 0 && kg < 10000000)) return uit_({ fout: 'onjuiste invoer' });
       return uit_({ ok: true, vervangen: zetOutput_(d) });
     }
+    if (d.actie === 'productie') return uit_(zetProductie_(d));
     if (d.actie === 'pm') {
       if (!/^PM-\d{6}-\d{1,2}$/.test(d.nr) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !PMSTATUS.includes(d.status) || !/^PM-\d+(,PM-\d+)*$/.test(d.taken)) return uit_({ fout: 'onjuiste invoer' });
       return uit_(Object.assign({ ok: true }, zetPm_(d)));
