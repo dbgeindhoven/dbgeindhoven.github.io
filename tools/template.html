@@ -718,6 +718,270 @@ svg.seg7{display:block;overflow:visible}
 .tdr.rca .tdr-plek .tekstknop{font-size:.8125rem}
 .tdr.rca .tdr-bedien{margin-left:0}
 .rcauitleg{max-width:80ch;margin:22px 0 0;color:var(--ink3);font-size:.8125rem}
+/* RCA analyse: bovenaan de signalen, daaronder het bord met de RCA's. Een RCA heeft links de acht stappen en rechts per stap een vlak.
+   Visgraat: drie M's boven en drie onder de graat, het probleem als kop rechts. Op de telefoon staan de M's onder elkaar. */
+.rc-filter{margin:0 0 4px}
+.rc-sigdeel{margin-top:16px}
+.rc-sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.rc-sig{display:flex;flex-direction:column;justify-content:space-between;gap:9px;padding:11px 14px 12px;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand);box-shadow:inset 3px 0 0 var(--k-rood)}
+.rc-sig.heeft{box-shadow:inset 3px 0 0 var(--line2)}
+.rc-sig1{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.rc-sig1 b{min-width:0;font-weight:600}
+.rc-sig1 small{flex:none;color:var(--ink3);font-size:.75rem}
+.rc-sigt>span{display:block;margin-top:2px;color:var(--crit-ink);font-size:.8125rem;font-weight:500}
+.rc-sig.heeft .rc-sigt>span{color:var(--ink2)}
+.rc-sigk{display:flex;flex-wrap:wrap;gap:6px}
+.rc-sigk .knop{padding:5px 12px;font-size:.8125rem}
+.rc-bord{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.rc-kol{min-width:0;min-height:160px;padding:12px;border-radius:22px;background:rgba(255,255,255,.35);border:1px solid var(--glas-rand)}
+.rc-kol h3{display:flex;align-items:baseline;gap:8px;margin:2px 4px 10px;font-size:.9375rem;font-weight:600}
+.rc-kol h3 small{color:var(--ink3);font-size:.75rem;font-weight:500}
+.rc-tel{margin-left:auto;color:var(--ink2);font-size:.8125rem}
+.rc-kolleeg{margin:4px;color:var(--ink3);font-size:.8125rem}
+.rc-kaart{display:flex;flex-direction:column;gap:7px;width:100%;margin:0 0 9px;padding:13px 14px;border:1px solid rgba(21,24,29,.07);border-radius:16px;background:rgba(255,255,255,.92);box-shadow:0 4px 14px rgba(70,45,10,.06);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.rc-kaart:hover{box-shadow:0 0 0 2px var(--ink),0 8px 22px rgba(70,45,10,.12)}
+.rc-kaart.terug{box-shadow:inset 3px 0 0 var(--crit),0 4px 14px rgba(70,45,10,.06)}
+.rc-k1{display:flex;align-items:center;gap:8px}
+.rc-k1 .p{margin-left:auto}
+.rc-nr{color:var(--ink3);font-size:.75rem;font-weight:600}
+.rc-kt{font-size:.875rem;font-weight:600;line-height:1.3}
+.rc-kp{margin-top:-3px;color:var(--ink2);font-size:.8125rem;line-height:1.35}
+.rc-v8{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.rc-v8 i{height:5px;border-radius:3px;background:rgba(21,24,29,.1)}
+.rc-v8 i.k{background:var(--ok)}
+.rc-v8 i.n{background:var(--ink)}
+.rc-ks{font-size:.75rem;font-weight:600}
+.rc-weken{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px}
+.rc-weken i{height:14px;border-radius:4px;background:rgba(21,24,29,.07)}
+.rc-weken i.ok{background:var(--k-groen)}
+.rc-kf{display:flex;flex-direction:column;gap:3px;color:var(--ink2);font-size:.75rem}
+.rc-kf span{display:flex;gap:7px;align-items:flex-start}
+.rc-kf .i{width:14px;height:14px;margin-top:1px}
+.rc-kv{display:flex;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink3);font-size:.75rem}
+.rc-meer{margin:4px}
+.rc-kop{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+.rc-kopl{flex:1;min-width:0}
+.rc-terug{display:inline-flex;align-items:center;gap:4px;margin-bottom:8px;text-decoration:none}
+.rc-terug .i{width:16px;height:16px}
+.rc-r2{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.rc-r2 .rc-in{width:auto;padding:3px 8px;font-size:.8125rem}
+.rc-titel{display:block;width:calc(100% + 9px);padding:4px 8px;margin-left:-9px;border:1px solid transparent;border-radius:10px;background:none;font:600 1.5rem/1.25 var(--kop);color:var(--ink);resize:none;overflow:hidden;field-sizing:content;min-height:0}
+.rc-titel:hover{border-color:var(--line2)}
+.rc-titel:focus{outline:none;border-color:var(--ink);background:#fff}
+.rc-titel[readonly]{border-color:transparent;background:none}
+.rc-sub{margin:4px 0 0;color:var(--ink2);font-size:.8125rem}
+.rc-team{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:0 12px;margin-top:10px;max-width:900px}
+.rc-team .rc-veld{margin:0}
+.rc-grid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
+.rc-stappen{position:sticky;top:calc(var(--kopruimte) + 8px);display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:20px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
+.rc-stappen button{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;align-items:center;padding:7px 8px;border:0;border-radius:13px;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.rc-stappen button:hover{background:rgba(255,255,255,.85)}
+.rc-stappen .nr{grid-row:span 2;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#fff;border:1.5px solid var(--line2);color:var(--ink2);font-size:.75rem;font-weight:700}
+.rc-stappen .nr .i{width:14px;height:14px;stroke-width:2.6}
+.rc-stappen b{font-size:.8125rem;font-weight:600;line-height:1.25}
+.rc-stappen small{color:var(--ink3);font-size:.6875rem;line-height:1.3}
+.rc-stappen .klaar .nr{background:var(--ok);border-color:var(--ok);color:#fff}
+.rc-stappen .nu .nr{background:var(--ink);border-color:var(--ink);color:#fff}
+.rc-svoet{margin:8px 8px 2px;padding-top:8px;border-top:1px solid var(--line);color:var(--ink3);font-size:.6875rem}
+.rc-secties{min-width:0}
+.rc-sec{margin:0 0 12px;padding:16px 18px;border-radius:22px;background:var(--glas-binnen);border:1px solid var(--glas-rand);scroll-margin-top:calc(var(--kopruimte) + 8px)}
+.rc-sh{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 12px;font:600 1.0625rem/1.3 var(--kop)}
+.rc-sh small{margin-left:auto;color:var(--ink2);font-size:.75rem;font-weight:500}
+.rc-snr{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#fff;border:1.5px solid var(--line2);font-size:.75rem;font-weight:700}
+.rc-snr.klaar{background:var(--ok);border-color:var(--ok);color:#fff}
+.rc-snr.nu{background:var(--ink);border-color:var(--ink);color:#fff}
+.rc-snr .i{width:14px;height:14px;stroke-width:2.6}
+.rc-h3{margin:14px 0 6px;font-size:.8125rem;font-weight:600;color:var(--ink2)}
+.rc-veld{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0 0 10px}
+.rc-veld>span{font-size:.75rem;font-weight:600;color:var(--ink2)}
+.rc-in{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.95);font-size:.875rem;line-height:1.4;color:var(--ink)}
+textarea.rc-in{resize:vertical;field-sizing:content;min-height:2.7em}
+select.rc-in{padding:7px 8px}
+.rc-in:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.rc-in[readonly],.rc-in:disabled{background:rgba(255,255,255,.5);border-color:transparent;color:var(--ink);opacity:1}
+.rc-getal{max-width:110px}
+.rc-rij3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 12px}
+.rc-rij2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.rc-w5{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}
+.rc-imp{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rc-impv{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rc-imph{display:flex;align-items:center;gap:8px;font-size:.75rem;font-weight:600;color:var(--ink2)}
+.rc-imph i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;font-style:normal;font-weight:700}
+.rc-s{background:var(--crit-soft);color:var(--crit-ink)}
+.rc-q{background:var(--wacht-soft);color:var(--al-goud-tekst)}
+.rc-d{background:var(--info-soft);color:var(--info)}
+.rc-kosten{background:var(--sunken);color:var(--ink2)}
+.rc-tblw{overflow-x:auto;margin:0 0 6px}
+.rc-tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.rc-tbl th{padding:4px 8px 6px 0;text-align:left;color:var(--ink3);font-size:.75rem;font-weight:600;white-space:nowrap}
+.rc-tbl tbody th{padding-top:12px;color:var(--ink);font-size:.8125rem;vertical-align:top}
+.rc-tbl td{padding:4px 8px 4px 0;vertical-align:top}
+.rc-tbl tbody tr+tr td,.rc-tbl tbody tr+tr th{border-top:1px solid var(--line)}
+.rc-leeg{padding:10px 0!important;color:var(--ink3)}
+.rc-wdat{width:150px}.rc-wwie{width:150px}.rc-wx{width:36px}.rc-wm{width:120px}.rc-wst2{width:135px}.rc-wsrt{width:130px}.rc-wwordt{width:175px}
+.rc-woz{width:26%}.rc-oztbl .rc-wm{width:112px}.rc-oztbl .rc-wst2{width:126px}.rc-oztbl .rc-wwie{width:112px}.rc-oztbl .rc-wdat{width:142px}
+.rc-oztbl,.rc-mtbl{min-width:880px}
+.rc-min{width:32px;height:32px}
+.rc-plus{display:inline-flex;align-items:center;gap:5px;margin:4px 0 10px;text-decoration:none}
+.rc-plus .i{width:15px;height:15px}
+.rc-stapvoet{display:flex;justify-content:flex-end;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)}
+.rc-hint{margin:0 0 10px;color:var(--ink2);font-size:.8125rem}
+.rc-feiten{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.rc-feiten span{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--ink2);font-size:.8125rem}
+.rc-feiten b{color:var(--ink);font-size:.9375rem;font-weight:600}
+.rc-feiten .let{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn2) 45%,transparent)}
+.rc-feiten .let b{color:var(--warn-ink)}
+.rc-twee{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;align-items:start}
+.rc-kolom{display:flex;flex-direction:column;gap:12px;min-width:0}
+.rc-rij2k{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.rc-kaart2{min-width:0;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.88);border:1px solid var(--line)}
+.rc-kaart2 h4{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px;font-size:.8125rem;font-weight:600}
+.rc-kaart2 h4 small{color:var(--ink3);font-size:.75rem;font-weight:500;text-align:right}
+.rc-regels td{border-top:1px solid var(--line)}
+.rc-regels tr:first-child td{border-top:0}
+.rc-wdag{width:62px;white-space:nowrap}
+.rc-wdag small{display:block;color:var(--ink3);font-size:.6875rem}
+.rc-wuur{width:66px;white-space:nowrap;font-weight:600}
+.rc-wst{width:120px}
+.rc-mach{display:block;color:var(--ink3);font-size:.6875rem}
+.rc-bl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:.8125rem}
+.rc-bl li{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;line-height:1.35}
+.rc-bl small{display:block;color:var(--ink3);font-size:.6875rem}
+.rc-docs li{grid-template-columns:minmax(0,1fr)}
+.rc-fijn{margin:6px 0 0;color:var(--ink3);font-size:.75rem}
+.rc-waarsch{display:flex;gap:8px;margin:0;padding:9px 11px;border-radius:12px;background:var(--warn-soft);font-size:.8125rem;line-height:1.4}
+.rc-waarsch .i{width:16px;height:16px;flex:none;color:var(--warn-ink)}
+.rc-graf.grafiek{padding:10px 0 24px;margin:0}
+.rc-graf .gvlak{height:150px;margin:0 2px 0 30px}
+.rc-graf .gstapel{width:min(58%,30px)}
+.rc-graf .gtot{background:none}
+.rc-gtoek{width:min(58%,30px);height:18px;border:1px dashed var(--line2);border-bottom:0;border-radius:4px 4px 0 0}
+.rc-gdot{width:7px;height:7px;margin-bottom:3px;border-radius:50%;background:var(--s1)}
+.rc-gm{position:absolute;top:-10px;bottom:0;z-index:2;border-left:1.5px dashed var(--ink);pointer-events:none}
+.rc-gm span{position:absolute;top:-6px;left:6px;padding:0 4px;border-radius:4px;background:#fff;font-size:.75rem;font-weight:600;white-space:nowrap}
+.rc-gm.links span{left:auto;right:6px}
+.rc-gdoel{position:absolute;right:0;bottom:-2px;z-index:1;height:3px;border-radius:2px;background:var(--ok)}
+.rc-leg{display:inline-flex;flex-wrap:wrap;gap:4px 12px}
+.rc-leg>span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.rc-vis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 210px;grid-template-rows:auto 30px auto;column-gap:30px;margin:4px 0 14px}
+.rc-cat{position:relative;display:flex;flex-direction:column;gap:5px;min-width:0}
+.rc-cat.boven{grid-row:1;justify-content:flex-end;padding-bottom:6px}
+.rc-cat.onder{grid-row:3;justify-content:flex-start;padding-top:6px}
+.rc-cat::after{content:"";position:absolute;right:-16px;width:2px;background:var(--ink3)}
+.rc-cat.boven::after{top:0;bottom:-15px;transform:skewX(14deg);transform-origin:bottom}
+.rc-cat.onder::after{top:-15px;bottom:0;transform:skewX(-14deg);transform-origin:top}
+.rc-cat h4{margin:0 0 2px;font-size:.875rem;font-weight:600}
+.rc-cat.onder h4{order:9;margin:2px 0 0}
+.rc-cat .rc-plus{margin:0;font-size:.75rem}
+.rc-graat{position:relative;grid-row:2;grid-column:1/4;align-self:center;height:2px;background:var(--ink)}
+.rc-graat::after{content:"";position:absolute;right:-10px;top:-5px;border-left:10px solid var(--ink);border-top:6px solid transparent;border-bottom:6px solid transparent}
+.rc-viskop{grid-row:1/4;grid-column:4;align-self:center;padding:14px 16px;border-radius:16px;background:var(--ink);color:#fff;font-size:.875rem;font-weight:600;line-height:1.35}
+.rc-viskop small{display:block;margin-bottom:4px;color:rgba(255,255,255,.7);font-size:.6875rem;font-weight:500}
+.rc-oz{display:grid;grid-template-columns:18px minmax(0,1fr);gap:0 7px;align-items:start;padding:5px 8px 6px 6px;border-radius:10px;background:rgba(255,255,255,.94);border:1px solid var(--line);font-size:.75rem;line-height:1.3}
+.rc-oz i{display:flex;align-items:center;justify-content:center;width:18px;height:18px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--info)}
+.rc-oz i .i{width:11px;height:11px;stroke-width:3}
+.rc-oz b{font-weight:500}
+.rc-oz small{display:block;color:var(--ink3);font-size:.6875rem}
+.rc-oz.bev{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 30%,transparent)}
+.rc-oz.bev i{background:var(--crit);box-shadow:none;color:#fff}
+.rc-oz.uit{background:rgba(255,255,255,.55);color:var(--ink3)}
+.rc-oz.uit b{text-decoration:line-through}
+.rc-oz.uit i{background:var(--sunken);box-shadow:none;color:var(--ink2)}
+.rc-ozl{display:inline-flex;padding:0;border:0;background:none}
+.rc-why{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:center;margin:0 0 6px}
+.rc-why i{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;font-size:.75rem;font-weight:700;font-style:normal}
+.rc-grond{padding:12px 14px;border-radius:16px;border:1.5px dashed var(--line2);background:rgba(255,255,255,.5)}
+.rc-link{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;font-size:.8125rem}
+.rc-wordt{display:block;padding:8px 0 0;font-size:.875rem;font-weight:500}
+.rc-maak{margin-top:6px;padding:5px 10px;font-size:.75rem}
+.rc-maak .i{width:14px;height:14px}
+.rc-borg{margin:0 0 4px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.rc-borg li{display:grid;grid-template-columns:22px minmax(0,1fr) 36px;gap:10px;align-items:start}
+.rc-vink{width:18px;height:18px;margin:9px 0 0;accent-color:var(--ok)}
+.rc-borgt{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px}
+.rc-eff{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;align-items:start}
+.rc-efft{margin:8px 0 0;color:var(--ink2);font-size:.8125rem}
+.rc-efft.terug{color:var(--crit-ink);font-weight:500}
+.rc-afsl{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.88);border:1px solid var(--line)}
+.rc-afsl h4{margin:0 0 8px;font-size:.875rem;font-weight:600}
+.rc-check{margin:0 0 10px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:.8125rem}
+.rc-check li{display:flex;gap:8px;align-items:flex-start;color:var(--ink2)}
+.rc-check li .i{width:15px;height:15px;margin-top:1px}
+.rc-check li.ok{color:var(--ok)}
+.rc-afknop{display:flex;justify-content:flex-end}
+.rc-vraag{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.rc-vraag span{font-size:.8125rem;font-weight:500}
+.rc-weg{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin:4px 0 12px;font-size:.8125rem}
+#rcarapport{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;background:var(--sunken)}
+.rr-balk{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
+.rr-balk b{flex:1;min-width:0}
+.rr-inhoud{flex:1;overflow:auto;padding:20px}
+.rr-blad{width:794px;max-width:100%;margin:0 auto;padding:34px 40px;background:#fff;color:#15181D;font-size:11px;line-height:1.42;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.rr-kop{display:flex;justify-content:space-between;gap:16px;padding-bottom:10px;border-bottom:2px solid #15181D}
+.rr-kop>div:first-child{display:flex;gap:10px;align-items:center}
+.rr-kop b{display:block;font-size:15px}
+.rr-kop small{display:block;color:#4B5361;font-size:10.5px}
+.rr-r{text-align:right;color:#4B5361;font-size:10.5px}
+.rr-r b{color:#15181D;font-size:12px}
+.rr-blad h1{margin:12px 0 6px;font-size:17px;line-height:1.25}
+.rr-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:5px 14px;margin:6px 0 8px;padding:7px 11px;border-radius:8px;background:#F4F5F7;font-size:10.5px}
+.rr-meta b{display:block;color:#646B79;font-size:9.5px}
+.rr-meta .breed{grid-column:1/-1}
+.rr-blad h2{display:flex;align-items:center;gap:8px;margin:12px 0 5px;padding-bottom:3px;border-bottom:1px solid #CBD0D6;font-size:12.5px}
+.rr-blad h2 i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#15181D;color:#fff;font-size:9.5px;font-style:normal}
+.rr-blad h2 small{margin-left:auto;color:#4B5361;font-size:10px;font-weight:500}
+.rr-blad p{margin:0 0 5px}
+.rr-t{width:100%;border-collapse:collapse;font-size:10.5px}
+.rr-t th,.rr-t td{padding:2.5px 6px 2.5px 0;border-bottom:1px solid #EEF0F3;text-align:left;vertical-align:top}
+.rr-t tbody th{width:90px;font-weight:600}
+.rr-n tbody th{width:22px}
+.rr-k thead th{color:#646B79;font-size:9.5px}
+.rr-teken{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+.rr-teken div{padding-top:22px;border-bottom:1px solid #15181D;font-size:10px}
+.rr-teken b{display:block;font-size:10.5px}
+.rr-voet{display:flex;justify-content:space-between;margin-top:10px;padding-top:6px;border-top:1px solid #E2E5E9;color:#646B79;font-size:9.5px}
+@media print{
+  @page{margin:14mm 12mm}
+  html.rcaprint body>*:not(#rcarapport){display:none!important}
+  html.rcaprint body{background:#fff}
+  html.rcaprint #rcarapport{position:static;display:block;background:#fff}
+  html.rcaprint .rr-balk{display:none}
+  html.rcaprint .rr-inhoud{padding:0;overflow:visible}
+  html.rcaprint .rr-blad{width:auto;max-width:none;padding:0;box-shadow:none}
+}
+@media (max-width:1100px){
+  .rc-bord{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rc-grid{grid-template-columns:minmax(0,1fr)}
+  .rc-stappen{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none}
+  .rc-stappen::-webkit-scrollbar{display:none}
+  .rc-stappen button{flex:none;width:170px}
+  .rc-svoet{display:none}
+}
+@media (max-width:760px){
+  .rc-bord,.rc-twee,.rc-eff,.rc-rij3,.rc-rij2,.rc-rij2k,.rc-w5,.rc-team{grid-template-columns:minmax(0,1fr)}
+  .rc-graf .gtot:not(.top){display:none}
+  .rc-tblw{overflow:visible}
+  .rc-ktbl{min-width:0!important}
+  .rc-ktbl thead{display:none}
+  .rc-ktbl tbody{display:block}
+  .rc-ktbl tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px;padding:12px 0}
+  .rc-ktbl tbody tr+tr{border-top:1px solid var(--line)}
+  .rc-ktbl td,.rc-ktbl tbody th{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0!important;border:0!important}
+  .rc-ktbl td[data-l]::before{content:attr(data-l);color:var(--ink2);font-size:.75rem;font-weight:600}
+  .rc-ktbl .breed,.rc-ktbl tbody th,.rc-ktbl td.rc-leeg,.rc-isniet td:last-child{grid-column:1/-1}
+  .rc-ktbl .rc-c1{order:-1}
+  .rc-ktbl .rc-xcel{grid-column:1/-1;align-items:flex-end;order:9}
+  .rc-sigs{grid-template-columns:minmax(0,1fr)}
+  .rc-imp{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rc-vis{display:flex;flex-direction:column;gap:12px}
+  .rc-cat::after,.rc-graat{display:none}
+  .rc-viskop{order:-1}
+  .rc-cat.onder h4{order:0;margin:0 0 2px}
+  .rc-borgt{grid-template-columns:minmax(0,1fr)}
+  .rc-kop{flex-direction:column}
+  .rc-titel{font-size:1.25rem}
+  .rc-sec{padding:14px 12px}
+}
 .tdleeg{padding:28px 18px;border:1px dashed var(--line2);border-radius:18px;color:var(--ink2);text-align:center}
 @media (max-width:1100px){.meldpaneel{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:760px){
@@ -1105,6 +1369,9 @@ const ICON={
   klembord:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 12l2 2 4-4"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   indelen:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  klok:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  pijl:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  terug:'<path d="m15 6-6 6 6 6"/>',
   map:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'
 };
 const ico=n=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+ICON[n]+"</svg>";
@@ -1115,7 +1382,7 @@ const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"
 /* De agenda toont de zaterdag ook, dus die heeft geen eigen stap. */
 const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"||p.id==="zaterdag"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"},{id:"docs",t:"Machinedocumentatie",i:"lijst"}];
-const P_WV=[{id:"rca",t:"RCA-signalen",i:"zoek"},{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
+const P_WV=[{id:"rca",t:"RCA analyse",i:"zoek"},{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
 /* Oude adressen blijven werken: ze openen de pagina die ervoor in de plaats kwam, op het juiste tabblad. */
 const OUD={zaterdag:["stop"],cmbonnen:["cm",""],pgeen:["cm","Open"],pbestel:["cm","Bestellen en leveren"],pgepland:["cm","Gepland"],pafgerond:["cm","Afgerond"],cpgeen:["cm","Open"],cpbestel:["cm","Bestellen en leveren"],cpgepland:["cm","Gepland"],cpafgerond:["cm","Afgerond"],spgeen:["sqdbonnen","Open"],spbestel:["sqdbonnen","Bestellen en leveren"],spgepland:["sqdbonnen","Gepland"],spafgerond:["sqdbonnen","Afgerond"],start:["tedoen"]};
 
@@ -1263,13 +1530,6 @@ document.addEventListener("click",e=>{
   if(e.target.closest(".kbchip"))menu(false);
   if(e.target.closest("#plusknop"))plusMenu($("#plusmenu").hidden);
   const pl=e.target.closest("[data-plus]");if(pl){const o=plusOpties()[+pl.dataset.plus];plusMenu(false);if(o)o[2]()}
-  const rl=e.target.closest("[data-rcalade]");if(rl)rcaKies(rl.dataset.rcalade);
-  const rv=e.target.closest("[data-rcavenster]");
-  if(rv){const w=rv.dataset.rcavenster;if(w==="weg"){RCAOUD=true;vRca();const el=$("#rcaweg");if(el)el.scrollIntoView({block:"start"})}else rcaKies(w,true,true)}
-  const ra=e.target.closest("[data-rcaalles]");
-  if(ra){RCAOPEN=new Set(ra.dataset.rcaalles==="1"?rcaPer(rcaItems().filter(x=>!x.gezien)).map(x=>x.w):[]);rcaOpenBewaar();vRca()}
-  if(e.target.closest("[data-rcaoud]")){RCAOUD=!RCAOUD;vRca()}
-  const rr=e.target.closest("[data-rcaregels]");if(rr){const x=rcaItems().find(y=>y.key===rr.dataset.rcaregels);if(x)openPaneel(rcaDetail(x.s))}
   const zw=e.target.closest("[data-zatweg],[data-zatja],[data-zatnee]");if(zw)zatKlik(zw);
   const dl=e.target.closest("[data-zatdl]");if(dl)zatDownload(dl);
   const zb=e.target.closest("[data-zatbon]");if(zb)zatBonHaal(zb);
@@ -1437,6 +1697,7 @@ function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{},oudKlaar=c&&KLAAR.includes(c.status);
   if(extra.pmreg||extra.zoekmeer)return;
   if(extra.gezien!==undefined){GEZIEN_LIVE[extra.gezien]=!extra.terug;return}
+  if(extra.rca!==undefined){pasRcaToe(extra.rca);return}
   if(extra.menu!==undefined){const oud=JSON.stringify(MENU_LIVE===undefined?null:MENU_LIVE);MENU_LIVE=extra.menu;if(MENU_WV&&JSON.stringify(MENU_LIVE)!==oud)bouwMenu();return}
   if(extra.week){const v=(D.cm||[]).find(x=>x.nr===extra.week.nr);if(v){v.week=!!extra.week.aan;if(v.week&&extra.week.soort)v.weeksoort=extra.week.soort;else delete v.weeksoort}return}
   if(extra.opname){pasOpnameToe(extra.opname,w);return}
@@ -1678,7 +1939,7 @@ async function cBonvinkOpslaan(x){
   const m=(MELDINGEN||[]).find(y=>y.id===x.id);if(!m)return;
   await stuur({actie:"bijwerken",id:m.id,prio:m.prio,oplossing:m.oplossing,lijn:m.lijn,machine:m.machine,actiehouder:m.actiehouder,datum:m.datum,bon_nodig:x.v.bon_nodig});m.bon_nodig=x.v.bon_nodig?"Ja":"Nee";
 }
-const C_OPSLAAN={bon:cBonOpslaan,kop:cKopOpslaan,bestel:cBestelOpslaan,actie:cActieOpslaan,bonvink:cBonvinkOpslaan};
+const C_OPSLAAN={bon:cBonOpslaan,kop:cKopOpslaan,bestel:cBestelOpslaan,actie:cActieOpslaan,bonvink:cBonvinkOpslaan,rca:cRcaOpslaan};
 /* Een bon op Gepland of Leverdatum heeft een dag nodig. Ontbreekt die, dan wordt er niets opgeslagen en springt de cursor naar die dag. */
 function cOnaf(){
   for(const x of CONCEPT.values()){
@@ -1737,6 +1998,7 @@ function cTekst(x){
   }else if(x.soort==="bestel")d.push(p.groep);
   else if(x.soort==="actie"){if("datum" in p)d.push(p.datum?"deadline "+p.datum:"geen deadline");if("voortgang" in p)d.push(p.voortgang||"Open")}
   else if(x.soort==="bonvink")d.push(p.bon_nodig?"bon maken":"geen bon");
+  else if(x.soort==="rca")d.push(rcaVerschil(x.id,p.rec));
   return d.join(", ");
 }
 function cNaam(x){
@@ -1744,6 +2006,7 @@ function cNaam(x){
   if(x.soort==="kop"){const s=x.plan?planVan(x.plan):plannen().find(p=>!p.id&&p.datum===x.datum);return"Planning "+(s?planDag(s):x.datum)}
   if(x.soort==="bestel"){const r=(D.bestellijst||[]).find(y=>y.id===x.id);return r?[r.cm,kortTekst(r.onderdeel)].filter(Boolean).join(" "):"Bestelregel"}
   if(x.soort==="actie"){const a=alVan(x.id);return a?a.code||kortTekst(a.wat):"Actie"}
+  if(x.soort==="rca"){const r=rcaWerk(x.id);return x.id+(r&&r.titel?" "+kortTekst(r.titel):"")}
   const m=(MELDINGEN||[]).find(y=>y.id===x.id);return m?m.code||kortTekst(m.melding):"Melding";
 }
 function cBalk(){
@@ -1758,7 +2021,7 @@ function cBalk(){
   const k=$("#obopslaan");k.disabled=!!C_BEZIG;k.textContent=C_BEZIG?"Opslaan "+C_BEZIG.n+" van "+C_BEZIG.van:"Alles opslaan";$("#obweg").disabled=!!C_BEZIG;
   $("#obtel").setAttribute("aria-expanded",lijst?"true":"false");
   const l=$("#oblijst");l.hidden=!lijst;
-  if(lijst)l.innerHTML="<ul>"+[...CONCEPT.entries()].map(([k,x])=>{const naam="<b>"+esc(cNaam(x))+"</b><span>"+esc(cTekst(x))+"</span>";return"<li>"+(x.soort==="bon"?'<button type="button" class="oblink" data-obopen="'+esc(k)+'">'+naam+"</button>":'<span class="oblink">'+naam+"</span>")+'<button type="button" class="icoonknop obx" data-obweg="'+esc(k)+'" aria-label="'+esc("Wijziging bij "+cNaam(x)+" ongedaan maken")+'">'+ico("sluit")+"</button></li>"}).join("")+"</ul>";
+  if(lijst)l.innerHTML="<ul>"+[...CONCEPT.entries()].map(([k,x])=>{const naam="<b>"+esc(cNaam(x))+"</b><span>"+esc(cTekst(x))+"</span>";return"<li>"+(x.soort==="bon"||x.soort==="rca"?'<button type="button" class="oblink" data-obopen="'+esc(k)+'">'+naam+"</button>":'<span class="oblink">'+naam+"</span>")+'<button type="button" class="icoonknop obx" data-obweg="'+esc(k)+'" aria-label="'+esc("Wijziging bij "+cNaam(x)+" ongedaan maken")+'">'+ico("sluit")+"</button></li>"}).join("")+"</ul>";
 }
 function cFlits(){const b=$("#opslaanbalk");if(!b)return;b.classList.remove("flits");void b.offsetWidth;b.classList.add("flits")}
 function cBewaar(){try{if(CONCEPT.size)localStorage.setItem(C_OPSLAG,JSON.stringify({tijd:Date.now(),niveau:cNiveau(),lijst:[...CONCEPT.values()]}));else localStorage.removeItem(C_OPSLAG)}catch(_){}}
@@ -1779,7 +2042,7 @@ document.addEventListener("click",e=>{
   else if(e.target.closest("#obtel")){C_LIJST=!C_LIJST;cBalk()}
   else{
     const w=e.target.closest("[data-obweg]");if(w){cWegEen(w.dataset.obweg);return}
-    const o=e.target.closest("[data-obopen]");if(o){const x=CONCEPT.get(o.dataset.obopen),c=x&&zatBon(x.id);C_LIJST=false;cBalk();if(c)openPaneel(cmDetail(c))}
+    const o=e.target.closest("[data-obopen]");if(o){const x=CONCEPT.get(o.dataset.obopen),c=x&&zatBon(x.id);C_LIJST=false;cBalk();if(x&&x.soort==="rca")location.hash="rca/"+x.id;else if(c)openPaneel(cmDetail(c))}
   }
 });
 /* Ctrl+S (of Cmd+S) slaat op wat klaarstaat. Een veld waarin je nog typt, telt mee. */
@@ -1869,7 +2132,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd"]).includes(HUIDIG))SCHERM[HUIDIG]()};
+const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd"]).includes(HUIDIG))SCHERM[HUIDIG]();if(HUIDIG==="rca"&&!RCA_SEL&&$("#paneel").hidden)vRca()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -2738,12 +3001,12 @@ async function alGereed(k){
 /* Bezig, Open en de deadline staan klaar tot Alles opslaan. Gereed vraagt eerst om bevestiging en gaat meteen. */
 document.addEventListener("change",e=>{const a=e.target.closest("[data-alstatus],[data-aldatum]");if(a)cActieKies(a)});
 /* Actie toevoegen, vanaf het SQD-overzicht en de actielijst. Een actie op S, Q of D krijgt een SQDM-nummer, net als een melding, en gaat meteen naar het bord. Een directie-actie heeft geen nummer. */
-function openActie(letter,wie){
+function openActie(letter,wie,voor){
   terug=document.activeElement;
   const p=$("#paneel"),namen=[...new Set(alActies().map(a=>a.wie).filter(Boolean))].sort((x,y)=>x.localeCompare(y,"nl"));
   const bij='<fieldset class="risico rij4"><legend>Hoort bij</legend><div>'+AL_GROEP.map(([g,n])=>'<label><input type="radio" name="a_bij" value="'+g+'" required'+(g===letter?" checked":"")+"><span>"+n+"</span></label>").join("")+"</div></fieldset>";
   const pr='<fieldset class="risico rij4"><legend>Prio</legend><div>'+[["","Geen"],["1","P1"],["2","P2"],["3","P3"]].map(([w,n])=>'<label><input type="radio" name="a_prio" value="'+w+'"'+(w?"":" checked")+"><span>"+n+"</span></label>").join("")+"</div></fieldset>";
-  p.innerHTML='<div class="pkopbalk"><div><small>'+(HUIDIG==="acties"?"Actielijst":"SQD-overzicht")+'</small><h2 id="ptitel">Actie toevoegen</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+"</button></div>"+
+  p.innerHTML='<div class="pkopbalk"><div><small>'+(HUIDIG==="rca"?"RCA analyse":HUIDIG==="acties"?"Actielijst":"SQD-overzicht")+'</small><h2 id="ptitel">Actie toevoegen</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+"</button></div>"+
     '<form class="meldform" id="actieform"><label>Wat moet er gebeuren?<textarea id="a_tekst" required></textarea></label>'+bij+
     '<div class="twee"><label>Actiehouder<input type="text" id="a_wie" list="a_namen" required value="'+esc(wie||"")+'"></label><label>Deadline<input type="date" id="a_dat" required></label></div><datalist id="a_namen">'+namen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>"+pr+
     '<div class="twee"><label>Lijn<select id="a_lijn">'+["","Lijn 1","Lijn 2","Lijn 3","Overig"].map(x=>"<option>"+x+"</option>").join("")+'</select></label><label>Machine<input type="text" id="a_mach"></label></div>'+
@@ -2753,6 +3016,7 @@ function openActie(letter,wie){
   p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   const f=$("#actieform"),gekozen=()=>(f.querySelector('input[name="a_bij"]:checked')||{}).value||"";
   const hulp=()=>{const g=gekozen();$("#a_bonvak").hidden=g==="DIR";$("#a_hulp").textContent=(g==="DIR"?"Een directie-actie heeft geen nummer. ":"De actie krijgt een SQDM-nummer. ")+"Is de deadline deze week of eerder, dan staat hij op het SQD-overzicht, anders in de actielijst. Hij schuift vanzelf door."};
+  if(voor){$("#a_tekst").value=voor.tekst||"";if(isDag(voor.datum))$("#a_dat").value=isoTekst(voor.datum);if(voor.lijn)$("#a_lijn").value=voor.lijn;if(voor.machine)$("#a_mach").value=voor.machine}
   hulp();f.addEventListener("change",hulp);$("#a_tekst").focus();
   f.addEventListener("submit",async e=>{
     e.preventDefault();const k=$("#a_knop"),fout=$("#a_fout"),g=gekozen(),w=id=>$(id).value.trim();fout.hidden=true;k.disabled=true;
@@ -2767,6 +3031,7 @@ function openActie(letter,wie){
     const sl=(alPersonen(alActies()).find(x=>x.k===d.actiehouder.toLowerCase())||{}).k;if(sl!==undefined&&alOpen())AL_OPEN.add(sl);
     laatste="";sluitPaneel();SCHERM[HUIDIG]();
     melder(mis?"Opgeslagen als melding"+(j.code?" "+j.code:"")+", maar nog niet op het bord. Zet hem door op de pagina Meldingen.":"Actie toegevoegd"+(j.code?": "+j.code:"")+(alOpSqd({datum:d.datum})?", op het SQD-overzicht":", in de actielijst"));
+    if(voor&&voor.klaar)voor.klaar(j);
   });
 }
 
@@ -3173,7 +3438,7 @@ function openNieuweBon(voor){
     let foto="";
     if(gekozen()){try{foto=await verklein(gekozen())}catch(_){f.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";f.hidden=false;k.disabled=false;return}}
     const d={actie:"nieuw",letter:"CM",melding:w("#n_tekst"),lijn:w("#n_lijn"),machine:w("#n_mach"),melder:wie,actiehouder:"",datum:doel?doel.datum:"",bon_nodig:true,oplossing:ond?"Onderdelen: "+ond:"",vervolg:doel?(doel.id?"Stop:"+doel.id:"Zaterdag"):"",prio:w("#n_prio"),risico:"",foto};
-    try{const j=await stuur(d);NIEUWBON=NIEUWBON.concat([Object.assign({},d,{id:j.id,tijd:j.tijd})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("De bon wordt bij de volgende run gemaakt");if(voor&&voor.gezien)tdZet(voor.gezien,false)}
+    try{const j=await stuur(d);NIEUWBON=NIEUWBON.concat([Object.assign({},d,{id:j.id,tijd:j.tijd})]);laatste="";sluitPaneel();SCHERM[HUIDIG]();melder("De bon wordt bij de volgende run gemaakt");if(voor&&voor.gezien)tdZet(voor.gezien,false);if(voor&&voor.klaar)voor.klaar(j)}
     catch(_){f.textContent="Versturen is niet gelukt. Controleer je verbinding en probeer het opnieuw.";f.hidden=false;k.disabled=false}
   });
   $("#n_tekst").focus();
@@ -3552,56 +3817,491 @@ const rcaKolommen=gezien=>[
   {k:"m",l:"Machine",c:"m-main",x:"titel",r:x=>esc(x.s.machine||"Regels zonder machine")+'<span class="bonplek">'+esc(x.s.waar)+"</span>"},
   {k:"w",l:"Waarom",w:"34%",c:"m-sub",r:x=>esc(x.s.w.join(", "))},
   {k:"l",l:"Laatste",w:"80px",c:"m-sub",ml:"Laatste",r:x=>esc(x.s.laatste.slice(0,5))}].concat(gezien?[{k:"g",l:"",w:"120px",c:"m-sub",r:x=>'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>'}]:[]);
-/* ---- RCA-signalen: een eigen pagina met een eigen menutje, los van Te doen ----
-   Per lijn een venster en een lade, met per machine waarom er een signaal is, de open bonnen en de regels uit het dienstrapport.
-   Gezien werkt zoals op Te doen, met dezelfde sleutel (rca:lijn|machine|laatste dag|aantal regels): een nieuwe regel in het dienstrapport maakt het signaal weer zichtbaar.
-   Alleen de werkvoorbereider zet weg; de kijkinlog ziet dezelfde lijst. In het menu staat het aantal signalen, en op deze pagina eronder de lijnen. */
-const RCA_WAAR=["Lijn 1","Lijn 2","Lijn 3","Inpak","Ompak"],RCA_LADEN="td-hub-rcaladen";
-let RCAOPEN,RCAOUD=false;
+/* ---- RCA analyse: van signaal naar grondoorzaak, en een maatregel die blijft werken ----
+   Eén pagina voor de signalen en de RCA's. Bovenaan staan de signalen zonder RCA (herhaling of veel stilstand in het dienstrapport), met Start RCA en Gezien.
+   Daaronder het bord: Analyse (stap 1 tot 5), Maatregelen (stap 6), Borgen en effect (stap 7 en 8) en Afgesloten. #rca/RCA-n opent een RCA met de acht stappen.
+   Een RCA staat in D.rca. Opslaan gaat via de wachtrij als status-RCA-n.txt met rij.rca: steeds de hele RCA, een nieuwere vervangt de oude (rca_wijzig in bonnen.py).
+   Velden staan klaar tot Alles opslaan (soort rca in CONCEPT). Knoppen werken meteen: Start RCA, Nieuwe RCA, Maak bon, Zet op Actielijst, Afsluiten, Heropenen en Verwijderen.
+   De feiten en het effect komen uit het dienstrapport van productie (output.rapport, 120 dagen in dit deel), de bonnen, de PM-taken en Machinedocumentatie.
+   Gezien werkt zoals op Te doen, met de sleutel rca:lijn|machine|laatste dag|aantal regels: een nieuwe regel in het dienstrapport maakt het signaal weer zichtbaar. */
+const RCA_WAAR=["Lijn 1","Lijn 2","Lijn 3","Inpak","Ompak"];
+const RCA_STAPPEN=["Probleem","Directe maatregel","Feiten","Oorzaken","Grondoorzaak","Maatregelen","Borgen","Effect en afsluiten"];
+const RCA_M=["Mens","Machine","Methode","Materiaal","Meting","Milieu"];
+const RCA_STAND={chk:"Te checken",bev:"Bevestigd",uit:"Uitgesloten"};
+const RCA_SOORT=["Ontwerp","Montage","Onderhoud","Bediening","Onderdeel","Omgeving"];
+const RCA_MSOORT=["Corrigerend","Preventief","Ook elders"];
+const RCA_WORDT=["CM-bon","Actie","PM-taak","Bestellijst","Werkinstructie","Anders"];
+const RCA_MST=["Voorstel","Gepland","Bezig","Klaar"];
+const RCA_BORGEN=["PM-taak staat in het PM-overzicht en is ingepland","Instelling, aanhaalmoment of borging staat op de bon en in de PM-taak","Werkinstructie of OPL gemaakt en uitgelegd aan de ploegen","Storingsinstructie in Machinedocumentatie","Reservedelen met minimum en maximum op voorraad","Dezelfde machines en plekken elders nagelopen"];
+const RCA_FEITDAGEN=120;
+let RCA_SEL=null,RCAF="",RCAOUD=false,RCAALLES=false,RCA_VRAAG="",RCA_W=null,RCA_REGELS=false,RCASIG=false;
+const RCA_SIGMAX=6;
 const rcaItems=()=>rcaSignalen().map(s=>{const key="rca:"+s.waar+"|"+s.machine+"|"+s.laatste+"|"+s.r.length;return{key,s,gezien:tdGezien(key)}});
-const rcaPer=r=>RCA_WAAR.concat(uniek(r.map(x=>x.s.waar)).filter(w=>!RCA_WAAR.includes(w))).map(w=>({w,l:r.filter(x=>x.s.waar===w)}));
-const rcaId=w=>"rca-"+norm(w).replace(/[^a-z0-9]+/g,"-");
-function rcaOpen(){
-  if(RCAOPEN===undefined){let l=null;try{l=JSON.parse(localStorage.getItem(RCA_LADEN)||"null")}catch(_){}RCAOPEN=Array.isArray(l)?new Set(l):null}
-  return RCAOPEN;
+const rcaMag=()=>wvMag()&&!alleenKijken();
+const rcaLijst=()=>D.rca||[];
+const rcaVan=id=>rcaLijst().find(x=>x.id===id);
+/* Wat op het scherm staat: de opgeslagen RCA met de wijzigingen die klaarstaan. */
+const rcaWerk=id=>{const x=CONCEPT.get(cSleutel("rca",id));return x&&x.v&&x.v.rec?x.v.rec:rcaVan(id)};
+const rcaJs=r=>JSON.stringify(Object.assign({},r,{bijgewerkt:null}));
+const rcaKopie=r=>JSON.parse(JSON.stringify(r));
+const rcaPad=p=>String(p).split(".").map(x=>/^\d+$/.test(x)?+x:x);
+const rcaHaal=(o,p)=>rcaPad(p).reduce((a,k)=>a==null?undefined:a[k],o);
+function rcaZetPad(o,p,w){const k=rcaPad(p);let a=o;for(let i=0;i<k.length-1;i++){if(a[k[i]]==null)a[k[i]]=typeof k[i+1]==="number"?[]:{};a=a[k[i]]}a[k[k.length-1]]=w}
+const rcaStap=r=>{const k=(r&&r.klaar)||[];for(let i=1;i<=8;i++)if(!k.includes(i))return i;return 9};
+const rcaKolom=r=>r.afgesloten?"af":rcaStap(r)<=5?"analyse":rcaStap(r)===6?"maatregel":"borg";
+const rcaPlek=r=>[r.lijn,r.machine].filter(Boolean).join(", ")||"Nog geen lijn of machine";
+const rcaZoekw=r=>norm(r.zoek||"").split(/[,;]+/).map(x=>x.trim()).filter(Boolean);
+const rcaZelfde=(a,b)=>norm(a).trim()===norm(b).trim();
+/* Een signaal hoort bij een lopende RCA met dezelfde lijn en machine, of bij de RCA die eruit is gestart (ook als daar later een machine bij kwam). */
+const rcaBijSignaal=s=>rcaLijst().find(r=>!r.afgesloten&&(r.bron===s.waar+"|"+s.machine||r.lijn===s.waar&&rcaZelfde(r.machine,s.machine)));
+const rcaSigOpen=()=>rcaItems().filter(x=>!x.gezien&&!rcaBijSignaal(x.s));
+/* Een RCA uit de wachtrij of een oudere versie mist soms velden. Die vullen we aan, zonder iets weg te halen. */
+function rcaVolledig(r){
+  const s={titel:"",lijn:"",machine:"",zoek:"",prio:null,gestart:"",eigenaar:"",team:"",signaal:"",bron:"",klaar:[],feiten:"",oorzaken:[],waarom:["","","","",""],maatregelen:[],effect:{vanaf:"",weken:8},lessen:"",akkoord_td:"",akkoord_productie:"",afgesloten:""};
+  const o=Object.assign({},s,r||{});
+  o.probleem=Object.assign({zin:"",wat:"",waar:"",wanneer:"",wie:"",hoevaak:"",hoeveel:"",s:"",q:"",d:"",kosten:""},o.probleem||{});
+  if(!Array.isArray(o.probleem.is)||o.probleem.is.length!==3)o.probleem.is=["Wat","Waar","Wanneer"].map((w,i)=>Object.assign({w,is:"",niet:"",op:""},((o.probleem.is||[])[i])||{}));
+  o.direct=Object.assign({acties:[],werkt:"",tot:"",risico:""},o.direct||{});
+  o.grond=Object.assign({zin:"",soort:"",bewijs:"",akkoord:""},o.grond||{});
+  o.effect=Object.assign({vanaf:"",weken:8},o.effect||{});
+  if(!Array.isArray(o.borgen))o.borgen=RCA_BORGEN.map(t=>({t,klaar:false,toel:""}));
+  if(!Array.isArray(o.waarom))o.waarom=["","","","",""];
+  while(o.waarom.length<5)o.waarom.push("");
+  ["klaar","oorzaken","maatregelen"].forEach(k=>{if(!Array.isArray(o[k]))o[k]=[]});
+  return o;
 }
-function rcaOpenBewaar(){try{localStorage.setItem(RCA_LADEN,JSON.stringify([...RCAOPEN]))}catch(_){}}
-function rcaTel(){TEL.rca=PAGINAS.some(p=>p.id==="rca")?rcaItems().filter(x=>!x.gezien).length:0}
-function rcaRegel(x){
-  const s=x.s,b=rcaBonnen(s);
-  const bonnen=b.length?(b.length===1?"Open bon: ":"Open bonnen: ")+b.map(c=>'<button type="button" class="tekstknop" data-tdcm="'+esc(c.nr)+'">'+esc(c.nr)+"</button>").join(", "):"Nog geen open bon voor deze machine";
-  return'<article class="tdr rca"><div class="tdr-info"><div><span class="tdr-titel"><b>'+esc(s.machine||"Regels zonder machine")+'</b></span><span class="tdr-waarom">'+esc(hoofd(s.w.join(", ")))+'</span><span class="tdr-plek">'+bonnen+'</span></div><div class="tdr-rechts"><span>Laatste op '+esc(s.laatste.slice(0,5))+"</span></div></div>"+
-    '<div class="tdr-bedien"><div class="acties"><button type="button" class="knop" data-rcaregels="'+esc(x.key)+'">Bekijk de regels</button>'+(tdMag()?'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>':"")+"</div></div></article>";
+function rcaNieuw(s){
+  /* meta.rca_laatste onthoudt het hoogste nummer, ook van een verwijderde RCA. Zo komt een nummer niet twee keer uit. */
+  const nr=rcaLijst().reduce((m,x)=>Math.max(m,+String(x.id||"").split("-")[1]||0),+((D.meta||{}).rca_laatste)||0)+1;
+  const veilig=s&&(s.w.includes("veiligheid")||s.w.includes("voedselveiligheid"));
+  return rcaVolledig({id:"RCA-"+nr,titel:s?(s.machine?s.machine+", "+s.waar.toLowerCase():s.waar+", zonder machine"):"Nieuwe RCA",lijn:s?s.waar:"",machine:s?s.machine:"",prio:veilig?1:null,
+    gestart:dagTekst(pmNu()),eigenaar:wvDoor(),signaal:s?s.waar+", "+(s.machine||"zonder machine")+": "+s.w.join(", ")+" in "+RCA_DAGEN+" dagen":"",bron:s?s.waar+"|"+s.machine:""});
 }
-function rcaLade(w,l,open){
-  const id=rcaId(w),x=l[0],vb=open?"Herhaling of veel stilstand in het dienstrapport. Zoek de oorzaak.":"<b>"+esc(x.s.machine||"Zonder machine")+"</b> "+esc(x.s.w.join(", "))+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
-  return'<section class="lade'+(open?" open":"")+'" id="'+id+'" style="--c:'+TDKLEUR.rood+'"><h2 class="ladekop"><button type="button" class="ladeknop" data-rcalade="'+esc(w)+'" aria-expanded="'+open+'" aria-controls="'+id+'-in"><span class="strip"></span><span class="led"></span><span class="naam">'+esc(w)+'</span><span class="uitlees" aria-hidden="true">'+seg7(l.length,22)+'</span><span class="ladevb">'+vb+'</span><span class="hendel" aria-hidden="true">'+ico("omlaag")+'</span><span class="vh">, '+l.length+(l.length===1?" signaal":" signalen")+"</span></button></h2>"+
-    '<div class="ladeinhoud" id="'+id+'-in">'+(open?l.map(rcaRegel).join(""):"")+"</div></section>";
+/* Toepassen wat opgeslagen is: na het versturen en als de wachtrij wordt gelezen. */
+function pasRcaToe(rec){
+  if(!rec||!/^RCA-\d+$/.test(rec.id||""))return;
+  const l=D.rca=D.rca||[],i=l.findIndex(x=>x.id===rec.id);
+  if(rec.weg){if(i>=0)l.splice(i,1);return}
+  const r=rcaVolledig(rec);if(i>=0)l[i]=r;else l.push(r);
+  l.sort((a,b)=>nummer(a.id)-nummer(b.id));
+}
+async function rcaStuur(rec){
+  await stuur({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor(),nr:rec.id,status:"Open",rij:{rca:rec}});
+  pasRcaToe(rec);
+}
+/* Een veld veranderen: de wijziging staat klaar tot Alles opslaan. Terug naar wat er was haalt hem weg. */
+function rcaZet(id,doe,teken){
+  const opg=rcaVan(id),k=cSleutel("rca",id),x=CONCEPT.get(k),basis=x&&x.v.rec?x.v.rec:opg;if(!basis)return;
+  const rec=rcaKopie(basis);doe(rec);
+  if(opg&&rcaJs(rec)===rcaJs(opg))CONCEPT.delete(k);else CONCEPT.set(k,{soort:"rca",id,v:{rec}});
+  cBewaar();cBalk();if(teken)rcaHerteken();
+}
+/* Een knop die meteen opslaat: wat klaarstaat voor deze RCA gaat mee, anders raakt de koppeling of de status zoek. */
+async function rcaNu(id,doe){
+  const k=cSleutel("rca",id),x=CONCEPT.get(k),basis=x&&x.v.rec?x.v.rec:rcaVan(id);if(!basis)return false;
+  const rec=rcaKopie(basis);doe(rec);rec.bijgewerkt=nuTekst();
+  await rcaStuur(rec);
+  const mee=!!x;CONCEPT.delete(k);cBewaar();cBalk();return mee;
+}
+async function cRcaOpslaan(x){
+  if(!x.v||!x.v.rec)return;
+  await rcaStuur(Object.assign(rcaKopie(x.v.rec),{bijgewerkt:nuTekst()}));
+}
+/* Opnieuw tekenen met dezelfde plek en dezelfde focus: een veld of een knop van deze pagina. */
+function rcaFocus(a){
+  if(!a||!a.closest||!a.closest("#view"))return null;
+  for(const at of a.attributes)if(/^data-rca/.test(at.name))return"["+at.name+'="'+CSS.escape(at.value)+'"]';
+  return null;
+}
+function rcaHerteken(){
+  const y=window.scrollY,f=rcaFocus(document.activeElement);
+  vRca();window.scrollTo(0,y);
+  if(f){const el=document.querySelector(f);if(el)el.focus({preventScroll:true})}
+}
+/* Een tekstveld dat het scherm verandert, tekent pas opnieuw als de muis los is en de focus op zijn nieuwe plek staat.
+   Anders valt de knop waar je op klikt onder de muis weg, of springt Tab terug naar het veld dat je net verliet. */
+let RCA_MUIS=false,RCA_LATER=false;
+function rcaLater(){if(!RCA_LATER)return;RCA_LATER=false;if(HUIDIG==="rca"&&RCA_SEL)rcaHerteken()}
+document.addEventListener("pointerdown",()=>{RCA_MUIS=true},true);
+["pointerup","pointercancel"].forEach(n=>document.addEventListener(n,()=>{RCA_MUIS=false;if(RCA_LATER)setTimeout(rcaLater,0)},true));
+const rcaGew=p=>{const w=rcaWerk(RCA_SEL),o=rcaVan(RCA_SEL),a=rcaHaal(w,p),b=rcaHaal(o,p);return w&&o&&JSON.stringify(a==null?null:a)!==JSON.stringify(b==null?null:b)?" gewijzigd":""};
+/* Voor de lijst bij Alles opslaan: in welke stappen iets klaarstaat. */
+const RCA_DELEN=[["titel prio eigenaar team","kop"],["lijn machine zoek probleem","probleem"],["direct","directe maatregel"],["feiten","feiten"],["oorzaken","oorzaken"],["waarom grond","grondoorzaak"],["maatregelen","maatregelen"],["borgen","borgen"],["effect lessen akkoord_td akkoord_productie","effect"],["klaar","stappen klaar"]];
+function rcaVerschil(id,rec){
+  const o=rcaVan(id);if(!o||!rec)return"nieuw";
+  const z=v=>JSON.stringify(v==null?null:v),d=RCA_DELEN.filter(([v])=>v.split(" ").some(k=>z(o[k])!==z(rec[k]))).map(x=>x[1]);
+  return d.length?d.join(", "):"wijziging";
+}
+const RCA_GROEIT=typeof CSS!=="undefined"&&!!CSS.supports&&CSS.supports("field-sizing","content");
+function rcaGroei(el){if(RCA_GROEIT||!el)return;el.style.height="auto";el.style.height=el.scrollHeight+2+"px"}
+function rcaVeld(el,klaar){
+  if(!rcaMag()||!RCA_SEL)return;
+  const p=el.dataset.rcav;let w;
+  if(el.type==="checkbox")w=el.checked;
+  else if(el.type==="date"){if(el.value&&el.value<"2000")return;w=el.value?isoTekst(el.value):""}
+  else if(el.dataset.getal!==undefined){const t=el.value.trim().replace(",",".");w=t===""?null:Number(t);if(w!==null&&!(w>=0))return}
+  else w=el.value;
+  if(p==="titel")w=String(w).replace(/\s*\n\s*/g," ");
+  const teken=klaar&&el.hasAttribute("data-teken"),tekst=el.tagName==="TEXTAREA"||el.type==="text";
+  rcaZet(RCA_SEL,r=>rcaZetPad(r,p,w),teken&&!tekst);
+  if(teken&&tekst){RCA_LATER=true;if(!RCA_MUIS)setTimeout(rcaLater,0)}
+  if(!teken||tekst)el.classList.toggle("gewijzigd",!!rcaGew(p));
+}
+
+/* ---- feiten uit de site ---- */
+/* Een machine past op het begin van een woord: oven vindt ovenband, maar niet boven; rijskast vindt niet voorrijskast. */
+const rcaRe=k=>new RegExp("(^|[^a-z0-9])"+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
+function rcaRegels(r,dagen){
+  const k=rcaKern(r.machine||""),re=k&&rcaRe(k),zw=rcaZoekw(r),nu=pmNu();
+  if(!r.lijn&&!k)return[];
+  return(((D.output||{}).rapport)||[]).filter(x=>{
+    if(r.lijn&&x.waar!==r.lijn)return false;
+    const d=datum(x.datum);if(!d||d>nu||(dagen&&(nu-d)/864e5>dagen))return false;
+    /* Zonder machine: de regels zonder machine, net als het signaal. Met zoekwoorden: de hele lijn. */
+    if(k){if(!re.test(rcaKern(x.machine)))return false}
+    else if(!zw.length&&!RCA_ALGEMEEN.test(String(x.machine||"").trim()))return false;
+    const t=norm(x.tekst);return!zw.length||zw.some(w=>t.includes(w));
+  }).sort((a,b)=>tdVolg(b.datum).localeCompare(tdVolg(a.datum)));
+}
+const rcaZondag=d=>{const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()-t.getDay());return t};
+function rcaWeken(regels,van,aantal){
+  const uit=[];let z=rcaZondag(van);
+  for(let i=0;i<aantal;i++){const e=new Date(z);e.setDate(e.getDate()+7);const r=regels.filter(x=>{const d=datum(x.datum);return d>=z&&d<e});uit.push({z:new Date(z),wk:prodWeek(z),n:r.length,u:somVan(r.filter(x=>x.stil==="Ja"),x=>x.uren)});z=e}
+  return uit;
+}
+function rcaEffect(r){
+  const e=r.effect||{},v=datum(e.vanaf),doel=Math.max(1,Math.min(26,Math.round(+e.weken)||8));
+  if(!v)return{doel,terug:false};
+  const na=rcaRegels(r).filter(x=>datum(x.datum)>=v),laatste=na.length?datum(na[0].datum):null,sinds=laatste?new Date(+laatste+864e5):v;
+  const weken=Math.max(0,Math.floor((pmNu()-sinds)/(7*864e5)));
+  return{v,doel,na,terug:!!laatste,laatste:na.length?na[0]:null,weken:Math.min(weken,doel),klaarOp:dagTekst(new Date(+sinds+doel*7*864e5))};
+}
+function rcaBonnenAlle(r){
+  const k=rcaKern(r.machine||""),zw=rcaZoekw(r);if(k.length<3&&!zw.length)return[];
+  const re=k.length>=3&&rcaRe(k);
+  return(D.cm||[]).filter(c=>(!r.lijn||c.lijn===r.lijn)&&(!re||re.test(norm([c.machine,c.omschrijving].join(" "))))&&(!zw.length||zw.some(w=>norm([c.machine,c.omschrijving,c.opmerking].join(" ")).includes(w)))).sort((a,b)=>(isOpen(b)-isOpen(a))||nummer(b.nr)-nummer(a.nr));
+}
+function rcaPmTaken(r){
+  const k=rcaKern(r.machine||"");if(k.length<3)return null;
+  const re=rcaRe(k),inp=/^(inpak|ompak)$/i.test(r.lijn||"");
+  return(D.pm||[]).filter(p=>(inp?norm([p.lijn,p.lijndeel].join(" ")).includes(norm(r.lijn)):!r.lijn||p.lijn===r.lijn)&&re.test(norm([p.lijndeel,p.onderdeel,p.taak].join(" "))));
+}
+function rcaDocs(r){
+  const k=rcaKern(r.machine||"");if(k.length<3)return null;
+  const re=rcaRe(k),n=(/\d/.exec(r.lijn||"")||[""])[0],lijnRe=n&&new RegExp("lijn\\s*"+n+"(?!\\d)","i");
+  return(((D.meta||{}).docs||{}).lijst||[]).filter(x=>re.test(norm([x.machine,x.titel].join(" ")))&&(!lijnRe||lijnRe.test(x.machine||"")||!/lijn\s*\d/i.test(x.machine||"")));
+}
+/* Stilstand per productieweek als staven, in de opmaak van de grafieken op Output per lijn: de letters blijven leesbaar op elk scherm.
+   Een week die nog moet komen is een gestippeld vak. Na de maatregel staat een stippellijn en loopt een groene lijn over de bodem. */
+function rcaStaaf(weken,o){
+  o=o||{};
+  const echt=weken.filter(x=>!x.toekomst),top=Math.max(1,...echt.map(x=>x.u||0)),m=10**Math.floor(Math.log10(top));
+  const stap=[.5,1,2,5,10].map(x=>x*m).find(s=>top/s<=4)||10*m,max=Math.ceil(top*1.08/stap)*stap,pc=n=>(n/max*100).toFixed(2)+"%";
+  const getal=n=>String(Math.round(n*10)/10).replace(".",",");
+  let lijnen="";for(let w=stap;w<=max+1e-9;w+=stap)lijnen+='<div class="glijn" style="bottom:'+pc(w)+'"><span>'+getal(w)+"</span></div>";
+  const hoogste=echt.reduce((a,x)=>(x.u||0)>(a?a.u:0)?x:a,null);
+  const kol=x=>{
+    if(x.toekomst)return'<div class="gkol rc-gk"><div class="rc-gtoek"></div><div class="gx">'+x.wk+"</div></div>";
+    const t=(x.u?eenDecimaal(x.u)+" uur stilstand":"geen stilstand")+", "+x.n+(x.n===1?" regel":" regels");
+    return'<div class="gkol rc-gk" tabindex="0" aria-label="'+esc("Week "+x.wk+": "+t)+'">'+(x.u>0?'<div class="gstapel" style="height:'+pc(x.u)+'"><i style="flex:1 0 0;background:var(--s1)"></i></div><div class="gtot'+(x===hoogste?" top":"")+'" style="bottom:calc('+pc(x.u)+' + 3px)">'+eenDecimaal(x.u)+"</div>":x.n?'<span class="rc-gdot"></span>':"")+
+      '<div class="gx">'+x.wk+'</div><div class="gtip"><b>Week '+x.wk+"</b><span><span>Stilstand</span>"+(x.u?eenDecimaal(x.u)+" uur":"–")+"</span><span><span>Regels</span>"+x.n+"</span></div></div>";
+  };
+  const mk=o.marker!=null?o.marker/(weken.length||1)*100:null;
+  const marker=mk==null?"":'<div class="rc-gm'+(mk>60?" links":"")+'" style="left:'+mk.toFixed(2)+'%"><span>'+esc(o.markerTekst||"")+"</span></div>"+(o.doel?'<div class="rc-gdoel" style="left:'+mk.toFixed(2)+'%"></div>':"");
+  return'<div class="grafiek rc-graf" role="group" aria-label="'+esc((o.label||"Stilstand per productieweek")+". Elke staaf is een productieweek, onder de staaf staat het weeknummer.")+'"><div class="gvlak">'+lijnen+'<div class="gkolommen">'+weken.map(kol).join("")+"</div>"+marker+"</div></div>";
+}
+
+/* ---- bord ---- */
+function rcaKaart(r){
+  const s=Math.min(8,rcaStap(r)),e=rcaEffect(r),dertig=r.lijn||r.machine?rcaRegels(r,30):[],u=somVan(dertig.filter(x=>x.stil==="Ja"),x=>x.uren);
+  const open=(r.maatregelen||[]).filter(x=>x.status!=="Klaar"),volg=open.slice().sort((a,b)=>tdVolg(a.deadline||"31-12-9999").localeCompare(tdVolg(b.deadline||"31-12-9999")))[0];
+  const feit=[];
+  if(r.afgesloten)feit.push(["afvink","Afgesloten op "+r.afgesloten]);
+  else{
+    if(r.lijn)feit.push(["klok",dertig.length?dertig.length+(dertig.length===1?" regel":" regels")+(u?", "+uurTekst(u)+" stil":"")+" in 30 dagen":"Geen regels in 30 dagen"]);
+    if(e.terug)feit.push(["storing","Kwam terug op "+e.laatste.datum]);
+    else if(e.v)feit.push(["afvink",e.weken+" van "+e.doel+" weken zonder storing"]);
+    if(volg)feit.push(["pijl",kortTekst(volg.t||"Maatregel")+(volg.deadline?" ("+volg.deadline.slice(0,5)+")":"")]);
+  }
+  const dagen=datum(r.gestart)?Math.max(0,Math.round((pmNu()-datum(r.gestart))/864e5)):null;
+  const v8='<span class="rc-v8" aria-hidden="true">'+RCA_STAPPEN.map((_,i)=>'<i class="'+(r.afgesloten||(r.klaar||[]).includes(i+1)?"k":i+1===s&&!r.afgesloten?"n":"")+'"></i>').join("")+"</span>";
+  return'<button type="button" class="rc-kaart'+(e.terug&&!r.afgesloten?" terug":"")+'" data-rcaopen="'+esc(r.id)+'"><span class="rc-k1"><span class="rc-nr">'+esc(r.id)+"</span>"+(r.prio?prio(r.prio):"")+'</span><b class="rc-kt">'+esc(r.titel||rcaPlek(r))+"</b>"+(r.probleem.zin?'<span class="rc-kp">'+esc(kortTekst(r.probleem.zin))+"</span>":'<span class="rc-kp zacht">'+esc(rcaPlek(r))+"</span>")+v8+
+    '<span class="rc-ks">'+esc(r.afgesloten?"Afgesloten":"Stap "+s+": "+RCA_STAPPEN[s-1])+"</span>"+(e.v&&!r.afgesloten&&!e.terug?'<span class="rc-weken" aria-hidden="true">'+Array.from({length:e.doel},(_,i)=>'<i class="'+(i<e.weken?"ok":"")+'"></i>').join("")+"</span>":"")+
+    '<span class="rc-kf">'+feit.map(([i,t])=>"<span>"+ico(i)+esc(t)+"</span>").join("")+'</span><span class="rc-kv"><span>'+esc(r.eigenaar||"Werkvoorbereider")+"</span><span>"+(r.afgesloten?"":dagen===0?"Vandaag":dagen!=null?"Dag "+(dagen+1):"")+"</span></span></button>";
+}
+function rcaSigKaart(x){
+  const s=x.s,r=rcaBijSignaal(s),kan=rcaMag();
+  return'<article class="rc-sig'+(r?" heeft":"")+'"><div class="rc-sigt"><div class="rc-sig1"><b>'+esc(s.waar+", "+(s.machine||"zonder machine"))+"</b><small>Laatste op "+esc(s.laatste.slice(0,5))+"</small></div><span>"+esc(hoofd(s.w.join(", ")))+"</span></div>"+
+    '<div class="rc-sigk">'+(r?'<button type="button" class="knop" data-rcaopen="'+esc(r.id)+'">'+esc(r.id)+" openen</button>":kan?'<button type="button" class="knop hoofd" data-rcastart="'+esc(x.key)+'">Start RCA</button>':"")+
+    '<button type="button" class="knop" data-rcaregels="'+esc(x.key)+'">Bekijk de regels</button>'+(tdMag()&&!r?'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>':"")+"</div></article>";
 }
 function vRca(){
-  const r=rcaItems(),open=r.filter(x=>!x.gezien),weg=r.filter(x=>x.gezien),per=rcaPer(open),kan=tdMag();
-  if(!rcaOpen()){const e=per.find(x=>x.l.length);RCAOPEN=new Set(e?[e.w]:[])}
-  const met=per.filter(x=>x.l.length),leeg=per.filter(x=>!x.l.length);
-  const sub="Herhaling of veel stilstand in het dienstrapport van productie, de laatste "+RCA_DAGEN+" dagen. "+(open.length?(open.length===1?"1 signaal":open.length+" signalen")+(met.length>1?" bij "+met.length+" lijnen.":"."):"Er is nu geen signaal.");
-  let h='<div class="tdkop"><div><h1>RCA-signalen</h1><p>'+esc(sub)+"</p></div>"+(met.length>1?'<div class="headknoppen"><button type="button" class="knop" data-rcaalles="1">Alles open</button><button type="button" class="knop" data-rcaalles="0">Alles dicht</button></div>':"")+"</div>";
-  h+='<section class="meldpaneel" aria-label="Lijnen">'+per.map(({w,l})=>{const aan=l.length>0;return'<button type="button" class="venster'+(aan?" aan":"")+'" style="--c:'+TDKLEUR.rood+'" data-rcavenster="'+esc(w)+'" aria-label="'+esc(w+": "+l.length)+'"'+(aan?"":" disabled")+'><span><span class="leg">'+esc(w)+'</span><span class="sub">'+esc(aan?(l.length===1?"1 machine":l.length+" machines"):"geen herhaling")+'</span></span><span class="cijfer">'+seg7(l.length,40)+"</span></button>"}).join("")+
-    (kan?'<button type="button" class="venster terug" data-rcavenster="weg" aria-label="Weggezet: '+weg.length+'"'+(weg.length?"":" disabled")+'><span><span class="leg">Weggezet</span><span class="sub">met Gezien, terugzetten kan</span></span><span class="cijfer">'+seg7(weg.length,40)+"</span></button>":"")+"</section>";
-  h+=met.length?'<div class="laden">'+met.map(({w,l})=>rcaLade(w,l,RCAOPEN.has(w))).join("")+"</div>":'<div class="tdleeg">Er is nu geen herhaling of lange stilstand in het dienstrapport.</div>';
-  if(met.length&&leeg.length)h+='<p class="legeregel"><span class="led"></span>Geen signaal bij '+esc(lijstTekst(leeg.map(x=>x.w)))+".</p>";
-  if(kan&&weg.length)h+='<section class="tdweg" id="rcaweg"><button type="button" class="tekstknop" data-rcaoud aria-expanded="'+RCAOUD+'">'+(RCAOUD?"Verbergen wat je hebt weggezet":"Weggezet met Gezien ("+weg.length+")")+"</button>"+(RCAOUD?'<ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(x.s.waar+", "+(x.s.machine||"zonder machine")+": "+x.s.w.join(", "))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul>":"")+"</section>";
-  h+='<p class="rcauitleg">Een signaal komt bij 3 storingen aan dezelfde machine, meer dan 4 uur stilstand of één stilstand van meer dan 2 uur in '+RCA_DAGEN+" dagen. Veiligheid en voedselveiligheid geven altijd een signaal."+(kan?" Met Gezien verdwijnt een signaal tot er een nieuwe regel bij komt.":"")+"</p>";
+  if(RCA_SEL){if(rcaWerk(RCA_SEL)){rcaDetailTeken();return}RCA_SEL=null;history.replaceState(null,"","#rca")}
+  const kan=rcaMag(),past=w=>!RCAF||w===RCAF;
+  const items=rcaItems(),sig=items.filter(x=>!x.gezien&&past(x.s.waar)),weg=items.filter(x=>x.gezien),lijst=rcaLijst().filter(r=>past(r.lijn));
+  const zonder=sig.filter(x=>!rcaBijSignaal(x.s)),volg=zonder.concat(sig.filter(x=>rcaBijSignaal(x.s)));
+  const zicht=RCASIG||RCAF||volg.length<=RCA_SIGMAX+2?volg:volg.slice(0,RCA_SIGMAX);
+  const open=lijst.filter(r=>!r.afgesloten),grens=new Date(+pmNu()-90*864e5),af=lijst.filter(r=>r.afgesloten).sort((a,b)=>tdVolg(b.afgesloten).localeCompare(tdVolg(a.afgesloten)));
+  const afZicht=RCAALLES?af:af.filter(r=>(datum(r.afgesloten)||0)>=grens);
+  const sub=(open.length?(open.length===1?"1 RCA loopt":open.length+" RCA's lopen"):"Er loopt geen RCA")+". "+(zonder.length?(zonder.length===1?"1 signaal heeft":zonder.length+" signalen hebben")+" nog geen RCA.":"Elk signaal heeft een RCA of is weggezet.");
+  let h='<div class="tdkop"><div><h1>RCA analyse</h1><p>'+esc(sub)+"</p></div>"+(kan?'<div class="headknoppen"><button type="button" class="knop hoofd" data-rcanieuw>'+ico("plus")+"Nieuwe RCA</button></div>":"")+"</div>";
+  h+='<div class="seg rc-filter" role="group" aria-label="Lijn">'+[["","Alles"]].concat(RCA_WAAR.map(w=>[w,w])).map(([w,t])=>{const n=items.filter(x=>!x.gezien&&(!w||x.s.waar===w)&&!rcaBijSignaal(x.s)).length+rcaLijst().filter(r=>!r.afgesloten&&(!w||r.lijn===w)).length;return'<button type="button" data-rcaf="'+esc(w)+'" aria-pressed="'+(RCAF===w)+'">'+esc(t)+(n?"<span>"+n+"</span>":"")+"</button>"}).join("")+"</div>";
+  h+='<section class="deel rc-sigdeel"><div class="deelkop"><h2>Signalen'+(zonder.length?"<span>"+zonder.length+" zonder RCA</span>":"")+'</h2></div>'+(sig.length?'<div class="rc-sigs">'+zicht.map(rcaSigKaart).join("")+"</div>"+(zicht.length<volg.length||RCASIG&&!RCAF&&volg.length>RCA_SIGMAX+2?'<button type="button" class="tekstknop rc-meer" data-rcasigalles aria-expanded="'+RCASIG+'">'+(RCASIG?"Minder signalen tonen":"Alle "+volg.length+" signalen")+"</button>":""):'<p class="tdleeg">'+(RCAF?"Geen signaal bij "+esc(RCAF)+".":"Er is nu geen herhaling of lange stilstand in het dienstrapport.")+"</p>")+"</section>";
+  const kol=(id,t,sub,l,extra)=>'<section class="rc-kol"><h3>'+esc(t)+(sub?"<small>"+esc(sub)+"</small>":"")+'<span class="rc-tel">'+l.length+"</span></h3>"+(l.length?l.map(rcaKaart).join(""):'<p class="rc-kolleeg">Niets</p>')+(extra||"")+"</section>";
+  const meerAf=af.length>afZicht.length||RCAALLES&&af.length?'<button type="button" class="tekstknop rc-meer" data-rcaalles>'+(RCAALLES?"Alleen de laatste 90 dagen":"Alle "+af.length+" afgesloten RCA's")+"</button>":"";
+  h+='<section class="deel"><div class="deelkop"><h2>RCA\'s</h2></div><div class="rc-bord">'+kol("analyse","Analyse","stap 1 tot 5",open.filter(r=>rcaKolom(r)==="analyse"))+kol("maatregel","Maatregelen","stap 6",open.filter(r=>rcaKolom(r)==="maatregel"))+kol("borg","Borgen en effect","stap 7 en 8",open.filter(r=>rcaKolom(r)==="borg"))+kol("af","Afgesloten","",afZicht,meerAf)+"</div></section>";
+  if(tdMag()&&weg.length)h+='<section class="tdweg" id="rcaweg"><button type="button" class="tekstknop" data-rcaoud aria-expanded="'+RCAOUD+'">'+(RCAOUD?"Verbergen wat je hebt weggezet":"Weggezet met Gezien ("+weg.length+")")+"</button>"+(RCAOUD?'<ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(x.s.waar+", "+(x.s.machine||"zonder machine")+": "+x.s.w.join(", "))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul>":"")+"</section>";
+  h+='<p class="rcauitleg">Een signaal komt bij 3 storingen aan dezelfde machine, meer dan 4 uur stilstand of één stilstand van meer dan 2 uur in '+RCA_DAGEN+" dagen. Veiligheid en voedselveiligheid geven altijd een signaal."+(kan?" Met Gezien verdwijnt een signaal tot er een nieuwe regel bij komt. Start RCA maakt er een RCA van.":"")+"</p>";
   $("#view").innerHTML=h;
 }
-/* Een lade openen of dicht doen. Een venster of een lijn in het menu opent zijn lade en springt erheen. */
-function rcaKies(w,stand,spring){
-  const o=rcaOpen()||(RCAOPEN=new Set());
-  if(stand===undefined)stand=!o.has(w);
-  if(stand)o.add(w);else o.delete(w);
-  rcaOpenBewaar();vRca();
-  const el=document.getElementById(rcaId(w));
-  if(spring&&el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
-  const k=[...document.querySelectorAll("[data-rcalade]")].find(x=>x.dataset.rcalade===w);if(k&&!spring)k.focus();
+
+/* ---- één RCA: de acht stappen ---- */
+const rcaRo=()=>rcaMag()?"":" readonly";
+const rcaUit=()=>rcaMag()?"":" disabled";
+const rcaWaarde=p=>{const v=rcaHaal(RCA_W,p);return v==null?"":v};
+const rcaTekst=(p,ph,rijen,teken)=>'<textarea class="rc-in'+rcaGew(p)+'" maxlength="5000" data-rcav="'+p+'"'+(teken?" data-teken":"")+' rows="'+(rijen||2)+'" placeholder="'+esc(ph||"")+'"'+rcaRo()+">"+esc(rcaWaarde(p))+"</textarea>";
+const rcaInvoer=(p,ph,teken,lijst)=>'<input type="text" class="rc-in'+rcaGew(p)+'" maxlength="500" data-rcav="'+p+'"'+(teken?" data-teken":"")+(lijst?' list="'+lijst+'"':"")+' value="'+esc(rcaWaarde(p))+'" placeholder="'+esc(ph||"")+'"'+rcaRo()+">";
+const rcaDatum=(p,teken)=>{const v=rcaWaarde(p);return'<input type="date" class="rc-in'+rcaGew(p)+'" data-rcav="'+p+'"'+(teken?" data-teken":"")+' value="'+(isDag(v)?isoTekst(v):"")+'"'+rcaUit()+">"};
+const rcaGetal=(p,teken)=>'<input type="text" inputmode="numeric" class="rc-in rc-getal'+rcaGew(p)+'" data-rcav="'+p+'" data-getal'+(teken?" data-teken":"")+' value="'+esc(rcaWaarde(p))+'"'+rcaRo()+">";
+function rcaKeus(p,opties,leegT,teken,getal){
+  const v=String(rcaWaarde(p));
+  return'<select class="rc-in'+rcaGew(p)+'" data-rcav="'+p+'"'+(teken?" data-teken":"")+(getal?" data-getal":"")+rcaUit()+">"+(leegT!=null?'<option value="">'+esc(leegT)+"</option>":"")+opties.map(o=>{const[w,t]=Array.isArray(o)?o:[o,o];return'<option value="'+esc(w)+'"'+(v===String(w)?" selected":"")+">"+esc(t)+"</option>"}).join("")+"</select>";
 }
+const rcaVink=(p,teken)=>'<input type="checkbox" class="rc-vink'+rcaGew(p)+'" data-rcav="'+p+'"'+(teken?" data-teken":"")+(rcaWaarde(p)?" checked":"")+rcaUit()+">";
+const rcaVeldL=(l,inh,breed)=>'<label class="rc-veld'+(breed?" breed":"")+'"><span>'+esc(l)+"</span>"+inh+"</label>";
+const rcaMin=(lijst,i)=>rcaMag()?'<button type="button" class="icoonknop rc-min" data-rcamin="'+lijst+"."+i+'" aria-label="Regel weghalen" title="Weghalen">'+ico("sluit")+"</button>":"";
+const rcaPlus=(lijst,t,extra)=>rcaMag()?'<button type="button" class="tekstknop rc-plus" data-rcaplus="'+lijst+'"'+(extra||"")+">"+ico("plus")+esc(t)+"</button>":"";
+function rcaStapSub(r,n){
+  const e=rcaEffect(r),oz=r.oorzaken||[],m=r.maatregelen||[],b=r.borgen||[];
+  if(n===1)return r.probleem.zin?"Ingevuld":"Nog invullen";
+  if(n===2)return r.direct.werkt?"Werkt: "+r.direct.werkt.toLowerCase():(r.direct.acties||[]).length?(r.direct.acties.length===1?"1 regel":r.direct.acties.length+" regels"):"Nog invullen";
+  if(n===3){if(!r.lijn&&!r.machine)return"Kies eerst lijn en machine";const l=rcaRegels(r,30);return l.length+(l.length===1?" regel":" regels")+" in 30 dagen"}
+  if(n===4)return oz.length?oz.filter(x=>x.stand==="bev").length+" bevestigd, "+oz.filter(x=>(x.stand||"chk")==="chk").length+" te checken":"Nog geen oorzaken";
+  if(n===5){const w=(r.waarom||[]).filter(x=>String(x).trim()).length;return r.grond.zin?"Grondoorzaak ingevuld":w+" van 5 keer waarom"}
+  if(n===6)return m.length?m.length+(m.length===1?" maatregel":" maatregelen")+", "+m.filter(x=>x.status==="Klaar").length+" klaar":"Nog geen maatregelen";
+  if(n===7)return b.filter(x=>x.klaar).length+" van "+b.length;
+  return r.afgesloten?"Afgesloten "+r.afgesloten:e.terug?"Kwam terug op "+e.laatste.datum.slice(0,5):e.v?e.weken+" van "+e.doel+" weken":"Na de maatregel";
+}
+function rcaSec(n,inh,rechts){
+  const k=(RCA_W.klaar||[]).includes(n),nu=!RCA_W.afgesloten&&rcaStap(RCA_W)===n;
+  return'<section class="rc-sec" id="rca-stap-'+n+'"><h2 class="rc-sh"><span class="rc-snr'+(k?" klaar":nu?" nu":"")+'">'+(k?ico("afvink"):n)+"</span>"+esc(RCA_STAPPEN[n-1])+(k?'<span class="chip" style="--c:var(--ok)">Klaar</span>':nu?'<span class="chip" style="--c:var(--info)">Nu</span>':"")+(rechts?"<small>"+rechts+"</small>":"")+"</h2>"+inh+
+    (rcaMag()&&!RCA_W.afgesloten&&n<8?'<div class="rc-stapvoet"><button type="button" class="knop'+(k?"":" hoofd")+'" data-rcastap="'+n+'">'+(k?"Stap "+n+" weer openzetten":"Stap "+n+" klaar")+"</button></div>":"")+"</section>";
+}
+function rcaS1(){
+  const m=(D.machines||{})[RCA_W.lijn]||[];
+  return rcaSec(1,'<div class="rc-rij3">'+rcaVeldL("Lijn",rcaKeus("lijn",RCA_WAAR.concat(["Overig"]),"Kies",true))+rcaVeldL("Machine",rcaInvoer("machine","Zoals in het dienstrapport",true,"rca_mach")+'<datalist id="rca_mach">'+m.map(x=>'<option value="'+esc(x)+'">').join("")+"</datalist>")+rcaVeldL("Zoekwoorden in het dienstrapport",rcaInvoer("zoek","Bijvoorbeeld: lift, tandwiel, ketting",true))+"</div>"+
+    rcaVeldL("Probleem in één zin",rcaTekst("probleem.zin","Wat gaat er mis, waar, en wat is het gevolg?",2,true),true)+
+    '<div class="rc-w5">'+[["wat","Wat","Wat gebeurt er precies?"],["waar","Waar","Welke plek op de machine?"],["wanneer","Wanneer","Sinds wanneer, welke dienst, na wat?"],["wie","Wie en hoe","Wie merkte het en hoe?"],["hoevaak","Hoe vaak","Aantal keer in een periode"],["hoeveel","Hoeveel","Stilstand, uitval, kilo's"]].map(([k,l,ph])=>rcaVeldL(l,rcaTekst("probleem."+k,ph,2))).join("")+"</div>"+
+    '<h3 class="rc-h3">Impact</h3><div class="rc-imp">'+[["s","S","Veiligheid"],["q","Q","Kwaliteit"],["d","D","Levering"],["kosten","€","Kosten"]].map(([k,l,t])=>'<label class="rc-impv"><span class="rc-imph"><i class="rc-'+k+'">'+l+"</i>"+t+"</span>"+rcaTekst("probleem."+k,k==="kosten"?"Optioneel":"",2)+"</label>").join("")+"</div>"+
+    '<h3 class="rc-h3">Is en is niet</h3><div class="rc-tblw"><table class="rc-tbl rc-ktbl rc-isniet"><thead><tr><th></th><th>Is</th><th>Is niet</th><th>Wat valt op</th></tr></thead><tbody>'+RCA_W.probleem.is.map((x,i)=>"<tr><th>"+esc(x.w)+'</th><td data-l="Is">'+rcaInvoer("probleem.is."+i+".is","")+'</td><td data-l="Is niet">'+rcaInvoer("probleem.is."+i+".niet","")+'</td><td data-l="Wat valt op">'+rcaInvoer("probleem.is."+i+".op","")+"</td></tr>").join("")+"</tbody></table></div>");
+}
+function rcaS2(){
+  const a=RCA_W.direct.acties||[],kan=rcaMag();
+  return rcaSec(2,'<div class="rc-tblw"><table class="rc-tbl rc-ktbl"><thead><tr><th class="rc-wdat">Datum</th><th>Wat is gedaan</th><th class="rc-wwie">Wie</th>'+(kan?'<th class="rc-wx"></th>':"")+"</tr></thead><tbody>"+(a.length?a.map((x,i)=>'<tr><td data-l="Datum">'+rcaDatum("direct.acties."+i+".datum")+'</td><td class="breed rc-c1" data-l="Wat is gedaan">'+rcaInvoer("direct.acties."+i+".tekst","Bijvoorbeeld: onderdeel eruit gehaald, lijn leeggedraaid")+'</td><td data-l="Wie">'+rcaInvoer("direct.acties."+i+".wie","")+"</td>"+(kan?'<td class="rc-xcel">'+rcaMin("direct.acties",i)+"</td>":"")+"</tr>").join(""):'<tr><td colspan="4" class="rc-leeg">Wat is er gedaan zodat productie door kan?</td></tr>')+"</tbody></table></div>"+rcaPlus("direct.acties","Regel toevoegen")+
+    '<div class="rc-rij3">'+rcaVeldL("Werkt het?",rcaKeus("direct.werkt",["Ja","Deels","Nee"],"Nog niet bekeken",true))+rcaVeldL("Tot wanneer",rcaInvoer("direct.tot","Bijvoorbeeld: tot de reparatie op zaterdag"))+"</div>"+rcaVeldL("Risico zolang de oorzaak er is",rcaTekst("direct.risico","Wat kan er nog gebeuren?",2),true));
+}
+function rcaS3(){
+  const r=RCA_W,notitie=rcaVeldL("Eigen waarnemingen en metingen",rcaTekst("feiten","Wat de monteur zag of mat, met datum",3),true);
+  if(!r.lijn&&!r.machine)return rcaSec(3,'<p class="rc-hint">Kies bij Probleem de lijn en de machine. Dan staan hier de regels uit het dienstrapport, de bonnen, de PM-taken en de documenten.</p>'+notitie);
+  const regels=rcaRegels(r,RCA_FEITDAGEN),dertig=regels.filter(x=>(pmNu()-datum(x.datum))/864e5<=30),stil=somVan(dertig.filter(x=>x.stil==="Ja"),x=>x.uren),b=rcaBonnenAlle(r),pm=rcaPmTaken(r),dc=rcaDocs(r);
+  const van=new Date(pmNu());van.setDate(van.getDate()-7*7);
+  const weken=rcaWeken(regels,van,8);
+  const strip='<div class="rc-feiten"><span><b>'+dertig.length+"</b>"+(dertig.length===1?"regel":"regels")+" in 30 dagen</span><span><b>"+(stil?eenDecimaal(stil):"0")+"</b>uur stilstand in 30 dagen</span><span><b>"+regels.length+"</b>"+(regels.length===1?"regel":"regels")+" in "+RCA_FEITDAGEN+" dagen</span><span><b>"+b.length+"</b>"+(b.length===1?"bon":"bonnen")+"</span>"+(pm?'<span class="'+(pm.length?"":"let")+'"><b>'+pm.length+"</b>PM-taken</span>":"")+"</div>";
+  const zicht=RCA_REGELS?regels:regels.slice(0,10);
+  const tabel=regels.length?'<div class="rc-tblw"><table class="rc-tbl rc-regels"><tbody>'+zicht.map(x=>'<tr><td class="rc-wdag"><b>'+esc(x.datum.slice(0,5))+"</b><small>"+esc((x.dienst||"").toLowerCase())+'</small></td><td class="rc-wuur">'+(x.uren?esc(uurTekst(x.uren)):"–")+"</td><td class=\"rc-wst\">"+(x.stil==="Ja"?st("Stilstand"):x.stil==="Halve capaciteit"?st("Halve capaciteit"):"")+"</td><td>"+esc(x.tekst||"")+(r.machine?"":'<small class="rc-mach">'+esc(x.machine||"")+"</small>")+"</td></tr>").join("")+"</tbody></table></div>"+(regels.length>10?'<button type="button" class="tekstknop rc-meer" data-rcaregelsalle>'+(RCA_REGELS?"Minder tonen":"Alle "+regels.length+" regels")+"</button>":""):'<p class="rc-hint">Geen regels in het dienstrapport voor '+esc(rcaPlek(r))+(rcaZoekw(r).length?" met deze zoekwoorden":"")+" in "+RCA_FEITDAGEN+" dagen.</p>";
+  const waarsch=t=>'<p class="rc-waarsch">'+ico("storing")+"<span>"+esc(t)+"</span></p>";
+  const bonnenK='<div class="rc-kaart2"><h4>Bonnen<small>'+b.length+"</small></h4>"+(b.length?'<ul class="rc-bl">'+b.slice(0,8).map(c=>'<li><button type="button" class="tekstknop" data-tdcm="'+esc(c.nr)+'">'+esc(c.nr)+"</button><span>"+esc(c.omschrijving||"")+"<small>"+esc(c.status+(c.uitgevoerd_op&&!isOpen(c)?" "+c.uitgevoerd_op:"")+(c.prio?", P"+c.prio:""))+"</small></span></li>").join("")+"</ul>"+(b.length>8?'<p class="rc-fijn">En nog '+(b.length-8)+". Zoek bij CM-bonnen op "+esc(r.machine)+".</p>":""):'<p class="rc-fijn">Geen bonnen voor deze machine.</p>')+"</div>";
+  const pmK='<div class="rc-kaart2"><h4>PM-taken'+(pm?"<small>"+pm.length+"</small>":"")+"</h4>"+(pm==null?'<p class="rc-fijn">Vul de machine in om de PM-taken te zoeken.</p>':pm.length?'<ul class="rc-bl">'+pm.slice(0,6).map(p=>"<li><b>"+esc(p.frequentie||"")+"</b><span>"+esc(p.taak||"")+"<small>"+esc([p.lijndeel,p.onderdeel].filter(Boolean).join(", "))+"</small></span></li>").join("")+"</ul>":waarsch("Geen PM-taken gevonden voor "+(r.machine||"deze machine")+(r.lijn?" op "+r.lijn.toLowerCase():"")+"."))+"</div>";
+  const docK='<div class="rc-kaart2"><h4>Machinedocumentatie'+(dc?"<small>"+dc.length+"</small>":"")+"</h4>"+(dc==null?'<p class="rc-fijn">Vul de machine in om de documenten te zoeken.</p>':dc.length?'<ul class="rc-bl rc-docs">'+dc.slice(0,6).map(x=>"<li><span>"+esc(x.titel)+"<small>"+esc(x.soort||"")+"</small></span></li>").join("")+'</ul><a class="tekstknop" href="#docs">Naar Machinedocumentatie</a>':waarsch("Geen document voor "+(r.machine||"deze machine")+" in Machinedocumentatie."))+"</div>";
+  const grafiek='<div class="rc-kaart2"><h4>Stilstand per productieweek<small>In uren, de laatste 8 weken</small></h4>'+rcaStaaf(weken,{label:"Stilstand per productieweek voor "+rcaPlek(r)})+"</div>";
+  return rcaSec(3,strip+'<div class="rc-twee rc-feitrij"><div class="rc-kaart2"><h4>Uit het dienstrapport<small>'+esc(rcaPlek(r)+(rcaZoekw(r).length?", met "+r.zoek:""))+"</small></h4>"+tabel+'</div><div class="rc-kolom">'+grafiek+bonnenK+'</div></div><div class="rc-rij2k">'+pmK+docK+"</div>"+notitie,"De site zoekt dit zelf op. Jij vult aan.");
+}
+const rcaOzChip=x=>'<div class="rc-oz '+esc(x.stand||"chk")+'"><i>'+(x.stand==="bev"?ico("afvink"):x.stand==="uit"?ico("sluit"):"")+"</i><span><b>"+esc(x.t||"Nog invullen")+"</b>"+(x.bron?"<small>"+esc(x.bron)+"</small>":"")+"</span></div>";
+function rcaS4(){
+  const oz=RCA_W.oorzaken||[],kan=rcaMag(),tel=k=>oz.filter(x=>(x.stand||"chk")===k).length;
+  const leg='<span class="rc-leg"><span><span class="rc-oz bev rc-ozl"><i>'+ico("afvink")+"</i></span>"+tel("bev")+' bevestigd</span><span><span class="rc-oz chk rc-ozl"><i></i></span>'+tel("chk")+' te checken</span><span><span class="rc-oz uit rc-ozl"><i>'+ico("sluit")+"</i></span>"+tel("uit")+" uitgesloten</span></span>";
+  const cat=(m,boven)=>'<div class="rc-cat '+(boven?"boven":"onder")+'"><h4>'+esc(m)+"</h4>"+oz.filter(x=>x.m===m).map(rcaOzChip).join("")+(kan&&!RCA_W.afgesloten?'<button type="button" class="tekstknop rc-plus" data-rcaplus="oorzaken" data-m="'+esc(m)+'">'+ico("plus")+"Oorzaak</button>":"")+"</div>";
+  const vis='<div class="rc-vis">'+RCA_M.slice(0,3).map(m=>cat(m,true)).join("")+'<div class="rc-graat" aria-hidden="true"></div><div class="rc-viskop"><small>Probleem</small>'+esc(kortTekst(RCA_W.probleem.zin)||RCA_W.titel||"Nog geen probleem")+"</div>"+RCA_M.slice(3).map(m=>cat(m,false)).join("")+"</div>";
+  const tbl=oz.length?'<div class="rc-tblw"><table class="rc-tbl rc-ktbl rc-oztbl"><thead><tr><th class="rc-wm">M</th><th class="rc-woz">Oorzaak</th><th class="rc-wst2">Stand</th><th>Bewijs of bron</th><th>Hoe checken</th><th class="rc-wwie">Wie</th><th class="rc-wdat">Wanneer</th>'+(kan?'<th class="rc-wx"></th>':"")+"</tr></thead><tbody>"+oz.map((x,i)=>'<tr><td data-l="M">'+rcaKeus("oorzaken."+i+".m",RCA_M,null,true)+'</td><td class="breed rc-c1" data-l="Oorzaak">'+rcaInvoer("oorzaken."+i+".t","Mogelijke oorzaak",true)+'</td><td data-l="Stand">'+rcaKeus("oorzaken."+i+".stand",Object.entries(RCA_STAND),null,true)+'</td><td class="breed" data-l="Bewijs of bron">'+rcaInvoer("oorzaken."+i+".bron","Meting, foto, bon",true)+'</td><td class="breed" data-l="Hoe checken">'+rcaInvoer("oorzaken."+i+".hoe","")+'</td><td data-l="Wie">'+rcaInvoer("oorzaken."+i+".wie","")+'</td><td data-l="Wanneer">'+rcaDatum("oorzaken."+i+".wanneer")+"</td>"+(kan?'<td class="rc-xcel">'+rcaMin("oorzaken",i)+"</td>":"")+"</tr>").join("")+"</tbody></table></div>":'<p class="rc-hint">Zet per M alle mogelijke oorzaken in de visgraat. Check ze daarna en zet ze op bevestigd of uitgesloten, met het bewijs.</p>';
+  return rcaSec(4,vis+tbl+rcaPlus("oorzaken","Oorzaak toevoegen"),leg);
+}
+function rcaS5(){
+  const rij=i=>'<div class="rc-why"><i>'+(i+1)+"</i>"+rcaInvoer("waarom."+i,i?"Waarom? Het antwoord op de regel hierboven":"Waarom gebeurde het? Begin bij het probleem")+"</div>";
+  return rcaSec(5,'<div class="rc-twee"><div><h3 class="rc-h3">5 keer waarom</h3>'+[0,1,2,3,4].map(rij).join("")+'</div><div class="rc-grond">'+rcaVeldL("Grondoorzaak in één zin",rcaTekst("grond.zin","De oorzaak waar je iets aan kunt doen",3),true)+'<div class="rc-rij2">'+rcaVeldL("Soort",rcaKeus("grond.soort",RCA_SOORT,"Kies"))+rcaVeldL("Akkoord teamleider TD",rcaInvoer("grond.akkoord","Naam en datum"))+"</div>"+rcaVeldL("Bewijs",rcaTekst("grond.bewijs","Meting, foto of wat de monteur zag",2),true)+"</div></div>","Doorvragen op wat bevestigd is");
+}
+/* Een maatregel die een bon of actie werd, toont die bon of actie met zijn status. Een nieuwe bon heeft pas na de volgende run een nummer. */
+function rcaLink(x,i){
+  if(x.link){
+    if((x.linksoort||x.wordt)==="CM-bon"){
+      const nr=/^(CM|SQDM)/.test(x.link)?x.link:bonVan(x.link),c=nr&&(D.cm||[]).find(y=>y.nr===nr);
+      if(c)return'<div class="rc-link"><button type="button" class="tekstknop" data-tdcm="'+esc(c.nr)+'">'+esc(c.nr)+"</button>"+st(c.status)+"</div>";
+      return'<div class="rc-link zacht">'+(nr?esc(nr)+" komt bij de volgende run op de site":"De bon komt bij de volgende run")+"</div>";
+    }
+    const a=(MELDINGEN||[]).find(y=>y.id===x.link);
+    if(a)return'<div class="rc-link"><span>'+esc(a.code||"Actie")+"</span>"+st(a.voortgang==="Bezig"?"Bezig":a.status)+"</div>";
+    return'<div class="rc-link zacht">'+(MELDINGEN?"De actie is gereed":"Actie op de Actielijst")+"</div>";
+  }
+  if(!rcaMag()||RCA_W.afgesloten)return"";
+  if(x.wordt==="CM-bon")return'<button type="button" class="knop rc-maak" data-rcamaak="'+i+'">'+ico("bon")+"Maak bon</button>";
+  if(x.wordt==="Actie")return'<button type="button" class="knop rc-maak" data-rcamaak="'+i+'">'+ico("klembord")+"Zet op Actielijst</button>";
+  return"";
+}
+function rcaS6(){
+  const m=RCA_W.maatregelen||[],kan=rcaMag();
+  const tbl=m.length?'<div class="rc-tblw"><table class="rc-tbl rc-ktbl rc-mtbl"><thead><tr><th>Maatregel</th><th class="rc-wsrt">Soort</th><th class="rc-wwordt">Wordt</th><th class="rc-wwie">Actiehouder</th><th class="rc-wdat">Deadline</th><th class="rc-wst2">Status</th>'+(kan?'<th class="rc-wx"></th>':"")+"</tr></thead><tbody>"+m.map((x,i)=>'<tr><td class="breed rc-c1" data-l="Maatregel">'+rcaTekst("maatregelen."+i+".t","Wat moet er gebeuren?",2)+'</td><td data-l="Soort">'+rcaKeus("maatregelen."+i+".soort",RCA_MSOORT)+'</td><td data-l="Wordt">'+(x.link?'<span class="rc-wordt">'+esc(x.linksoort||x.wordt)+"</span>":rcaKeus("maatregelen."+i+".wordt",RCA_WORDT,null,true))+rcaLink(x,i)+'</td><td data-l="Actiehouder">'+rcaInvoer("maatregelen."+i+".wie","")+'</td><td data-l="Deadline">'+rcaDatum("maatregelen."+i+".deadline")+'</td><td data-l="Status">'+rcaKeus("maatregelen."+i+".status",RCA_MST,null,true)+"</td>"+(kan?'<td class="rc-xcel">'+rcaMin("maatregelen",i)+"</td>":"")+"</tr>").join("")+"</tbody></table></div>":'<p class="rc-hint">Corrigerend haalt de oorzaak weg, preventief zorgt dat hij niet terugkomt. Een maatregel kan een CM-bon of een actie op de Actielijst worden, dan komt hij terug op Te doen en bij de dagstart.</p>';
+  const k=m.filter(x=>x.status==="Klaar").length;
+  return rcaSec(6,tbl+rcaPlus("maatregelen","Maatregel toevoegen"),m.length?k+" van "+m.length+" klaar":"");
+}
+function rcaS7(){
+  const b=RCA_W.borgen||[],n=b.filter(x=>x.klaar).length;
+  return rcaSec(7,'<ul class="rc-borg">'+b.map((x,i)=>"<li>"+rcaVink("borgen."+i+".klaar",true)+'<div class="rc-borgt">'+rcaInvoer("borgen."+i+".t","Wat moet er geborgd zijn?")+rcaInvoer("borgen."+i+".toel","Toelichting of waar het staat")+"</div>"+rcaMin("borgen",i)+"</li>").join("")+"</ul>"+rcaPlus("borgen","Punt toevoegen"),n+" van "+b.length);
+}
+function rcaS8(){
+  const r=RCA_W,e=rcaEffect(r),kan=rcaMag();
+  let grafiek="",tekst;
+  if(r.lijn||r.machine){
+    const basis=e.v||pmNu(),van=new Date(basis);van.setDate(van.getDate()-7*6);
+    const weken=rcaWeken(rcaRegels(r),van,6+(e.v?e.doel+1:1)).map(x=>Object.assign(x,{toekomst:x.z>pmNu()}));
+    let mi=null;if(e.v){const i=weken.findIndex(x=>e.v>=x.z&&e.v<new Date(+x.z+7*864e5));if(i>=0)mi=i+(e.v-weken[i].z)/(7*864e5)}
+    grafiek=rcaStaaf(weken,{marker:mi,markerTekst:e.v?"Maatregel "+r.effect.vanaf.slice(0,5):"",doel:!!e.v,label:"Stilstand per productieweek, voor en na de maatregel"});
+  }
+  if(!e.v)tekst="Vul in vanaf wanneer de maatregel er is. Dan telt de site per week de regels in het dienstrapport voor "+rcaPlek(r)+".";
+  else if(e.terug)tekst="Weer een regel op "+e.laatste.datum+" in het dienstrapport. Hoort die bij dit probleem, kijk dan of de grondoorzaak klopt. Zo niet, vul bij Probleem zoekwoorden in.";
+  else tekst=e.weken+" van "+e.doel+" weken zonder storing. "+(e.weken>=e.doel?"Het doel is gehaald.":"Afsluiten kan op zijn vroegst op "+e.klaarOp+".");
+  const m=r.maatregelen||[],mk=m.length>0&&m.every(x=>x.status==="Klaar"),bk=(r.borgen||[]).every(x=>x.klaar),ek=!!e.v&&!e.terug&&e.weken>=e.doel;
+  const check=(ok,t)=>'<li class="'+(ok?"ok":"")+'">'+ico(ok?"afvink":"klok")+"<span>"+esc(t)+"</span></li>";
+  const vraag=RCA_VRAAG==="af"?'<div class="rc-vraag"><span>Nog niet alles is klaar. Toch afsluiten?</span><button type="button" class="knop hoofd" data-rcaafja>Toch afsluiten</button><button type="button" class="knop" data-rcanee>Annuleren</button></div>':"";
+  const knop=!kan?"":r.afgesloten?'<button type="button" class="knop" data-rcaheropen>Heropenen</button>':vraag||'<button type="button" class="knop hoofd" data-rcaaf>'+ico("afvink")+"Afsluiten</button>";
+  return rcaSec(8,'<div class="rc-rij3">'+rcaVeldL("Maatregel genomen op",rcaDatum("effect.vanaf",true))+rcaVeldL("Weken zonder storing om af te sluiten",rcaGetal("effect.weken",true))+"</div>"+
+    '<div class="rc-eff"><div class="rc-kaart2"><h4>Stilstand per productieweek<small>In uren, '+esc(rcaPlek(r))+"</small></h4>"+(grafiek||'<p class="rc-fijn">Kies bij Probleem de lijn en de machine.</p>')+'<p class="rc-efft'+(e.terug?" terug":"")+'">'+esc(tekst)+"</p>"+(e.terug?'<p class="rc-fijn">'+esc(e.laatste.datum.slice(0,5)+" "+(e.laatste.dienst||"").toLowerCase()+": "+((t=>t.length>150?t.slice(0,148)+"…":t)(String(e.laatste.tekst||"").trim())))+"</p>":"")+"</div>"+
+    '<div class="rc-afsl"><h4>'+(r.afgesloten?"Afgesloten op "+esc(r.afgesloten):"Afsluiten kan als")+'</h4><ul class="rc-check">'+check(ek,e.doel+" weken geen storing na de maatregel")+check(mk,"Alle maatregelen staan op Klaar")+check(bk,"Borgen is helemaal afgevinkt")+"</ul>"+
+    rcaVeldL("Lessen voor de volgende keer",rcaTekst("lessen","Wat nemen we mee naar andere machines?",3),true)+'<div class="rc-rij2">'+rcaVeldL("Akkoord TD",rcaInvoer("akkoord_td","Naam en datum"))+rcaVeldL("Akkoord productie",rcaInvoer("akkoord_productie","Naam en datum"))+"</div>"+
+    '<div class="rc-afknop">'+knop+"</div></div></div>",r.afgesloten?"Afgesloten":"");
+}
+function rcaStappen(r){
+  const k=r.klaar||[],nu=r.afgesloten?0:rcaStap(r);
+  return'<nav class="rc-stappen" aria-label="Stappen">'+RCA_STAPPEN.map((t,i)=>{const n=i+1,kl=k.includes(n);return'<button type="button" data-rcanaar="'+n+'" class="'+(kl?"klaar":n===nu?"nu":"")+'"><span class="nr">'+(kl?ico("afvink"):n)+"</span><b>"+esc(t)+"</b><small>"+esc(rcaStapSub(r,n))+"</small></button>"}).join("")+'<p class="rc-svoet">'+esc((r.gestart?"Gestart "+r.gestart+". ":"")+(r.bijgewerkt?"Opgeslagen "+r.bijgewerkt+".":""))+"</p></nav>";
+}
+function rcaDetailTeken(){
+  const r=RCA_W=rcaWerk(RCA_SEL),kan=rcaMag(),s=Math.min(8,rcaStap(r));
+  const stapChip=r.afgesloten?'<span class="chip" style="--c:var(--ok)">Afgesloten '+esc(r.afgesloten)+"</span>":'<span class="chip" style="--c:var(--info)">Stap '+s+" van 8: "+esc(RCA_STAPPEN[s-1])+"</span>";
+  let h='<div class="rc-kop"><div class="rc-kopl"><button type="button" class="tekstknop rc-terug" data-rcaterug>'+ico("terug")+"Alle RCA's</button>"+
+    '<div class="rc-r2"><span class="rc-nr">'+esc(r.id)+"</span>"+(kan?rcaKeus("prio",[["1","P1"],["2","P2"],["3","P3"]],"Geen prio",false,true):r.prio?prio(r.prio):"")+stapChip+"</div>"+
+    '<textarea class="rc-titel'+rcaGew("titel")+'" maxlength="200" rows="1" data-rcav="titel" aria-label="Titel" placeholder="Titel"'+rcaRo()+">"+esc(r.titel||"")+"</textarea>"+
+    (r.signaal?'<p class="rc-sub">Uit het RCA-signaal '+esc(r.signaal)+".</p>":"")+
+    '<div class="rc-team">'+rcaVeldL("Eigenaar",rcaInvoer("eigenaar","Wie houdt de vaart erin?"))+rcaVeldL("Team",rcaInvoer("team","Bijvoorbeeld: monteur storingsdienst, teamleider TD, teamleider productie"))+"</div></div>"+
+    '<div class="headknoppen"><button type="button" class="knop" data-rcarapport>'+ico("download")+"Rapport (PDF)</button></div></div>";
+  h+='<div class="rc-grid">'+rcaStappen(r)+'<div class="rc-secties">'+rcaS1()+rcaS2()+rcaS3()+rcaS4()+rcaS5()+rcaS6()+rcaS7()+rcaS8();
+  if(kan)h+='<div class="rc-weg">'+(RCA_VRAAG==="weg"?'<span>'+esc(r.id)+" verwijderen? Dat kan niet ongedaan worden.</span><button type=\"button\" class=\"knop gevaar\" data-rcawegja>Verwijderen</button><button type=\"button\" class=\"knop\" data-rcanee>Annuleren</button>":'<button type="button" class="tekstknop gevaar" data-rcaweg>RCA verwijderen</button>')+"</div>";
+  h+="</div></div>";
+  $("#view").innerHTML=h;
+  if(!RCA_GROEIT)document.querySelectorAll("#view textarea.rc-in,#view textarea.rc-titel").forEach(rcaGroei);
+}
+
+/* ---- rapport om te printen of als PDF op te slaan ---- */
+function rcaRapportHtml(r){
+  const e=rcaEffect(r),rij=(l,v)=>v?"<tr><th>"+esc(l)+"</th><td>"+esc(v)+"</td></tr>":"",oz=r.oorzaken||[],m=r.maatregelen||[];
+  const deel=(n,inh,rechts)=>'<h2><i>'+n+"</i>"+esc(RCA_STAPPEN[n-1])+(rechts?"<small>"+esc(rechts)+"</small>":"")+"</h2>"+(inh||'<p class="zacht">Nog niet ingevuld.</p>');
+  const regels=r.lijn||r.machine?rcaRegels(r,30):[];
+  return'<div class="rr-blad"><div class="rr-kop"><div><span class="mark">TD</span><div><b>RCA-rapport</b><small>Dutch Bakery Eindhoven, technische dienst</small></div></div><div class="rr-r"><b>'+esc(r.id)+"</b>Gemaakt op "+esc(dagTekst(pmNu()))+"<br>"+esc(r.afgesloten?"Afgesloten op "+r.afgesloten:"Stand: stap "+Math.min(8,rcaStap(r))+" van 8")+"</div></div>"+
+    '<h1>'+esc(r.titel||rcaPlek(r))+"</h1>"+
+    '<div class="rr-meta"><div><b>Lijn en machine</b>'+esc(rcaPlek(r))+"</div><div><b>Prio</b>"+esc(r.prio?"P"+r.prio:"Geen")+"</div><div><b>Eigenaar</b>"+esc(r.eigenaar||"")+"</div><div><b>Gestart</b>"+esc(r.gestart||"")+"</div>"+(r.team?'<div class="breed"><b>Team</b>'+esc(r.team)+"</div>":"")+"</div>"+
+    deel(1,(r.probleem.zin?"<p>"+esc(r.probleem.zin)+"</p>":"")+'<table class="rr-t">'+rij("Wat",r.probleem.wat)+rij("Waar",r.probleem.waar)+rij("Wanneer",r.probleem.wanneer)+rij("Wie en hoe",r.probleem.wie)+rij("Hoe vaak",r.probleem.hoevaak)+rij("Hoeveel",r.probleem.hoeveel)+rij("Veiligheid",r.probleem.s)+rij("Kwaliteit",r.probleem.q)+rij("Levering",r.probleem.d)+rij("Kosten",r.probleem.kosten)+r.probleem.is.filter(x=>x.is||x.niet||x.op).map(x=>"<tr><th>"+esc(x.w)+"</th><td>Is: "+esc(x.is||"–")+". Is niet: "+esc(x.niet||"–")+(x.op?". Valt op: "+esc(x.op):"")+"</td></tr>").join("")+"</table>")+
+    deel(2,(r.direct.acties||[]).length||r.direct.risico?'<table class="rr-t">'+(r.direct.acties||[]).map(x=>"<tr><th>"+esc(x.datum||"")+"</th><td>"+esc(x.tekst||"")+(x.wie?" ("+esc(x.wie)+")":"")+"</td></tr>").join("")+rij("Tot wanneer",r.direct.tot)+rij("Risico",r.direct.risico)+"</table>":"",r.direct.werkt?"Werkt: "+r.direct.werkt.toLowerCase():"")+
+    deel(3,(r.lijn||r.machine?"<p>"+regels.length+(regels.length===1?" regel":" regels")+" in het dienstrapport in 30 dagen, "+eenDecimaal(somVan(regels.filter(x=>x.stil==="Ja"),x=>x.uren))+" uur stilstand.</p>":"")+(r.feiten?"<p>"+esc(r.feiten)+"</p>":""))+
+    deel(4,oz.length?'<table class="rr-t rr-k"><thead><tr><th>Oorzaak</th><th>M</th><th>Stand</th><th>Bewijs of check</th></tr></thead><tbody>'+oz.slice().sort((a,b)=>["bev","chk","uit"].indexOf(a.stand||"chk")-["bev","chk","uit"].indexOf(b.stand||"chk")).map(x=>"<tr><td>"+esc(x.t||"")+"</td><td>"+esc(x.m||"")+"</td><td>"+esc(RCA_STAND[x.stand||"chk"])+"</td><td>"+esc([x.bron,x.hoe,x.wie,x.wanneer].filter(Boolean).join(", "))+"</td></tr>").join("")+"</tbody></table>":"",oz.length?oz.filter(x=>x.stand==="bev").length+" bevestigd, "+oz.filter(x=>(x.stand||"chk")==="chk").length+" te checken, "+oz.filter(x=>x.stand==="uit").length+" uitgesloten":"")+
+    deel(5,((r.waarom||[]).filter(x=>String(x).trim()).length?'<table class="rr-t rr-n">'+r.waarom.map((w,i)=>String(w).trim()?"<tr><th>"+(i+1)+"</th><td>"+esc(w)+"</td></tr>":"").join("")+"</table>":"")+(r.grond.zin?"<p><b>Grondoorzaak:</b> "+esc(r.grond.zin)+(r.grond.soort?" ("+esc(r.grond.soort.toLowerCase())+")":"")+"</p>":"")+(r.grond.bewijs?"<p>Bewijs: "+esc(r.grond.bewijs)+"</p>":"")+(r.grond.akkoord?"<p>Akkoord TD: "+esc(r.grond.akkoord)+"</p>":""),r.grond.zin?"":"Nog open")+
+    deel(6,m.length?'<table class="rr-t rr-k"><thead><tr><th>Maatregel</th><th>Soort</th><th>Wordt</th><th>Wie</th><th>Deadline</th><th>Status</th></tr></thead><tbody>'+m.map(x=>{const nr=x.link?(/^(CM|SQDM)/.test(x.link)?x.link:bonVan(x.link)):"";return"<tr><td>"+esc(x.t||"")+"</td><td>"+esc(x.soort||"")+"</td><td>"+esc(nr||x.wordt||"")+"</td><td>"+esc(x.wie||"")+"</td><td>"+esc(x.deadline||"")+"</td><td>"+esc(x.status||"")+"</td></tr>"}).join("")+"</tbody></table>":"")+
+    deel(7,(r.borgen||[]).length?'<table class="rr-t rr-n">'+r.borgen.map(x=>"<tr><th>"+(x.klaar?"✓":"–")+"</th><td>"+esc(x.t||"")+(x.toel?". "+esc(x.toel):"")+"</td></tr>").join("")+"</table>":"",(r.borgen||[]).filter(x=>x.klaar).length+" van "+(r.borgen||[]).length)+
+    deel(8,"<p>"+esc(e.v?(e.terug?"Kwam terug op "+e.laatste.datum+".":e.weken+" van "+e.doel+" weken zonder storing sinds "+r.effect.vanaf+"."):"Nog niet gestart.")+"</p>"+(r.lessen?"<p><b>Lessen:</b> "+esc(r.lessen)+"</p>":""))+
+    '<div class="rr-teken"><div><b>Werkvoorbereider</b>'+esc(r.eigenaar||"")+"</div><div><b>Teamleider TD</b>"+esc(r.akkoord_td||r.grond.akkoord||"")+"</div><div><b>Productie</b>"+esc(r.akkoord_productie||"")+"</div></div>"+
+    '<div class="rr-voet"><span>Gemaakt in de TD Hub, pagina RCA analyse</span><span>'+esc(r.id)+"</span></div></div>";
+}
+function rcaRapport(id){
+  const r=rcaWerk(id);if(!r)return;
+  let v=$("#rcarapport");if(!v){v=document.createElement("div");v.id="rcarapport";v.setAttribute("role","dialog");v.setAttribute("aria-modal","true");v.setAttribute("aria-label","RCA-rapport");document.body.appendChild(v)}
+  v.innerHTML='<div class="rr-balk"><b>'+esc(r.id)+' als rapport</b><button type="button" class="knop hoofd" data-rcaprint>'+ico("download")+'Afdrukken of opslaan als PDF</button><button type="button" class="knop" data-rcarapportdicht>Sluiten</button></div><div class="rr-inhoud">'+rcaRapportHtml(r)+"</div>";
+  v.hidden=false;document.documentElement.classList.add("rcaprint");v.querySelector("[data-rcaprint]").focus();
+}
+function rcaRapportDicht(){const v=$("#rcarapport");if(v)v.hidden=true;document.documentElement.classList.remove("rcaprint");const k=$("[data-rcarapport]");if(k)k.focus()}
+
+/* ---- knoppen ---- */
+async function rcaMaakNieuw(key){
+  if(!rcaMag())return;
+  const x=key?rcaItems().find(y=>y.key===key):null;if(key&&!x)return;
+  const rec=rcaNieuw(x?x.s:null);rec.bijgewerkt=nuTekst();
+  try{await rcaStuur(rec);RCA_VRAAG="";location.hash="rca/"+rec.id;melder(rec.id+" gemaakt"+(x?" uit het signaal":""))}
+  catch(_){melder("De RCA is niet gemaakt. Probeer het opnieuw.")}
+}
+function rcaMaak(i){
+  const id=RCA_SEL,r=rcaWerk(id),x=r&&r.maatregelen[i];if(!x)return;
+  const lijn=/^Lijn [123]$/.test(r.lijn)?r.lijn:"";
+  const soort=x.wordt;
+  const koppel=async j=>{
+    if(!j||!j.id)return;
+    try{
+      const mee=await rcaNu(id,rec=>{const m=rec.maatregelen[i];if(m){m.link=j.id;m.linksoort=soort;if(m.status==="Voorstel")m.status="Gepland"}});
+      if(HUIDIG==="rca"&&RCA_SEL===id)rcaHerteken();
+      melder((soort==="CM-bon"?"De bon komt bij de volgende run en hoort bij ":"Actie"+(j.code?" "+j.code:"")+" staat op de Actielijst en hoort bij ")+id+(mee?". Je andere wijzigingen aan "+id+" zijn ook opgeslagen.":"."));
+    }catch(_){melder("De koppeling met "+id+" is niet opgeslagen. Probeer het opnieuw.")}
+  };
+  if(x.wordt==="CM-bon")openNieuweBon({tekst:x.t,lijn,machine:r.machine,klaar:koppel});
+  else openActie("",x.wie,{tekst:x.t,datum:x.deadline,lijn,machine:r.machine,klaar:koppel});
+}
+async function rcaAf(ja){
+  const id=RCA_SEL,r=rcaWerk(id),e=rcaEffect(r),m=r.maatregelen||[];
+  const ok=!!e.v&&!e.terug&&e.weken>=e.doel&&m.length&&m.every(x=>x.status==="Klaar")&&(r.borgen||[]).every(x=>x.klaar);
+  if(!ok&&!ja){RCA_VRAAG="af";rcaHerteken();const k=$("[data-rcaafja]");if(k)k.focus();return}
+  RCA_VRAAG="";
+  try{await rcaNu(id,rec=>{rec.afgesloten=dagTekst(pmNu());if(!rec.klaar.includes(8))rec.klaar.push(8)});rcaHerteken();melder(id+" is afgesloten")}
+  catch(_){melder(id+" is niet afgesloten. Probeer het opnieuw.")}
+}
+async function rcaHeropen(){
+  const id=RCA_SEL;
+  try{await rcaNu(id,rec=>{rec.afgesloten="";rec.klaar=rec.klaar.filter(n=>n!==8)});rcaHerteken();melder(id+" staat weer open")}
+  catch(_){melder(id+" is niet heropend. Probeer het opnieuw.")}
+}
+async function rcaWeg(){
+  const id=RCA_SEL;
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor(),nr:id,status:"Open",rij:{rca:{id,weg:true}}});pasRcaToe({id,weg:true});CONCEPT.delete(cSleutel("rca",id));cBewaar();cBalk();RCA_VRAAG="";location.hash="rca";melder(id+" is verwijderd")}
+  catch(_){RCA_VRAAG="";rcaHerteken();melder(id+" is niet verwijderd. Probeer het opnieuw.")}
+}
+const RCA_NIEUW={"direct.acties":()=>({datum:dagTekst(pmNu()),tekst:"",wie:""}),oorzaken:m=>({m:m||"Machine",t:"",stand:"chk",bron:"",hoe:"",wie:"",wanneer:""}),maatregelen:()=>({t:"",soort:"Corrigerend",wordt:"CM-bon",link:"",wie:"",deadline:"",status:"Voorstel"}),borgen:()=>({t:"",klaar:false,toel:""})};
+function rcaKlik(e){
+  const t=e.target;
+  const o=t.closest("[data-rcaopen]");if(o){location.hash="rca/"+o.dataset.rcaopen;return}
+  const s=t.closest("[data-rcastart]");if(s){rcaMaakNieuw(s.dataset.rcastart);return}
+  if(t.closest("[data-rcanieuw]")){rcaMaakNieuw(null);return}
+  const f=t.closest("[data-rcaf]");if(f){RCAF=f.dataset.rcaf;vRca();return}
+  if(t.closest("[data-rcaalles]")){RCAALLES=!RCAALLES;vRca();return}
+  if(t.closest("[data-rcasigalles]")){RCASIG=!RCASIG;vRca();return}
+  if(t.closest("[data-rcaoud]")){RCAOUD=!RCAOUD;vRca();return}
+  const rr=t.closest("[data-rcaregels]");if(rr){const x=rcaItems().find(y=>y.key===rr.dataset.rcaregels);if(x)openPaneel(rcaDetail(x.s));return}
+  if(t.closest("[data-rcaprint]")){window.print();return}
+  if(t.closest("[data-rcarapportdicht]")){rcaRapportDicht();return}
+  if(HUIDIG!=="rca"||!RCA_SEL)return;
+  if(t.closest("[data-rcaterug]")){location.hash="rca";return}
+  const n=t.closest("[data-rcanaar]");if(n){const el=document.getElementById("rca-stap-"+n.dataset.rcanaar);if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
+  if(t.closest("[data-rcarapport]")){rcaRapport(RCA_SEL);return}
+  if(!rcaMag())return;
+  const sk=t.closest("[data-rcastap]");if(sk){const k=+sk.dataset.rcastap;rcaZet(RCA_SEL,r=>{r.klaar=r.klaar.includes(k)?r.klaar.filter(x=>x!==k):r.klaar.concat([k]).sort((a,b)=>a-b)},true);return}
+  const p=t.closest("[data-rcaplus]");if(p){const l=p.dataset.rcaplus,maak=RCA_NIEUW[l];if(!maak)return;let nieuw=0;rcaZet(RCA_SEL,r=>{const a=rcaHaal(r,l);a.push(maak(p.dataset.m));nieuw=a.length-1},true);const el=document.querySelector('[data-rcav="'+l+"."+nieuw+(l==="oorzaken"||l==="maatregelen"?".t":l==="borgen"?".t":".tekst")+'"]');if(el)el.focus();return}
+  const mn=t.closest("[data-rcamin]");if(mn){const k=rcaPad(mn.dataset.rcamin),i=k.pop(),l=k.join(".");rcaZet(RCA_SEL,r=>{rcaHaal(r,l).splice(i,1)},true);return}
+  const mk=t.closest("[data-rcamaak]");if(mk){rcaMaak(+mk.dataset.rcamaak);return}
+  if(t.closest("[data-rcaaf]")){rcaAf(false);return}
+  if(t.closest("[data-rcaafja]")){rcaAf(true);return}
+  if(t.closest("[data-rcaheropen]")){rcaHeropen();return}
+  if(t.closest("[data-rcaweg]")){RCA_VRAAG="weg";rcaHerteken();const k=$("[data-rcawegja]");if(k)k.focus();return}
+  if(t.closest("[data-rcawegja]")){rcaWeg();return}
+  if(t.closest("[data-rcanee]")){RCA_VRAAG="";rcaHerteken();return}
+  if(t.closest("[data-rcaregelsalle]")){RCA_REGELS=!RCA_REGELS;rcaHerteken()}
+}
+document.addEventListener("click",rcaKlik);
+document.addEventListener("input",e=>{const el=e.target.closest("[data-rcav]");if(el&&el.tagName!=="SELECT"&&el.type!=="checkbox"&&el.type!=="date"){rcaVeld(el,false);if(el.tagName==="TEXTAREA")rcaGroei(el)}});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches&&e.target.matches("textarea.rc-titel")){e.preventDefault();e.target.blur()}});
+document.addEventListener("change",e=>{const el=e.target.closest("[data-rcav]");if(el)rcaVeld(el,true)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#rcarapport")&&!$("#rcarapport").hidden){e.stopPropagation();rcaRapportDicht()}},true);
+function rcaTel(){TEL.rca=PAGINAS.some(p=>p.id==="rca")?rcaSigOpen().length+rcaLijst().filter(r=>!r.afgesloten&&rcaEffect(r).terug).length:0}
 function tdItems(alles){
   if(!tdMag())return[];
   const uit=[],bev=PMBEV||[],bevIds=new Set(bev.map(x=>x.id)),zonderPrio=c=>c.status==="Open"&&!c.prio;
@@ -3755,7 +4455,7 @@ function tdFotos(){document.querySelectorAll("#view [data-tdfoto]").forEach(k=>{
 async function tdZet(key,terug){
   const oud=GEZIEN_LIVE[key],her=()=>{tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]()};
   GEZIEN_LIVE[key]=!terug;her();
-  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";const plek=key.startsWith("rca:")?"RCA-signalen":"Te doen";melder(terug?"Staat weer bij "+plek:"Weggezet. Terugzetten kan onderaan "+plek+".")}
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";const plek=key.startsWith("rca:")?"RCA analyse":"Te doen";melder(terug?"Staat weer bij "+plek:"Weggezet. Terugzetten kan onderaan "+plek+".")}
   catch(_){if(oud===undefined)delete GEZIEN_LIVE[key];else GEZIEN_LIVE[key]=oud;her();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
 /* Bon maken vult Nieuwe bon met de lijn, het lijndeel en de opmerking. Na het versturen staat de regel op Gezien. */
@@ -4176,6 +4876,7 @@ function kopjeKies(t){
 /* De +: alleen wat deze inlog mag. */
 const plusOpties=()=>alleenKijken()?[]:[
   wvMag()&&["Nieuwe bon","bon",()=>openNieuweBon()],
+  rcaMag()&&PAGINAS.some(p=>p.id==="rca")&&["Nieuwe RCA","zoek",()=>rcaMaakNieuw(null)],
   MELD()&&["Actie toevoegen","klembord",()=>openActie("","")],
   MELD()&&["Melding maken","bel",()=>openMelding("")],
   rapportMag()&&["Storing melden","storing",()=>openStoring()]].filter(Boolean);
@@ -4213,6 +4914,7 @@ function zoekVind(q){
   (D.cm||[]).forEach(c=>{if(past([c.nr,c.omschrijving,c.lijn,c.machine].join(" ")))uit.push({s:isSqd(c)?"SQD-bon":"CM-bon",t:c.nr+" "+(c.omschrijving||""),o:[[c.lijn,c.machine].filter(Boolean).join(", "),stTekst(c)].filter(Boolean).join(". "),r:norm(c.nr)===vol?-1:isOpen(c)?2:4,go:()=>openPaneel(cmDetail(c))})});
   if(!(D.cm||[]).length)(D.storingen||[]).forEach(x=>{if(past([x.nr,x.storing,x.lijn,x.machine].join(" ")))uit.push({s:"Storing",t:x.nr+" "+(x.storing||""),o:[x.lijn,x.machine].filter(Boolean).join(", "),r:norm(x.nr)===vol?-1:2,go:()=>openPaneel({klein:x.nr,titel:x.storing,velden:[["Status",st(x.status),true],["Prio",x.prio?prio(x.prio):null,true],["Lijn",x.lijn],["Machine",x.machine],["Actiehouder",x.actiehouder||"Nog toewijzen"]]})})});
   (MELDINGEN||[]).forEach(m=>{if(past([m.code,m.melding,m.lijn,m.machine,m.actiehouder].join(" ")))uit.push({s:m.letter==="DIR"||isDirectie(m)?"Directie":["S","Q","D"].includes(m.letter)?"Actie "+m.letter:"Melding",t:(m.code?m.code+" ":"")+(m.melding||""),o:[m.actiehouder,m.datum].filter(Boolean).join(", "),r:m.code&&norm(m.code)===vol?-1:3,go:()=>openDetailMelding(m)})});
+  if(PAGINAS.some(p=>p.id==="rca"))rcaLijst().forEach(r=>{if(past([r.id,r.titel,r.lijn,r.machine,r.probleem&&r.probleem.zin].join(" ")))uit.push({s:"RCA",t:r.id+" "+(r.titel||""),o:[rcaPlek(r),r.afgesloten?"Afgesloten "+r.afgesloten:"Stap "+Math.min(8,rcaStap(r))+" van 8"].join(". "),r:norm(r.id)===vol?-1:r.afgesloten?4:2,go:()=>{location.hash="rca/"+r.id}})});
   return uit.sort((a,b)=>a.r-b.r).slice(0,12);
 }
 function zoekTeken(){
@@ -4303,6 +5005,7 @@ function openMenuIndelen(){
 /* ---- navigatie ---- */
 function route(){
   let h=location.hash.replace("#","");
+  const rm=/^rca\/(RCA-\d+)$/.exec(h),voorSel=RCA_SEL;RCA_SEL=rm?rm[1]:null;if(rm)h="rca";if(RCA_SEL!==voorSel){RCA_VRAAG="";RCA_REGELS=false}
   if(!PAGINAS.some(p=>p.id===h)&&OUD[h]&&PAGINAS.some(p=>p.id===OUD[h][0])){
     const [n,tab]=OUD[h];if(tab!==undefined)mem[n]=Object.assign(mem[n]||{q:"",sel:{},alleen:false,sort:{k:"nr",d:-1}},{seg:tab});
     if(h==="zaterdag")naarZaterdag();
@@ -4360,7 +5063,7 @@ function start(data){
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[]);
   PAGINAS=(tdMag()?[P_TEDOEN]:[]).concat(P_DAG,P_LIJN,td?P_TD.filter(p=>!(tdMag()&&p.id==="start")):[P_RAPPORT],wv?pWv:[]);
-  D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];
+  D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];D.rca=(D.rca||[]).map(rcaVolledig);
   MENU_TD=td;MENU_WV=wv;bouwMenu();
   planTel();
   presStappen();

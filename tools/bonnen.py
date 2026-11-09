@@ -513,6 +513,47 @@ def gezien_opruimen(data, dagen=120):
             pass
 
 
+RCA_TEKST = 5000
+
+
+def rca_schoon(x, diepte=0):
+    """Alleen tekst, getallen, ja en nee, lijsten en objecten, met ingekorte teksten. Zo komt er uit de wachtrij niets vreemds in site.json."""
+    if diepte > 6:
+        return None
+    if x is None or isinstance(x, (bool, int, float)):
+        return x
+    if isinstance(x, str):
+        return x[:RCA_TEKST]
+    if isinstance(x, list):
+        return [rca_schoon(v, diepte + 1) for v in x[:60]]
+    if isinstance(x, dict):
+        return {str(k)[:40]: rca_schoon(v, diepte + 1) for k, v in list(x.items())[:80]}
+    return None
+
+
+def rca_wijzig(data, r):
+    """RCA analyse: de site stuurt steeds de hele RCA (status-RCA-n.txt met rij.rca). Een nieuwere versie vervangt de oude, weg haalt hem weg."""
+    if not isinstance(r, dict) or not re.fullmatch(r"RCA-\d{1,5}", str(r.get("id") or "")):
+        print("rca overgeslagen: geen geldig nummer")
+        return
+    lijst = data.setdefault("rca", [])
+    # Het hoogste nummer blijft bewaard, ook als de RCA wordt verwijderd: een nummer komt nooit twee keer uit.
+    data["meta"]["rca_laatste"] = max(int(data["meta"].get("rca_laatste") or 0), int(r["id"].split("-")[1]))
+    oud = next((x for x in lijst if x.get("id") == r["id"]), None)
+    if r.get("weg"):
+        if oud is not None:
+            lijst.remove(oud)
+        print(r["id"], "verwijderd")
+        return
+    nieuw = rca_schoon(r)
+    if oud is None:
+        lijst.append(nieuw)
+    else:
+        lijst[lijst.index(oud)] = nieuw
+    lijst.sort(key=lambda x: int(x["id"].split("-")[1]))
+    print(r["id"], "opgeslagen:", nieuw.get("titel") or "")
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
@@ -533,6 +574,9 @@ def wijzig(a):
             else:
                 data["meta"].pop("menu", None)
             print("menu", "aangepast" if data["meta"].get("menu") else "standaard")
+            continue
+        if "rca" in extra:
+            rca_wijzig(data, extra["rca"])
             continue
         if extra.get("gezien"):
             # Te doen: de werkvoorbereider zette een regel op Gezien, of terug.

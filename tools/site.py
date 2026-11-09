@@ -216,6 +216,9 @@ def build(a):
     dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": kort_rapport(data.get("output", {}), 14), "zaterdag": data.get("zaterdag", {}), "stops": data.get("stops", [])}
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
+    # RCA analyse: de feiten en het effect van een maatregel kijken verder terug dan het RCA-signaal.
+    wv["output"] = kort_rapport(data.get("output"), 120)
+    td.pop("rca", None)  # RCA analyse is voor werkvoorbereider en kijkinlog
     mld.pop("sleutel_wv", None)
     td["meta"].pop("actielijst", None)
     td["meta"].pop("levbestand", None)  # met inkoopbedragen, alleen voor de werkvoorbereider

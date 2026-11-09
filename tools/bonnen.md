@@ -42,6 +42,8 @@ De werkvoorbereider zet CM- en SQD-bonnen met de knop Plannen voor monteurs bij 
 
 Gezien op de pagina Te doen staat als `status-GZ-<code>.txt` met `rij.gezien` (de sleutel van de regel) en `rij.terug`. `bonnen.py wijzig` zet dat in `meta.gezien`. Bij een afmelding met `rij.weekaf` zet hij ook `cm[].weekaf`. Verwerk en verwijder deze bestanden zoals elk ander `status-`-bestand. `status-MENU.txt` met `rij.menu` is de menu-indeling van de werkvoorbereider; `bonnen.py wijzig` zet die in `meta.menu` (`null` haalt hem weg).
 
+Een RCA analyse staat als `status-RCA-<n>.txt` met `rij.rca`: steeds de hele RCA, Apps Script vervangt een ouder bestand van dezelfde RCA. `bonnen.py wijzig` zet hem in `rca` in site.json (een nieuwere versie vervangt de oude) en houdt `meta.rca_laatste` bij; `rij.rca.weg` haalt de RCA weg. Er komt geen bon van. Verwerk en verwijder deze bestanden zoals elk ander `status-`-bestand.
+
 Een afgehandelde melding zet de bon via Apps Script op Uitgevoerd, ook als `status-<nr>.txt`. Een afgesloten bon haalt de site zelf van het SQD-bord: `meta.bonnen.gesloten` bevat de meldingen van afgesloten bonnen.
 
 ## Stappen
