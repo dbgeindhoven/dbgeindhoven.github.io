@@ -195,7 +195,7 @@ def registreer(a):
                 {"nr": w["nr"], "werkzaamheid": spec["kort"], "lijn_machine": spec.get("lijn_machine"), "prio": rij["prio"], "uitvoerder": None, "gereed": None})
             rij["status"], rij["uitvoeren"] = "Gepland", plan_dag(z)
         if w.get("vervolg") == "Onderdeel bestellen":
-            data["bestellijst"].append(bestelregel(w["nr"], spec.get("onderdelen"), "Uit storing van " + datum + ", monteur " + str(w.get("melder")) + ". Foto op de bon."))
+            data["bestellijst"].append(bestelregel(w["nr"], spec.get("onderdelen"), "Uit storing van " + datum + ", monteur " + str(w.get("melder")) + "." + (" Foto op de bon." if w.get("foto") else "")))
         b["verwerkt"][w["id"]] = w["nr"]
         m = re.fullmatch(r"CM(\d+)", w["nr"])
         if m:

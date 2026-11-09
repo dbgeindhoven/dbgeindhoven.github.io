@@ -1696,7 +1696,6 @@ function koppelStoring(klaar){
     const w=id=>$(id).value.trim(),wie=w("#r_naam");naam(wie);
     const vervolg=document.querySelector('input[name="r_verv"]:checked').value;
     const delen=[[foto1(),"Storing"],[foto2(),"Oplossing"]].filter(x=>x[0]);
-    if(vervolg==="Onderdeel bestellen"&&!delen.length){fout.textContent="Voeg bij Onderdeel bestellen een foto toe.";fout.hidden=false;k.disabled=false;return}
     let foto="";
     if(delen.length){try{foto=await fotoSamen(delen)}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
     const deel=w("#r_deel");
