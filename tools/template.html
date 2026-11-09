@@ -4797,9 +4797,10 @@ const SCHERM={tedoen:vTeDoen,rca:vRca,acties:vActies,docs:vDocs,leveranciers:vLe
 /* ---- menu ---- */
 /* De werkvoorbereider deelt zijn menu zelf in met Menu indelen. Dat geldt ook voor de kijkinlog, die hetzelfde deel leest.
    De indeling gaat via de wachtrij als status-MENU.txt met rij.menu en komt daarna in meta.menu. Te doen staat standaard bovenaan Werkvoorbereiding; bij de kijkinlog staat het Overzicht bovenaan.
+   RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","rca","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
@@ -4822,7 +4823,7 @@ function menuKopjes(m){
    Een klik op een kopje opent de pagina waar je in dat kopje het laatst was (td-hub-kopjes). Onderin staat ook de + voor iets nieuws.
    Op de telefoon kies je het kopje bovenin (kiezer) en staan alle pagina's per kopje in de kiezer. De getallen staan bij de pagina en opgeteld bij het kopje. */
 const KORT={sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
-const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
+const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
 const TEL={},KOPLAATST="td-hub-kopjes";
 let KOPJE=null,MODEL=[];
 function kopLaatst(t,id){
