@@ -531,6 +531,48 @@ html.present .okpis{margin-bottom:0}
 .zatkeuze span{display:block;margin-top:2px;font-size:.8125rem;color:var(--ink2)}
 @media (min-width:761px){.tbl .statuskeuze,.zatbulk .statuskeuze,.zatinvoer{font-size:.8125rem}.tbl td:has(>.statuskeuze){padding-top:7px;padding-bottom:7px}}
 .toast{position:fixed;left:50%;bottom:calc(var(--dockruimte) + env(safe-area-inset-bottom,0px));z-index:30;transform:translateX(-50%);padding:10px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(20,22,24,.25);background:var(--ink);color:var(--bg);font-size:.8125rem;font-weight:500;max-width:calc(100% - 32px)}
+/* Wijzigingen die klaarstaan: een oker ring om het veld, met wit ertussen, zodat hij ook op een rood of goud veld opvalt. */
+.gewijzigd{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--wacht)!important}
+.bestvink.gewijzigd,label.gewijzigd{border-radius:8px;background:var(--wacht-soft)}
+.bdl[hidden]{display:none}
+/* Alles opslaan zweeft boven de balk onderin, zolang er iets klaarstaat. */
+.opslaanbalk{position:fixed;z-index:16;left:calc(50% + 23px);bottom:86px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;width:max-content;max-width:calc(100vw - 150px);padding:6px;border-radius:999px;background:rgba(255,255,255,.94);border:1px solid var(--glas-rand);box-shadow:0 0 0 2px var(--wacht),0 16px 40px rgba(70,45,10,.22);backdrop-filter:var(--vervaag);-webkit-backdrop-filter:var(--vervaag)}
+.opslaanbalk[hidden],.opslaanbalk [hidden]{display:none}
+.obtel{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:40px;padding:0 12px 0 6px;border:0;border-radius:999px;background:none;color:var(--ink);font-size:.8125rem;font-weight:500;white-space:nowrap;cursor:pointer}
+.obtel:hover,.obtel[aria-expanded="true"]{background:rgba(21,24,29,.05)}
+.obtel b{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--wacht);color:#fff;font-size:.8125rem;font-weight:700}
+.obtel .kort{display:none}
+.obvraag{padding:0 10px;font-size:.8125rem;font-weight:600;white-space:nowrap}
+.opslaanbalk .tekstknop{padding:0 10px;white-space:nowrap}
+.opslaanbalk .knop{padding:10px 18px}
+.opslaanbalk .knop:disabled{opacity:.75;cursor:progress}
+.oblijst{position:absolute;left:0;bottom:calc(100% + 10px);width:min(460px,calc(100vw - 32px));max-height:min(55vh,420px);overflow-y:auto;padding:6px;border-radius:18px;background:#fff;border:1px solid var(--glas-rand);box-shadow:0 18px 50px rgba(20,22,24,.2)}
+.oblijst ul{margin:0;padding:0;list-style:none}
+.oblijst li{display:flex;align-items:center;gap:2px}
+.oblink{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px 10px;border:0;border-radius:12px;background:none;color:var(--ink2);font-size:.8125rem;text-align:left}
+button.oblink{cursor:pointer}
+button.oblink:hover{background:var(--hover)}
+.oblink b{color:var(--ink);font-weight:600}
+@keyframes obflits{50%{box-shadow:0 0 0 7px var(--wacht),0 16px 40px rgba(70,45,10,.22)}}
+.opslaanbalk.flits{animation:obflits .45s ease 2}
+@media (prefers-reduced-motion:reduce){.opslaanbalk.flits{animation:none}}
+html.concept .toast{bottom:calc(var(--dockruimte) + 66px + env(safe-area-inset-bottom,0px))}
+html.concept .page{padding-bottom:calc(var(--dockruimte) + 66px)}
+html.present .opslaanbalk{left:50%;bottom:22px}
+html.present.concept .toast{bottom:88px}
+/* Met het detailpaneel open staat de balk links ervan en erboven, zodat je meteen kunt opslaan. */
+html:has(#paneel:not([hidden])) .opslaanbalk{z-index:22;left:calc((100vw - 452px) / 2);max-width:calc(100vw - 490px)}
+@media (max-width:980px){
+  .opslaanbalk{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:calc(max(10px,env(safe-area-inset-bottom,0px)) + 56px);transform:none;width:auto;max-width:none}
+  html.present .opslaanbalk{left:max(10px,env(safe-area-inset-left,0px));bottom:max(10px,env(safe-area-inset-bottom,0px))}
+  .obtel{flex:1;padding-right:6px}
+  .obtel .lang{display:none}
+  .obtel .kort{display:inline}
+  .oblijst{width:auto;right:0}
+  html:has(#paneel:not([hidden])) .opslaanbalk{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:max(10px,env(safe-area-inset-bottom,0px));max-width:none}
+  html.concept .paneel{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:430px){.obtel>span{display:none}}
 
 /* kengetallen en balken */
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--glas-rand);border-radius:18px;background:var(--glas-binnen)}
@@ -951,7 +993,7 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
 @media (max-width:1280px) and (min-width:981px){.dtab .lang{display:none}.dtab .kort{display:inline}}
 @media (max-width:1140px) and (min-width:981px){.standpil{display:none}.groet small{display:none}}
 /* Wie op het apparaat minder transparantie vraagt, krijgt vlakke panelen. */
-@media (prefers-reduced-transparency:reduce){.topglas,.rail,.dock,.shell,.paneel,.plusmenu,.kiesblad,.gzlijst,#lockform,.meldkaart,.mkop,#minhoud{background:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media (prefers-reduced-transparency:reduce){.opslaanbalk,.topglas,.rail,.dock,.shell,.paneel,.plusmenu,.kiesblad,.gzlijst,#lockform,.meldkaart,.mkop,#minhoud{background:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none}}
 </style>
 
 <div id="lock" hidden>
@@ -1001,6 +1043,15 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
   </div>
   <nav class="dock" id="dock" aria-label="Pagina's"></nav>
   <div class="plusmenu" id="plusmenu" role="menu" aria-label="Nieuw" hidden></div>
+  <div class="opslaanbalk" id="opslaanbalk" role="region" aria-label="Wijzigingen opslaan" hidden>
+    <div class="oblijst" id="oblijst" hidden></div>
+    <button type="button" class="obtel" id="obtel" aria-expanded="false" aria-controls="oblijst"><b id="obaantal">0</b><span id="obtekst"></span></button>
+    <span class="obvraag" id="obvraag" hidden>Alle wijzigingen weggooien?</span>
+    <button type="button" class="tekstknop" id="obweg">Ongedaan maken</button>
+    <button type="button" class="knop" id="obnee" hidden>Nee</button>
+    <button type="button" class="knop gevaar" id="obja" hidden>Weggooien</button>
+    <button type="button" class="knop hoofd" id="obopslaan">Alles opslaan</button>
+  </div>
   <div class="waas" id="menuwaas" hidden></div>
   <div class="kiesblad" id="kiesblad" hidden></div>
   <div class="waas" id="paneelwaas" hidden></div>
@@ -1201,7 +1252,7 @@ document.addEventListener("click",e=>{
   const tb=e.target.closest("[data-tdbon]");if(tb)tdBonMaken(tb.dataset.tdbon);
   const tf=e.target.closest("[data-tdfoto]");if(tf)tf.closest(".fotos").classList.toggle("groot");
   const tm=e.target.closest("[data-tdmeer]");if(tm){TDMEER[tm.dataset.tdmeer]=!TDMEER[tm.dataset.tdmeer];vTeDoen()}
-  const tq=e.target.closest("[data-tdprio]");if(tq)tdPrio(tq);
+  const tq=e.target.closest("[data-tdprio]");if(tq)cPrioKies(tq.dataset.tdprio,tq.dataset.p);
   if(e.target.closest("[data-tdoud]")){TDOUD=!TDOUD;vTeDoen()}
   const tl=e.target.closest("[data-tdlade]");if(tl)tdLade(tl.dataset.tdlade);
   const tv=e.target.closest("[data-tdvenster]");
@@ -1247,7 +1298,7 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-t] tr[data-i]")){e.preventDefault();const t=vasteTabel.reg[e.target.closest("[data-t]").dataset.t],d=t.detail(t.rijen[+e.target.dataset.i]);if(d)openPaneel(d)}
-  if(e.key==="Escape"){if(!$("#bonvak").hidden)sluitBon();else if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
+  if(e.key==="Escape"){if(C_LIJST||C_VRAAG){C_LIJST=C_VRAAG=false;cBalk()}else if(!$("#bonvak").hidden)sluitBon();else if(!$("#paneel").hidden)sluitPaneel();else if(document.documentElement.classList.contains("present"))presenteer(false)}
   if(document.documentElement.classList.contains("present")&&$("#paneel").hidden&&!e.target.matches("input,select,textarea")){
     if(["ArrowRight","PageDown"," "].includes(e.key)&&!e.target.matches("button")){e.preventDefault();presStap(1)}
     if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();presStap(-1)}
@@ -1265,7 +1316,7 @@ document.addEventListener("touchend",e=>{
 /* ---- detailpaneel ---- */
 let terug=null;
 function openPaneel(d){
-  terug=document.activeElement;
+  terug=document.activeElement;PANEELBON=d.bon||null;
   const velden=d.velden.filter(v=>!leeg(v[1])).map(v=>"<dt>"+esc(v[0])+"</dt><dd>"+(v[2]?v[1]:esc(v[1]))+"</dd>").join("");
   const p=$("#paneel");
   p.innerHTML='<div class="pkopbalk"><div>'+(d.klein?"<small>"+esc(d.klein)+"</small>":"")+'<h2 id="ptitel">'+esc(d.titel)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+velden+"</dl>"+(d.weg?'<div class="weg bonweg" id="b_weg"></div>':"");
@@ -1273,14 +1324,14 @@ function openPaneel(d){
   $("#psl").addEventListener("click",sluitPaneel);
   if(d.weg)d.weg($("#b_weg"));
 }
-function sluitPaneel(){const p=$("#paneel");p.onclick=p.onchange=p.oninput=null;p.hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
+function sluitPaneel(){PANEELBON=null;const p=$("#paneel");p.onclick=p.onchange=p.oninput=null;p.hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
 /* Wat de monteur bij de opname noteerde, met de foto. De specificaties staan ook op de bestellijst. */
 const opnameHtml=r=>{
   const o=r.opname;if(!o)return null;
   const regels=(o.regels||[]).map(x=>"<li><b>"+esc(x.onderdeel||"Onderdeel")+":</b> "+esc(x.spec)+(x.aantal?", "+esc(x.aantal)+" stuks":"")+"</li>").join("");
   return'<div class="opnameblok"><span>'+esc([o.klaar?"Opname gedaan":"Opname deels gedaan",o.door,o.tijd].filter(Boolean).join(" · "))+"</span>"+(regels?"<ul>"+regels+"</ul>":"")+(o.tekst?"<p>"+esc(o.tekst)+"</p>":"")+(o.fotos||[]).map(f=>'<button type="button" class="tekstknop" data-rfoto="'+esc(f)+'">Foto bekijken</button>').join("")+"</div>";
 };
-const cmDetail=r=>({klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",wvMag()&&isOpen(r)?prioVeld(r):r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Monteurs",weekKnop(r)||null,true],["Onderdelen",r.onderdelen],["Bestellen",bestelRegels(r),true],["Opname",opnameHtml(r),true],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
+const cmDetail=r=>({bon:r.nr,klein:r.nr,titel:r.omschrijving,velden:[["Status",statusVeld(r),true],["Prio",wvMag()&&isOpen(r)?prioVeld(r):r.prio?prio(r.prio):null,true],["Lijn",r.lijn],["Machine",r.machine],["Melder",r.melder],["Uitvoeren op",r.uitvoeren],["Monteurs",weekKnop(r)||null,true],["Onderdelen",r.onderdelen],["Bestellen",bestelRegels(r),true],["Opname",opnameHtml(r),true],["Opmerking",r.opmerking],["Uitgevoerd op",r.uitgevoerd_op],["Monteur",r.monteur],["Afgetekend",r.afgetekend],["Herkomst",r.herkomst?herkomst(r):null],["Bon",bonKnop(r),true],["Bron",r.bron]],weg:wvMag()&&r.melding?vak=>wegVak(vak,{id:r.melding},"Bon verwijderen",()=>{MELDINGEN=(MELDINGEN||[]).filter(x=>x.id!==r.melding);if(RAPPORT)RAPPORT=RAPPORT.filter(x=>x.id!==r.melding);laatste="";rlaatste="";sluitPaneel();SCHERM[HUIDIG]();melder("Bon "+r.nr+" verwijderd")},r.nr):null});
 function bonKnop(r){
   if(!r.bon||MODE!=="enc"||!bonnen().sleutel)return null;
   return'<span class="bonknoppen">'+["docx","pdf"].filter(s=>r.bon[s]).map(s=>'<button class="tekstknop" data-bon="'+s+'" data-nr="'+esc(r.nr)+'" aria-label="'+(s==="pdf"?"PDF":"Word")+" van "+esc(r.nr)+'">'+(s==="pdf"?"PDF":"Word")+"</button>").join("")+"</span>";
@@ -1344,7 +1395,7 @@ const prioVeld=r=>{
   const v=!r.prio?prioVoorstel(r):null;
   return prioKeuze(r)+(v?'<small class="bonlos pvhint">Voorstel: prio '+v.p+", "+esc(v.w.charAt(0).toLowerCase()+v.w.slice(1))+' <button type="button" class="tekstknop" data-tdprio="'+esc(r.nr)+'" data-p="'+v.p+'">Overnemen</button></small>':"");
 };
-const prioKeuze=r=>'<select class="statuskeuze" data-bonprio="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen prio</option>'+[1,2,3].map(p=>'<option value="'+p+'"'+(Number(r.prio)===p?" selected":"")+">Prio "+p+"</option>").join("")+"</select>";
+const prioKeuze=r=>{const c=cv("bon",r.nr),q="prio" in c?c.prio:r.prio;return'<select class="statuskeuze'+("prio" in c?" gewijzigd":"")+'" data-bonprio="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen prio</option>'+[1,2,3].map(p=>'<option value="'+p+'"'+(Number(q)===p?" selected":"")+">Prio "+p+"</option>").join("")+"</select>"};
 /* De dag die bij de status hoort: besteld op, leverdatum, de dag in de planning of de dag van afmelden. */
 function stDag(c){
   if(c.status==="Gepland"){const p=planVanBon(c.nr);return p?p.datum:""}
@@ -1353,13 +1404,13 @@ function stDag(c){
 }
 const stTekst=c=>{const t=stDag(c);return c.status+(t?" "+t.slice(0,5):"")};
 const stBon=c=>c.status?'<span class="st '+(STATUS[c.status]||"")+'"><i></i>'+esc(stTekst(c))+"</span>":"";
-/* Status kiezen, met de kalender ernaast als er een dag bij hoort. Bij Leverdatum en Gepland wordt pas opgeslagen als de dag gekozen is. */
+/* Status kiezen, met de kalender ernaast als er een dag bij hoort. Wat je kiest staat klaar tot Alles opslaan (zie Wijzigingen klaarzetten); Leverdatum en Gepland hebben dan een dag nodig. */
 function statusVeld(c){
   if(!wvMag())return stBon(c);
-  const s=c.status,dag=stDag(c),opt=x=>"<option"+(x===s?" selected":"")+">"+esc(x)+"</option>",los=BONSTATUS.includes(s)||BONSLOT.includes(s)?"":opt(s);
+  const p=cv("bon",c.nr),s=p.status||c.status,dag=cDag(c),opt=x=>"<option"+(x===s?" selected":"")+">"+esc(x)+"</option>",los=BONSTATUS.includes(s)||BONSLOT.includes(s)?"":opt(s);
   const hint=(s==="Gepland"||s==="Leverdatum")&&!dag?'<small class="bonlos">'+(s==="Gepland"?"Kies de dag":"Kies de leverdatum")+"</small>":"";
-  return'<span class="stveld" data-stveld="'+esc(c.nr)+'"><select class="statuskeuze" data-bonstatus="'+esc(c.nr)+'" aria-label="Status van '+esc(c.nr)+'">'+BONSTATUS.map(opt).join("")+los+'<optgroup label="Afsluiten zonder uitvoeren">'+BONSLOT.map(opt).join("")+"</optgroup></select>"+
-    (STMETDAG.includes(s)?'<input type="date" class="zatinvoer stdatum" data-stdatum="'+esc(c.nr)+'" value="'+(dag?isoTekst(dag):"")+'" aria-label="'+esc(STLABEL[s]+" voor "+c.nr)+'">':"")+hint+"</span>";
+  return'<span class="stveld" data-stveld="'+esc(c.nr)+'"><select class="statuskeuze'+(p.status?" gewijzigd":"")+'" data-bonstatus="'+esc(c.nr)+'" aria-label="Status van '+esc(c.nr)+'">'+BONSTATUS.map(opt).join("")+los+'<optgroup label="Afsluiten zonder uitvoeren">'+BONSLOT.map(opt).join("")+"</optgroup></select>"+
+    (STMETDAG.includes(s)?'<input type="date" class="zatinvoer stdatum'+("dag" in p?" gewijzigd":"")+'" data-stdatum="'+esc(c.nr)+'" value="'+(dag?isoTekst(dag):"")+'" aria-label="'+esc(STLABEL[s]+" voor "+c.nr)+'">':"")+hint+"</span>";
 }
 /* Dezelfde regels als storingen() in site.py. De dagstart heeft geen CM-overzicht en krijgt de regel daarom mee. */
 function storingRij(c){
@@ -1424,82 +1475,317 @@ function vanPlan(c,status,extra){
   const op=planVanBon(c.nr),r=planRijen(op).find(x=>x.nr===c.nr);
   return zatStuur(r,Object.assign(op.id?{plan:op.id}:{},{datum:op.datum,prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren,weg:true}),Object.assign({uitvoeren:BESTELFASE.includes(status)?"Na levering":"In overleg"},extra||{}),status);
 }
-const statusMelding=c=>c.nr+" staat op "+stTekst(c)+(["cm","sqdbonnen"].includes(HUIDIG)?", tabblad "+bonTab(c):"");
 const stuurFout=e=>e&&e.message==="onbekende status"?"Deze status werkt pas als het nieuwe script (versie 20) in Apps Script staat.":"Opslaan is niet gelukt. Probeer het opnieuw.";
 /* Status zetten. Een status zonder dag haalt de bon van de agenda. Besteld krijgt vandaag als besteldatum als er nog geen is. */
 async function bonStatusZet(c,status,dag){
   status=statusNorm(status);
   if(status==="Gepland"){if(!dag)throw new Error("geen dag");await bonDatumZet(c,dag);return}
   if(!GESLOTEN.includes(status))delete AFOPEN[c.nr];
-  const k=STDATUM[status],extra=k?{[k]:dag||(status==="Besteld"&&isDag(c[k])?c[k]:status==="Besteld"?dagTekst(pmNu()):null)}:{};
+  const k=STDATUM[status],extra=k?{[k]:dag||(status==="Besteld"&&isDag(c[k])?c[k]:status==="Besteld"?dagTekst(pmNu()):null)}:KLAAR.includes(status)&&isDag(dag)?{afgemeld:dag}:{};
   if(planVanBon(c.nr)&&VAN_AGENDA.includes(status))pasBonToe(await vanPlan(c,status,extra));
   else{
     const w={nr:c.nr,status,rij:Object.assign({},metZat(c.nr,storingRij(Object.assign({},c,{status}))),extra)};
     await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);
   }
 }
-/* Na een wijziging tekent alles opnieuw, ook het detailpaneel als de wijziging daar gebeurde. */
-function naWijziging(el,c){
-  laatste="";if(rteken)rteken();planTel();SCHERM[HUIDIG]();
-  if(el&&el.closest&&el.closest(".paneel")){const t=terug;openPaneel(cmDetail(c));terug=t}
+document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))cStatusKies(e.target)});
+document.addEventListener("change",e=>{if(e.target.matches("[data-stdatum]"))cDagKies(e.target)});
+document.addEventListener("change",e=>{if(e.target.matches("[data-bonprio]"))cPrioKies(e.target.dataset.bonprio,e.target.value)});
+
+/* ---- Wijzigingen klaarzetten en in één keer opslaan ----
+   Wat je in een veld verandert, gaat niet meteen weg: het staat klaar (CONCEPT) tot je op Alles opslaan drukt, of Ctrl+S.
+   Per onderwerp één regel: een bon (status met dag, prio, uren, uitvoerder), de kop van een planning, een bestelregel, een actie of het vinkje Bon maken.
+   Een veld met een wijziging die klaarstaat heeft een oker ring (.gewijzigd), ook na opnieuw tekenen en op andere pagina's.
+   Knoppen werken meteen: Plannen voor monteurs, Gezien, Gereed melden, Verplaatsen, Toewijzen en de knoppen voor meerdere bonnen.
+   Dit apparaat bewaart wat klaarstaat 12 uur (td-hub-concept), zodat het na herladen terug is. Alles opslaan verstuurt het op volgorde, via dezelfde wachtrij. */
+const CONCEPT=new Map(),C_OPSLAG="td-hub-concept",C_UUR=12;
+let C_BEZIG=null,C_LIJST=false,C_VRAAG=false,PANEELBON=null;
+const cSleutel=(s,id)=>s+":"+id;
+const cv=(s,id)=>{const x=CONCEPT.get(cSleutel(s,id));return x?x.v:{}};
+const cIn=(s,id,f)=>f in cv(s,id);
+const cGelijk=(a,b)=>String(a==null?"":a)===String(b==null?"":b);
+const cNiveau=()=>D.niveau||(wvMag()?"wv":(D.cm||[]).length?"td":"dagstart");
+const kortTekst=t=>{t=String(t||"").trim();return t.length>44?t.slice(0,42)+"…":t};
+function cVast(k,x){if(Object.keys(x.v).length)CONCEPT.set(k,x);else CONCEPT.delete(k);cBewaar();cBalk()}
+/* velden is wat het veld nu zegt, orig wat er is opgeslagen. Terug naar opgeslagen haalt de wijziging weg. */
+function cZet(s,id,velden,orig,extra){
+  const k=cSleutel(s,id),x=CONCEPT.get(k)||Object.assign({soort:s,id,v:{}},extra||{});
+  Object.keys(velden).forEach(f=>{if(cGelijk(velden[f],orig[f]))delete x.v[f];else x.v[f]=velden[f]});
+  cVast(k,x);
+}
+/* Status en dag horen bij elkaar. Een andere status neemt zijn eigen dag mee; terug naar de opgeslagen status zet ook de dag terug. */
+function cBonSt(c,status,dag){
+  const k=cSleutel("bon",c.nr),x=CONCEPT.get(k)||{soort:"bon",id:c.nr,v:{}};
+  delete x.v.status;delete x.v.dag;
+  if(status!==c.status){x.v.status=status;if(dag!==undefined)x.v.dag=dag}
+  else if(dag!==undefined&&!cGelijk(dag,stDag(c)))x.v.dag=dag;
+  cVast(k,x);
+}
+/* Een knop die meteen iets met de bon doet, haalt de velden weg die hij zelf al regelt. */
+function cVergeet(nr,velden){const k=cSleutel("bon",nr),x=CONCEPT.get(k);if(!x)return;velden.forEach(f=>{delete x.v[f]});cVast(k,x)}
+const cStatus=c=>cv("bon",c.nr).status||c.status;
+function cDag(c){const p=cv("bon",c.nr);return"dag" in p?p.dag:p.status?"":stDag(c)}
+function cStatusKies(sel){
+  const c=zatBon(sel.dataset.bonstatus);if(!c)return;
+  const s=sel.value;let dag;
+  if(s!==c.status){
+    if(s==="Gepland")dag="";
+    else if(s==="Leverdatum")dag=isDag(c.leverdatum)?c.leverdatum:"";
+    else if(s==="Besteld")dag=isDag(c.besteld_op)?c.besteld_op:dagTekst(pmNu());
+    else if(KLAAR.includes(s))dag=dagTekst(pmNu());
+  }
+  cBonSt(c,s,dag);
+  cTekenBon(c.nr,{opnieuw:true,bron:sel,kies:(s==="Gepland"||s==="Leverdatum")&&!cDag(c)});
+}
+/* Een dag uit de kalender. Plannen op zet de bon op Gepland met die dag, daarna staat de dag bij de status.
+   Tijdens het typen is een jaar als 0002 al een geldige datum: die telt nog niet. */
+function cDagKies(el){
+  const c=zatBon(el.dataset.stdatum);if(!c)return;
+  const w=el.value;if(w&&w<"2000")return;
+  const t=w?isoTekst(w):"";
+  if(el.dataset.stnieuw){if(t){cBonSt(c,"Gepland",t);cTekenBon(c.nr,{opnieuw:true,dag:true,bron:el})}return}
+  cBonSt(c,cStatus(c),t);cTekenBon(c.nr,{bron:el});
+}
+/* Bij een bon op een plan staat de prio ook op de regel van het plan (zatPrio). */
+function cPrioKies(nr,waarde){
+  const c=zatBon(nr);if(!c)return;
+  const op=planVanBon(nr),r=op?planRijen(op).find(x=>x.nr===nr):null;
+  cZet("bon",nr,{prio:waarde?Number(waarde):null},{prio:r?zatPrio(r):c.prio||null});
+  cVeldenBon(nr);
+}
+/* Uren en uitvoerder op een regel van de planning. */
+function cZatKies(v){
+  const nr=v.dataset.nr,soort=v.dataset.zat,r=zatRijen().find(x=>x.nr===nr);if(!r)return;
+  if(soort==="prio"){cPrioKies(nr,v.value);return}
+  if(soort==="uren"){
+    const u=v.value.trim().replace(",","."),n=u===""?null:Number(u);
+    if(u!==""&&!(n>=0&&n<=100)){const p=cv("bon",nr);v.value=urenTekst("uren" in p?p.uren:r.uren);melder("Vul de uren in als getal, bijvoorbeeld 1,5.");return}
+    cZet("bon",nr,{uren:n},{uren:r.uren==null?null:r.uren});
+  }else cZet("bon",nr,{uitvoerder:v.value.trim()},{uitvoerder:r.uitvoerder||""});
+  cVeldenBon(nr);zatTotaal();
+}
+const kopId=s=>s.id||"ZAT-"+s.datum;
+function cKopKies(v){
+  const s=plan(),k=v.dataset.zatkop,cap=Number(v.value.trim().replace(",",".")),w=k==="capaciteit"?(cap>0?cap:null):v.value.trim();
+  cZet("kop",kopId(s),{[k]:w},{[k]:k==="capaciteit"?s.capaciteit||null:s[k]||""},{plan:s.id||"",datum:s.datum});
+  v.classList.toggle("gewijzigd",cIn("kop",kopId(s),k));zatTotaal();
+}
+/* Een vinkje haalt het andere weg. Uitvinken zet terug wat er was opgeslagen, of de stand van daarvoor. */
+function cBestelKies(v){
+  const id=v.dataset.bestvink||v.dataset.bestel,r=(D.bestellijst||[]).find(x=>x.id===id);if(!r)return;
+  let groep=v.value;
+  if(v.dataset.bestvink){
+    const p=cv("bestel",id),nu="groep" in p?p.groep:r.groep;
+    if(!BESTVINK.includes(r.groep))r.terug=r.groep;
+    groep=v.checked?v.value:nu!==r.groep?r.groep:r.terug||"Nog niet besteld";
+  }
+  cZet("bestel",id,{groep},{groep:r.groep});cVeldenBestel(id);
+}
+/* Gereed vraagt eerst om bevestiging en gaat dan meteen. Bezig, Open en de deadline staan klaar. */
+function cActieKies(el){
+  const a=alVan(el.dataset.alstatus||el.dataset.aldatum);if(!a||!alMag(a))return;
+  if(el.dataset.alstatus){
+    if(el.value==="Gereed"){AL_GEREED=a.id;SCHERM[HUIDIG]();const k=$('[data-algereed="'+CSS.escape(a.id)+'"]');if(k)k.focus();return}
+    cZet("actie",a.id,{voortgang:el.value==="Bezig"?"Bezig":""},{voortgang:a.bezig?"Bezig":""});
+  }else{
+    const w=el.value;if(w&&w<"2000")return;
+    cZet("actie",a.id,{datum:w?isoTekst(w):""},{datum:a.datum||""});
+  }
+  el.classList.toggle("gewijzigd",cIn("actie",a.id,el.dataset.alstatus?"voortgang":"datum"));
+}
+function cBonvinkKies(k){
+  const m=(MELDINGEN||[]).find(x=>x.id===k.dataset.lsbon);if(!m)return;
+  cZet("bonvink",m.id,{bon_nodig:k.checked},{bon_nodig:m.bon_nodig==="Ja"});
+  k.closest("label").classList.toggle("gewijzigd",cIn("bonvink",m.id,"bon_nodig"));
+}
+/* De status van een bon staat op meer plekken tegelijk: in de lijst, op Te doen en in het paneel. Die tekenen opnieuw; een datum waarin je nog typt blijft staan. */
+function cTekenBon(nr,o){
+  o=o||{};const c=zatBon(nr);if(!c)return;
+  const act=document.activeElement,q=CSS.escape(nr);let plek=null;
+  document.querySelectorAll('[data-stveld="'+q+'"],[data-plandag="'+q+'"]').forEach(el=>{
+    const bij=el.contains(act)||!!(o.bron&&el.contains(o.bron));
+    if(bij&&!o.opnieuw){el.querySelectorAll(".stdatum:not([data-stnieuw])").forEach(i=>i.classList.toggle("gewijzigd",cIn("bon",nr,"dag")));return}
+    const t=document.createElement("div");t.innerHTML=el.matches("[data-stveld]")?statusVeld(c):planDagVeld(c);
+    if(bij)plek=el.parentNode;
+    if(t.firstElementChild)el.replaceWith(t.firstElementChild);else el.remove();
+  });
+  if(plek){
+    const d=plek.querySelector('[data-stveld="'+q+'"] .stdatum'),s=plek.querySelector('[data-bonstatus="'+q+'"]'),doel=(o.kies||o.dag)&&d?d:s;
+    if(doel){doel.focus();if(o.kies&&doel===d)try{if(d.showPicker)d.showPicker()}catch(_){}}
+  }
+  cVeldenBon(nr);
+}
+/* Prio, uren en uitvoerder van een bon, overal waar hij staat. */
+function cVeldenBon(nr){
+  const c=zatBon(nr),p=cv("bon",nr),op=planVanBon(nr),r=op?planRijen(op).find(x=>x.nr===nr):null,q=CSS.escape(nr);
+  document.querySelectorAll('[data-bonprio="'+q+'"],[data-zat][data-nr="'+q+'"]').forEach(v=>{
+    const f=v.dataset.zat||"prio",w=f in p?p[f]:f==="prio"?(v.dataset.bonprio?c&&c.prio:r&&zatPrio(r)):r?r[f]:null;
+    v.value=f==="uren"?urenTekst(w):w==null?"":String(w);
+    v.classList.toggle("gewijzigd",f in p);
+  });
+  document.querySelectorAll('[data-tdprio="'+q+'"]').forEach(b=>{const aan="prio" in p&&String(p.prio)===b.dataset.p;b.classList.toggle("gewijzigd",aan);b.setAttribute("aria-pressed",aan?"true":"false")});
+}
+function cVeldenBestel(id){
+  const r=(D.bestellijst||[]).find(x=>x.id===id);if(!r)return;
+  const p=cv("bestel",id),g="groep" in p?p.groep:r.groep,q=CSS.escape(id);
+  document.querySelectorAll('[data-bestvink="'+q+'"]').forEach(i=>{i.checked=i.value===g});
+  document.querySelectorAll('[data-bestid="'+q+'"]').forEach(x=>x.classList.toggle("gewijzigd","groep" in p));
+  document.querySelectorAll('[data-bestel="'+q+'"]').forEach(s=>{s.value=g;s.classList.toggle("gewijzigd","groep" in p)});
+}
+/* Opslaan: per bon eerst de status met de dag, dan prio, uren en uitvoerder. Dezelfde stappen en dezelfde wachtrij als toen elk veld meteen opsloeg. */
+async function cBonOpslaan(x){
+  const c=zatBon(x.id),p=x.v;if(!c)return;
+  if("status" in p||"dag" in p){
+    const s=statusNorm(p.status||c.status),dag="dag" in p?p.dag:undefined;
+    if(s==="Gepland"){if(!(c.status==="Gepland"&&bonDag(c)===dag))pasBonToe(await planZet(c,await planVoor(dag),"Gepland"))}
+    else if(KLAAR.includes(s)&&s===c.status){if(dag!==undefined&&dag!==stDag(c))await bonDatumZet(c,dag)}
+    else if(s!==c.status||(dag!==undefined&&dag!==stDag(c)))await bonStatusZet(c,s,dag||"");
+  }
+  const op=planVanBon(c.nr);
+  if(op&&("prio" in p||"uren" in p||"uitvoerder" in p)){
+    const r=planRijen(op).find(y=>y.nr===c.nr),o=ZATOPEN[c.nr]||{},oud={prio:zatPrio(r),uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren};
+    const z=Object.assign(o.nieuw?{nieuw:o.nieuw}:{},op.id?{plan:op.id}:{},{datum:op.datum},oud);
+    ["prio","uren","uitvoerder"].forEach(f=>{if(f in p)z[f]=p[f]});
+    if(!cGelijk(z.prio,oud.prio)||!cGelijk(z.uren,oud.uren)||z.uitvoerder!==oud.uitvoerder){pasBonToe(await zatStuur(r,z));c.prio=z.prio}
+    if("prio" in p)zatPrioNaarMelding(c.nr,z.prio);
+  }else if("prio" in p&&!cGelijk(p.prio,c.prio)){
+    const w={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(Object.assign({},c,{prio:p.prio}))),{prioset:p.prio?String(p.prio):""})};
+    await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);c.prio=p.prio;zatPrioNaarMelding(c.nr,p.prio);
+  }
   weekSync(c);
 }
-async function zetBonStatus(sel){
-  const c=D.cm.find(x=>x.nr===sel.dataset.bonstatus),oud=c.status,status=sel.value,veld=sel.closest("[data-stveld]");
-  if(status===oud)return;
-  /* Leverdatum en Gepland wachten op een dag uit de kalender. */
-  if(status==="Leverdatum"||status==="Gepland"){
-    veld.querySelectorAll(".stdatum,.bonlos").forEach(x=>x.remove());
-    veld.insertAdjacentHTML("beforeend",'<input type="date" class="zatinvoer stdatum" data-stdatum="'+esc(c.nr)+'" data-stnieuw="'+status+'" aria-label="'+esc(STLABEL[status]+" voor "+c.nr)+'"><small class="bonlos">'+(status==="Gepland"?"Kies de dag in de kalender":"Kies de leverdatum in de kalender")+"</small>");
-    const d=veld.querySelector(".stdatum");d.focus();try{if(d.showPicker)d.showPicker()}catch(_){}
+async function cKopOpslaan(x){
+  const s=x.plan?planVan(x.plan):plannen().find(p=>!p.id&&p.datum===x.datum);if(!s||s.datum!==x.datum)return;
+  const z=Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,teamleider:s.teamleider||"",monteurs:s.monteurs||"",letop:s.letop||"",capaciteit:s.capaciteit||null},x.v);
+  await stuur({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor(),nr:s.id?"KOP-"+s.id:"ZAT-"+s.datum,status:"Open",rij:{zatkop:z}});
+  pasZatKop(z);
+}
+async function cBestelOpslaan(x){
+  const r=(D.bestellijst||[]).find(y=>y.id===x.id);if(!r)return;
+  const w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:x.v.groep}}};
+  await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);
+}
+async function cActieOpslaan(x){
+  const a=alVan(x.id),p=x.v;if(!a||!a.m)return;const m=a.m;
+  if("voortgang" in p&&!cGelijk(p.voortgang,a.bezig?"Bezig":"")){await stuur({actie:"voortgang",id:m.id,voortgang:p.voortgang});m.voortgang=p.voortgang}
+  if("datum" in p&&!cGelijk(p.datum,a.datum)){await stuur({actie:"bijwerken",id:m.id,prio:m.prio||"",oplossing:m.oplossing||"",lijn:m.lijn||"",machine:m.machine||"",actiehouder:m.actiehouder||"",datum:p.datum,bon_nodig:m.bon_nodig==="Ja"});m.datum=p.datum}
+}
+async function cBonvinkOpslaan(x){
+  const m=(MELDINGEN||[]).find(y=>y.id===x.id);if(!m)return;
+  await stuur({actie:"bijwerken",id:m.id,prio:m.prio,oplossing:m.oplossing,lijn:m.lijn,machine:m.machine,actiehouder:m.actiehouder,datum:m.datum,bon_nodig:x.v.bon_nodig});m.bon_nodig=x.v.bon_nodig?"Ja":"Nee";
+}
+const C_OPSLAAN={bon:cBonOpslaan,kop:cKopOpslaan,bestel:cBestelOpslaan,actie:cActieOpslaan,bonvink:cBonvinkOpslaan};
+/* Een bon op Gepland of Leverdatum heeft een dag nodig. Ontbreekt die, dan wordt er niets opgeslagen en springt de cursor naar die dag. */
+function cOnaf(){
+  for(const x of CONCEPT.values()){
+    if(x.soort!=="bon"||!("status" in x.v||"dag" in x.v))continue;
+    const c=zatBon(x.id),s=c&&cStatus(c);
+    if(c&&(s==="Gepland"||s==="Leverdatum")&&!cDag(c))return c;
+  }
+  return null;
+}
+function cPaneel(){
+  const q=PANEELBON&&CSS.escape(PANEELBON);
+  if($("#paneel").hidden||!q||!$('#paneel [data-bonstatus="'+q+'"],#paneel [data-bonprio="'+q+'"]'))return;
+  const c=zatBon(PANEELBON);if(c){const t=terug;openPaneel(cmDetail(c));terug=t}
+}
+function cHerteken(){laatste="";if(rteken)rteken();planTel();alTel();if(SCHERM[HUIDIG])SCHERM[HUIDIG]();cPaneel()}
+const cFout=e=>e&&/onbekende actie/.test(e.message||"")?"Bezig opslaan kan pas met versie 21 van het script in Apps Script.":e&&e.message==="onbekende status"?"Deze status werkt pas als het nieuwe script (versie 20) in Apps Script staat.":"Probeer het opnieuw.";
+async function cOpslaan(){
+  if(C_BEZIG)return;
+  const a=document.activeElement;if(a&&a.matches&&a.matches("input,select,textarea")&&a.closest("#view,#paneel"))a.blur();
+  C_VRAAG=C_LIJST=false;
+  if(!CONCEPT.size){cBalk();melder("Er staat niets klaar om op te slaan.");return}
+  const onaf=cOnaf();
+  if(onaf){
+    cBalk();melder("Kies eerst "+(cStatus(onaf)==="Gepland"?"de dag":"de leverdatum")+" bij "+onaf.nr+".");
+    const q=CSS.escape(onaf.nr);let v=[...document.querySelectorAll('[data-stveld="'+q+'"] .stdatum')].find(x=>x.offsetParent);
+    if(!v){openPaneel(cmDetail(onaf));v=$('#paneel [data-stveld="'+q+'"] .stdatum')}
+    if(v)v.focus();
     return;
   }
-  sel.disabled=true;
-  try{await bonStatusZet(c,status);naWijziging(sel,c);melder(statusMelding(c))}
-  catch(e){sel.value=oud;sel.disabled=false;melder(stuurFout(e))}
-}
-/* Een dag uit de kalender. Bij Gepland zet hij de bon op die dag in de onderhoudsplanning, bij Uitgevoerd is het de dag van afmelden. */
-async function zetStDatum(el){
-  const c=D.cm.find(x=>x.nr===el.dataset.stdatum),w=el.value;
-  if(!c||(w&&w<"2000"))return;
-  const t=w?isoTekst(w):"",status=el.dataset.stnieuw||c.status;
-  if(!t&&(status==="Besteld"||status==="Leverdatum"||el.dataset.stnieuw))return;
-  if(t===stDag(c)&&status===c.status)return;
-  el.disabled=true;
-  try{
-    if(status==="Gepland"||KLAAR.includes(status))await bonDatumZet(c,t);else await bonStatusZet(c,status,t);
-    naWijziging(el,c);melder(t||status!=="Gepland"?statusMelding(c):c.nr+" staat niet meer in de planning en is Te plannen");
-  }catch(e){el.disabled=false;melder(stuurFout(e))}
-}
-document.addEventListener("change",e=>{if(e.target.matches("[data-bonstatus]"))zetBonStatus(e.target)});
-/* Tijdens het typen is een datum al even geldig, dus er wordt per veld gewacht tot hij af is. */
-document.addEventListener("change",e=>{if(!e.target.matches("[data-stdatum]"))return;const el=e.target;clearTimeout(el.klok);el.klok=setTimeout(()=>zetStDatum(el),900)});
-/* Prio van een bon. Staat de bon op een plan, dan gaat het via het plan (rij.zat), net als in de Onderhoudsplanning. Anders met rij.prioset. */
-async function zetPrio(c,waarde){
-  const p=waarde?Number(waarde):null,op=planVanBon(c.nr);
-  let w;
-  if(op){
-    const r=planRijen(op).find(x=>x.nr===c.nr),o=ZATOPEN[c.nr]||{};
-    w=await zatStuur(r,Object.assign(o.nieuw?{nieuw:o.nieuw}:{},op.id?{plan:op.id}:{},{datum:op.datum,prio:p,uitvoerder:r.uitvoerder||"",uren:r.uren==null?null:r.uren}));
-  }else{
-    w={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(Object.assign({},c,{prio:p}))),{prioset:p?String(p):""})};
-    await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));
+  const lijst=[...CONCEPT.values()],mis=[];let fout=null;
+  C_BEZIG={n:0,van:lijst.length};
+  for(const x of lijst){
+    C_BEZIG.n++;cBalk();
+    const k=cSleutel(x.soort,x.id),voor=JSON.stringify(x.v);
+    try{await C_OPSLAAN[x.soort](x);const nu=CONCEPT.get(k);if(nu&&JSON.stringify(nu.v)===voor)CONCEPT.delete(k)}
+    catch(e){mis.push(x);fout=e}
   }
-  pasBonToe(w);c.prio=p;zatPrioNaarMelding(c.nr,p);weekSync(c);
+  C_BEZIG=null;cBewaar();cHerteken();cBalk();
+  const goed=lijst.length-mis.length;
+  melder(mis.length?(goed?goed+(goed===1?" wijziging":" wijzigingen")+" opgeslagen. ":"")+mis.map(cNaam).join(", ")+(mis.length===1?" is":" zijn")+" niet opgeslagen. "+cFout(fout):goed===1?"De wijziging is opgeslagen":"Alle "+goed+" wijzigingen zijn opgeslagen");
 }
-async function zetPrioVeld(sel){
-  const c=(D.cm||[]).find(x=>x.nr===sel.dataset.bonprio);if(!c)return;
-  const oud=c.prio||"";sel.disabled=true;
-  try{await zetPrio(c,sel.value);laatste="";tdTel();SCHERM[HUIDIG]();if(sel.closest(".paneel"))openPaneel(cmDetail(c));melder(c.nr+": "+(c.prio?"prio "+c.prio:"geen prio"))}
-  catch(_){sel.value=oud;sel.disabled=false;melder("Prio aanpassen is niet gelukt. Probeer het opnieuw.")}
+function cWeg(){if(C_BEZIG)return;CONCEPT.clear();C_VRAAG=C_LIJST=false;cBewaar();cHerteken();cBalk();melder("De wijzigingen zijn ongedaan gemaakt")}
+function cWegEen(k){if(C_BEZIG||!CONCEPT.has(k))return;CONCEPT.delete(k);cBewaar();cHerteken();cBalk();const f=$("#oblijst:not([hidden]) .obx")||$("#obopslaan");if(f&&!$("#opslaanbalk").hidden)f.focus()}
+function cTekst(x){
+  const p=x.v,d=[];
+  if(x.soort==="bon"){
+    const c=zatBon(x.id);
+    if("status" in p)d.push("status "+p.status+(p.dag?" "+p.dag:""));
+    else if("dag" in p)d.push((c&&STLABEL[c.status]||"Dag").toLowerCase()+" "+(p.dag||"leeg"));
+    if("prio" in p)d.push(p.prio?"prio "+p.prio:"geen prio");
+    if("uren" in p)d.push(p.uren==null?"geen uren":urenTekst(p.uren)+" uur");
+    if("uitvoerder" in p)d.push(p.uitvoerder?"uitvoerder "+p.uitvoerder:"geen uitvoerder");
+  }else if(x.soort==="kop"){
+    const n={teamleider:"teamleider",monteurs:"monteurs",letop:"let op",capaciteit:"beschikbare manuren"};
+    Object.keys(p).forEach(k=>d.push(n[k]+" "+(p[k]==null||p[k]===""?"leeg":k==="capaciteit"?urenTekst(p[k]):p[k])));
+  }else if(x.soort==="bestel")d.push(p.groep);
+  else if(x.soort==="actie"){if("datum" in p)d.push(p.datum?"deadline "+p.datum:"geen deadline");if("voortgang" in p)d.push(p.voortgang||"Open")}
+  else if(x.soort==="bonvink")d.push(p.bon_nodig?"bon maken":"geen bon");
+  return d.join(", ");
 }
-async function tdPrio(k){
-  const c=(D.cm||[]).find(x=>x.nr===k.dataset.tdprio);if(!c)return;
-  k.disabled=true;
-  try{await zetPrio(c,k.dataset.p);laatste="";tdTel();SCHERM[HUIDIG]();if(k.closest(".paneel"))openPaneel(cmDetail(c));melder(c.nr+" heeft nu prio "+k.dataset.p)}
-  catch(_){k.disabled=false;melder("Prio opslaan is niet gelukt. Probeer het opnieuw.")}
+function cNaam(x){
+  if(x.soort==="bon")return x.id;
+  if(x.soort==="kop"){const s=x.plan?planVan(x.plan):plannen().find(p=>!p.id&&p.datum===x.datum);return"Planning "+(s?planDag(s):x.datum)}
+  if(x.soort==="bestel"){const r=(D.bestellijst||[]).find(y=>y.id===x.id);return r?[r.cm,kortTekst(r.onderdeel)].filter(Boolean).join(" "):"Bestelregel"}
+  if(x.soort==="actie"){const a=alVan(x.id);return a?a.code||kortTekst(a.wat):"Actie"}
+  const m=(MELDINGEN||[]).find(y=>y.id===x.id);return m?m.code||kortTekst(m.melding):"Melding";
 }
-document.addEventListener("change",e=>{if(e.target.matches("[data-bonprio]"))zetPrioVeld(e.target)});
+function cBalk(){
+  const b=$("#opslaanbalk");if(!b)return;
+  const n=CONCEPT.size,aan=n>0||!!C_BEZIG;document.documentElement.classList.toggle("concept",aan);
+  document.title=(n?"• ":"")+document.title.replace(/^• /,"");
+  b.hidden=!aan;if(!aan){C_LIJST=C_VRAAG=false;return}
+  const vraag=C_VRAAG&&!C_BEZIG,lijst=C_LIJST&&!vraag;
+  $("#obaantal").textContent=C_BEZIG?C_BEZIG.van:n;
+  $("#obtekst").innerHTML=C_BEZIG?'<span class="lang">wordt opgeslagen</span><span class="kort">bezig</span>':'<span class="lang">'+(n===1?"wijziging":"wijzigingen")+' nog niet opgeslagen</span><span class="kort">niet opgeslagen</span>';
+  ["obtel","obweg","obopslaan"].forEach(i=>{$("#"+i).hidden=vraag});["obvraag","obnee","obja"].forEach(i=>{$("#"+i).hidden=!vraag});
+  const k=$("#obopslaan");k.disabled=!!C_BEZIG;k.textContent=C_BEZIG?"Opslaan "+C_BEZIG.n+" van "+C_BEZIG.van:"Alles opslaan";$("#obweg").disabled=!!C_BEZIG;
+  $("#obtel").setAttribute("aria-expanded",lijst?"true":"false");
+  const l=$("#oblijst");l.hidden=!lijst;
+  if(lijst)l.innerHTML="<ul>"+[...CONCEPT.entries()].map(([k,x])=>{const naam="<b>"+esc(cNaam(x))+"</b><span>"+esc(cTekst(x))+"</span>";return"<li>"+(x.soort==="bon"?'<button type="button" class="oblink" data-obopen="'+esc(k)+'">'+naam+"</button>":'<span class="oblink">'+naam+"</span>")+'<button type="button" class="icoonknop obx" data-obweg="'+esc(k)+'" aria-label="'+esc("Wijziging bij "+cNaam(x)+" ongedaan maken")+'">'+ico("sluit")+"</button></li>"}).join("")+"</ul>";
+}
+function cFlits(){const b=$("#opslaanbalk");if(!b)return;b.classList.remove("flits");void b.offsetWidth;b.classList.add("flits")}
+function cBewaar(){try{if(CONCEPT.size)localStorage.setItem(C_OPSLAG,JSON.stringify({tijd:Date.now(),niveau:cNiveau(),lijst:[...CONCEPT.values()]}));else localStorage.removeItem(C_OPSLAG)}catch(_){}}
+function cLaad(){
+  let j=null;try{j=JSON.parse(localStorage.getItem(C_OPSLAG)||"null")}catch(_){}
+  if(!j||j.niveau!==cNiveau()||!(Date.now()-j.tijd<C_UUR*36e5)){try{localStorage.removeItem(C_OPSLAG)}catch(_){}return}
+  (j.lijst||[]).forEach(x=>{if(x&&C_OPSLAAN[x.soort]&&x.id&&x.v&&Object.keys(x.v).length)CONCEPT.set(cSleutel(x.soort,x.id),x)});
+  cBalk();
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("#opslaanbalk");
+  if(C_LIJST&&!b){C_LIJST=false;cBalk()}
+  if(!b)return;
+  if(e.target.closest("#obopslaan"))cOpslaan();
+  else if(e.target.closest("#obweg")){C_VRAAG=true;C_LIJST=false;cBalk();$("#obnee").focus()}
+  else if(e.target.closest("#obnee")){C_VRAAG=false;cBalk();$("#obweg").focus()}
+  else if(e.target.closest("#obja"))cWeg();
+  else if(e.target.closest("#obtel")){C_LIJST=!C_LIJST;cBalk()}
+  else{
+    const w=e.target.closest("[data-obweg]");if(w){cWegEen(w.dataset.obweg);return}
+    const o=e.target.closest("[data-obopen]");if(o){const x=CONCEPT.get(o.dataset.obopen),c=x&&zatBon(x.id);C_LIJST=false;cBalk();if(c)openPaneel(cmDetail(c))}
+  }
+});
+/* Ctrl+S (of Cmd+S) slaat op wat klaarstaat. Een veld waarin je nog typt, telt mee. */
+document.addEventListener("keydown",e=>{
+  if(!(e.ctrlKey||e.metaKey)||e.altKey||e.shiftKey||String(e.key).toLowerCase()!=="s"||$("#app").hidden)return;
+  e.preventDefault();cOpslaan();
+});
+/* Naar een andere pagina: de lijst en de vraag gaan dicht, wat klaarstaat blijft. */
+addEventListener("hashchange",()=>{if(C_LIJST||C_VRAAG){C_LIJST=C_VRAAG=false;cBalk()}});
+addEventListener("beforeunload",e=>{if(CONCEPT.size){e.preventDefault();e.returnValue=""}});
 /* Een eigen wachtrijbestand per bon, zodat een statuswijziging op dezelfde bon het vinkje niet overschrijft. */
 const weekLabel=x=>x.weeksoort==="opname"?"Opnamebon bij monteurs":"Bij monteurs";
 /* Moet er eerst iets worden opgenomen of uitgezocht, dan is Opnamebon de hoofdknop. */
@@ -2356,10 +2642,10 @@ function alVensterHtml(p,huidig){
 function alRij(a,metWie){
   const kleur=alKleur(a),mag=alMag(a),bon=a.m?bonVan(a.m.id):"",c=bon&&(D.cm||[]).find(x=>x.nr===bon);
   const meta=[a.prio?prio(a.prio):"",metWie?'<span class="wie">'+(a.wie?esc(a.wie):"Nog geen actiehouder")+"</span>":"",a.code?"<span>"+esc(a.code)+"</span>":"",a.plek?"<span>"+esc(a.plek)+"</span>":"",bon?"<span>Bon "+esc(bon)+(c?": "+esc(stTekst(c)):"")+"</span>":""].join("");
-  const iso=datum(a.datum)?a.datum.split("-").reverse().join("-"):"",st=a.bezig?"Bezig":"Open";
-  const dag=mag?'<input type="date" class="kveld" data-aldatum="'+esc(a.id)+'" value="'+esc(iso)+'" aria-label="'+esc("Deadline: "+a.wat)+'">':'<span class="kvast">'+(a.datum?esc(a.datum):"Geen deadline")+"</span>";
+  const cp=cv("actie",a.id),cd="datum" in cp?cp.datum:a.datum,iso=datum(cd)?cd.split("-").reverse().join("-"):"",st="voortgang" in cp?(cp.voortgang?"Bezig":"Open"):a.bezig?"Bezig":"Open";
+  const dag=mag?'<input type="date" class="kveld'+("datum" in cp?" gewijzigd":"")+'" data-aldatum="'+esc(a.id)+'" value="'+esc(iso)+'" aria-label="'+esc("Deadline: "+a.wat)+'">':'<span class="kvast">'+(a.datum?esc(a.datum):"Geen deadline")+"</span>";
   const stat=AL_GEREED===a.id?'<div class="krja"><button type="button" class="knop hoofd" data-algereed="'+esc(a.id)+'">Gereed melden</button><button type="button" class="knop" data-alnee>Annuleren</button></div>':
-    mag?'<select class="kveld" data-alstatus="'+esc(a.id)+'" aria-label="'+esc("Status: "+a.wat)+'">'+["Open","Bezig","Gereed"].map(s=>"<option"+(s===st?" selected":"")+">"+s+"</option>").join("")+"</select>":'<span class="kvast">'+st+"</span>";
+    mag?'<select class="kveld'+("voortgang" in cp?" gewijzigd":"")+'" data-alstatus="'+esc(a.id)+'" aria-label="'+esc("Status: "+a.wat)+'">'+["Open","Bezig","Gereed"].map(s=>"<option"+(s===st?" selected":"")+">"+s+"</option>").join("")+"</select>":'<span class="kvast">'+st+"</span>";
   return'<div class="kr '+kleur+'"><div class="wat">'+(a.m?'<button type="button" class="krwat" data-alopen="'+esc(a.id)+'">'+esc(a.wat)+"</button>":'<span class="krwat">'+esc(a.wat)+"</span>")+(meta?'<span class="meta">'+meta+"</span>":"")+'</div><div class="wanneer">'+dag+"<small>"+esc(alWanneer(a))+"</small></div><div>"+stat+"</div></div>";
 }
 function alBlok(l,metWie,id){
@@ -2413,36 +2699,16 @@ function alLade(k){
   const b=[...document.querySelectorAll("[data-allade]")].find(x=>x.dataset.allade===k);if(b)b.focus();
 }
 const alVan=id=>alActies().find(a=>a.id===id);
-/* Bezig of weer Open: een eigen actie in Apps Script (vanaf versie 21), los van de opvolging. Gereed vraagt eerst om bevestiging. */
-async function alStatus(sel){
-  const a=alVan(sel.dataset.alstatus);if(!a||!alMag(a))return;
-  if(sel.value==="Gereed"){AL_GEREED=a.id;SCHERM[HUIDIG]();const k=$('[data-algereed="'+CSS.escape(a.id)+'"]');if(k)k.focus();return}
-  const v=sel.value==="Bezig"?"Bezig":"";
-  sel.disabled=true;
-  try{await stuur({actie:"voortgang",id:a.id,voortgang:v});a.m.voortgang=v;laatste="";SCHERM[HUIDIG]();melder(v?"Op Bezig gezet":"Weer op Open gezet")}
-  catch(e){sel.disabled=false;sel.value=a.bezig?"Bezig":"Open";melder(/onbekende actie/.test(e.message||"")?"Bezig opslaan kan pas met versie 21 van het script in Apps Script.":"Opslaan is niet gelukt. Probeer het opnieuw.")}
-}
 /* Gereed haalt de actie van het bord en uit de lijst. Hoort er een bon bij, dan gaat die op Uitgevoerd, net als bij Markeer als afgehandeld. */
 async function alGereed(k){
   const a=alVan(k.dataset.algereed);if(!a||!alMag(a))return;
   const x=a.m,dir=x.letter==="DIR",bon=dir?"":bonVan(x.id)||"",rij=bon?metZat(bon,null):null;
   k.disabled=true;
-  try{await stuur(Object.assign({actie:"gereed",id:x.id,door:naam()},bon?{bon,rij}:{}));MELDINGEN=MELDINGEN.filter(y=>y.id!==x.id);if(bon)pasBonToe({nr:bon,status:"Uitgevoerd",rij});AL_GEREED=null;laatste="";SCHERM[HUIDIG]();melder(bon?"Gereed, bon "+bon+" staat op Uitgevoerd":"Actie gereed")}
+  try{await stuur(Object.assign({actie:"gereed",id:x.id,door:naam()},bon?{bon,rij}:{}));MELDINGEN=MELDINGEN.filter(y=>y.id!==x.id);if(bon)pasBonToe({nr:bon,status:"Uitgevoerd",rij});AL_GEREED=null;CONCEPT.delete(cSleutel("actie",x.id));cBewaar();cBalk();laatste="";SCHERM[HUIDIG]();melder(bon?"Gereed, bon "+bon+" staat op Uitgevoerd":"Actie gereed")}
   catch(_){k.disabled=false;melder("Gereed melden is niet gelukt. Probeer het opnieuw.")}
 }
-/* De deadline gaat met de opvolging mee (bijwerken), met de velden zoals ze nu zijn. Even wachten tot de datum helemaal is ingetikt. */
-async function alDatum(inp){
-  const a=alVan(inp.dataset.aldatum);if(!a||!alMag(a))return;
-  const x=a.m,nieuw=inp.value?inp.value.split("-").reverse().join("-"):"";
-  if(nieuw===a.datum)return;
-  inp.disabled=true;
-  try{await stuur({actie:"bijwerken",id:x.id,prio:x.prio||"",oplossing:x.oplossing||"",lijn:x.lijn||"",machine:x.machine||"",actiehouder:x.actiehouder||"",datum:nieuw,bon_nodig:x.bon_nodig==="Ja"});x.datum=nieuw;laatste="";SCHERM[HUIDIG]();melder(nieuw?"Deadline "+nieuw+" opgeslagen"+(alOpSqd({datum:nieuw})?(HUIDIG==="sqd"?"":", hij staat nu op het SQD-overzicht"):(HUIDIG==="acties"?"":", hij staat nu in de actielijst")):"Deadline weggehaald, hij staat nu in de actielijst")}
-  catch(_){inp.disabled=false;inp.value=a.datum?a.datum.split("-").reverse().join("-"):"";melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
-}
-document.addEventListener("change",e=>{
-  const s=e.target.closest("[data-alstatus]");if(s)alStatus(s);
-  const d=e.target.closest("[data-aldatum]");if(d){clearTimeout(d.klok);d.klok=setTimeout(()=>alDatum(d),900)}
-});
+/* Bezig, Open en de deadline staan klaar tot Alles opslaan. Gereed vraagt eerst om bevestiging en gaat meteen. */
+document.addEventListener("change",e=>{const a=e.target.closest("[data-alstatus],[data-aldatum]");if(a)cActieKies(a)});
 /* Actie toevoegen, vanaf het SQD-overzicht en de actielijst. Een actie op S, Q of D krijgt een SQDM-nummer, net als een melding, en gaat meteen naar het bord. Een directie-actie heeft geen nummer. */
 function openActie(letter,wie){
   terug=document.activeElement;
@@ -2502,7 +2768,7 @@ function vMeldingen(){
 function vStoringen(){
   const m=(MELDINGEN||[]).filter(x=>x.letter!=="DIR"&&String(x.prio)==="1");
   const r=(D.storingen||[]).filter(x=>String(x.prio)==="1"&&!m.some(y=>y.code===x.nr)).concat(m.map(x=>{const s=(D.storingen||[]).find(y=>y.nr===x.code);return{nr:x.code||"Melding",storing:x.melding,lijn:x.lijn,machine:x.machine,status:s?s.status:"Open",actiehouder:x.actiehouder,prio:1,_m:x}}));
-  const bonVeld=x=>!x._m?of(null):bonVan(x._m.id)?"Gemaakt":alleenKijken()?(x._m.bon_nodig==="Ja"?"Wordt gemaakt":"Geen bon"):'<label class="bonvink"><input type="checkbox" data-lsbon="'+esc(x._m.id)+'"'+(x._m.bon_nodig==="Ja"?" checked":"")+"> Bon maken</label>";
+  const bonVeld=x=>!x._m?of(null):bonVan(x._m.id)?"Gemaakt":alleenKijken()?(x._m.bon_nodig==="Ja"?"Wordt gemaakt":"Geen bon"):(()=>{const p=cv("bonvink",x._m.id),g="bon_nodig" in p,aan=g?p.bon_nodig:x._m.bon_nodig==="Ja";return'<label class="bonvink'+(g?" gewijzigd":"")+'"><input type="checkbox" data-lsbon="'+esc(x._m.id)+'"'+(aan?" checked":"")+"> Bon maken</label>"})();
   lijstScherm({key:"storingen",titel:"Lopende storingen",sub:"Storingen met prio 1: deze brengen SQD direct in gevaar. Gereedgemelde storingen verdwijnen automatisch.",dagstart:true,rijen:r,eenheid:["storing","storingen"],
     geen:"Geen storingen met prio 1.",
     seg:{get:x=>x.status,o:["Open","In bestelling","Gepland"]},
@@ -2518,14 +2784,7 @@ function vStoringen(){
     detail:x=>{if(x._m){openDetailMelding(x._m);return null}const c=(D.cm||[]).find(y=>y.nr===x.nr);return c?cmDetail(c):{klein:x.nr,titel:x.storing,velden:[["Status",st(x.status),true],["Prio",x.prio?prio(x.prio):null,true],["Lijn",x.lijn],["Machine",x.machine],["Actiehouder",x.actiehouder||"Nog toewijzen"]]}}
   });
 }
-async function zetBonVink(k){
-  const m=(MELDINGEN||[]).find(x=>x.id===k.dataset.lsbon);if(!m)return;
-  k.disabled=true;
-  try{await stuur({actie:"bijwerken",id:m.id,prio:m.prio,oplossing:m.oplossing,lijn:m.lijn,machine:m.machine,actiehouder:m.actiehouder,datum:m.datum,bon_nodig:k.checked});m.bon_nodig=k.checked?"Ja":"Nee";laatste="";melder(k.checked?"De bon wordt bij de volgende run gemaakt":"Er wordt geen bon gemaakt")}
-  catch(_){k.checked=!k.checked;melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
-  k.disabled=false;
-}
-document.addEventListener("change",e=>{if(e.target.matches("[data-lsbon]"))zetBonVink(e.target)});
+document.addEventListener("change",e=>{if(e.target.matches("[data-lsbon]"))cBonvinkKies(e.target)});
 /* Output per lijn: startcijfers uit het Excel-bestand (D.output), aangevuld met wat de ploegen invullen (OUTPUT). */
 const PLOEGEN=[["ochtend","Ochtend","05:50-13:50"],["middag","Middag","13:50-21:50"],["nacht a","Nacht a","21:50-24:00"],["nacht b","Nacht b","00:00-05:50"]];
 const kgTekst=n=>n==null?"–":Math.round(n).toLocaleString("nl-NL");
@@ -2776,32 +3035,8 @@ function zatPrioNaarMelding(nr,p){
   m.prio=p?String(p):"";laatste="";
   zatKeten=zatKeten.then(()=>stuur({actie:"prio",lijst:[{id:m.id,prio:p||""}]})).catch(()=>{melder("De prio op het SQD-bord is niet aangepast. Probeer het opnieuw.")});
 }
-function zatVeld(veld){
-  const nr=veld.dataset.nr,r=zatRijen().find(x=>x.nr===nr);if(!r)return;
-  const soort=veld.dataset.zat,oud=zatBasis(r),z=Object.assign({},oud);
-  if(soort==="prio")z.prio=veld.value?Number(veld.value):null;
-  else if(soort==="uren"){
-    const u=veld.value.trim().replace(",",".");z.uren=u===""?null:Number(u);
-    if(u!==""&&!(z.uren>=0&&z.uren<=100)){veld.value=urenTekst(oud.uren);melder("Vul de uren in als getal, bijvoorbeeld 1,5.");return}
-  }else z.uitvoerder=veld.value.trim();
-  if(z.prio===oud.prio&&z.uitvoerder===oud.uitvoerder&&z.uren===oud.uren)return;
-  const tekst=nr+": "+(soort==="prio"?(z.prio?"prio "+z.prio:"geen prio"):soort==="uren"?(z.uren==null?"geen uren":urenTekst(z.uren)+" uur"):z.uitvoerder||"geen uitvoerder");
-  const terugzetten=()=>{pasZatToe(nr,oud);if(veld.isConnected)veld.value=soort==="prio"?oud.prio||"":soort==="uren"?urenTekst(oud.uren):oud.uitvoerder;zatTotaal();melder(nr+" is niet opgeslagen. Probeer het opnieuw.")};
-  pasZatToe(nr,z);zatTotaal();
-  zatStuur(r,z).then(w=>{pasBonToe(w);laatste="";melder(tekst)}).catch(terugzetten);
-  if(soort==="prio")zatPrioNaarMelding(nr,z.prio);
-}
-function zatKopVeld(v){
-  const s=plan(),k=v.dataset.zatkop,cap=Number(v.value.trim().replace(",",".")),w=k==="capaciteit"?(cap>0?cap:null):v.value.trim();
-  if((s[k]||"")===(w||""))return;
-  const z=Object.assign(s.id?{plan:s.id}:{},{datum:s.datum,teamleider:s.teamleider||"",monteurs:s.monteurs||"",letop:s.letop||"",capaciteit:s.capaciteit||null});z[k]=w;
-  pasZatKop(z);zatTotaal();
-  const stap=zatKeten.then(()=>stuur({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor(),nr:s.id?"KOP-"+s.id:"ZAT-"+s.datum,status:"Open",rij:{zatkop:z}}));
-  zatKeten=stap.catch(()=>{});
-  stap.then(()=>{laatste="";melder("Opgeslagen")}).catch(()=>{melder("Opslaan is niet gelukt. Probeer het opnieuw.")});
-}
 function zatTotaalHtml(){
-  const r=zatRijen(),s=plan(),uren=r.reduce((n,x)=>n+(Number(x.uren)||0),0),cap=Number(s.capaciteit)||(planIsZat(s)?35:0);
+  const s=plan(),r=zatRijen().map(x=>{const p=cv("bon",x.nr);return Object.assign({},x,"uren" in p?{uren:p.uren}:{},"uitvoerder" in p?{uitvoerder:p.uitvoerder}:{})}),kp=cv("kop",kopId(s)),uren=r.reduce((n,x)=>n+(Number(x.uren)||0),0),cap=Number("capaciteit" in kp?kp.capaciteit:s.capaciteit)||(planIsZat(s)?35:0);
   const tel=(n,een,meer)=>n+" "+(n===1?een:meer),per={};
   r.forEach(x=>{if(x.uitvoerder&&x.uren)per[x.uitvoerder]=(per[x.uitvoerder]||0)+Number(x.uren)});
   const zonderUren=r.filter(x=>x.uren==null).length,zonderWie=r.filter(x=>!x.uitvoerder).length,wacht=r.filter(x=>zatOnderdelen(x.nr).length).length;
@@ -2820,7 +3055,7 @@ async function zatBulk(){
   k.disabled=true;let n=0,mis=0;
   for(const x of r){
     n++;k.textContent="Bezig "+n+" van "+r.length;
-    try{pasBonToe(await zatStuur(x,Object.assign(zatBasis(x),{uitvoerder:v})));ZATKIES.delete(x.nr)}catch(_){mis++}
+    try{pasBonToe(await zatStuur(x,Object.assign(zatBasis(x),{uitvoerder:v})));ZATKIES.delete(x.nr);cVergeet(x.nr,["uitvoerder"])}catch(_){mis++}
   }
   laatste="";SCHERM[HUIDIG]();
   melder(mis?mis+" van de "+r.length+" bonnen zijn niet opgeslagen. Ze staan nog aangevinkt.":r.length+(r.length===1?" bon staat":" bonnen staan")+" op "+v);
@@ -2836,7 +3071,7 @@ async function zatVerplaats(){
   for(const x of r){
     n++;k.textContent="Bezig "+n+" van "+r.length;
     const z=Object.assign(doel.id?{plan:doel.id}:{},{datum:doel.datum,prio:zatPrio(x),uitvoerder:x.uitvoerder||"",uren:x.uren==null?null:x.uren,nieuw:{lijst:(nu.preventief||[]).includes(x)?"preventief":"correctief",werkzaamheid:x.werkzaamheid,lijn_machine:x.lijn_machine}});
-    try{pasBonToe(await zatStuur(x,z));ZATKIES.delete(x.nr)}catch(_){mis++}
+    try{pasBonToe(await zatStuur(x,z));ZATKIES.delete(x.nr);cVergeet(x.nr,["status","dag"])}catch(_){mis++}
   }
   laatste="";SCHERM[HUIDIG]();
   melder(mis?mis+" van de "+r.length+" bonnen zijn niet verplaatst. Ze staan nog aangevinkt.":r.length+(r.length===1?" bon staat":" bonnen staan")+" nu op "+planKort(doel));
@@ -2887,7 +3122,7 @@ function zatPaneel(){
     const k=e.target.closest("[data-ztnr]");if(!k)return;
     const c=zatBon(k.dataset.ztnr);
     k.disabled=true;
-    try{pasBonToe(await planZet(c,await planVoor(s.datum)));laatste="";teken();melder(c.nr+" staat op de lijst");SCHERM[HUIDIG]()}
+    try{pasBonToe(await planZet(c,await planVoor(s.datum)));cVergeet(c.nr,["status","dag"]);laatste="";teken();melder(c.nr+" staat op de lijst");SCHERM[HUIDIG]()}
     catch(_){k.disabled=false;melder(c.nr+" is niet toegevoegd. Probeer het opnieuw.")}
   });
   teken();q.focus();
@@ -2916,10 +3151,9 @@ function openNieuweBon(voor){
   $("#n_tekst").focus();
 }
 document.addEventListener("change",e=>{
-  if(e.target.matches("[data-zat]"))zatVeld(e.target);
-  if(e.target.matches("[data-zatkop]"))zatKopVeld(e.target);
-  if(e.target.matches("[data-bestel]"))zetBestel(e.target);
-  if(e.target.matches("[data-bestvink]"))zetBestelVink(e.target);
+  if(e.target.matches("[data-zat]"))cZatKies(e.target);
+  if(e.target.matches("[data-zatkop]"))cKopKies(e.target);
+  if(e.target.matches("[data-bestel],[data-bestvink]"))cBestelKies(e.target);
   if(e.target.matches("[data-zatkies]")){const n=e.target.dataset.zatkies;if(e.target.checked)ZATKIES.add(n);else ZATKIES.delete(n);zatBulkTeken()}
   if(e.target.id==="zat_alles"){document.querySelectorAll("[data-zatkies]").forEach(k=>{k.checked=e.target.checked;if(k.checked)ZATKIES.add(k.dataset.zatkies);else ZATKIES.delete(k.dataset.zatkies)});zatBulkTeken()}
   if(e.target.id==="zat_lijn"){ZATF.lijn=e.target.value;SCHERM[HUIDIG]()}
@@ -2933,7 +3167,7 @@ async function zatKlik(k){
   if(k.dataset.zatweg){if(!vraag){tr.querySelector(".m-main").insertAdjacentHTML("beforeend",'<span class="zatlet zatvraag">Van de lijst halen?<button type="button" class="tekstknop gevaar" data-zatja="'+esc(nr)+'">Ja</button><button type="button" class="tekstknop" data-zatnee="'+esc(nr)+'">Annuleren</button></span>');tr.querySelector("[data-zatnee]").focus()}return}
   if(k.dataset.zatnee){vraag.remove();return}
   vraag.querySelectorAll("button").forEach(b=>{b.disabled=true});k.textContent="Bezig";
-  try{const w=await zatStuur(r,Object.assign(zatBasis(r),{weg:true}));pasBonToe(w);ZATKIES.delete(nr);laatste="";SCHERM[HUIDIG]();melder(nr+" staat niet meer op de lijst. De bon blijft bestaan.")}
+  try{const w=await zatStuur(r,Object.assign(zatBasis(r),{weg:true}));pasBonToe(w);ZATKIES.delete(nr);cVergeet(nr,["status","dag","uren","uitvoerder"]);laatste="";SCHERM[HUIDIG]();melder(nr+" staat niet meer op de lijst. De bon blijft bestaan.")}
   catch(_){vraag.remove();melder(nr+" is niet verwijderd. Probeer het opnieuw.")}
 }
 /* ---- Word-bestanden in de browser vullen: zo zitten de laatste wijzigingen er altijd in ---- */
@@ -3099,15 +3333,16 @@ function vStop(){
 function vPlan(s,o){
   if(vPlan.vorig!==planSleutel(s)){ZATKIES.clear();ZATF.lijn="";ZATF.soort="";vPlan.vorig=planSleutel(s)}
   const c=(s.correctief||[]).filter(zatTest),p=(s.preventief||[]).filter(zatTest),wv=wvMag(),td=(D.cm||[]).length>0,kijk=alleenKijken();
-  const prioVeld=r=>{const q=zatPrio(r);return wv?'<select class="statuskeuze" data-zat="prio" data-nr="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen</option>'+[1,2,3].map(n=>'<option value="'+n+'"'+(n===q?" selected":"")+">Prio "+n+"</option>").join("")+"</select>":prio(q)};
-  const uitVeld=r=>wv?'<input class="zatinvoer" data-zat="uitvoerder" data-nr="'+esc(r.nr)+'" list="zatnamen" value="'+esc(r.uitvoerder||"")+'" placeholder="Toewijzen" autocomplete="off" aria-label="Uitvoerder van '+esc(r.nr)+'">':of(r.uitvoerder,"Nog toewijzen");
+  const zc=r=>cv("bon",r.nr),zg=(r,f)=>f in zc(r)?" gewijzigd":"";
+  const prioVeld=r=>{const p=zc(r),q="prio" in p?p.prio:zatPrio(r);return wv?'<select class="statuskeuze'+zg(r,"prio")+'" data-zat="prio" data-nr="'+esc(r.nr)+'" aria-label="Prio van '+esc(r.nr)+'"><option value="">Geen</option>'+[1,2,3].map(n=>'<option value="'+n+'"'+(n===q?" selected":"")+">Prio "+n+"</option>").join("")+"</select>":prio(q)};
+  const uitVeld=r=>{const p=zc(r),u="uitvoerder" in p?p.uitvoerder:r.uitvoerder;return wv?'<input class="zatinvoer'+zg(r,"uitvoerder")+'" data-zat="uitvoerder" data-nr="'+esc(r.nr)+'" list="zatnamen" value="'+esc(u||"")+'" placeholder="Toewijzen" autocomplete="off" aria-label="Uitvoerder van '+esc(r.nr)+'">':of(u,"Nog toewijzen")};
   const cols=[
     {k:"n",l:"Bon",w:wv?"104px":"96px",c:"m-nr",x:"nr",r:r=>wv?'<label class="zatkies"><input type="checkbox" data-zatkies="'+esc(r.nr)+'"'+(ZATKIES.has(r.nr)?" checked":"")+' aria-label="'+esc(r.nr)+' kiezen">'+of(r.nr)+"</label>":of(r.nr)},
     {k:"w",l:"Werkzaamheid",c:"m-main",x:"titel",r:r=>{const o=zatOnderdelen(r.nr),b=zatBon(r.nr);return esc(r.werkzaamheid)+(o.length?'<span class="zatlet st warn" title="'+esc(o.map(x=>x.onderdeel+": "+x.groep).join(", "))+'"><i></i>'+o.length+(o.length===1?" onderdeel":" onderdelen")+" niet binnen</span>":"")+(wv&&!(b&&b.bon)?'<span class="zatlet">Bon volgt bij de run</span>':"")}},
     {k:"m",l:"Lijn en machine",w:wv?"132px":"28%",c:"m-sub",r:r=>esc(r.lijn_machine)}
   ].concat(wv||kijk?[{k:"s",l:"Status",w:"140px",c:"m-sub m-zat",ml:"Status",r:r=>{const b=zatBon(r.nr);return b?statusVeld(b):of(null)}}]:[],[
     {k:"p",l:"Prio",w:wv?"88px":"76px",c:"m-status",r:prioVeld}
-  ],wv?[{k:"ur",l:"Uren",w:"66px",c:"m-sub m-zat",ml:"Uren",r:r=>'<input class="zatinvoer zatuur" data-zat="uren" data-nr="'+esc(r.nr)+'" inputmode="decimal" value="'+esc(urenTekst(r.uren))+'" aria-label="Uren voor '+esc(r.nr)+'">'}]:kijk?[{k:"ur",l:"Uren",w:"66px",c:"m-sub m-zat",ml:"Uren",r:r=>of(urenTekst(r.uren))}]:[],[
+  ],wv?[{k:"ur",l:"Uren",w:"66px",c:"m-sub m-zat",ml:"Uren",r:r=>{const p=zc(r);return'<input class="zatinvoer zatuur'+zg(r,"uren")+'" data-zat="uren" data-nr="'+esc(r.nr)+'" inputmode="decimal" value="'+esc(urenTekst("uren" in p?p.uren:r.uren))+'" aria-label="Uren voor '+esc(r.nr)+'">'}}]:kijk?[{k:"ur",l:"Uren",w:"66px",c:"m-sub m-zat",ml:"Uren",r:r=>of(urenTekst(r.uren))}]:[],[
     {k:"u",l:"Uitvoerder",w:wv?"136px":"150px",c:wv?"m-sub m-zat":"m-sub",ml:"Uitvoerder",r:uitVeld}
   ],wv?[{k:"b",l:"",w:"56px",c:"m-sub m-zat",r:zatBonPdf},{k:"x",l:"",w:"44px",c:"m-sub m-zat",r:zatWegKnop}]:kijk?[{k:"b",l:"",w:"56px",c:"m-sub m-zat",r:zatBonPdf}]:[]);
   const bon=td?r=>{const x=D.cm.find(y=>y.nr===r.nr);if(!x)return null;const k=cmDetail(x),o=zatOnderdelen(r.nr);if(o.length)k.velden.splice(1,0,["Niet binnen",o.map(y=>y.onderdeel+" ("+y.groep+")").join(", ")]);return k}:null;
@@ -3115,7 +3350,7 @@ function vPlan(s,o){
   const namen=wv?uniek((D.cm||[]).map(x=>x.monteur).concat(zatRijen().map(x=>x.uitvoerder),[s.teamleider])).sort((a,b)=>a.localeCompare(b,"nl")):[];
   const knop=(soort,t)=>'<button class="knop" data-zatdl="'+soort+'">'+ico("download")+t+"</button>";
   const knoppen=(wv||kijk)&&bonnen().sleutel?knop("word","Bonnen in Word")+knop("pdf","Bonnen in PDF")+(bonnen().lijst?knop("lijst",planIsZat(s)?"Zaterdaglijst":"Daglijst"):""):"";
-  const veld=(k,t,w,extra)=>'<label'+(k==="letop"?' class="breed"':"")+">"+t+'<input class="zatinvoer" data-zatkop="'+k+'" value="'+esc(w==null?"":w)+'"'+(extra||"")+"></label>";
+  const kp=cv("kop",kopId(s)),veld=(k,t,w,extra)=>{const g=k in kp,v=g?(k==="capaciteit"?urenTekst(kp[k]):kp[k]):w;return'<label'+(k==="letop"?' class="breed"':"")+">"+t+'<input class="zatinvoer'+(g?" gewijzigd":"")+'" data-zatkop="'+k+'" value="'+esc(v==null?"":v)+'"'+(extra||"")+"></label>"};
   const kopVelden=wv?'<div class="zatkop">'+veld("teamleider","Teamleider",s.teamleider,' list="zatnamen" autocomplete="off"')+veld("monteurs","Monteurs",s.monteurs)+veld("capaciteit","Beschikbare manuren",urenTekst(s.capaciteit||(planIsZat(s)?35:"")),' inputmode="decimal"')+veld("letop","LET OP",s.letop)+"</div>":[["Teamleider",s.teamleider],["Monteurs",s.monteurs],["LET OP",s.letop]].filter(x=>x[1]).map(x=>'<p class="zatinfo"><b>'+x[0]+":</b> "+esc(x[1])+"</p>").join("");
   const lijnen=uniek(zatRijen().map(zatLijn)).sort((a,b)=>a.localeCompare(b,"nl")),keuze=(a,b)=>a===b?" selected":"";
   const balk=td?'<div class="toolbar"><select id="zat_lijn" aria-label="Filter op lijn"><option value="">Alle lijnen</option>'+lijnen.map(l=>'<option value="'+esc(l)+'"'+keuze(l,ZATF.lijn)+">"+esc(l)+"</option>").join("")+'</select><select id="zat_soort" aria-label="Filter op bon"><option value="">Alle bonnen</option><option value="zonder"'+keuze("zonder",ZATF.soort)+'>Zonder uitvoerder</option><option value="onderdelen"'+keuze("onderdelen",ZATF.soort)+">Onderdelen niet binnen</option></select>"+(wv?'<label class="toggle"><input type="checkbox" id="zat_alles"> Alles kiezen</label><button class="knop" type="button" data-zattoe>Bon toevoegen</button>':"")+"</div>":"";
@@ -3236,7 +3471,7 @@ function prioVoorstel(c){
   if(s)return{p:2,w:stilTekst};
   return{p:3,w:"Geen veiligheid of stilstand"};
 }
-const pvCel=c=>{const v=prioVoorstel(c);return'<span class="pvcel">'+prio(v.p)+"<span>"+esc(v.w)+"</span>"+(wvMag()?'<button type="button" class="knop" data-tdprio="'+esc(c.nr)+'" data-p="'+v.p+'">Prio '+v.p+"</button>":"")+"</span>"};
+const pvCel=c=>{const v=prioVoorstel(c);return'<span class="pvcel">'+prio(v.p)+"<span>"+esc(v.w)+"</span>"+(wvMag()?(()=>{const p=cv("bon",c.nr),aan="prio" in p&&String(p.prio)===String(v.p);return'<button type="button" class="knop'+(aan?" gewijzigd":"")+'" data-tdprio="'+esc(c.nr)+'" data-p="'+v.p+'" aria-pressed="'+aan+'">Prio '+v.p+"</button>"})():"")+"</span>"};
 /* Klopt niet: een open bon met een dag die voorbij is, Besteld of Leverdatum terwijl een bestelregel nog op Nog niet besteld staat,
    een leverdatum die voorbij is terwijl nog niet alles binnen is, of Gepland of Leverdatum zonder dag. */
 const knDag=c=>{const p=planVanBon(c.nr);if(p)return{t:p.datum,plan:true};const m=/(\d{2}-\d{2}-\d{4})/.exec(c.uitvoeren||"");return m?{t:m[1],plan:false}:null};
@@ -3368,7 +3603,7 @@ function tdTel(){
   if(tdMag()){
     const r=tdItems(),n=r.filter(x=>x.groep!=="prio").length;
     TDMAP={};r.forEach(x=>{if(x.c&&!TDMAP[x.c.nr])TDMAP[x.c.nr]=x.groep});
-    TEL.tedoen=n;document.title=(n?"("+n+") ":"")+TITEL;
+    TEL.tedoen=n;document.title=(CONCEPT.size?"• ":"")+(n?"("+n+") ":"")+TITEL;
   }
   telMenu();
 }
@@ -3403,8 +3638,12 @@ function tdVoorbeeld(g,l,open){
   return(nr?"<b>"+esc(nr)+"</b> ":"")+esc(tekst)+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
 }
 /* De bediening van een bon: status met de kalender, prio en de monteursapp. Dezelfde velden en dezelfde wachtrij als op CM-bonnen en in de planning. */
-/* Plannen op: een dag uit de kalender zet de bon op die dag in de onderhoudsplanning en op Gepland, ook als de status nog Open of Te plannen is. Een bon die al gepland is, verschuif je met de dag bij de status. */
-const planDagVeld=c=>wvMag()&&isOpen(c)&&c.status!=="Gepland"?'<div class="bdl"><span>Plannen op</span><input type="date" class="zatinvoer stdatum" data-stdatum="'+esc(c.nr)+'" data-stnieuw="Gepland" min="'+n0()+'" aria-label="'+esc("Plannen op voor "+c.nr)+'"></div>':"";
+/* Plannen op: een dag uit de kalender zet de bon op Gepland met die dag, ook als de status nog Open of Te plannen is. Dat staat klaar tot Alles opslaan; daarna staat de dag bij de status. Een bon die al gepland is, verschuif je met de dag bij de status. */
+const planDagVeld=c=>{
+  if(!wvMag()||!isOpen(c))return"";
+  const s=cStatus(c);
+  return'<div class="bdl" data-plandag="'+esc(c.nr)+'"'+(s==="Gepland"||GESLOTEN.includes(s)?" hidden":"")+'><span>Plannen op</span><input type="date" class="zatinvoer stdatum" data-stdatum="'+esc(c.nr)+'" data-stnieuw="Gepland" min="'+n0()+'" aria-label="'+esc("Plannen op voor "+c.nr)+'"></div>';
+};
 const bonBediening=(c,g)=>'<div class="bdl"><span>Status</span>'+statusVeld(c)+"</div>"+planDagVeld(c)+(isOpen(c)?'<div class="bdl"><span>Prio</span>'+prioKeuze(c)+'</div><div class="bdl"><span>Monteursapp</span>'+weekKnop(c)+"</div>":"")+(g.id==="prio"||g.id==="nieuw"&&!c.prio?'<div class="bdl"><span>Voorstel</span>'+pvCel(c)+"</div>":"");
 function tdRegel(x,g){
   const c=x.c,b=x.b,id=g.id,reg=tdReg(x),feit=[],knop=[];
@@ -3645,7 +3884,7 @@ async function bonBulk(soort){
   for(const c of kies){
     if(mis===kies.length)break;
     n++;k.textContent="Bezig "+n+" van "+kies.length;
-    try{if(soort==="status")await bonStatusZet(c,status,STDATUM[status]?t:"");else await bonDatumZet(c,t,doel);BONKIES.delete(c.nr);weekSync(c)}catch(e){mis++;fout=e}
+    try{if(soort==="status")await bonStatusZet(c,status,STDATUM[status]?t:"");else await bonDatumZet(c,t,doel);BONKIES.delete(c.nr);cVergeet(c.nr,["status","dag"]);weekSync(c)}catch(e){mis++;fout=e}
   }
   laatste="";planTel();SCHERM[HUIDIG]();
   melder(mis?(fout&&fout.message==="onbekende status"?stuurFout(fout)+" ":"")+mis+" van de "+kies.length+" bonnen zijn niet aangepast. Ze staan nog aangevinkt.":kies.length+(kies.length===1?" bon staat":" bonnen staan")+" nu "+(soort==="status"?"op "+status+(STDATUM[status]&&t?" "+t.slice(0,5):""):"gepland op "+t));
@@ -3691,17 +3930,8 @@ const BESTVINK=["Opgevraagd","Besteld","Binnen"];
 const nogBestellen=c=>{const a=(D.bestellijst||[]).filter(x=>x.cm===c.nr);return a.length?a.some(x=>!BESTVINK.includes(x.groep)):c.status==="Uitzoeken voor bestelling"};
 function bestelVink(x){
   if(!wvMag()||!x.id)return BESTVINK.includes(x.groep)?"<span>"+esc(x.groep)+"</span>":"";
-  return'<span class="bestvink">'+BESTVINK.map(o=>'<label class="bonvink"><input type="checkbox" data-bestvink="'+esc(x.id)+'" value="'+o+'" aria-label="'+esc(x.onderdeel+": "+o.toLowerCase())+'"'+(x.groep===o?" checked":"")+">"+o+"</label>").join("")+"</span>";
-}
-async function zetBestelVink(v){
-  const r=D.bestellijst.find(x=>x.id===v.dataset.bestvink),oud=r.groep;
-  if(!BESTVINK.includes(oud))r.terug=oud;
-  const groep=v.checked?v.value:r.terug||"Nog niet besteld",w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep}}};
-  /* De lijst loopt meteen mee, dan kun je achter elkaar doorvinken. Het detailpaneel staat buiten de lijst. */
-  const teken=()=>{document.querySelectorAll('[data-bestvink="'+r.id+'"]').forEach(i=>{i.checked=i.value===r.groep});laatste="";planTel();SCHERM[HUIDIG]()};
-  r.groep=groep;teken();
-  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);melder(r.onderdeel+": "+groep)}
-  catch(_){r.groep=oud;teken();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
+  const p=cv("bestel",x.id),g="groep" in p?p.groep:x.groep;
+  return'<span class="bestvink'+("groep" in p?" gewijzigd":"")+'" data-bestid="'+esc(x.id)+'">'+BESTVINK.map(o=>'<label class="bonvink"><input type="checkbox" data-bestvink="'+esc(x.id)+'" value="'+o+'" aria-label="'+esc(x.onderdeel+": "+o.toLowerCase())+'"'+(g===o?" checked":"")+">"+o+"</label>").join("")+"</span>";
 }
 async function zoekOpnieuw(k){
   const r=D.bestellijst.find(x=>x.id===k.dataset.bestelzoek),w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:r.groep,zoek:true}}};
@@ -3709,16 +3939,10 @@ async function zoekOpnieuw(k){
   try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);k.textContent="Komt bij de volgende ronde";laatste="";melder(r.onderdeel+" wordt opgezocht bij de volgende ronde")}
   catch(_){k.disabled=false;melder("Dat is niet gelukt. Probeer het opnieuw.")}
 }
-async function zetBestel(sel){
-  const r=D.bestellijst.find(x=>x.id===sel.dataset.bestel),oud=r.groep,w={nr:r.id,status:"Open",rij:{bestel:{id:r.id,groep:sel.value}}};
-  sel.disabled=true;
-  try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";if(HUIDIG==="bestel")SCHERM.bestel();melder(r.onderdeel+": "+w.rij.bestel.groep)}
-  catch(_){sel.value=oud;sel.disabled=false;melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
-}
 function vBestel(){
   const r=D.bestellijst,g=["Nog niet besteld","Eerst opmeten of checken","Opgevraagd","Besteld","Binnen"];
   const lev=x=>levVan(zoekNaam(x))||{};
-  const groepVeld=x=>wvMag()&&x.id?'<select class="statuskeuze" data-bestel="'+esc(x.id)+'" aria-label="Status van '+esc(x.onderdeel)+'">'+g.map(o=>"<option"+(o===x.groep?" selected":"")+">"+o+"</option>").join("")+"</select>":st(x.groep);
+  const groepVeld=x=>{if(!(wvMag()&&x.id))return st(x.groep);const p=cv("bestel",x.id),h="groep" in p?p.groep:x.groep;return'<select class="statuskeuze'+("groep" in p?" gewijzigd":"")+'" data-bestel="'+esc(x.id)+'" aria-label="Status van '+esc(x.onderdeel)+'">'+g.map(o=>"<option"+(o===h?" selected":"")+">"+o+"</option>").join("")+"</select>"};
   lijstScherm({key:"bestel",titel:"Bestellijst",sub:stand("bestel"),rijen:r,eenheid:["regel","regels"],
     seg:{get:x=>x.groep,o:g},
     selects:[{k:"lev",l:"Alle leveranciers",o:uniek(r.map(zoekNaam)).sort(),get:zoekNaam}],
@@ -4124,6 +4348,7 @@ function start(data){
   $("#pvolgende").addEventListener("click",()=>presStap(1));
   document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&document.documentElement.classList.contains("present"))presenteer(false)});
   $("#lock").hidden=true;$("#app").hidden=false;
+  cLaad();
   window.addEventListener("hashchange",route);route();
   if(MELD()){haalMeldingen();klok=setInterval(()=>{if(!document.hidden)haalMeldingen()},60000);if(td&&!alleenKijken())uitbakAan()}
 }
@@ -4165,6 +4390,7 @@ function slot(box){
   });
 }
 function uitloggen(){
+  if(CONCEPT.size){melder("Sla je wijzigingen eerst op of maak ze ongedaan.");cFlits();return}
   try{localStorage.removeItem(SLEUTEL)}catch(_){}
   history.replaceState(null,"",location.pathname);location.reload();
 }
