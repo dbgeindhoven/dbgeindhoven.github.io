@@ -336,6 +336,12 @@ html.present .deelkop .knop{display:none}
 .pd-cel.nu{border:1.5px dashed var(--info);background:rgba(255,255,255,.6)}
 .pd-cel.leeg{background:rgba(255,255,255,.45);color:var(--ink3)}
 .pd-cel.leeg b{font-weight:500}
+.pd-cel.xl{border-color:var(--line2);background:var(--sunken)}
+.pd-cel.xl b{color:var(--ink2)}
+.pd-chip.xl{--c:var(--ink3)}
+.pd-xl{margin-top:12px}
+.pd-xl summary{cursor:pointer;color:var(--ink2);font-size:.8125rem;font-weight:600}
+.pd-xl[open] summary{margin-bottom:4px}
 .pd-cel.toekomst{min-height:50px;border:1px dashed var(--line);background:none;cursor:default}
 .pd-chip{--c:var(--ink3)}
 .pd-chip.ok{--c:var(--ok)}.pd-chip.info{--c:var(--info)}.pd-chip.warn{--c:var(--warn)}.pd-chip.wacht{--c:var(--wacht)}.pd-chip.nu{--c:var(--info)}
@@ -4922,6 +4928,10 @@ const PROD_CONCEPT="td-hub-prodconcept",PROD_AFDKEUZE="td-hub-prodafd";
 let PROD=null,PRODFOUT=false,PRODWK=0,PA=null,PAVRAAG=false,PDBEWERK=null;
 const prodSleutel=(t,dienst,afd)=>t+"|"+dienst+"|"+afd;
 const prodRij=(t,dienst,afd)=>(PROD||[]).find(r=>r.datum===t&&r.dienst===dienst&&r.afdeling===afd);
+/* Wat de Excel-dienstrapporten over een dienst zeggen (prod_excel uit output.py), in dezelfde vorm als de app. Alleen bij de werkvoorbereider. */
+const prodExcel=(t,dienst,afd)=>((D&&D.prod_excel||{}).diensten||[]).find(x=>x.datum===t&&x.dienst===dienst&&x.afdeling===afd);
+/* Overnemen uit het dienstrapport: dezelfde velden als de app, zonder de duur die alleen het Excel kent. */
+const prodXlNaarApp=g=>{const o=JSON.parse(JSON.stringify(g||{}));(o.storingen||[]).forEach(x=>delete x.uren);return o};
 const prodDienst=n=>PROD_DIENST.find(x=>x.d===n)||PROD_DIENST[0];
 /* De dienst die nu loopt: voor 05:50 is het nog de nacht van gisteren. */
 function prodNu(){
@@ -4962,7 +4972,7 @@ function prodMist(afd,g){
   }
   return mist;
 }
-const prodStil=g=>somVan((g.storingen||[]).filter(x=>x.stil==="Ja"),x=>prodDuur(x.van,x.tot));
+const prodStil=g=>somVan((g.storingen||[]).filter(x=>x.stil==="Ja"),x=>prodDuur(x.van,x.tot)||Math.round((+x.uren||0)*60));
 /* De dag tot nu: alle diensten van die datum en afdeling samen, met wat nu in het formulier staat voor deze dienst. */
 function prodDagKg(t,afd,lijn,dienst,nu){
   return(PROD||[]).filter(r=>r.datum===t&&r.afdeling===afd&&r.dienst!==dienst).reduce((s,r)=>s+(prodGetal(afd==="Bakkerij"?((r.gegevens||{}).output||{})[lijn]:(((r.gegevens||{}).gereed||{})[lijn]||{}).kg)||0),prodGetal(nu)||0);
@@ -5076,15 +5086,15 @@ function paLijstKlik(e,vak,c,teken){
 }
 
 /* ---- leesvorm: wat een dienst bevat, voor het paneel bij de werkvoorbereider en een gecontroleerde dienst in de app ---- */
-function prodLeesHtml(r){
+function prodLeesHtml(r,xl){
   const g=prodVul(r.afdeling,r.gegevens),tabel=(kop,rijen)=>'<div class="pd-tblw"><table class="pd-tbl"><thead><tr>'+kop.map(k=>"<th>"+esc(k)+"</th>").join("")+"</tr></thead><tbody>"+rijen.join("")+"</tbody></table></div>",td=v=>"<td>"+v+"</td>",tdn=v=>'<td class="nw">'+v+"</td>";
   const sto=(g.storingen||[]).filter(x=>x.lijn||x.machine||x.tekst),bak=r.afdeling==="Bakkerij";
   /* Storingen en blokkades als kaartjes onder elkaar: de omschrijving is het belangrijkst en past zo ook op de telefoon. */
   const kaart=(kop,sub,extra,tekst)=>'<li><div class="pd-sk"><b>'+esc(kop)+"</b>"+(sub?"<span>"+esc(sub)+"</span>":"")+(extra||"")+"</div>"+(tekst||"")+"</li>";
-  const storingen=sto.length?'<ul class="pd-lijst">'+sto.map(x=>{const d=prodDuur(x.van,x.tot);return kaart([x.lijn,x.machine].filter(Boolean).join(", ")||"Zonder lijn",(x.van||"")+(x.tot?"–"+x.tot:"")+(d?(x.van?", ":"")+prodUur(d)+" uur":""),bak?(x.stil==="Ja"?st("Stilstand"):x.stil==="Halve capaciteit"?st("Halve capaciteit"):x.stil==="Nee"?'<span>geen stilstand</span>':""):"",x.tekst?"<p>"+esc(x.tekst)+"</p>":"")}).join("")+"</ul>":'<p class="pd-geen">Geen storingen.</p>';
+  const storingen=sto.length?'<ul class="pd-lijst">'+sto.map(x=>{const d=prodDuur(x.van,x.tot)||Math.round((+x.uren||0)*60);return kaart([x.lijn,x.machine].filter(Boolean).join(", ")||"Zonder lijn",(x.van||"")+(x.tot?"–"+x.tot:"")+(d?(x.van?", ":"")+prodUur(d)+" uur":""),bak?(x.stil==="Ja"?st("Stilstand"):x.stil==="Halve capaciteit"?st("Halve capaciteit"):x.stil==="Nee"?'<span>geen stilstand</span>':""):"",x.tekst?"<p>"+esc(x.tekst)+"</p>":"")}).join("")+"</ul>":'<p class="pd-geen">Geen storingen.</p>';
   let h="";
   if(bak){
-    h+='<h3 class="pd-h3">Output per lijn</h3>'+tabel(["Lijn","Deze dienst","Dag tot nu","Planning dag"],PROD_LIJN.map(l=>{const plan=prodPlan(r.datum,l),dag=prodDagKg(r.datum,"Bakkerij",l,r.dienst,(g.output||{})[l]);return"<tr>"+tdn(l)+td(prodKg((g.output||{})[l]))+td(kgTekst(dag)+" kg")+td(plan?kgTekst(plan)+" kg, "+Math.round(dag/plan*100)+"%":"–")+"</tr>"}));
+    h+='<h3 class="pd-h3">Output per lijn</h3>'+tabel(["Lijn","Deze dienst","Dag tot nu","Planning dag"],PROD_LIJN.map(l=>{const plan=prodPlan(r.datum,l),dag=xl?somVan(((D.prod_excel||{}).diensten||[]).filter(x=>x.datum===r.datum&&x.afdeling==="Bakkerij"),x=>prodGetal(((x.gegevens||{}).output||{})[l])||0):prodDagKg(r.datum,"Bakkerij",l,r.dienst,(g.output||{})[l]);return"<tr>"+tdn(l)+td(prodKg((g.output||{})[l]))+td(kgTekst(dag)+" kg")+td(plan?kgTekst(plan)+" kg, "+Math.round(dag/plan*100)+"%":"–")+"</tr>"}));
     h+='<h3 class="pd-h3">Stilstand en storingen<small>'+esc(prodStil(g)?prodUur(prodStil(g))+" uur stil":"geen stilstand")+"</small></h3>"+storingen;
   }else{
     const ge=g.gereed||{};
@@ -5198,6 +5208,7 @@ function prodCel(t,dienst,afd){
   const r=prodRij(t,dienst,afd),tt=prodTijden(t,dienst),nu=new Date();
   if(r)return'<button type="button" class="pd-cel '+({Gecontroleerd:"ok",Ingevuld:"info",Onvolledig:"warn"}[r.status]||"")+'" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'" aria-label="'+esc(prodTitel({datum:t,dienst,afdeling:afd})+": "+r.status)+'"><b>'+esc(r.status)+"</b><small>"+esc((r.door||"")+(r.tijd?" "+prodTijd(r.tijd):""))+"</small></button>";
   if(tt&&nu>=tt.van&&nu<tt.eind)return'<button type="button" class="pd-cel nu" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Loopt nu</b><small>Nog niet verstuurd</small></button>';
+  if(tt&&nu>=tt.eind&&prodExcel(t,dienst,afd))return'<button type="button" class="pd-cel xl" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'" aria-label="'+esc(prodTitel({datum:t,dienst,afdeling:afd})+": niet in de app, wel in het dienstrapport")+'"><b>Dienstrapport</b><small>niet in de app</small></button>';
   if(tt&&nu>=tt.eind)return'<button type="button" class="pd-cel leeg" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Niet ingevuld</b></button>';
   return'<span class="pd-cel toekomst" aria-hidden="true"></span>';
 }
@@ -5210,7 +5221,7 @@ function vProd(){
   if(open.length)h+='<p class="pd-let">'+(open.length===1?"1 dienst wacht":open.length+" diensten wachten")+" op controle: "+open.slice(0,6).map(r=>'<button type="button" class="tekstknop" data-pdopen="'+esc(prodSleutel(r.datum,r.dienst,r.afdeling))+'">'+esc(dagKort(r.datum)+" "+r.dienst.toLowerCase()+", "+r.afdeling.toLowerCase())+"</button>").join(", ")+(open.length>6?" en nog "+(open.length-6):"")+".</p>";
   h+='<div class="pd-tblw pd-roosterw" data-wk="'+wk+'"><table class="pd-rooster"><thead><tr><th></th>'+dagen.map(d=>{const t=dagTekst(d);return'<th class="'+(t===vandaag?"vandaag":"")+'"><span>'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"short"})))+"</span> "+d.getDate()+"</th>"}).join("")+"</tr></thead><tbody>"+
     PROD_AFD.map(afd=>'<tr class="pd-afd"><th colspan="8"><span>'+esc(afd)+"</span></th></tr>"+PROD_DIENST.map(x=>'<tr><th class="pd-dienst"><b>'+x.d+"</b><small>"+x.van+" tot "+x.tot+"</small></th>"+dagen.map(d=>"<td>"+prodCel(dagTekst(d),x.d,afd)+"</td>").join("")+"</tr>").join("")).join("")+"</tbody></table></div>";
-  h+='<p class="rcauitleg">De teamleider vult zijn dienst in op de telefoon, met de inlog Productie test. Verstuurd is meteen hier te zien. Klik op een dienst om hem te bekijken, te verbeteren of op Gecontroleerd te zetten. Daarna kan de teamleider hem niet meer aanpassen.</p>';
+  h+='<p class="rcauitleg">De teamleider vult zijn dienst in op de telefoon, met de inlog Productie test. Verstuurd is meteen hier te zien. Klik op een dienst om hem te bekijken, te verbeteren of op Gecontroleerd te zetten. Daarna kan de teamleider hem niet meer aanpassen. Dienstrapport betekent: niet in de app ingevuld, wel in het Excel-dienstrapport. Klik erop om het te bekijken of over te nemen. Bij een ingevulde dienst staat in het paneel de vergelijking met het dienstrapport.</p>';
   /* Op een smal scherm schuift het rooster: bij opnieuw tekenen blijft het staan waar het stond, anders staat vandaag in beeld. */
   const oud=$("#view .pd-roosterw"),oudL=oud&&oud.dataset.wk===String(wk)?oud.scrollLeft:null;
   $("#view").innerHTML=h;
@@ -5221,21 +5232,40 @@ function vProd(){
 function prodPaneel(sl,bewerk){
   const[t,dienst,afdeling]=sl.split("|"),r=prodRij(t,dienst,afdeling),p=$("#paneel"),c={datum:t,dienst,afdeling};
   if($("#paneel").hidden)terug=document.activeElement;
-  PDBEWERK=bewerk?{sl,datum:t,dienst,afdeling,g:prodVul(afdeling,r&&r.gegevens)}:null;
+  const xl=prodExcel(t,dienst,afdeling);
+  PDBEWERK=bewerk?{sl,datum:t,dienst,afdeling,g:prodVul(afdeling,r?r.gegevens:xl?prodXlNaarApp(xl.gegevens):null)}:null;
   const kop='<div class="pkopbalk"><div><small>Productie, pilot</small><h2 id="ptitel">'+esc(hoofd(prodTitel(c)))+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+"</button></div>";
   let h;
   if(bewerk){
-    h=kop+'<form class="meldform pa-form pd-form" id="pdform" novalidate>'+(r?"":'<p class="pa-hint">Deze dienst is nog niet ingevuld. Wat je opslaat, staat als ingevuld door jou.</p>')+paVelden(c,PDBEWERK.g)+'<p class="fout" id="pd_fout" hidden></p><div class="acties pd-knoppen"><button class="knop hoofd" id="pd_opslaan" type="submit">Opslaan</button><button type="button" class="knop" data-pdterug>Annuleren</button></div></form>';
+    h=kop+'<form class="meldform pa-form pd-form" id="pdform" novalidate>'+(r?"":xl?'<p class="pa-hint">Overgenomen uit het Excel-dienstrapport. Controleer het en sla op: dan staat de dienst als ingevuld door jou.</p>':'<p class="pa-hint">Deze dienst is nog niet ingevuld. Wat je opslaat, staat als ingevuld door jou.</p>')+paVelden(c,PDBEWERK.g)+'<p class="fout" id="pd_fout" hidden></p><div class="acties pd-knoppen"><button class="knop hoofd" id="pd_opslaan" type="submit">Opslaan</button><button type="button" class="knop" data-pdterug>Annuleren</button></div></form>';
   }else{
     const log=r&&r.log?String(r.log).split("\n").filter(Boolean).reverse():[];
-    h=kop+'<div class="pd-paneel"><div class="pd-st">'+(r?prodStatusChip(r.status)+"<span>Verstuurd door "+esc(r.door||"")+" op "+esc(r.tijd||"")+(r.status==="Gecontroleerd"&&r.gecontroleerd_door?". Gecontroleerd door "+esc(r.gecontroleerd_door)+" op "+esc(r.gecontroleerd_op):"")+"</span>":"<span>Nog niet ingevuld.</span>")+"</div>"+
-      (r?prodLeesHtml(r):"")+
-      '<div class="acties pd-knoppen">'+(r&&r.status!=="Gecontroleerd"?'<button type="button" class="knop hoofd" data-pdcontrole="1">'+ico("afvink")+"Gecontroleerd</button>":"")+'<button type="button" class="knop" data-pdbewerk>'+ico("pen")+(r?"Verbeteren":"Invullen")+"</button>"+(r&&r.status==="Gecontroleerd"?'<button type="button" class="knop" data-pdcontrole="0">Controle terugdraaien</button>':"")+"</div>"+
+    h=kop+'<div class="pd-paneel"><div class="pd-st">'+(r?prodStatusChip(r.status)+"<span>Verstuurd door "+esc(r.door||"")+" op "+esc(r.tijd||"")+(r.status==="Gecontroleerd"&&r.gecontroleerd_door?". Gecontroleerd door "+esc(r.gecontroleerd_door)+" op "+esc(r.gecontroleerd_op):"")+"</span>":xl?'<span class="chip pd-chip xl">Dienstrapport</span><span>Niet in de app ingevuld. Dit staat in het Excel-dienstrapport'+((D.prod_excel||{}).bron?" ("+esc(D.prod_excel.bron.replace(/^Excel-dienstrapporten, /,""))+")":"")+".</span>":"<span>Nog niet ingevuld.</span>")+"</div>"+
+      (r?prodLeesHtml(r)+(xl?prodVergelijk(r,xl):""):xl?prodLeesHtml({datum:t,dienst,afdeling,gegevens:xl.gegevens},true):"")+
+      '<div class="acties pd-knoppen">'+(r&&r.status!=="Gecontroleerd"?'<button type="button" class="knop hoofd" data-pdcontrole="1">'+ico("afvink")+"Gecontroleerd</button>":"")+'<button type="button" class="knop" data-pdbewerk>'+ico("pen")+(r?"Verbeteren":xl?"Overnemen en aanpassen":"Invullen")+"</button>"+(r&&r.status==="Gecontroleerd"?'<button type="button" class="knop" data-pdcontrole="0">Controle terugdraaien</button>':"")+"</div>"+
       '<p class="fout" id="pd_fout" hidden></p>'+(log.length?'<h3 class="pd-h3">Logboek</h3><ul class="pd-log">'+log.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"")+"</div>";
   }
   p.innerHTML=h;p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
   if(bewerk){const f=$("#pdform");f.addEventListener("input",e=>{if(e.target.closest("[data-pa]")){PDBEWERK.g=paLees(f,PDBEWERK.g);paBij(f,PDBEWERK,PDBEWERK.g)}});f.addEventListener("change",e=>{if(e.target.closest("[data-pa]")){PDBEWERK.g=paLees(f,PDBEWERK.g);paBij(f,PDBEWERK,PDBEWERK.g)}});f.addEventListener("submit",e=>{e.preventDefault();prodOpslaan(null)});const v=f.querySelector("input,select,textarea");if(v)v.focus()}
   else p.focus();
+}
+/* Een ingevulde dienst naast het Excel-dienstrapport: per lijn de getallen, en onderaan het hele rapport van die dienst. */
+function prodVergelijk(r,xl){
+  const a=prodVul(r.afdeling,r.gegevens),b=prodVul(r.afdeling,xl.gegevens),bak=r.afdeling==="Bakkerij";
+  const n=v=>prodGetal(v)==null?"–":kgTekst(+v),tel=g=>(g.storingen||[]).filter(x=>x.lijn||x.machine||x.tekst).length;
+  const vs=(x,y)=>{x=prodGetal(x);y=prodGetal(y);if(x==null||y==null)return"";const v=x-y;return v?(v>0?"+":"−")+kgTekst(Math.abs(v)):"gelijk"};
+  const rijen=[];
+  if(bak){
+    PROD_LIJN.forEach(l=>rijen.push([l+", kg",n(a.output[l]),n(b.output[l]),vs(a.output[l],b.output[l])]));
+    rijen.push(["Stilstand",prodUur(prodStil(a))+" uur",prodUur(prodStil(b))+" uur",""]);
+  }else{
+    PROD_LIJN.forEach(l=>{const x=a.gereed[l]||{},y=b.gereed[l]||{};rijen.push([l+", gereed kg",n(x.kg),n(y.kg),vs(x.kg,y.kg)],[l+", uitval kg",n(x.uitval),n(y.uitval),vs(x.uitval,y.uitval)])});
+    PROD_LIJN.forEach(l=>rijen.push([l+", pallets",n(a.pallets[l]),n(b.pallets[l]),vs(a.pallets[l],b.pallets[l])]));
+  }
+  rijen.push(["Storingen",String(tel(a)),String(tel(b)),""]);
+  return'<h3 class="pd-h3">Vergelijking met het Excel-dienstrapport</h3><div class="pd-tblw"><table class="pd-tbl"><thead><tr><th></th><th>App</th><th>Dienstrapport</th><th>Verschil</th></tr></thead><tbody>'+
+    rijen.map(x=>"<tr>"+x.map((v,i)=>(i?"<td>":'<td class="nw">')+esc(v)+"</td>").join("")+"</tr>").join("")+"</tbody></table></div>"+
+    '<details class="pd-xl"><summary>Het Excel-dienstrapport van deze dienst</summary>'+prodLeesHtml({datum:r.datum,dienst:r.dienst,afdeling:r.afdeling,gegevens:xl.gegevens},true)+"</details>";
 }
 async function prodOpslaan(controle){
   const b=PDBEWERK,sl=b?b.sl:prodPaneelSl,[t,dienst,afdeling]=sl.split("|"),r=prodRij(t,dienst,afdeling),f=$("#pd_fout"),knop=controle!=null?$('[data-pdcontrole="'+(controle?1:0)+'"]'):$("#pd_opslaan");
@@ -5251,7 +5281,7 @@ function vProdHerteken(){if(HUIDIG==="prod"){const y=window.scrollY;vProd();wind
 document.addEventListener("click",e=>{
   if(!D||D.niveau==="productie")return;
   const w=e.target.closest("[data-pdwk]");if(w){PRODWK=w.dataset.pdwk==="0"?0:PRODWK+ +w.dataset.pdwk;vProd();return}
-  const o=e.target.closest("[data-pdopen]");if(o){prodPaneelSl=o.dataset.pdopen;prodPaneel(prodPaneelSl,!prodRij(...prodPaneelSl.split("|")));return}
+  const o=e.target.closest("[data-pdopen]");if(o){prodPaneelSl=o.dataset.pdopen;const k=prodPaneelSl.split("|");prodPaneel(prodPaneelSl,!prodRij(...k)&&!prodExcel(...k));return}
   if(e.target.closest("[data-pdbewerk]")){prodPaneel(prodPaneelSl,true);return}
   if(e.target.closest("[data-pdterug]")){prodPaneel(prodPaneelSl,false);return}
   const c=e.target.closest("[data-pdcontrole]");if(c){PDBEWERK=null;prodOpslaan(c.dataset.pdcontrole==="1");return}

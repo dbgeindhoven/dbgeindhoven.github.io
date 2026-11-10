@@ -251,6 +251,7 @@ def build(a):
     wv["output"] = kort_rapport(data.get("output"), 120)
     wv["prodmachines"] = prod_machines(data)  # productie (pilot): voor Verbeteren op de pagina Diensten
     td.pop("rca", None)  # RCA analyse is voor werkvoorbereider en kijkinlog
+    td.pop("prod_excel", None)  # productie (pilot): de diensten uit de Excel-dienstrapporten staan alleen op de pagina Diensten
     mld.pop("sleutel_wv", None)
     td["meta"].pop("actielijst", None)
     td["meta"].pop("levbestand", None)  # met inkoopbedragen, alleen voor de werkvoorbereider
