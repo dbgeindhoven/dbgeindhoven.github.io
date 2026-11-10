@@ -2771,13 +2771,17 @@ function pmVak(vak,tabs){
     let h=(onder?'<div class="seg pmsub" data-pmsub role="group" aria-label="Bonnen">'+knoppen+"</div>":"")+'<p class="pmwie">'+esc([pmDag(new Date()),D.naam].filter(Boolean).join(", "))+"</p>"+(PMFOUT?'<p class="pmmelding">Eerder afgemelde bonnen zijn nu niet op te halen. Afmelden kan wel.</p>':"");
     if(tab==="af"){h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
     else{
+      /* Opnamebonnen staan apart bovenaan. De rest staat per dag: de CM- en SQD-bonnen van die dag en daaronder de PM-bonnen. Bonnen zonder dag staan onderaan. */
       const opnames=cmDoen.filter(b=>b.soort==="opname"),gewoon=cmDoen.filter(b=>b.soort!=="opname");
       if(opnames.length)h+=cmGroep("Opnamebonnen",opnames);
-      if(gewoon.length)h+=cmGroep("Bonnen",gewoon);
+      const cmD=b=>isDag(b.dag)?datum(b.dag):null;
+      const sectie=(t,cms,pms,leeg)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+(cms.length+pms.length)+"</span></h2>"+(cms.length||pms.length?cms.slice().sort(cmVolg).map(cmKaart).join("")+pms.map(kaart).join(""):'<p class="pmgeen">'+esc(leeg)+"</p>")+"</section>";
+      const cmLaat=gewoon.filter(b=>cmD(b)&&cmD(b)<nu),cmNu=gewoon.filter(b=>cmD(b)&&+cmD(b)===+nu),cmLater=gewoon.filter(b=>cmD(b)&&cmD(b)>nu),cmZonder=gewoon.filter(b=>!cmD(b));
       const laat=doen.filter(b=>datum(b.datum)<nu),nuB=doen.filter(b=>+datum(b.datum)===+nu),later=doen.filter(b=>datum(b.datum)>nu);
-      if(laat.length)h+=groep("Achterstallig",laat);
-      h+=nuB.length?groep("Vandaag",nuB):'<section class="dag pmdag"><h2>Vandaag</h2><p class="pmgeen">Vandaag staan er geen bonnen meer open.</p></section>';
-      uniek(later.map(b=>b.datum)).sort((a,b)=>datum(a)-datum(b)).forEach(d=>{h+=groep(pmDag(datum(d)),later.filter(b=>b.datum===d))});
+      if(cmLaat.length||laat.length)h+=sectie("Achterstallig",cmLaat,laat);
+      h+=sectie("Vandaag",cmNu,nuB,"Vandaag staan er geen bonnen meer open.");
+      uniek(later.map(b=>b.datum).concat(cmLater.map(b=>b.dag))).sort((a,b)=>datum(a)-datum(b)).forEach(d=>{h+=sectie(pmDag(datum(d)),cmLater.filter(b=>+cmD(b)===+datum(d)),later.filter(b=>b.datum===d))});
+      if(cmZonder.length)h+=sectie("Nog geen dag",cmZonder,[]);
     }
     vak.innerHTML=h;
   }
