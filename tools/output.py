@@ -151,6 +151,28 @@ def rapportregel(d, ds, waar, machine, uren, stil, t):
     return {"datum": tekst(d), "dienst": ds, "waar": waar, "machine": schoon(machine) or None, "uren": round(getal(uren), 2), "stil": stil, "tekst": t[:TEKENS]}
 
 
+OMGEDRAAID = []  # regels waarvan van en tot omgedraaid zijn ingevuld, om te melden
+
+
+def minuten(v):
+    """Tijdstip als minuten na middernacht, ook als Excel er een datum aan hangt (1900-01-01 06:05)."""
+    if isinstance(v, (datetime.time, datetime.datetime)):
+        return v.hour * 60 + v.minute
+    return None
+
+
+def stilstand_uren(x, d, ds):
+    """Totaal stilstand uit het dienstrapport. Ligt tot minder dan een uur vóór van, dan zijn van en tot omgedraaid ingevuld:
+    Excel rekent dan bijna een hele dag (23:30 tot 23:15 wordt 23,75 uur). De duur is dan van min tot."""
+    uren = getal(x.get("Totaal stilstand (PR)"))
+    van, tot = minuten(x.get("Storing van (PR)")), minuten(x.get("Storing tot (PR)"))
+    if van is not None and tot is not None and 0 < van - tot <= 60 and uren > 12:
+        OMGEDRAAID.append("%s %s: %s tot %s, %s uur wordt %s uur" % (tekst(d), ds.lower(), x.get("Storing van (PR)").strftime("%H:%M"),
+                                                                      x.get("Storing tot (PR)").strftime("%H:%M"), round(uren, 2), round((van - tot) / 60, 2)))
+        return (van - tot) / 60
+    return uren
+
+
 def lees_productie(pad, vandaag):
     uit = []
     for x, _ in rijen(boek(pad)["Dienstrapport productie"], "Invoer"):
@@ -163,7 +185,7 @@ def lees_productie(pad, vandaag):
         waar = "Ompak" if "ompak" in soort else "Lijn " + m.group(1) if m else None
         # Procesregels zonder stilstand zijn een verhaal over de dienst, geen oorzaak.
         if waar and (soort.startswith("techniek") or stil != "Nee"):
-            uit.append((d, DIENSTEN.index(ds), rapportregel(d, ds, waar, machine, x.get("Totaal stilstand (PR)"), stil, t)))
+            uit.append((d, DIENSTEN.index(ds), rapportregel(d, ds, waar, machine, stilstand_uren(x, d, ds), stil, t)))
     return uit
 
 
@@ -206,6 +228,8 @@ def main():
         o["rapport"] = [x[2] for x in sorted(regels, key=lambda x: (x[0], x[1]))]
     json.dump(data, open(a.site, "w", encoding="utf-8"), ensure_ascii=False)
     print("Output:", len(o.get("dagen", [])), "regels, plan", len(o.get("plan", [])), "| inpak en ompak:", len((o.get("io") or {}).get("dagen", [])), "| dienstrapport:", len(o.get("rapport", [])))
+    for r in OMGEDRAAID:
+        print("Van en tot omgedraaid:", r)
 
 
 if __name__ == "__main__":
