@@ -164,8 +164,8 @@ def kopie_kenmerk(b, soort, pad):
 
 
 def opname_kopieen(data):
-    """De monteurs hebben de sleutel van de bonnen niet. Een opnamebon krijgt daarom een eigen kopie van de originele bon,
-    met een eigen sleutel die alleen in het monteursdeel staat. Gaat de bon van de lijst, dan verdwijnt de kopie."""
+    """De monteurs hebben de sleutel van de bonnen niet. Elke open bon bij de monteurs (Uitvoerbare bonnen en opnamebonnen) krijgt daarom
+    een eigen kopie van de originele bon, met een eigen sleutel die alleen in het monteursdeel staat. Gaat de bon van de lijst of dicht, dan verdwijnt de kopie."""
     b, map_, uit = data["meta"].get("bonnen") or {}, TOOLS.parent, {}
     if not b.get("sleutel"):
         return uit
@@ -176,7 +176,7 @@ def opname_kopieen(data):
             continue
         sleutel = kopie_kenmerk(b, "sleutel", bon["pdf"])
         paden = {s: "bonnen/%s.bin" % kopie_kenmerk(b, "bestand", bon[s])[:8].hex() for s in ("pdf", "beeld") if bon.get(s)}
-        if not (r.get("week") and r.get("weeksoort") == "opname"):
+        if not (r.get("week") and r.get("status") not in GESLOTEN):
             for p in paden.values():
                 (map_ / p).unlink(missing_ok=True)
             continue
@@ -298,7 +298,7 @@ def build(a):
 
 def weekbonnen(data, stand, kopie):
     """De aangevinkte bonnen voor de monteurs: alleen de velden voor de kaart. Een afgemelde bon blijft twee weken bij Afgemeld staan.
-    Een opnamebon heeft ook de onderdelen die nog opgenomen moeten worden en de kopie van de originele bon.
+    Een open bon heeft de kopie van de originele bon, een opnamebon ook de onderdelen die nog opgenomen moeten worden.
     Staat de bon in de onderhoudsplanning, dan krijgt hij de dag mee (dag): de monteur ziet wanneer hij gepland is."""
     grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
     plan_dag = {r.get("nr"): z.get("datum") for z in [data.get("zaterdag") or {}] + list(data.get("stops") or []) if z.get("datum") for r in (z.get("correctief") or []) + (z.get("preventief") or [])}
@@ -329,10 +329,10 @@ def weekbonnen(data, stand, kopie):
             x["soort"] = "opname"
             al = {y.get("onderdeel"): y.get("spec") for y in o.get("regels") or []}  # wat bij Deels uitgevoerd al is ingevuld
             x["regels"] = [{**{k: b.get(k) for k in ("id", "onderdeel", "specificatie", "aantal", "toelichting")}, "spec": al.get(b.get("onderdeel"))} for b in data.get("bestellijst", []) if b.get("cm") == r["nr"] and b.get("groep") not in ("Binnen", "Besteld")]
-            if r["nr"] in kopie:
-                x["bon"] = kopie[r["nr"]]
         elif not aan:
             x.update(soort="opname", klaar=True, af={k: o.get(k) for k in ("door", "tijd", "tekst")})
+        if aan and r["nr"] in kopie:
+            x["bon"] = kopie[r["nr"]]
         uit.append(x)
     return uit
 
