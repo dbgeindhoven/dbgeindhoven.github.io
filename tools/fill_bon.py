@@ -118,6 +118,27 @@ def vul_opmerkingen(root, regels):
         c.find(q("p")).append(run(t, 16, i=True))
 
 
+def zet_registratie(inhoud, regel):
+    """Zet een regel bij 3 Opmerkingen/bijzonderheden van een bestaande Word-bon: in de eerste lege regel, of achter de laatste als alles vol staat."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    kop = next(tc for tc in root.iter(q("tc")) if "OPMERKINGEN" in tekst(tc))
+    cellen, rij = [], kop.getparent().getnext()
+    while rij is not None and len(cellen) < 4:
+        if rij.tag == q("tr"):
+            c = rij.find(q("tc"))
+            if c is not None:
+                cellen.append(c)
+        rij = rij.getnext()
+    leeg = next((c for c in cellen if not tekst(c)), None)
+    if leeg is not None:
+        leeg.find(q("p")).append(run(regel, 16, i=True))
+    else:
+        cellen[-1].findall(q("p"))[-1].append(run(" " + regel, 16, i=True))
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
+
+
 def zet_foto(cel, spec, delen):
     p = cel.find(q("p"))
     if not spec.get("foto"):

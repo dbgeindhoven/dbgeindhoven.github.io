@@ -1,4 +1,4 @@
-// TD Hub meldingen, versie 22: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 23: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // Versie 22: het tabblad Productie voor de productie-app (pilot), met een eigen sleutel.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
 const SHEET_ID = '__SHEET_ID__';
@@ -414,7 +414,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     const rapport = rijen.filter(r => r[2] === 'TD').slice(-500).map(object_);
     // De monteur ziet aangevinkte en afgemelde bonnen meteen, verder niets uit de wachtrij.
-    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname } })) });
+    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf } })) });
     return uit_({ rapport: rapport });
   }
   return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_() });
@@ -437,9 +437,11 @@ function doPost(e) {
   const weekbon = d.k === MONTEURSLEUTEL && d.actie === 'weekbon';
   // De monteur meldt een opnamebon af: specificaties en foto, meer niet.
   const opname = d.k === MONTEURSLEUTEL && d.actie === 'opname';
+  // De monteur meldt de opdracht van de werkvoorbereider af (vanaf versie 23). De bon zelf blijft open.
+  const opdracht = d.k === MONTEURSLEUTEL && d.actie === 'opdracht';
   // Productie-app: de teamleider vult zijn dienst in. De werkvoorbereider verbetert en zet hem op Gecontroleerd.
   const productie = (d.k === PRODUCTIESLEUTEL || d.k === WVSLEUTEL) && d.actie === 'productie';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !productie) return uit_({ fout: 'geen toegang' });
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !opdracht && !productie) return uit_({ fout: 'geen toegang' });
   VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : d.k === PRODUCTIESLEUTEL ? 'productie' : 'melden';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -482,6 +484,14 @@ function doPost(e) {
       if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !['Uitgevoerd', 'Deels uitgevoerd'].includes(d.status)) return uit_({ fout: 'onjuiste invoer' });
       zetBonstatus_(d.nr, d.status, { weekaf: { tekst: String(d.tekst == null ? '' : d.tekst).slice(0, 1000), door: schoon_(d.door), status: d.status, tijd: nu_() } }, d.door);
       return uit_({ ok: true, tijd: nu_() });
+    }
+    if (d.actie === 'opdracht') {
+      // Een eigen wachtrijbestand per afmelding: de registratie mag een statuswijziging op de bon niet overschrijven, en andersom.
+      const tekst = String(d.tekst == null ? '' : d.tekst).trim();
+      if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !tekst) return uit_({ fout: 'onjuiste invoer' });
+      const tijd = nu_();
+      zetBonstatus_('OPD-' + d.nr + '-' + Date.now(), 'Open', { opdrachtaf: { nr: d.nr, opdracht: String(d.opdracht == null ? '' : d.opdracht).slice(0, 1000), tekst: tekst.slice(0, 1000), door: schoon_(d.door), tijd: tijd } }, d.door);
+      return uit_({ ok: true, tijd: tijd });
     }
     if (d.actie === 'opname') {
       if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !OPNAMESTATUS.includes(d.status)) return uit_({ fout: 'onjuiste invoer' });

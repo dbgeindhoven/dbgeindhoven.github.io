@@ -353,6 +353,49 @@ def bon_uitvoeren(data, rij, wm):
     bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
 
 
+def bon_registratie(data, rij, regel, wm):
+    """Zet een registratie, zoals een afgemelde opdracht, bij Opmerkingen op de Word- en PDF-bon. Prio, uitvoerder en dag blijven, dus de stempel ook."""
+    bon = rij.get("bon") or {}
+    if not bon.get("docx"):
+        return
+    b = stand(data)
+    wm.mkdir(parents=True, exist_ok=True)
+    docx = wm / (bon["naam"] + ".docx")
+    docx.write_bytes(fill_bon.zet_registratie(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), regel))
+    naar_pdf([docx], wm)
+    pdf = docx.with_suffix(".pdf")
+    for k in ("docx", "pdf", "beeld"):
+        if bon.get(k):
+            (REPO / bon[k]).unlink(missing_ok=True)
+    bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
+
+
+def opdracht_af(data, o, w, wm):
+    """De monteur meldde de opdracht van de werkvoorbereider af. De bon blijft open: de opdracht gaat eraf en wat de monteur schreef
+    komt als registratie op de bon (opmerking, Word en PDF) en in cm[].opdrachtaf, voor Te doen en het detailpaneel."""
+    nr = o.get("nr")
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None:
+        print(nr, "staat niet in het overzicht, opdracht overgeslagen")
+        return
+    af = {"opdracht": str(o.get("opdracht") or "").strip(), "tekst": str(o.get("tekst") or "").strip(), "door": o.get("door") or "Monteur", "tijd": str(o.get("tijd") or w.get("tijd"))[:16]}
+    lijst = rij.setdefault("opdrachtaf", [])
+    if af in lijst:
+        print(nr, "opdracht al verwerkt")
+        return
+    lijst.append(af)
+    if rij.get("opdracht") == af["opdracht"] or not af["opdracht"]:
+        rij.pop("opdracht", None)
+    zin = lambda t: t + ("" if t[-1:] in ".!?" else ".")
+    regel = "%s, %s: opdracht %s" % (af["tijd"][:10], af["door"], ("“%s” gedaan. " % af["opdracht"].rstrip(".")) if af["opdracht"] else "gedaan. ") + zin(af["tekst"])
+    rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+    print(nr, regel)
+    try:
+        bon_registratie(data, rij, regel, wm)
+    except Exception as e:  # De registratie staat dan wel in de opmerking; de bon volgt bij een volgende wijziging.
+        print(nr, "registratie niet op de bon gezet:", e)
+
+
 UITVOEREN_VERVOLG = {"Overdragen aan volgende dienst": "Volgende dienst", "Plannen voor onderhoudstop": "Eerstvolgende onderhoudstop", "Onderdeel bestellen": "In overleg"}
 UITVOEREN_LOS = (None, "", *UITVOEREN_VERVOLG.values())
 
@@ -444,7 +487,7 @@ def opname_wijzig(data, o, w, opnieuw):
 def volgorde(w):
     """Een nieuwe stop eerst, bonnen kunnen er al naartoe verplaatst zijn. Het vervolg uit het dienstrapport en de opnames als laatste, op tijd: het nummer eindigt op het moment van de wijziging."""
     extra = w.get("rij") or {}
-    laatst = bool(extra.get("vervolg") or extra.get("opname"))
+    laatst = bool(extra.get("vervolg") or extra.get("opname") or extra.get("opdrachtaf"))
     return (not extra.get("stop"), laatst, w["nr"] if laatst else "")
 
 
@@ -616,10 +659,19 @@ def wijzig(a):
                     rij["weeksoort"] = "opname"
                 else:
                     rij.pop("weeksoort", None)
+                if "opdracht" in extra["week"]:
+                    t = str(extra["week"].get("opdracht") or "").strip()[:1000]
+                    if t:
+                        rij["opdracht"] = t
+                    else:
+                        rij.pop("opdracht", None)
                 print(rij["nr"], rij.get("weeksoort") or "uitvoerbaar" if rij["week"] else "niet meer uitvoerbaar")
             continue
         if extra.get("opname"):
             opname_wijzig(data, extra["opname"], w, opnieuw)
+            continue
+        if extra.get("opdrachtaf"):
+            opdracht_af(data, extra["opdrachtaf"], w, Path(a.map) / "registratie")
             continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         # Deels uitgevoerd is wat de monteur koos. De bon is dan niet klaar en moet opnieuw worden gepland.

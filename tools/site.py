@@ -322,7 +322,7 @@ def weekbonnen(data, stand, kopie):
         aan = r.get("week") and zicht(r)
         if not (aan or klaar):
             continue
-        x = {k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op")}
+        x = {k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op", "opdracht")}
         if plan_dag.get(r["nr"]):
             x["dag"] = plan_dag[r["nr"]]
         if aan and r.get("weeksoort") == "opname":
