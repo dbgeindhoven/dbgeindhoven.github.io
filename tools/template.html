@@ -2772,7 +2772,9 @@ function pmVak(vak,tabs){
     if(tab==="af"){h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
     else{
       /* Opnamebonnen staan apart bovenaan. De rest staat per dag: de CM- en SQD-bonnen van die dag en daaronder de PM-bonnen. Bonnen zonder dag staan onderaan. */
-      const opnames=cmDoen.filter(b=>b.soort==="opname"),gewoon=cmDoen.filter(b=>b.soort!=="opname");
+      /* Een bon met een opdracht die nog open staat (bijvoorbeeld maat opnemen) hoort ook bij de opnamebonnen, ook als hij met Plannen voor monteurs is klaargezet. */
+      const isOpn=b=>b.soort==="opname"||(!!b.opdracht&&!opdGedaan(b));
+      const opnames=cmDoen.filter(isOpn),gewoon=cmDoen.filter(b=>!isOpn(b));
       if(opnames.length)h+=cmGroep("Opnamebonnen",opnames);
       const cmD=b=>isDag(b.dag)?datum(b.dag):null;
       const sectie=(t,cms,pms,leeg)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+(cms.length+pms.length)+"</span></h2>"+(cms.length||pms.length?cms.slice().sort(cmVolg).map(cmKaart).join("")+pms.map(kaart).join(""):'<p class="pmgeen">'+esc(leeg)+"</p>")+"</section>";
