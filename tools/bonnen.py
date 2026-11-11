@@ -922,13 +922,13 @@ def pm_spec(b, rijen):
             delen.append(r["onderdeel"])
     naam = re.sub(r"[^A-Za-z0-9]+", "_", b["lijn"] + " " + b["lijndeel"]).strip("_")
     return {
-        "naam": b["nr"] + "_" + naam, "werkbon_nr": b["nr"], "in_bedrijf": True,
-        "omschrijving": "Preventief %s – %s" % (freq, b["lijndeel"] if b["lijn"].lower() in b["lijndeel"].lower() else b["lijndeel"] + " " + b["lijn"].lower()),
+        "naam": b["nr"] + "_" + naam, "werkbon_nr": b["nr"], "in_bedrijf": not b.get("uit"),
+        "omschrijving": "Preventief %s%s – %s" % (freq, " uit bedrijf" if b.get("uit") else "", b["lijndeel"] if b["lijn"].lower() in b["lijndeel"].lower() else b["lijndeel"] + " " + b["lijn"].lower()),
         "uitvoeren_op": WEEKDAGEN[pm.dat(b["datum"]).weekday()] + " " + b["datum"],
         "lijn_machine": b["lijn"] + " / " + b["lijndeel"], "melder": "PM-planning", "installatie": delen[0] if len(delen) == 1 else b["lijndeel"],
         "afdeling": "TD", "onderdelen": ", ".join(nodig)[:120] or None,
         "stappen": [pm.stap(r) for r in taken],
-        "opmerking": ["Taken in bedrijf uit de PM-planning. Aftekenen in de TD Hub, tabblad PM-bonnen."],
+        "opmerking": ["Taken %s uit de PM-planning. Aftekenen in de TD Hub, tabblad PM-bonnen." % ("uit bedrijf: lijn staat stil, LOTOTO toepassen" if b.get("uit") else "in bedrijf")],
         "foto_tekst": "Geen foto – foto bij bevindingen toevoegen",
     }
 

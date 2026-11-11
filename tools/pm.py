@@ -5,12 +5,17 @@ Elk lijndeel heeft een vaste plek in een cyclus van 4 weken: een week en een wer
 elke week op die werkdag, maandelijkse taken elke 4 weken in die week. Zo komt een maandelijkse taak in elke
 kalendermaand minstens één keer aan de beurt. Bonnen tot en met vandaag liggen vast, latere bonnen worden bij
 elke bouw opnieuw berekend. Wat is afgetekend staat niet hier maar live in de Sheet (tabblad PM).
+
+Taken uit bedrijf (LOTOTO) kunnen alleen als de lijn stilstaat. Welke lijn wanneer staat in pmplan.uit, per lijn
+een begindatum (vanaf) en de weekdag waarop de lijn stilstaat (dag, 6 = zaterdag). Die taken krijgen een eigen
+bon met uit = true, op die dag. Ook hier heeft elk lijndeel een vaste week in de cyclus van 4 weken.
 """
 import datetime
 
 TOESTAND = "In bedrijf"
 FREQ = {"Wekelijks": 1, "2-wekelijks": 2, "Maandelijks": 4}  # om de hoeveel weken
 MAX_REGELS = 16  # zoveel regels taakstappen passen op één bon van 1 pagina
+MAX_REGELS_UIT = 12  # uit bedrijf: de vaste stappen over stoppen en LOTOTO blijven staan, dus minder ruimte
 TEKENS = 56  # tekens op een regel in het vak Werkinstructie
 VOORUIT = 42  # dagen vooruit plannen
 BEWAAR = 56  # dagen terug bewaren
@@ -25,6 +30,34 @@ def dat(s):
 
 def tekst(d):
     return d.strftime("%d-%m-%Y")
+
+
+def groepen_uit(data):
+    """De taken uit bedrijf van de lijnen in pmplan.uit, per lijndeel. De sleutel begint met UIT zodat hij een eigen plek krijgt."""
+    lijnen = (data.get("pmplan") or {}).get("uit") or {}
+    uit = {}
+    for r in data.get("pm", []):
+        if r.get("lijn") in lijnen and str(r.get("bedrijfstoestand") or "").startswith("Uit") and r.get("frequentie") in FREQ and not r.get("niet_plannen"):
+            uit.setdefault("UIT | " + r["lijn"] + " | " + r["lijndeel"], []).append(r)
+    return uit
+
+
+def verdeel_uit(plan, g):
+    """Elk lijndeel uit bedrijf krijgt de week met de minste taken op de stilstanddag van zijn lijn."""
+    vak = plan.setdefault("vak", {})
+    lijnen = plan.get("uit") or {}
+    druk = {}
+    for k in sorted(g, key=lambda k: (k in vak and 0 or 1, -len(g[k]), k)):
+        lijn = g[k][0]["lijn"]
+        dag = int(lijnen[lijn].get("dag") or 6)
+        if k not in vak or vak[k].get("dag") != dag:
+            def last(w):
+                return max(druk.get((lijn, x), 0) + sum(1 for r in g[k] if (x - w) % FREQ[r["frequentie"]] == 0) for x in range(1, 5))
+            vak[k] = {"week": min(range(1, 5), key=lambda w: (last(w), w)), "dag": dag}
+        for r in g[k]:
+            for x in range(1, 5):
+                if (x - vak[k]["week"]) % FREQ[r["frequentie"]] == 0:
+                    druk[(lijn, x)] = druk.get((lijn, x), 0) + 1
 
 
 def groepen(data):
@@ -73,12 +106,12 @@ def stap(r):
     return "%s%s (%s)" % (r["taak"].rstrip(". "), " [Operator]" if r.get("discipline") == "Operator" else "", r["id"])
 
 
-def verdeel_over_bonnen(rijen):
+def verdeel_over_bonnen(rijen, maximaal=MAX_REGELS):
     uit = [[]]
     regels = 0
     for r in rijen:
         n = (len(stap(r)) - 1) // TEKENS + 1
-        if uit[-1] and regels + n > MAX_REGELS:
+        if uit[-1] and regels + n > maximaal:
             uit.append([])
             regels = 0
         uit[-1].append(r)
@@ -86,19 +119,22 @@ def verdeel_over_bonnen(rijen):
     return uit
 
 
-def bonnen_op(plan, g, d):
-    """De bonnen van één werkdag: één bon per lijndeel. Past het niet op 1 pagina, dan krijgt het lijndeel meer bonnen."""
+def bonnen_op(plan, g, d, uit=None):
+    """De bonnen van één dag: één bon per lijndeel. Past het niet op 1 pagina, dan krijgt het lijndeel meer bonnen. Bonnen uit bedrijf tellen door na die van in bedrijf."""
     n = (d - dat(plan["start"])).days
     week, dag = n // 7 % 4 + 1, d.weekday() + 1
-    uit = []
+    uit = uit if uit is not None else []
     for k in sorted(g):
         v = plan["vak"][k]
         if v["dag"] != dag:
             continue
         volgorde = list(FREQ)
         rijen = sorted((r for r in g[k] if (week - v["week"]) % FREQ[r["frequentie"]] == 0), key=lambda r: (volgorde.index(r["frequentie"]), r["onderdeel"] or "", r["id"]))
-        for deel in verdeel_over_bonnen(rijen) if rijen else []:
-            uit.append({"nr": "PM-%s-%d" % (d.strftime("%y%m%d"), len(uit) + 1), "datum": tekst(d), "lijn": deel[0]["lijn"], "lijndeel": deel[0]["lijndeel"], "taken": [r["id"] for r in deel]})
+        for deel in verdeel_over_bonnen(rijen, MAX_REGELS_UIT if k.startswith("UIT | ") else MAX_REGELS) if rijen else []:
+            b = {"nr": "PM-%s-%d" % (d.strftime("%y%m%d"), len(uit) + 1), "datum": tekst(d), "lijn": deel[0]["lijn"], "lijndeel": deel[0]["lijndeel"], "taken": [r["id"] for r in deel]}
+            if k.startswith("UIT | "):
+                b["uit"] = True
+            uit.append(b)
     return uit
 
 
@@ -110,13 +146,22 @@ def bijwerken(data, vandaag):
     nu, start = dat(vandaag), dat(plan["start"])
     g = groepen(data)
     verdeel(plan, g)
+    gu = groepen_uit(data)
+    verdeel_uit(plan, gu)
+    lijnen = plan.get("uit") or {}
+    # Uit bedrijf: alvast vier weken na de begindatum zichtbaar, ook als die verder weg ligt dan normaal.
+    eind = max([nu + datetime.timedelta(days=VOORUIT)] + [dat(v["vanaf"]) + datetime.timedelta(days=27) for v in lijnen.values() if v.get("vanaf")])
     tot = dat(plan["vast_tot"]) if plan.get("vast_tot") else start - EEN_DAG
     # Een bon met een registratiebon blijft staan: dat is het bewijs dat het werk is gedaan.
     vast = (data["meta"].get("bonnen") or {}).get("pmreg") or {}
     bonnen, d = [b for b in plan.get("bonnen", []) if dat(b["datum"]) <= tot and (b["nr"] in vast or nu - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]))], tot + EEN_DAG
-    while d <= nu + datetime.timedelta(days=VOORUIT):
-        if d >= start and d.weekday() < 5:
-            bonnen += bonnen_op(plan, g, d)
+    while d <= eind:
+        if d >= start:
+            dagbonnen = bonnen_op(plan, g, d) if d.weekday() < 5 and d <= nu + datetime.timedelta(days=VOORUIT) else []
+            gd = {k: v for k, v in gu.items() if lijnen[v[0]["lijn"]].get("vanaf") and d >= dat(lijnen[v[0]["lijn"]]["vanaf"])}
+            if gd:
+                bonnen_op(plan, gd, d, dagbonnen)
+            bonnen += dagbonnen
         d += EEN_DAG
     plan["bonnen"] = bonnen
     if nu > tot:

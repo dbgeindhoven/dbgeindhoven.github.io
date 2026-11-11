@@ -2687,7 +2687,8 @@ function uitbakAan(){
 /* ---- PM-bonnen ---- */
 /* De planning staat vast in pmplan, zie tools/pm.py. Wat is afgemeld staat live op het tabblad PM in de Sheet. Een bon blijft te doen tot hij helemaal is afgemeld. */
 const PMFREQ=["Wekelijks","2-wekelijks","Maandelijks"],PMSTAND=["Achterstallig","Deels uitgevoerd","Vandaag","Gepland","Uitgevoerd"];
-const PMLET="Taak in bedrijf: de machine blijft draaien. Denk aan LMRA voordat je aan het werk begint.";
+const PMLET="Taak in bedrijf: de machine blijft draaien. Denk aan LMRA voordat je aan het werk begint.",PMLETUIT="Taak uit bedrijf: de lijn staat stil. Pas LOTOTO toe en doe een LMRA voordat je begint.";
+const pmLet=b=>b&&b.uit?PMLETUIT:PMLET;
 let PMAF=null,PMBEV=[],PMFOUT=false,pmTeken=null;
 const pmPlan=()=>D.pmplan||{bonnen:[],taken:{}};
 const pmTaken=b=>b.taken.map(id=>Object.assign({id},pmPlan().taken[id]));
@@ -2695,7 +2696,7 @@ const pmFreq=b=>{const t=pmTaken(b);return PMFREQ.filter(f=>t.some(x=>x.frequent
 /* Een lijndeel als Inpak lijn 2 of Ompak lijn 3 noemt zijn lijn al. */
 const pmLijnIn=b=>b.lijndeel.toLowerCase().includes(b.lijn.toLowerCase());
 const pmPlek=b=>pmLijnIn(b)?b.lijndeel:b.lijn+", "+b.lijndeel;
-const pmTitel=b=>"Preventief "+pmFreq(b).toLowerCase()+" – "+b.lijndeel+(pmLijnIn(b)?"":" "+b.lijn.toLowerCase());
+const pmTitel=b=>"Preventief "+pmFreq(b).toLowerCase()+(b.uit?" uit bedrijf":"")+" – "+b.lijndeel+(pmLijnIn(b)?"":" "+b.lijn.toLowerCase());
 const pmDag=d=>hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}));
 const pmNu=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
 const pmGedaan=a=>String(a&&a.taken||"").split(",").filter(Boolean);
@@ -2854,7 +2855,7 @@ function pmVak(vak,tabs,modus){
   const onder=!tabs;
   const kaart=b=>{
     const s=pmStand(b),n=b.taken.length,a=pmAf(b.nr);
-    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(pmPlek(b))+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.nr,a&&a.reg,pmBevAantal(b.nr)].filter(Boolean).join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
+    return'<button type="button" class="pmkaart'+(s==="Achterstallig"?" laat":"")+'" data-pm="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(pmPlek(b))+"</b>"+st(s)+'</span><span class="pmk2">'+esc([n+(n===1?" taak":" taken"),pmFreq(b),b.uit?"uit bedrijf":"",b.nr,a&&a.reg,pmBevAantal(b.nr)].filter(Boolean).join(" · "))+"</span>"+(a&&a.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
   };
   const groep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.map(kaart).join("")+"</section>";
   const cmDag=b=>isDag(b.dag)?(+datum(b.dag)===+pmNu()?"Vandaag":pmDag(datum(b.dag))):"";
@@ -3136,7 +3137,7 @@ function pmVak(vak,tabs,modus){
     const b=pmPlan().bonnen.find(x=>x.nr===nr);if(!b){lijst();return}
     open=nr;
     const a=pmAf(nr),klaar=a&&a.status==="Uitgevoerd"&&!aanpassen,gedaan=pmGedaan(a),ts=pmTaken(b);
-    const kopje='<button type="button" class="tekstknop pmterug" data-pmterug>Terug naar de lijst</button><article class="pmbon"><div class="pmb1"><div><small>'+esc(nr)+"</small><h2>"+esc(pmTitel(b))+"</h2></div>"+st(pmStand(b))+'</div><dl class="pmvelden"><dt>Uitvoeren op</dt><dd>'+esc(pmDag(datum(b.datum)))+"</dd><dt>Lijn / machine</dt><dd>"+esc(b.lijn+" / "+b.lijndeel)+'</dd></dl><p class="pmlet">'+esc(PMLET)+"</p>";
+    const kopje='<button type="button" class="tekstknop pmterug" data-pmterug>Terug naar de lijst</button><article class="pmbon"><div class="pmb1"><div><small>'+esc(nr)+"</small><h2>"+esc(pmTitel(b))+"</h2></div>"+st(pmStand(b))+'</div><dl class="pmvelden"><dt>Uitvoeren op</dt><dd>'+esc(pmDag(datum(b.datum)))+"</dd><dt>Lijn / machine</dt><dd>"+esc(b.lijn+" / "+b.lijndeel)+'</dd></dl><p class="pmlet">'+esc(pmLet(b))+"</p>";
     const stand=a?'<p class="pmaf">'+esc((a.wacht?"Wacht op bereik, afgemeld door ":"Afgemeld door ")+a.door+", "+a.tijd)+"</p>"+(a.reg?'<p class="pmaf">Registratienummer <b>'+esc(a.reg)+"</b></p>":""):"";
     if(klaar){
       vak.innerHTML=kopje+stand+'<div class="pmtaken">'+ts.map(t=>taak(t,gedaan,true,nr)).join("")+"</div>"+(a.opmerking?'<p class="pmopm"><b>Opmerking</b>'+esc(a.opmerking)+"</p>":"")+(a.reg?"":'<button type="button" class="knop" data-pmaanpas>Aanpassen</button>')+"</article>";
@@ -3236,7 +3237,7 @@ function vPmBonnen(){
   const bonnenLijst=pmPlan().bonnen,nu=pmNu(),van=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate()-56),tot=bonnenLijst.filter(b=>datum(b.datum)>=van&&datum(b.datum)<=nu);
   const af=tot.filter(b=>pmStand(b)==="Uitgevoerd").length,laat=tot.filter(b=>pmStand(b)==="Achterstallig").length;
   const af2=(b,k)=>(pmAf(b.nr)||{})[k]||null;
-  lijstScherm({key:"pmbonnen",titel:"PM-bonnen",sub:"Taken in bedrijf, wekelijks en maandelijks. Laatste 8 weken "+af+" van de "+tot.length+" afgemeld"+(laat?", "+laat+" achterstallig":"")+".",rijen:bonnenLijst,eenheid:["bon","bonnen"],
+  lijstScherm({key:"pmbonnen",titel:"PM-bonnen",sub:"Taken in bedrijf, wekelijks en maandelijks."+Object.entries(pmPlan().uit||{}).map(([l,v])=>" "+l+" heeft vanaf "+v.vanaf+" ook taken uit bedrijf op "+["maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag","zondag"][(+v.dag||6)-1]+".").join("")+" Laatste 8 weken "+af+" van de "+tot.length+" afgemeld"+(laat?", "+laat+" achterstallig":"")+".",rijen:bonnenLijst,eenheid:["bon","bonnen"],
     geen:"Er staan nog geen PM-bonnen gepland.",
     alleen:{l:"Tot en met vandaag",test:b=>datum(b.datum)<=nu},
     seg:{get:pmStand,o:PMSTAND},
