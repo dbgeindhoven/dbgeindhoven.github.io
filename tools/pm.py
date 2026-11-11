@@ -53,7 +53,7 @@ def verdeel_uit(plan, g):
         if k not in vak or vak[k].get("dag") != dag:
             def last(w):
                 return max(druk.get((lijn, x), 0) + sum(1 for r in g[k] if (x - w) % FREQ[r["frequentie"]] == 0) for x in range(1, 5))
-            vak[k] = {"week": min(range(1, 5), key=lambda w: (last(w), w)), "dag": dag}
+            vak[k] = {"week": min(range(1, 5), key=lambda w: (last(w), druk.get((lijn, w), 0), w)), "dag": dag}
         for r in g[k]:
             for x in range(1, 5):
                 if (x - vak[k]["week"]) % FREQ[r["frequentie"]] == 0:
