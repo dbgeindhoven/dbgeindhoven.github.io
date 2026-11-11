@@ -348,8 +348,9 @@ def ol_pm(data, r):
 
 
 def olbonnen(data, stand):
-    """Opnamelijsten voor de monteursapp: wat de werkvoorbereider klaarzette, met de onderdelen en PM-punten van die machine al ingevuld.
-    Wat al is ingevuld staat in de Sheet (tabblad Opnamelijst) en niet hier. Een afgemelde lijst blijft twee weken bij Afgemeld staan."""
+    """Opnamelijsten voor de monteursapp: elke lijst die nog open staat, met de onderdelen en PM-punten van die machine al ingevuld.
+    Wat de werkvoorbereider inplande heeft een dag (dag). Wat al is ingevuld staat in de Sheet (tabblad Opnamelijst) en niet hier.
+    Een lijst die in de app is afgemeld blijft twee weken bij Afgemeld staan; een lijst die op papier is opgenomen staat er niet in."""
     grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
     uit = []
     for r in data.get("opnamelijsten", []):
@@ -358,7 +359,7 @@ def olbonnen(data, stand):
             recent = datetime.datetime.strptime(str(d.get("tijd"))[:10], "%d-%m-%Y") >= grens
         except ValueError:
             recent = False
-        if not (r.get("plan") and not d) and not recent:
+        if d and not recent or not d and (r.get("opname_gedaan") or r.get("uitgewerkt")) and not r.get("plan"):
             continue
         x = {k: r.get(k) for k in ("ol", "lijn", "machine", "pm_code")}
         if d:

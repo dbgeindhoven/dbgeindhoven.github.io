@@ -460,6 +460,13 @@ textarea.opdracht{min-height:56px;resize:vertical;font-size:.875rem}
 .olvraag{margin:0;padding:12px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--bg)}
 .olvraag p{margin:0 0 10px;font-weight:500}
 .olvoet{flex-wrap:wrap;padding-bottom:22px}
+.ollijn{margin-top:10px;border:1px solid var(--line2);border-radius:16px;background:rgba(255,255,255,.6)}
+.ollijn>summary{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:13px 14px;cursor:pointer;list-style:none}
+.ollijn>summary::-webkit-details-marker{display:none}
+.ollijn>summary b{font-weight:600}
+.ollijn>summary span{color:var(--ink2);font-size:.8125rem}
+.ollijn[open]>summary{border-bottom:1px solid var(--line)}
+.ollijn .pmkaart{margin:8px 10px;width:calc(100% - 20px)}
 .olbalk{display:block;height:6px;margin-top:6px;border-radius:99px;background:var(--sunken);overflow:hidden}
 .olbalk i{display:block;height:100%;background:var(--ok)}
 .olknop{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -1512,7 +1519,7 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
 
 <div id="monteurscherm" hidden>
   <header class="mkop"><span class="mark" aria-hidden="true">TD</span><div><b>Technische dienst</b><small>Dutch Bakery Group Eindhoven</small></div><button class="uitlog bovenaan" data-uitlog hidden>Uitloggen</button></header>
-  <div class="seg mtabs" id="mtabs" role="group" aria-label="Schermen"><button data-m="melden" aria-pressed="true">Storing melden</button><button data-m="rapport" aria-pressed="false">Dienstrapport</button><button data-m="uitvoer" aria-pressed="false">Uitvoerbare bonnen</button></div>
+  <div class="seg mtabs" id="mtabs" role="group" aria-label="Schermen"><button data-m="melden" aria-pressed="true">Storing melden</button><button data-m="rapport" aria-pressed="false">Dienstrapport</button><button data-m="uitvoer" aria-pressed="false">Uitvoerbare bonnen</button><button data-m="ol" aria-pressed="false">Opname&shy;lijsten</button></div>
   <main id="minhoud"></main>
   <span class="merk">Muller Technical Solutions</span>
 </div>
@@ -2662,6 +2669,7 @@ function monteurScherm(){
     document.querySelectorAll("#mtabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===t)));
     rteken=null;pmTeken=null;
     if(t==="uitvoer"){pmVak(vak,null);return}
+    if(t==="ol"){pmVak(vak,null,"ol");return}
     if(t==="rapport"){rapportLijst(vak);return}
     if(!MELD()){vak.innerHTML='<div class="leegmelding">Storing melden staat nog niet aan.</div>';return}
     vak.innerHTML='<form class="meldform" id="stform">'+storingVelden()+"</form>";
@@ -2732,6 +2740,7 @@ function pmScherm(){
 }
 /* Uitvoerbare bonnen: de werkvoorbereider vinkt CM-bonnen aan op de pagina CM-bonnen. De monteur ziet ze boven de PM-bonnen en meldt ze hier af. */
 let WEEK=null,pmKlik=null,olIn=null,olCh=null;
+const OLLIJN=new Set();
 const weekLijst=()=>WEEK||(WEEK=(D.weekbonnen||[]).map(x=>Object.assign({},x)));
 /* De opdracht van de werkvoorbereider meldt de monteur los af. Gedaan is: lokaal afgemeld, nog in de uitbak, of al in de wachtrij. */
 const opdWacht=nr=>UIT.filter(x=>x.d.actie==="opdracht"&&x.d.nr===nr).pop();
@@ -2783,7 +2792,7 @@ function olLijst(){
     const i=uit.findIndex(x=>x.ol===p.ol);
     if(i>=0&&uit[i].af)return;
     if(i>=0&&uit[i].plantijd&&tdVolg(uit[i].plantijd)>tdVolg(p.tijd))return;
-    if(!p.aan){if(i>=0)uit.splice(i,1);return}
+    if(!p.aan){if(i>=0)Object.assign(uit[i],{dag:null,plantijd:p.tijd});return}
     if(i<0)uit.push({ol:p.ol,lijn:p.lijn,machine:p.machine,pm_code:p.pm_code,comps:p.comps||[],pm:p.pm||[],dag:p.dag,plantijd:p.tijd});else Object.assign(uit[i],{dag:p.dag,plantijd:p.tijd});
   });
   return uit;
@@ -2839,7 +2848,7 @@ async function olWacht(){
 /* In de inlog van de monteur is de naam niet vast: die komt uit het veld op de bon. */
 const pmDoor=()=>{const v=$("#pm_naam");return D.naam||(v?v.value.trim():naam())};
 const pmNaamVeld=()=>D.naam?"":'<label>Monteur<input type="text" id="pm_naam" required value="'+esc(naam())+'"></label>';
-function pmVak(vak,tabs){
+function pmVak(vak,tabs,modus){
   if(pmKlik){vak.removeEventListener("click",pmKlik)}
   let tab="doen",open=null;
   const onder=!tabs;
@@ -2850,7 +2859,7 @@ function pmVak(vak,tabs){
   const groep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.map(kaart).join("")+"</section>";
   const cmDag=b=>isDag(b.dag)?(+datum(b.dag)===+pmNu()?"Vandaag":pmDag(datum(b.dag))):"";
   const cmKaart=b=>'<button type="button" class="pmkaart'+(isDag(b.dag)&&datum(b.dag)<pmNu()&&!weekKlaar(b)?" laat":"")+'" data-weekbon="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.omschrijving)+"</b>"+st(kaartStatus(b))+'</span><span class="pmk2">'+esc([hoofd(cmDag(b)),b.nr,b.lijn,b.machine,b.prio?"Prio "+b.prio:""].filter(Boolean).join(" · "))+"</span>"+(b.opdracht&&!weekKlaar(b)?'<span class="pmk2 pmopdr"><b>'+(opdGedaan(b)?"Opdracht gedaan:":"Opdracht:")+"</b> "+esc(b.opdracht)+"</span>":"")+(weekWacht(b.nr)?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
-  const olKaart=x=>{const k=olKlaar(x),c=k?null:olLees()[x.ol],l=k?null:olLive(x.ol),g=k?null:(c&&c.g)||(l&&l.g)||{},n=k?9:(g.gezien||[]).length;return'<button type="button" class="pmkaart olkaart'+(!k&&isDag(x.dag)&&datum(x.dag)<pmNu()?" laat":"")+'" data-ol="'+esc(x.ol)+'"><span class="pmk1"><b>'+esc(x.ol+" "+x.machine)+"</b>"+st(k?"Uitgevoerd":n?"Bezig":"Open")+'</span><span class="pmk2">'+esc([x.lijn,isDag(x.dag)?hoofd(+datum(x.dag)===+pmNu()?"Vandaag":pmDag(datum(x.dag))):"",k?(k.wacht?"Wacht op bereik":"Afgemeld door "+k.door):n+" van 9 vakken bekeken"].filter(Boolean).join(" · "))+"</span>"+(k?"":'<span class="olbalk"><i style="width:'+Math.round(n/9*100)+'%"></i></span>')+(c&&c.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>"};
+  const olKaart=x=>{const k=olKlaar(x),c=k?null:olLees()[x.ol],l=k?null:olLive(x.ol),g=k?null:(c&&c.g)||(l&&l.g)||{},n=k?9:(g.gezien||[]).length;return'<button type="button" class="pmkaart olkaart'+(!k&&isDag(x.dag)&&datum(x.dag)<pmNu()?" laat":"")+'" data-ol="'+esc(x.ol)+'"><span class="pmk1"><b>'+esc(x.ol+" "+x.machine)+"</b>"+st(k?"Uitgevoerd":n?"Bezig":"Open")+'</span><span class="pmk2">'+esc([x.lijn,isDag(x.dag)?hoofd(+datum(x.dag)===+pmNu()?"Vandaag":pmDag(datum(x.dag))):"",k?(k.wacht?"Wacht op bereik":"Afgemeld door "+k.door):n?n+" van 9 vakken bekeken":"Nog niet begonnen"].filter(Boolean).join(" · "))+"</span>"+(k||!n?"":'<span class="olbalk"><i style="width'+':'+Math.round(n/9*100)+'%"></i></span>')+(c&&c.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>"};
   /* Bonnen met een dag eerst, op volgorde van de dag. */
   const cmVolg=(a,b)=>(isDag(a.dag)?+datum(a.dag):9e15)-(isDag(b.dag)?+datum(b.dag):9e15)||nummer(a.nr)-nummer(b.nr);
   const cmGroep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.slice().sort(cmVolg).map(cmKaart).join("")+"</section>";
@@ -3029,24 +3038,37 @@ function pmVak(vak,tabs){
     if(!D.naam)naam(String(g.wie).split(",")[0].trim());
     olStuur(k,"Opgenomen");
   }
+  /* Eigen tab Opnamelijsten: bovenaan wat de werkvoorbereider inplande, daaronder per lijn alles wat nog open staat. Een lijn gaat open met een tik. */
+  function olOverzicht(){
+    const ols=olLijst(),open_=ols.filter(x=>!olKlaar(x)),af=ols.filter(x=>olKlaar(x)),gepland=open_.filter(x=>isDag(x.dag)).sort((a,b)=>datum(a.dag)-datum(b.dag));
+    const lijnen=uniek(open_.map(x=>x.lijn||"Overig")).sort((a,b)=>a.localeCompare(b,"nl",{numeric:true}));
+    const volg=(a,b)=>{const n=x=>{const m=/(\d+)\.(\d+)/.exec(x.ol||"");return m?+m[1]*1000+ +m[2]:1e9};return n(a)-n(b)};
+    const bezig=x=>{const c=olLees()[x.ol],l=olLive(x.ol),g=(c&&c.g)||(l&&l.g);return!!(g&&(g.gezien||[]).length)};
+    let h='<p class="pmwie">'+esc([pmDag(new Date()),D.naam].filter(Boolean).join(", "))+'</p><p class="pmhint">Kies een lijst en vul hem vak voor vak in. Wat je invult blijft bewaard, ook als je tussendoor stopt.</p>';
+    if(gepland.length)h+='<section class="dag pmdag"><h2>Ingepland<span>'+gepland.length+"</span></h2>"+gepland.map(olKaart).join("")+"</section>";
+    const nu_=open_.filter(bezig).filter(x=>!isDag(x.dag));
+    if(nu_.length)h+='<section class="dag pmdag"><h2>Mee bezig<span>'+nu_.length+"</span></h2>"+nu_.sort(volg).map(olKaart).join("")+"</section>";
+    h+=lijnen.length?lijnen.map(l=>{const r=open_.filter(x=>(x.lijn||"Overig")===l).sort(volg);return'<details class="ollijn"'+(OLLIJN.has(l)?" open":"")+' data-ollijn="'+esc(l)+'"><summary><b>'+esc(l)+"</b><span>"+r.length+(r.length===1?" lijst open":" lijsten open")+"</span></summary>"+r.map(olKaart).join("")+"</details>"}).join(""):'<div class="leegmelding">Alle opnamelijsten zijn gedaan.</div>';
+    if(af.length)h+='<section class="dag pmdag"><h2>Afgemeld<span>'+af.length+"</span></h2>"+af.map(olKaart).join("")+"</section>";
+    return h;
+  }
   function lijst(){
     open=null;olOpen=null;
     if(!vak.isConnected||(onder&&!pmTeken))return;
     const alle=pmPlan().bonnen,nu=pmNu(),grens=new Date(nu);grens.setDate(grens.getDate()+7);
     const cmDoen=onder?weekLijst().filter(b=>!weekKlaar(b)):[],cmAf=onder?weekLijst().filter(weekKlaar):[];
     const doen=alle.filter(b=>pmStand(b)!=="Uitgevoerd"&&datum(b.datum)<=grens),af=alle.filter(b=>pmStand(b)==="Uitgevoerd").reverse();
-    const ols=onder?olLijst():[],olDoen=ols.filter(x=>!olKlaar(x)),olAf=ols.filter(x=>olKlaar(x));
-    const knoppen='<button data-m="doen" aria-pressed="'+(tab==="doen")+'">Te doen<span>'+(doen.filter(b=>datum(b.datum)<=nu).length+cmDoen.length+olDoen.length)+'</span></button><button data-m="af" aria-pressed="'+(tab==="af")+'">Afgemeld<span>'+(af.length+cmAf.length+olAf.length)+"</span></button>";
+    if(modus==="ol"){vak.innerHTML=olOverzicht();return}
+    const knoppen='<button data-m="doen" aria-pressed="'+(tab==="doen")+'">Te doen<span>'+(doen.filter(b=>datum(b.datum)<=nu).length+cmDoen.length)+'</span></button><button data-m="af" aria-pressed="'+(tab==="af")+'">Afgemeld<span>'+(af.length+cmAf.length)+"</span></button>";
     if(tabs)tabs.innerHTML=knoppen;
     let h=(onder?'<div class="seg pmsub" data-pmsub role="group" aria-label="Bonnen">'+knoppen+"</div>":"")+'<p class="pmwie">'+esc([pmDag(new Date()),D.naam].filter(Boolean).join(", "))+"</p>"+(PMFOUT?'<p class="pmmelding">Eerder afgemelde bonnen zijn nu niet op te halen. Afmelden kan wel.</p>':"");
     const olSectie=r=>'<section class="dag pmdag"><h2>Opnamelijsten<span>'+r.length+"</span></h2>"+r.map(olKaart).join("")+"</section>";
-    if(tab==="af"){h+=olAf.length?olSectie(olAf):"";h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length||olAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
+    if(tab==="af"){h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
     else{
       /* Opnamebonnen staan apart bovenaan. De rest staat per dag: de CM- en SQD-bonnen van die dag en daaronder de PM-bonnen. Bonnen zonder dag staan onderaan. */
       /* Een bon met een opdracht die nog open staat (bijvoorbeeld maat opnemen) hoort ook bij de opnamebonnen, ook als hij met Plannen voor monteurs is klaargezet. */
       const isOpn=b=>b.soort==="opname"||(!!b.opdracht&&!opdGedaan(b));
       const opnames=cmDoen.filter(isOpn),gewoon=cmDoen.filter(b=>!isOpn(b));
-      if(olDoen.length)h+=olSectie(olDoen);
       if(opnames.length)h+=cmGroep("Opnamebonnen",opnames);
       const cmD=b=>isDag(b.dag)?datum(b.dag):null;
       const sectie=(t,cms,pms,leeg)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+(cms.length+pms.length)+"</span></h2>"+(cms.length||pms.length?cms.slice().sort(cmVolg).map(cmKaart).join("")+pms.map(kaart).join(""):'<p class="pmgeen">'+esc(leeg)+"</p>")+"</section>";
@@ -3187,6 +3209,7 @@ function pmVak(vak,tabs){
   if(olIn){vak.removeEventListener("input",olIn);vak.removeEventListener("change",olCh)}
   olIn=e=>{const el=e.target.closest("[data-olv]");if(el&&olOpen&&olG){olSet(el.dataset.olv,el.value);olLokaal()}};
   olCh=e=>{const el=e.target.closest("[data-olfoto]");if(el&&olOpen)olFotoKies(el)};
+  vak.addEventListener("toggle",e=>{const d=e.target.closest&&e.target.closest("[data-ollijn]");if(d){if(d.open)OLLIJN.add(d.dataset.ollijn);else OLLIJN.delete(d.dataset.ollijn)}},true);
   vak.addEventListener("input",olIn);vak.addEventListener("change",olCh);
   vak.addEventListener("click",pmKlik);
   pmTeken=()=>{if(!open)lijst()};rteken=pmTeken;
@@ -5384,15 +5407,17 @@ function olStandWv(r){
   const p=olPlanWv(r),l=olLive(r.ol);
   if(l&&l.status==="Opgenomen"&&(!p||tdVolg(l.tijd)>=tdVolg(p.tijd)))return{s:"af",door:l.door,tijd:l.tijd,g:l.g};
   if(p)return{s:"bij",dag:p.dag,n:l&&l.g&&(!p.tijd||tdVolg(l.tijd)>=tdVolg(p.tijd))?(l.g.gezien||[]).length:0,door:l&&l.door,tijd:l&&l.tijd};
+  if(l&&l.status!=="Opgenomen"&&!r.opname_gedaan)return{s:"bezig",n:l.g?(l.g.gezien||[]).length:0,door:l.door,tijd:l.tijd};
   return{s:""};
 }
 function olCel(r){
   const x=olStandWv(r),f=(bonnen().ol||{})[r.ol],wv=wvMag();
   if(x.s==="klaar")return'<span class="olknop"><span class="st ok"><i></i>In de app, '+esc(String(x.tijd||"").slice(0,10))+"</span>"+(f&&MODE==="enc"?'<button type="button" class="tekstknop" data-olbestand="'+esc(r.ol)+'|docx">Word</button><button type="button" class="tekstknop" data-olbestand="'+esc(r.ol)+'|pdf">PDF</button>':"")+"</span>";
   if(x.s==="af")return'<span class="st ok"><i></i>Afgemeld, Word volgt</span>';
-  if(x.s==="bij")return'<span class="olknop"><span class="st info"><i></i>Bij monteurs'+(x.dag?", "+esc(x.dag.slice(0,5)):"")+"</span>"+(x.n?'<span class="zacht">'+x.n+" van 9</span>":"")+(wv?'<button type="button" class="tekstknop" data-olvan="'+esc(r.ol)+'">Van monteurs halen</button>':"")+"</span>";
+  if(x.s==="bezig")return'<span class="olknop"><span class="st infoleeg"><i></i>Monteur is bezig</span><span class="zacht">'+x.n+" van 9"+(x.door?", "+esc(x.door):"")+"</span></span>";
+  if(x.s==="bij")return'<span class="olknop"><span class="st info"><i></i>Ingepland'+(x.dag?", "+esc(x.dag.slice(0,5)):"")+"</span>"+(x.n?'<span class="zacht">'+x.n+" van 9</span>":"")+(wv?'<button type="button" class="tekstknop" data-olvan="'+esc(r.ol)+'">Niet meer inplannen</button>':"")+"</span>";
   if(!wv||r.opname_gedaan)return of(null);
-  return'<span class="olknop"><input type="date" min="'+n0()+'" data-oldag="'+esc(r.ol)+'" aria-label="'+esc("Dag voor "+r.ol+", mag leeg")+'"><button type="button" class="knop" data-olnaar="'+esc(r.ol)+'">Naar monteurs</button></span>';
+  return'<span class="olknop"><input type="date" min="'+n0()+'" data-oldag="'+esc(r.ol)+'" aria-label="'+esc("Dag voor "+r.ol+", mag leeg")+'"><button type="button" class="knop" data-olnaar="'+esc(r.ol)+'">Inplannen</button></span>';
 }
 async function olKlaarzetten(ol,aan,dag){
   const r=(D.opnamelijsten||[]).find(x=>x.ol===ol);if(!r||!MELD())return;
@@ -5400,7 +5425,7 @@ async function olKlaarzetten(ol,aan,dag){
   if(aan)Object.assign(p,{comps:uniek(t.map(x=>x.onderdeel).filter(Boolean)).slice(0,30),pm:t.slice(0,40).map(x=>({id:x.id,taak:x.taak}))});
   const oud=OLPLANLIVE[ol],her=()=>{if(HUIDIG==="opname")vOpname()};
   OLPLANLIVE[ol]=Object.assign({},p,{tijd:nuTekst()});her();
-  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:olNr(ol),status:"Open",rij:{olplan:p},door:wvDoor()});laatste="";melder(aan?ol+" staat in de monteursapp":ol+" is uit de monteursapp gehaald")}
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:olNr(ol),status:"Open",rij:{olplan:p},door:wvDoor()});laatste="";melder(aan?ol+" staat ingepland in de monteursapp":ol+" is niet meer ingepland")}
   catch(_){if(oud)OLPLANLIVE[ol]=oud;else delete OLPLANLIVE[ol];her();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
 }
 async function olBestand(k){
@@ -5425,8 +5450,8 @@ function olSamenvatting(g){
 function vOpname(){
   const o=D.opnamelijsten,g=o.filter(x=>x.opname_gedaan).length,u=o.filter(x=>x.uitgewerkt).length;
   const ja=(v,t,n)=>v?'<span class="st ok"><i></i>'+t+"</span>":'<span class="st"><i></i>'+n+"</span>";
-  const f=x=>x.uitgewerkt?"Uitgewerkt":x.opname_gedaan||olStandWv(x).s==="af"?"Opgenomen":olStandWv(x).s==="bij"?"Bij monteurs":"Nog te doen";
-  lijstScherm({key:"opname",titel:"Opnamelijsten",sub:g+" van "+o.length+" opgenomen, "+u+" uitgewerkt. "+(wvMag()?"Met Naar monteurs staat een lijst meteen in de monteursapp, de dag mag leeg. ":"")+stand("opname"),rijen:o,eenheid:["lijst","lijsten"],
+  const f=x=>x.uitgewerkt?"Uitgewerkt":x.opname_gedaan||olStandWv(x).s==="af"?"Opgenomen":["bij","bezig"].includes(olStandWv(x).s)?"Bij monteurs":"Nog te doen";
+  lijstScherm({key:"opname",titel:"Opnamelijsten",sub:g+" van "+o.length+" opgenomen, "+u+" uitgewerkt. "+(wvMag()?"Elke open lijst staat in de monteursapp, per lijn. Met Inplannen en een dag komt hij daar bovenaan. ":"")+stand("opname"),rijen:o,eenheid:["lijst","lijsten"],
     seg:{get:f,o:["Nog te doen","Bij monteurs","Opgenomen","Uitgewerkt"]},
     selects:[{k:"lijn",l:"Alle lijnen",o:uniek(o.map(x=>x.lijn)),get:x=>x.lijn}],
     tekst:x=>[x.ol,x.machine,x.lijn,x.pm_code,x.opmerking].join(" "),
@@ -5436,7 +5461,7 @@ function vOpname(){
       {k:"l",l:"Lijn",w:"80px",c:"m-sub",r:x=>of(x.lijn),s:x=>norm(x.lijn)},
       {k:"g",l:"Opname",w:"110px",c:"m-status",r:x=>ja(x.opname_gedaan,"Gedaan","Open"),s:x=>x.opname_gedaan?0:1},
       {k:"u",l:"Uitwerking",w:"110px",c:"m-sub",ml:"Uitwerking",r:x=>ja(x.uitgewerkt,"Klaar","Open"),s:x=>x.uitgewerkt?0:1},
-      {k:"a",l:"Monteursapp",w:"300px",c:"m-sub",ml:"Monteursapp",r:olCel,s:x=>({klaar:0,af:1,bij:2,"":3})[olStandWv(x).s]}],
+      {k:"a",l:"Monteursapp",w:"300px",c:"m-sub",ml:"Monteursapp",r:olCel,s:x=>({klaar:0,af:1,bezig:2,bij:3,"":4})[olStandWv(x).s]}],
     detail:x=>{const st_=olStandWv(x),gg=x.digitaal?x.digitaal.gegevens:st_.g||(olLive(x.ol)||{}).g;return{klein:x.ol,titel:x.machine,velden:[["Lijn",x.lijn],["PM-code",x.pm_code],["Opname",x.opname_gedaan?"Gedaan":"Open"],["Uitwerking",x.uitgewerkt?"Klaar":"Open"],["Monteursapp",olCel(x),true],["Ingevuld door",st_.door],["Laatst opgeslagen",st_.tijd],["In de app",olSamenvatting(gg),true],["Opmerking",x.opmerking]]}}});
 }
 function vPm(){
