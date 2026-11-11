@@ -138,6 +138,12 @@ def bonnen_op(plan, g, d, uit=None):
     return uit
 
 
+def uit_vanaf(lijnen, r):
+    """Vanaf wanneer een lijndeel uit bedrijf wordt gepland. Per lijndeel kan het eerder (lijndelen), zoals de oven van lijn 3, die al op zaterdag stilstaat."""
+    v = lijnen.get(r["lijn"]) or {}
+    return (v.get("lijndelen") or {}).get(r["lijndeel"]) or v.get("vanaf")
+
+
 def bijwerken(data, vandaag):
     """Legt de bonnen tot en met vandaag vast en berekent de weken daarna. Zonder pmplan gebeurt er niets."""
     plan = data.get("pmplan")
@@ -160,7 +166,7 @@ def bijwerken(data, vandaag):
             # Een lijndeel met dag 6 in vak doet ook zijn taken in bedrijf op zaterdag, zoals de oven van lijn 3.
             gdag = g if d.weekday() < 5 else {k: v for k, v in g.items() if plan["vak"][k]["dag"] == 6}
             dagbonnen = bonnen_op(plan, gdag, d) if d.weekday() < 6 and gdag and d <= nu + datetime.timedelta(days=VOORUIT) else []
-            gd = {k: v for k, v in gu.items() if lijnen[v[0]["lijn"]].get("vanaf") and d >= dat(lijnen[v[0]["lijn"]]["vanaf"])}
+            gd = {k: v for k, v in gu.items() if uit_vanaf(lijnen, v[0]) and d >= dat(uit_vanaf(lijnen, v[0]))}
             if gd:
                 bonnen_op(plan, gd, d, dagbonnen)
             bonnen += dagbonnen
