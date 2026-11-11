@@ -879,9 +879,19 @@ def plan_print(data, z, wm, oud):
     # Wat al klaar is staat niet meer op de lijst en de bon zit niet in de PDF. De PM-bonnen van die dag staan bij preventief, altijd prio 1.
     open_ = lambda r: (cm.get(r["nr"]) or {}).get("status") not in DICHT
     rijen = {x["id"]: x for x in data.get("pm", [])}
-    specs = [pm_spec(x, rijen) for x in pmb]
+    # Elke PM-taak staat apart op de lijst en heeft een eigen bon, met het nummer van de taak. Aftekenen blijft per PM-bon in de TD Hub.
+    specs, pmregels = [], []
+    for x in pmb:
+        for t in x["taken"]:
+            r = rijen.get(t)
+            if not r:
+                continue
+            sp = pm_spec({**x, "taken": [t]}, rijen)
+            sp.update(naam=x["nr"] + "_" + t, werkbon_nr=t, opmerking=["Taak %s van PM-bon %s. Aftekenen in de TD Hub, tabblad PM-bonnen, bij die PM-bon." % (t, x["nr"])] + sp["opmerking"][1:])
+            specs.append(sp)
+            pmregels.append((t, r["taak"], sp["lijn_machine"] + (" – " + r["onderdeel"] if r.get("onderdeel") and r["onderdeel"] != x["lijndeel"] else ""), 1, "", ""))
     lijsten = [[regel(r) for r in z.get(k) or [] if open_(r)] for k in ("correctief", "preventief")]
-    lijsten[1] = [(sp["werkbon_nr"], sp["omschrijving"], sp["lijn_machine"], 1, "", "") for sp in specs] + lijsten[1]
+    lijsten[1] = pmregels + lijsten[1]
     lijstpdf = lijst_opmaken(lambda vrij: fill_bon.zaterdaglijst(leeg, datum, lijsten, z, plan_tekst(z), vrij), docx, wm)
     stukken = [lijstpdf]
     for i, r in enumerate(r for r in zat_rijen(z) if open_(r)):
@@ -919,6 +929,8 @@ def zaterdag(a):
     data = laad(a.site)
     b = stand(data)
     wm = Path(a.map)
+    # De PM-bonnen op de lijsten moeten bij de PM-taken van nu horen.
+    pm.bijwerken(data, datetime.date.today().strftime("%d-%m-%Y"))
     if data.get("zaterdag"):
         b["zaterdag"] = plan_print(data, data["zaterdag"], wm / "zaterdag", b.get("zaterdag") or {})
     klaar = b.setdefault("stops", {})
