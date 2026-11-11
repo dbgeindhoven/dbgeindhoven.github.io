@@ -1,4 +1,5 @@
-// TD Hub meldingen, versie 23: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 24: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// Versie 24: opnamelijsten in de monteursapp (tabblad Opnamelijst, acties olopname en olfoto).
 // Versie 22: het tabblad Productie voor de productie-app (pilot), met een eigen sleutel.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
 const SHEET_ID = '__SHEET_ID__';
@@ -28,6 +29,10 @@ const PMSTATUS = ['Uitgevoerd', 'Deels uitgevoerd'];
 const BEVKOP = ['id', 'nr', 'punt', 'naam', 'opmerking', 'foto', 'bon', 'door', 'tijd'];
 const OPNAMEKOP = ['nr', 'status', 'regels', 'opmerking', 'foto', 'door', 'tijd'];
 const OPNAMESTATUS = ['Bestellen', 'Deels uitgevoerd'];
+// Opnamelijst in de monteursapp: per opnamelijst één regel. Alles wat de monteur invulde staat als JSON in de kolom gegevens.
+const OLKOP = ['ol', 'status', 'gegevens', 'door', 'tijd'];
+const OLSTATUS = ['Deels', 'Opgenomen'];
+const OLMAX = 45000;
 const LOGKOP = ['tijd', 'door', 'van', 'nr', 'status', 'rij'];
 // Productie-app (pilot): per datum, dienst en afdeling één regel. De gegevens van de dienst staan als JSON in de kolom gegevens.
 const PRODKOP = ['id', 'datum', 'dienst', 'afdeling', 'status', 'gegevens', 'door', 'tijd', 'gecontroleerd_door', 'gecontroleerd_op', 'log'];
@@ -316,6 +321,45 @@ function zetOpname_(d) {
   return { ok: true, tijd: tijd, foto: foto };
 }
 
+// Opnamelijsten in de monteursapp. Een collega kan verder waar de vorige stopte, dus de laatste stand staat altijd in de Sheet.
+function olRijen_() {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Opnamelijst');
+  if (!b || b.getLastRow() < 2) return [];
+  return b.getRange(2, 1, b.getLastRow() - 1, OLKOP.length).getValues().map(r => {
+    const o = {};
+    OLKOP.forEach((k, i) => { o[k] = String(r[i]); });
+    return o;
+  });
+}
+
+// Een foto gaat meteen naar Drive. In de gegevens staat daarna alleen het id.
+function zetOlFoto_(d) {
+  if (!d.foto || d.foto.length > MAX_FOTO) return { fout: 'foto te groot' };
+  const id = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'opnamelijst-' + d.ol + '-' + Date.now() + '.jpg')).getId();
+  return { ok: true, foto: id };
+}
+
+// Opslaan (Deels) of afmelden (Opgenomen). Afmelden zet ook een bestand in de wachtrij: daarvan maakt de geplande taak de opnamelijst in Word en PDF.
+function zetOl_(d) {
+  const g = d.gegevens && typeof d.gegevens === 'object' && !Array.isArray(d.gegevens) ? d.gegevens : null;
+  if (!g) return { fout: 'onjuiste invoer' };
+  const tekst = JSON.stringify(g);
+  if (tekst.length > OLMAX) return { fout: 'te veel tekst' };
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const t = s.getSheetByName('Opnamelijst') || s.insertSheet('Opnamelijst', s.getNumSheets());
+  t.getRange('A:E').setNumberFormat('@');
+  t.getRange(1, 1, 1, OLKOP.length).setValues([OLKOP]);
+  const tijd = nu_();
+  const rij = [d.ol, d.status, tekst, schoon_(d.door).slice(0, 200), tijd];
+  const n = t.getLastRow();
+  const ols = n > 1 ? t.getRange(2, 1, n - 1, 1).getDisplayValues().map(r => r[0]) : [];
+  const i = ols.indexOf(d.ol);
+  if (i >= 0) t.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
+  else t.appendRow(rij);
+  if (d.status === 'Opgenomen') zetBonstatus_('OLA-' + d.ol.replace('.', '-') + '-' + Date.now(), 'Open', { olopname: { ol: d.ol, status: d.status, door: schoon_(d.door), tijd: tijd, gegevens: g } }, d.door);
+  return { ok: true, tijd: tijd };
+}
+
 // Een bon die helemaal is afgemeld krijgt een doorlopend registratienummer en een bestand voor de geplande taak, die de registratiebon maakt.
 // Dit draait binnen de lock, dus nooit dubbel. Met een nummer ligt de regel vast.
 function zetPm_(d) {
@@ -408,16 +452,17 @@ function doGet(e) {
     // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive. De PM-inlog ziet alleen foto's van bevindingen.
     const bevinding = !monteur && bevRijen_().some(x => x.foto === p.foto);
     const opname = !pm && opnameRijen_().some(x => x.foto === p.foto);
-    if (!bevinding && !opname && (pm || !rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
+    const ol = !pm && !opname && String(p.foto).length > 15 && olRijen_().some(x => x.gegevens.indexOf('"' + p.foto + '"') >= 0);
+    if (!bevinding && !opname && !ol && (pm || !rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
   if (monteur || p.rapport) {
     const rapport = rijen.filter(r => r[2] === 'TD').slice(-500).map(object_);
     // De monteur ziet aangevinkte en afgemelde bonnen meteen, verder niets uit de wachtrij.
-    if (monteur) return uit_({ rapport: rapport, bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf } })) });
+    if (monteur) return uit_({ rapport: rapport, olopname: olRijen_(), bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf || x.rij.olplan || x.rij.olopname)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf, olplan: x.rij.olplan, olopname: x.rij.olopname && { ol: x.rij.olopname.ol, status: x.rij.olopname.status, door: x.rij.olopname.door, tijd: x.rij.olopname.tijd } } })) });
     return uit_({ rapport: rapport });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_() });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_(), olopname: olRijen_() });
 }
 
 function doPost(e) {
@@ -441,7 +486,9 @@ function doPost(e) {
   const opdracht = d.k === MONTEURSLEUTEL && d.actie === 'opdracht';
   // Productie-app: de teamleider vult zijn dienst in. De werkvoorbereider verbetert en zet hem op Gecontroleerd.
   const productie = (d.k === PRODUCTIESLEUTEL || d.k === WVSLEUTEL) && d.actie === 'productie';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !opdracht && !productie) return uit_({ fout: 'geen toegang' });
+  // De monteur vult een opnamelijst in en slaat hem op of meldt hem af (vanaf versie 24). Meer kan deze actie niet.
+  const ol = d.k === MONTEURSLEUTEL && (d.actie === 'olopname' || d.actie === 'olfoto');
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !opdracht && !productie && !ol) return uit_({ fout: 'geen toegang' });
   VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : d.k === PRODUCTIESLEUTEL ? 'productie' : 'melden';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -496,6 +543,10 @@ function doPost(e) {
     if (d.actie === 'opname') {
       if (!/^(CM\d+|SQDM-\d+)$/.test(d.nr) || !OPNAMESTATUS.includes(d.status)) return uit_({ fout: 'onjuiste invoer' });
       return uit_(zetOpname_(d));
+    }
+    if (d.actie === 'olfoto' || d.actie === 'olopname') {
+      if (!/^OL\d{1,2}\.\d{1,3}$/.test(d.ol) || (d.actie === 'olopname' && !OLSTATUS.includes(d.status))) return uit_({ fout: 'onjuiste invoer' });
+      return uit_(d.actie === 'olfoto' ? zetOlFoto_(d) : zetOl_(d));
     }
     if (d.actie === 'verwijder') {
       if (d.bon && !/^[A-Za-z0-9-]{1,20}$/.test(d.bon)) return uit_({ fout: 'onbekende bon' });

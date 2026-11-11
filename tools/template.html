@@ -419,6 +419,51 @@ textarea.opdracht{min-height:56px;resize:vertical;font-size:.875rem}
 .pmaf{margin:0;color:var(--ink2);font-size:.8125rem}
 .pmopm{margin:0;font-size:.9375rem}
 .pmopm b{display:block;font-size:.8125rem}
+/* Opnamelijst in de monteursapp */
+.olstap{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.olvak.meldform{padding:0}
+.olstap button{height:32px;border:0;border-radius:999px;background:var(--sunken);color:var(--ink3);font-weight:600;font-size:.8125rem;cursor:pointer}
+.olstap button.ok{background:var(--ok-soft);color:var(--ok)}
+.olstap button.nu{background:var(--accent);color:var(--on-accent)}
+.olvak h3{margin:0;font-size:1rem;font-weight:600}
+.olv{display:flex;flex-direction:column;gap:5px;font-size:.8125rem;font-weight:500}
+.oltwee{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.olchips{display:flex;flex-wrap:wrap;gap:6px}
+.olchip{min-height:40px;padding:8px 14px;border:1px solid var(--line2);border-radius:999px;background:var(--bg);color:var(--ink2);font-size:.875rem;font-weight:500;cursor:pointer}
+.olchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.olchip[aria-pressed="true"][data-kl="g"]{background:var(--ok);border-color:var(--ok)}
+.olchip[aria-pressed="true"][data-kl="m"]{background:var(--warn);border-color:var(--warn)}
+.olchip[aria-pressed="true"][data-kl="s"]{background:var(--crit);border-color:var(--crit)}
+.olrij{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.72)}
+.olrij h4{display:flex;align-items:baseline;gap:8px;margin:0;font-size:.9375rem;font-weight:600}
+.olrij h4 small{display:block;color:var(--ink3);font-size:.75rem;font-weight:400}
+.olmeer{display:flex;flex-direction:column;gap:10px}
+.olmeer summary{cursor:pointer;color:var(--ink2);font-size:.8125rem;font-weight:500;padding:4px 0}
+.olmeer[open]>summary{margin-bottom:8px}
+.olmeer>*+*{margin-top:10px}
+.olrij h4 .olweg{margin-left:auto}
+.olrijkop{display:flex;align-items:flex-end;gap:8px}
+.olrijkop .olv{flex:1}
+.olpm p{margin:0;font-size:.875rem}
+.olpm p small{display:block;color:var(--ink3);font-size:.75rem}
+.olplus{padding:11px;border:1.5px dashed var(--line2);border-radius:14px;background:none;color:var(--ink2);font-weight:600;font-size:.875rem;cursor:pointer}
+.olfotos{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.olft{position:relative;display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:10px;overflow:hidden;background:var(--sunken)}
+.olft img{width:100%;height:100%;object-fit:cover}
+.olft em{color:var(--ink3);font-size:.75rem;font-style:normal}
+.olft button{position:absolute;top:3px;right:3px;display:flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:0;border-radius:50%;background:rgba(21,24,29,.75);color:#fff;cursor:pointer}
+.olft button svg{width:12px;height:12px}
+.meldform .olfplus{display:inline-flex;flex-direction:row;align-items:center;gap:6px;height:40px;padding:0 14px;border:1.5px dashed var(--line2);border-radius:999px;font-weight:500;cursor:pointer}
+.olfplus input{display:none}
+.olvoorstel{padding:10px 12px;border-left:3px solid var(--wacht);border-radius:10px;background:rgba(255,255,255,.72);font-size:.875rem}
+.olvoorstel ul{margin:4px 0 6px;padding-left:18px}
+.olvraag{margin:0;padding:12px 14px;border:1px solid var(--line2);border-radius:14px;background:var(--bg)}
+.olvraag p{margin:0 0 10px;font-weight:500}
+.olvoet{flex-wrap:wrap;padding-bottom:22px}
+.olbalk{display:block;height:6px;margin-top:6px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.olbalk i{display:block;height:100%;background:var(--ok)}
+.olknop{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.olknop input[type=date]{padding:4px 8px;border:1px solid var(--line2);border-radius:999px;font:inherit;font-size:.8125rem;background:var(--bg)}
 .pmtaken{display:flex;flex-direction:column;gap:14px;min-width:0}
 .pmtkop{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .pmtkop b{font-size:.8125rem}
@@ -1674,7 +1719,7 @@ function lijstScherm(cfg){
   if(cfg.seg)$("#seg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){s.seg=b.dataset.seg;teken()}});
   const tb=$("#tabel");
   tb.addEventListener("click",e=>{
-    if(e.target.closest("[data-bon],[data-pmpdf],[data-weekknop],.bonvink,.zatkies,select,input,a"))return;
+    if(e.target.closest("[data-bon],[data-pmpdf],[data-weekknop],[data-olnaar],[data-olvan],[data-olbestand],.bonvink,.zatkies,select,input,a"))return;
     const th=e.target.closest("th[data-k]");
     if(th){const k=th.dataset.k;s.sort=s.sort&&s.sort.k===k?(s.sort.d>0?{k,d:-1}:null):{k,d:1};teken();return}
     const tr=e.target.closest("tr[data-i]");
@@ -1707,6 +1752,7 @@ document.addEventListener("click",e=>{
   const tc=e.target.closest("[data-tdcm]");if(tc){const c=(D.cm||[]).find(x=>x.nr===tc.dataset.tdcm);if(c)openPaneel(cmDetail(c))}
   const tp=e.target.closest("[data-tdpm]");if(tp){const b=tdPm(tp.dataset.tdpm);if(b)openPaneel(pmDetail(b))}
   const tb=e.target.closest("[data-tdbon]");if(tb)tdBonMaken(tb.dataset.tdbon);
+  const to=e.target.closest("[data-tdolbon]");if(to){const [k,i]=to.dataset.tdolbon.split("|"),x=tdItems(true).find(y=>y.key===k);if(x&&x.ol)openNieuweBon({tekst:"Uit opnamelijst "+x.ol.ol+": "+olBevLijst(x.g)[+i],lijn:x.ol.lijn,machine:x.ol.machine})}
   const tf=e.target.closest("[data-tdfoto]");if(tf)tf.closest(".fotos").classList.toggle("groot");
   const tm=e.target.closest("[data-tdmeer]");if(tm){TDMEER[tm.dataset.tdmeer]=!TDMEER[tm.dataset.tdmeer];vTeDoen()}
   const tq=e.target.closest("[data-tdprio]");if(tq)cPrioKies(tq.dataset.tdprio,tq.dataset.p);
@@ -1885,7 +1931,7 @@ function pasOpnameToe(o,w){
 /* Een wijziging die de geplande taak nog niet verwerkte. Blijft staan tot de pagina opnieuw laadt, dan zit hij in het overzicht. */
 function pasBonToe(w){
   const c=(D.cm||[]).find(x=>x.nr===w.nr),b=D.meta.bonnen,volg=["Open","In bestelling","Gepland"],extra=w.rij||{},oudKlaar=c&&KLAAR.includes(c.status);
-  if(extra.pmreg||extra.zoekmeer)return;
+  if(extra.pmreg||extra.zoekmeer||extra.olplan||extra.olopname)return;
   if(extra.gezien!==undefined){GEZIEN_LIVE[extra.gezien]=!extra.terug;return}
   if(extra.rca!==undefined){pasRcaToe(extra.rca);return}
   if(extra.menu!==undefined){const oud=JSON.stringify(MENU_LIVE===undefined?null:MENU_LIVE);MENU_LIVE=extra.menu;if(MENU_WV&&JSON.stringify(MENU_LIVE)!==oud)bouwMenu();return}
@@ -2347,7 +2393,7 @@ let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
 const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
-const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd"]).includes(HUIDIG))SCHERM[HUIDIG]();if(HUIDIG==="rca"&&!RCA_SEL&&$("#paneel").hidden)vRca()};
+const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd","opname"]).includes(HUIDIG))SCHERM[HUIDIG]();if(HUIDIG==="rca"&&!RCA_SEL&&$("#paneel").hidden)vRca()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
 function melder(t){document.querySelectorAll(".toast").forEach(x=>x.remove());const e=document.createElement("div");e.className="toast";e.setAttribute("role","status");e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),3200)}
 async function haalMeldingen(){
@@ -2355,8 +2401,8 @@ async function haalMeldingen(){
   const fout=MELDFOUT;
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
-    MELDFOUT=false;LIVE_TIJD=new Date();standTeken();const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[],j.pm||[],j.bevindingen||[]]);
-    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);bordPrio();NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
+    MELDFOUT=false;LIVE_TIJD=new Date();standTeken();const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[],j.pm||[],j.bevindingen||[],j.olopname||[]]);
+    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);OLLIVE=j.olopname||[];(j.bonstatus||[]).forEach(olToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);bordPrio();NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;standTeken();if(!fout)herteken()}
 }
 async function stuur(d){
@@ -2440,6 +2486,7 @@ async function verzendUitbak(){
   if(verzendt||!MELD())return;
   verzendt=true;
   try{
+    if(D.niveau==="monteur")await olWacht();
     for(const x of (await UITBAK.alles()).filter(uitbakVanMij)){
       let j;
       /* Een regel die intussen is verwijderd mag de rest niet tegenhouden. */
@@ -2563,7 +2610,7 @@ async function haalRapport(){
   const m=MELD();if(!m)return;
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)+"&rapport=1"),j=await r.json();if(j.fout)throw 0;
-    RFOUT=false;if(j.bonstatus&&D.niveau==="monteur"){j.bonstatus.slice().sort((a,b)=>!(a.rij||{}).week-!(b.rij||{}).week).forEach(weekToe);if(pmTeken)pmTeken()}const t=JSON.stringify(j.rapport||[]);
+    RFOUT=false;if(j.bonstatus&&D.niveau==="monteur"){if(j.olopname)OLLIVE=j.olopname;j.bonstatus.slice().sort((a,b)=>!(a.rij||{}).week-!(b.rij||{}).week).forEach(w=>{weekToe(w);olToe(w)});if(pmTeken)pmTeken()}const t=JSON.stringify(j.rapport||[]);
     if(t!==rlaatste||RAPPORT===null){rlaatste=t;RAPPORT=j.rapport||[];if(rteken)rteken()}
   }catch(_){RFOUT=true;if(rteken)rteken()}
 }
@@ -2684,7 +2731,7 @@ function pmScherm(){
   if(MELD()){haalPm();leesUitbak();uitbakAan();setInterval(()=>{if(!document.hidden)haalPm()},60000)}
 }
 /* Uitvoerbare bonnen: de werkvoorbereider vinkt CM-bonnen aan op de pagina CM-bonnen. De monteur ziet ze boven de PM-bonnen en meldt ze hier af. */
-let WEEK=null,pmKlik=null;
+let WEEK=null,pmKlik=null,olIn=null,olCh=null;
 const weekLijst=()=>WEEK||(WEEK=(D.weekbonnen||[]).map(x=>Object.assign({},x)));
 /* De opdracht van de werkvoorbereider meldt de monteur los af. Gedaan is: lokaal afgemeld, nog in de uitbak, of al in de wachtrij. */
 const opdWacht=nr=>UIT.filter(x=>x.d.actie==="opdracht"&&x.d.nr===nr).pop();
@@ -2715,6 +2762,80 @@ function weekToe(w){
   if(e.opname)opnameAf(e.opname,w.status,w.tijd);
   if(e.opdrachtaf){const b=weekLijst().find(x=>x.nr===e.opdrachtaf.nr);if(b&&(!b.opdgedaan||tdVolg(e.opdrachtaf.tijd)>=tdVolg(b.opdgedaan.tijd)))b.opdgedaan=Object.assign({},e.opdrachtaf)}
 }
+/* ---- Opnamelijst in de monteursapp: vak A tot en met I, zoals het formulier op papier.
+   De werkvoorbereider zet een lijst klaar (rij.olplan). Wat de monteur invult staat op de telefoon (td-hub-ol) en bij Opslaan of Afmelden in de Sheet
+   (tabblad Opnamelijst), zodat een collega verder kan. Foto's gaan los naar Drive (actie olfoto); in de gegevens staat dan alleen het id. ---- */
+let OLLIVE=[],OLPLANLIVE={};
+const OLSTAP=[["A","Machinegegevens"],["B","Componenten"],["C","Smeerpunten"],["D","Bestaande PM-punten"],["E","Reserveonderdelen"],["F","Veiligheid"],["G","Foto's"],["H","Afronding"],["I","Notities en afmelden"]];
+const OLKEY="td-hub-ol",OLAANWEZIG=["Perslucht","Hydrauliek","Stoom","Water","Documentatie"],OLBRON=["Elektrisch","Perslucht","Hydrauliek","Stoom","Water","Zwaartekracht","Veerspanning"],OLFOTOSOORT=["Typeplaatje","Overzicht machine","Aandrijving","Typeplaatjes componenten"];
+const olLees=()=>{try{return JSON.parse(localStorage.getItem(OLKEY)||"{}")||{}}catch(_){return{}}};
+const olSchrijf=o=>{try{localStorage.setItem(OLKEY,JSON.stringify(o));return true}catch(_){return false}};
+const olThumb=id=>{try{return localStorage.getItem("td-hub-olt-"+id)}catch(_){return null}};
+const olLive=ol=>{const r=OLLIVE.filter(x=>x.ol===ol).pop();if(!r)return null;let g=null;try{g=JSON.parse(r.gegevens)}catch(_){}return Object.assign({},r,{g})};
+/* Wat als voorstel voor een CM-bon geldt: componenten op Slecht of Matig, PM-punten op Niet OK, onderdelen die niet op voorraad zijn. */
+const olBevLijst=g=>(g.B||[]).filter(b=>b.c&&(b.staat==="S"||b.staat==="M")).map(b=>b.c+(b.staat==="S"?" slecht":" matig")+(b.opm?": "+b.opm:"")).concat((g.D||[]).filter(d=>d.s==="NOK").map(d=>d.taak+": niet OK"+(d.opm?" ("+d.opm+")":"")),(g.E||[]).filter(e=>e.o&&e.voorraad==="N").map(e=>e.o+": niet op voorraad"));
+const olNr=ol=>String(ol).replace(".","-");
+function olToe(w){const e=w.rij||{};if(e.olplan&&e.olplan.ol){const o=OLPLANLIVE[e.olplan.ol];if(!o||tdVolg(w.tijd)>=tdVolg(o.tijd))OLPLANLIVE[e.olplan.ol]=Object.assign({},e.olplan,{tijd:w.tijd})}}
+/* De lijsten voor de monteur: uit de site, aangevuld met wat de werkvoorbereider net klaarzette of weghaalde. */
+function olLijst(){
+  const uit=(D.olbonnen||[]).map(x=>Object.assign({},x));
+  Object.values(OLPLANLIVE).forEach(p=>{
+    const i=uit.findIndex(x=>x.ol===p.ol);
+    if(i>=0&&uit[i].af)return;
+    if(i>=0&&uit[i].plantijd&&tdVolg(uit[i].plantijd)>tdVolg(p.tijd))return;
+    if(!p.aan){if(i>=0)uit.splice(i,1);return}
+    if(i<0)uit.push({ol:p.ol,lijn:p.lijn,machine:p.machine,pm_code:p.pm_code,comps:p.comps||[],pm:p.pm||[],dag:p.dag,plantijd:p.tijd});else Object.assign(uit[i],{dag:p.dag,plantijd:p.tijd});
+  });
+  return uit;
+}
+/* Afgemeld: verwerkt in de site, al in de Sheet, of nog op de telefoon omdat er geen bereik was. */
+function olKlaar(x){
+  if(x.af)return x.af;
+  const c=olLees()[x.ol];if(c&&c.wacht==="Opgenomen")return{door:c.g.wie,tijd:c.wtijd,wacht:true};
+  const l=olLive(x.ol);if(l&&l.status==="Opgenomen"&&(!x.plantijd||tdVolg(l.tijd)>=tdVolg(x.plantijd)))return{door:l.door,tijd:l.tijd};
+  return null;
+}
+function olVul(x,g){
+  g.A=g.A||{};g.F=g.F||{};g.G=g.G||{};g.H=g.H||{};g.gezien=g.gezien||[];
+  if(!g.B)g.B=(x.comps||[]).map(c=>({c,pm:1}));
+  if(!g.C)g.C=[];
+  if(!g.D)g.D=(x.pm||[]).map(p=>({id:p.id,taak:p.taak}));
+  if(!g.E)g.E=[];
+  if(!g.wie)g.wie=D.naam||naam();
+  return g;
+}
+/* De nieuwste stand gaat voor: die van deze telefoon, of wat een collega opsloeg. */
+function olConcept(x){
+  const c=olLees()[x.ol],l=olLive(x.ol);let g=c&&c.g;
+  if(l&&l.g&&l.status!=="Opgenomen"&&(!g||(l.g.t||0)>(g.t||0)))g=l.g;
+  return olVul(x,JSON.parse(JSON.stringify(g||{})));
+}
+function olBewaar(ol,g,extra){const o=olLees();g.t=Date.now();o[ol]=Object.assign({},o[ol]||{},{g},extra||{});return olSchrijf(o)}
+const olFotoPaden=g=>[g.A&&g.A.fotos,g.F&&g.F.fotos,g.G&&g.G.fotos].concat((g.B||[]).map(b=>b.fotos)).filter(Array.isArray);
+async function olFotosUp(ol,g){
+  for(const lijst of olFotoPaden(g))for(let i=lijst.length-1;i>=0;i--){
+    const f=lijst[i];if(!String(f).startsWith("tmp:"))continue;
+    const k=f.slice(4);let b=null;try{b=localStorage.getItem("td-hub-olf-"+k)}catch(_){}
+    if(!b){lijst.splice(i,1);continue}
+    const j=await stuur({actie:"olfoto",ol,foto:b});
+    lijst[i]=j.foto;
+    try{const t=localStorage.getItem("td-hub-olt-"+f);if(t)localStorage.setItem("td-hub-olt-"+j.foto,t);localStorage.removeItem("td-hub-olt-"+f);localStorage.removeItem("td-hub-olf-"+k)}catch(_){}
+    olBewaar(ol,g);
+  }
+}
+async function olVerstuur(ol,status,g){
+  await olFotosUp(ol,g);
+  const j=await stuur({actie:"olopname",ol,status,gegevens:g,door:g.wie||pmDoor()});
+  OLLIVE=OLLIVE.filter(r=>r.ol!==ol).concat([{ol,status,gegevens:JSON.stringify(g),door:g.wie,tijd:j.tijd}]);
+  const o=olLees();if(status==="Opgenomen")delete o[ol];else if(o[ol]){o[ol].g=g;delete o[ol].wacht}
+  olSchrijf(o);
+  return j;
+}
+/* Wat zonder bereik is opgeslagen of afgemeld, gaat vanzelf zodra er weer bereik is. */
+async function olWacht(){
+  const o=olLees();
+  for(const ol in o){if(!o[ol].wacht)continue;try{await olVerstuur(ol,o[ol].wacht,o[ol].g)}catch(_){return}}
+}
 /* In de inlog van de monteur is de naam niet vast: die komt uit het veld op de bon. */
 const pmDoor=()=>{const v=$("#pm_naam");return D.naam||(v?v.value.trim():naam())};
 const pmNaamVeld=()=>D.naam?"":'<label>Monteur<input type="text" id="pm_naam" required value="'+esc(naam())+'"></label>';
@@ -2729,6 +2850,7 @@ function pmVak(vak,tabs){
   const groep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.map(kaart).join("")+"</section>";
   const cmDag=b=>isDag(b.dag)?(+datum(b.dag)===+pmNu()?"Vandaag":pmDag(datum(b.dag))):"";
   const cmKaart=b=>'<button type="button" class="pmkaart'+(isDag(b.dag)&&datum(b.dag)<pmNu()&&!weekKlaar(b)?" laat":"")+'" data-weekbon="'+esc(b.nr)+'"><span class="pmk1"><b>'+esc(b.omschrijving)+"</b>"+st(kaartStatus(b))+'</span><span class="pmk2">'+esc([hoofd(cmDag(b)),b.nr,b.lijn,b.machine,b.prio?"Prio "+b.prio:""].filter(Boolean).join(" · "))+"</span>"+(b.opdracht&&!weekKlaar(b)?'<span class="pmk2 pmopdr"><b>'+(opdGedaan(b)?"Opdracht gedaan:":"Opdracht:")+"</b> "+esc(b.opdracht)+"</span>":"")+(weekWacht(b.nr)?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>";
+  const olKaart=x=>{const k=olKlaar(x),c=k?null:olLees()[x.ol],l=k?null:olLive(x.ol),g=k?null:(c&&c.g)||(l&&l.g)||{},n=k?9:(g.gezien||[]).length;return'<button type="button" class="pmkaart olkaart'+(!k&&isDag(x.dag)&&datum(x.dag)<pmNu()?" laat":"")+'" data-ol="'+esc(x.ol)+'"><span class="pmk1"><b>'+esc(x.ol+" "+x.machine)+"</b>"+st(k?"Uitgevoerd":n?"Bezig":"Open")+'</span><span class="pmk2">'+esc([x.lijn,isDag(x.dag)?hoofd(+datum(x.dag)===+pmNu()?"Vandaag":pmDag(datum(x.dag))):"",k?(k.wacht?"Wacht op bereik":"Afgemeld door "+k.door):n+" van 9 vakken bekeken"].filter(Boolean).join(" · "))+"</span>"+(k?"":'<span class="olbalk"><i style="width:'+Math.round(n/9*100)+'%"></i></span>')+(c&&c.wacht?'<span class="pmk2 pmwacht">Wacht op bereik</span>':"")+"</button>"};
   /* Bonnen met een dag eerst, op volgorde van de dag. */
   const cmVolg=(a,b)=>(isDag(a.dag)?+datum(a.dag):9e15)-(isDag(b.dag)?+datum(b.dag):9e15)||nummer(a.nr)-nummer(b.nr);
   const cmGroep=(t,r)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+r.length+"</span></h2>"+r.slice().sort(cmVolg).map(cmKaart).join("")+"</section>";
@@ -2819,21 +2941,112 @@ function pmVak(vak,tabs){
       meld("Afmelden is niet gelukt. Probeer het opnieuw.");k.disabled=false;k.textContent=was;
     }
   }
+  /* ---- Opnamelijst: één vak per scherm, bovenin welke vakken al bekeken zijn ---- */
+  let olOpen=null,olG=null,olS=0,olVraag=null,olTimer=null;
+  const olGet=p=>p.split(".").reduce((o,k)=>o==null?o:o[k],olG);
+  const olSet=(p,v)=>{const k=p.split("."),l=k.pop(),o=k.reduce((o,x)=>o[x]==null?(o[x]={}):o[x],olG);o[l]=v};
+  const olLokaal=()=>{clearTimeout(olTimer);olTimer=setTimeout(()=>{if(olOpen&&olG&&!olBewaar(olOpen,olG))melder("De telefoon is vol. Sla op met bereik.")},400)};
+  const olTxt=(p,l,ph,num)=>'<label class="olv"><span>'+esc(l)+'</span><input type="text"'+(num?' inputmode="decimal"':"")+' data-olv="'+p+'" value="'+esc(olGet(p)||"")+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+"></label>";
+  const olTa=(p,l,ph)=>'<label class="olv"><span>'+esc(l)+'</span><textarea data-olv="'+p+'"'+(ph?' placeholder="'+esc(ph)+'"':"")+">"+esc(olGet(p)||"")+"</textarea></label>";
+  const olKies=(p,l,opties,multi,kl)=>{
+    const v=olGet(p);
+    return'<div class="olv">'+(l?"<span>"+esc(l)+"</span>":"")+'<div class="olchips">'+opties.map(o=>{const w=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o,aan=multi?(v||[]).includes(w):v===w;return'<button type="button" class="olchip" data-olkies="'+p+'" data-w="'+esc(w)+'"'+(multi?' data-multi="1"':"")+(kl?' data-kl="'+kl[w]+'"':"")+' aria-pressed="'+aan+'">'+esc(t)+"</button>"}).join("")+"</div></div>";
+  };
+  const olFoto=(p,l)=>{
+    const f=olGet(p)||[],kies=(t,cap)=>'<label class="olfplus">'+ico(cap?"camera":"foto")+t+'<input type="file" accept="image/*"'+(cap?' capture="environment"':"")+' data-olfoto="'+p+'"></label>';
+    return'<div class="olv"><span>'+esc(l)+'</span><div class="olfotos">'+f.map((id,i)=>{const t=olThumb(id);return'<span class="olft">'+(t?'<img alt="Foto" src="data:image/jpeg;base64,'+t+'">':"<em>Foto</em>")+'<button type="button" data-olfweg="'+p+"|"+i+'" aria-label="Foto weghalen">'+ico("sluit")+"</button></span>"}).join("")+(navigator.maxTouchPoints>0?kies("Foto maken",1):"")+kies("Foto kiezen",0)+"</div></div>";
+  };
+  const olStaat={G:"g",M:"m",S:"s"};
+  /* Wat bij H als voorstel voor een CM-bon komt: componenten op Slecht of Matig, PM-punten op Niet OK, onderdelen die niet op voorraad zijn. */
+  const olBev=olBevLijst;
+  function olVakHtml(x,L){
+    const g=olG,rij=(lijst,f,leeg,plus,soort)=>(lijst.length?lijst.map(f).join(""):'<p class="pmgeen">'+esc(leeg)+"</p>")+'<button type="button" class="olplus" data-oladd="'+soort+'">'+esc(plus)+"</button>";
+    const weg=(s,i)=>'<button type="button" class="tekstknop olweg" data-olweg="'+s+"|"+i+'">Weghalen</button>';
+    if(L==="A")return'<p class="pmhint">Neem over wat op de typeplaat staat. Onleesbaar? Laat het leeg.</p>'+olFoto("A.fotos","Foto typeplaat")+olTxt("A.fabrikant","Fabrikant")+'<div class="oltwee">'+olTxt("A.type","Type / model")+olTxt("A.bouwjaar","Bouwjaar","",1)+"</div>"+olTxt("A.serie","Serienummer")+olTxt("A.leverancier","Leverancier")+'<div class="oltwee">'+olTxt("A.spanning","Spanning","400 V")+olTxt("A.vermogen","Vermogen","kW")+"</div>"+olTxt("A.ultimo","Ultimo-nummer")+olKies("A.aanwezig","Aanwezig",OLAANWEZIG,1);
+    if(L==="B")return'<p class="pmhint">'+(g.B.some(b=>b.pm)?"De onderdelen uit de PM-taken staan er al. ":"")+"Geef per component de staat. Bij Slecht schrijf je wat er is.</p>"+rij(g.B,(b,i)=>'<div class="olrij">'+(b.pm?'<h4><span>'+esc(b.c)+"<small>uit PM-taken</small></span>"+weg("B",i)+"</h4>":'<div class="olrijkop">'+olTxt("B."+i+".c","Component")+weg("B",i)+"</div>")+olKies("B."+i+".staat","Staat",[["G","Goed"],["M","Matig"],["S","Slecht"]],0,olStaat)+olTxt("B."+i+".opm","Wat is er?","Verplicht bij Slecht")+'<details class="olmeer"'+(b.aantal||b.type||b.maat||(b.fotos||[]).length?" open":"")+"><summary>Aantal, merk, maat en foto</summary>"+'<div class="oltwee">'+olTxt("B."+i+".aantal","Aantal","",1)+olTxt("B."+i+".type","Merk / type")+"</div>"+olTxt("B."+i+".maat","Maat / artikelnr.")+olFoto("B."+i+".fotos","Foto")+"</details></div>","Nog geen componenten.","Component toevoegen","B");
+    if(L==="C")return olKies("Cgeen","",[["1","Geen smeerpunten gevonden"]])+rij(g.C,(c,i)=>'<div class="olrij"><div class="olrijkop">'+olTxt("C."+i+".p","Smeerpunt","Bijv. flenslagers tussenas")+weg("C",i)+'</div><div class="oltwee">'+olTxt("C."+i+".aantal","Aantal","",1)+olTxt("C."+i+".interval","Interval","Bijv. maand")+"</div>"+olKies("C."+i+".middel","Smeermiddel",["H1-vet","H1-olie","Kettingolie","Anders"])+olTxt("C."+i+".hoeveel","Hoeveelheid")+olKies("C."+i+".methode","Methode",["Vetspuit","Smeerautomaat","Oliekan","Kwast"])+"</div>","Nog geen smeerpunten.","Smeerpunt toevoegen","C");
+    if(L==="D")return(g.D.length?'<p class="pmhint">De PM-punten die nu voor deze machine gelden. Tik OK of Niet OK. Niet gedaan? Laat leeg.</p>'+g.D.map((d,i)=>'<div class="olrij olpm"><p>'+esc(d.taak)+(d.id?"<small>"+esc(d.id)+"</small>":"")+"</p>"+olKies("D."+i+".s","",[["OK","OK"],["NOK","Niet OK"]],0,{OK:"g",NOK:"s"})+olTxt("D."+i+".opm","Opmerking","Bij Niet OK: wat is er?")+"</div>").join(""):'<p class="pmhint">Voor deze machine staan nog geen PM-taken op de site. Schrijf hieronder wat je controleerde.</p>')+olTa("Dopm","Overige bijzonderheden","Typ wat je nog opviel");
+    if(L==="E")return'<p class="pmhint">Onderdelen die op voorraad moeten liggen omdat de machine anders stilvalt.</p>'+rij(g.E,(e,i)=>'<div class="olrij"><div class="olrijkop">'+olTxt("E."+i+".o","Onderdeel")+weg("E",i)+'</div><div class="oltwee">'+olTxt("E."+i+".art","Artikelnr. / type")+olTxt("E."+i+".lev","Leverancier")+"</div>"+olKies("E."+i+".voorraad","Op voorraad",[["J","Ja"],["N","Nee"]],0,{J:"g",N:"s"})+olTxt("E."+i+".min","Minimaal op voorraad","",1)+"</div>","Nog geen onderdelen.","Onderdeel toevoegen","E");
+    if(L==="F")return olKies("F.bronnen","Energiebronnen",OLBRON,1)+olTxt("F.loto","LOTO-punt","Bijv. hoofdschakelaar kast 916")+olFoto("F.fotos","Foto LOTO-punt")+olTa("F.risico","Risico's","Bijv. beknelling bij de mat");
+    if(L==="G"){const n=olFotoPaden(g).reduce((s,l)=>s+l.length,0);return olKies("G.gemaakt","Vink af wat je hebt gefotografeerd",OLFOTOSOORT,1)+olFoto("G.fotos","Overige foto's")+'<p class="pmhint">'+n+(n===1?" foto":" foto's")+" bij deze lijst.</p>"}
+    if(L==="H"){const b=olBev(g);return olKies("H.compleet","Opname compleet?",[["Ja","Ja"],["Nee","Nee"]])+olKies("H.correctief","Correctieve bon nodig?",[["Ja","Ja"],["Nee","Nee"]])+(b.length?'<div class="olvoorstel"><b>Uit de vakken</b><ul>'+b.map(t=>"<li>"+esc(t)+"</li>").join("")+'</ul><button type="button" class="tekstknop" data-olneem>Overnemen</button></div>':"")+olTa("H.wat","Voor wat?","Wat moet er gebeuren")}
+    return olTa("I","Notities","Wat wil je nog kwijt?")+olTxt("wie","Opgenomen door","Namen");
+  }
+  function olForm(ol,stap){
+    const x=olLijst().find(y=>y.ol===ol);if(!x){lijst();return}
+    open="ol:"+ol;
+    const k=olKlaar(x),kop='<button type="button" class="tekstknop pmterug" data-pmterug>Terug naar de lijst</button><article class="pmbon"><div class="pmb1"><div><small>'+esc([x.ol,x.lijn,x.pm_code].filter(Boolean).join(" · "))+"</small><h2>"+esc(x.machine)+"</h2></div>"+(k?st("Uitgevoerd"):"")+"</div>";
+    if(k){vak.innerHTML=kop+'<p class="pmaf">'+esc((k.wacht?"Wacht op bereik. ":"")+"Afgemeld door "+k.door+(k.tijd?", "+k.tijd:""))+'</p><p class="pmhint">De werkvoorbereider maakt hier de opnamelijst in Word en PDF van.</p></article>';olOpen=null;return}
+    if(olOpen!==ol){olG=olConcept(x);olS=0;olVraag=null;olOpen=ol}
+    if(stap!=null)olS=stap;
+    const L=OLSTAP[olS][0],g=olG,laatste=olS===OLSTAP.length-1;
+    const stapper='<div class="olstap">'+OLSTAP.map((s,i)=>'<button type="button" data-olstap="'+i+'" class="'+(i===olS?"nu":g.gezien.includes(s[0])?"ok":"")+'" aria-label="'+esc("Vak "+s[0]+": "+s[1]+(g.gezien.includes(s[0])?", bekeken":""))+'"'+(i===olS?' aria-current="step"':"")+">"+s[0]+"</button>").join("")+"</div>";
+    const vraag=olVraag?'<div class="olvraag"><p>'+esc(olVraag)+'</p><div class="rfknoppen"><button type="button" class="knop" data-olnee>Nee, verder invullen</button><button type="button" class="knop hoofd" data-olja>Ja, afmelden</button></div></div>':"";
+    const voet=laatste?'<div class="rfknoppen olvoet"><button type="button" class="knop" data-olvorig>Vorige</button><button type="button" class="knop" data-olop>Opslaan, later verder</button><button type="button" class="knop hoofd" data-olaf>Afmelden</button></div>':'<div class="rfknoppen olvoet">'+(olS?'<button type="button" class="knop" data-olvorig>Vorige</button>':"")+'<button type="button" class="knop" data-olop>Opslaan</button><button type="button" class="knop hoofd" data-olvolg>Volgende: '+OLSTAP[olS+1][0]+"</button></div>";
+    vak.innerHTML=kop+(isDag(x.dag)?'<p class="pmaf">Gepland: '+esc(pmDag(datum(x.dag)))+"</p>":"")+stapper+'<div class="olvak meldform"><h3>'+L+" "+esc(OLSTAP[olS][1])+"</h3>"+olVakHtml(x,L)+'</div><p class="fout" id="ol_fout" role="alert" hidden></p>'+vraag+voet+"</article>";
+  }
+  const olFout=t=>{const f=$("#ol_fout");if(f){f.textContent=t;f.hidden=false;f.scrollIntoView({block:"center"})}};
+  function olNaar(i){
+    const L=OLSTAP[olS][0];if(!olG.gezien.includes(L))olG.gezien.push(L);
+    olVraag=null;olBewaar(olOpen,olG);olForm(olOpen,i);window.scrollTo(0,0);
+  }
+  async function olFotoKies(inp){
+    const f=inp.files[0],p=inp.dataset.olfoto;inp.value="";if(!f)return;
+    let b,t;
+    try{b=await verklein(f);t=await new Promise((ok,nee)=>{const i=new Image();i.onload=()=>{const s=Math.min(1,180/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext("2d").drawImage(i,0,0,c.width,c.height);ok(c.toDataURL("image/jpeg",.6).split(",")[1])};i.onerror=nee;i.src="data:image/jpeg;base64,"+b})}
+    catch(_){melder("Deze foto kan niet worden gelezen. Kies een andere foto.");return}
+    const k=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    try{localStorage.setItem("td-hub-olf-"+k,b);localStorage.setItem("td-hub-olt-tmp:"+k,t)}catch(_){melder("De telefoon is vol. Sla eerst op met bereik, dan gaan de foto's weg van de telefoon.");return}
+    olSet(p,(olGet(p)||[]).concat(["tmp:"+k]));olBewaar(olOpen,olG);olForm(olOpen);
+    /* Met bereik gaat de foto meteen naar Drive, dan blijft de telefoon leeg. */
+    const ol=olOpen,g=olG;olFotosUp(ol,g).catch(()=>{});
+  }
+  async function olStuur(k,status){
+    const ol=olOpen,g=olG,was=k.textContent;
+    k.disabled=true;k.textContent="Bezig";
+    try{
+      await olVerstuur(ol,status,g);
+      if(status==="Opgenomen"){olOpen=null;lijst();window.scrollTo(0,0);melder(ol+" is afgemeld")}
+      else{k.disabled=false;k.textContent=was;melder("Opgeslagen. Een collega kan verder waar jij stopte.")}
+    }catch(e){
+      const m=e&&e.message||"";
+      if(e instanceof TypeError||e.name==="TimeoutError"||navigator.onLine===false){
+        olBewaar(ol,g,{wacht:status,wtijd:nuTekst()});
+        if(status==="Opgenomen"){olOpen=null;lijst();window.scrollTo(0,0)}else{k.disabled=false;k.textContent=was}
+        melder("Geen bereik. Het wordt vanzelf verstuurd.");return;
+      }
+      k.disabled=false;k.textContent=was;
+      olFout(/onbekende actie|geen toegang/.test(m)?"Opslaan kan pas als het nieuwe script (versie 24) in Apps Script staat.":m==="te veel tekst"?"De lijst is te lang om op te slaan. Maak de notities korter.":"Opslaan is niet gelukt. Probeer het opnieuw.");
+    }
+  }
+  function olAfmelden(k,zeker){
+    const g=olG;if(!g.gezien.includes("I"))g.gezien.push("I");
+    if(!String(g.wie||"").trim()){olFout("Vul in wie de opname deed.");return}
+    const slecht=g.B.findIndex(b=>b.staat==="S"&&!String(b.opm||"").trim());
+    if(slecht>=0){olS=1;olForm(olOpen);olFout("Schrijf bij "+(g.B[slecht].c||"de component")+" wat er slecht is.");return}
+    const mist=OLSTAP.map(s=>s[0]).filter(l=>!g.gezien.includes(l));
+    if(mist.length&&!zeker){olVraag=(mist.length===1?"Vak "+mist[0]+" is nog niet bekeken.":"Vak "+lijstTekst(mist)+" zijn nog niet bekeken.")+" Toch afmelden?";olForm(olOpen);return}
+    if(!D.naam)naam(String(g.wie).split(",")[0].trim());
+    olStuur(k,"Opgenomen");
+  }
   function lijst(){
-    open=null;
+    open=null;olOpen=null;
     if(!vak.isConnected||(onder&&!pmTeken))return;
     const alle=pmPlan().bonnen,nu=pmNu(),grens=new Date(nu);grens.setDate(grens.getDate()+7);
     const cmDoen=onder?weekLijst().filter(b=>!weekKlaar(b)):[],cmAf=onder?weekLijst().filter(weekKlaar):[];
     const doen=alle.filter(b=>pmStand(b)!=="Uitgevoerd"&&datum(b.datum)<=grens),af=alle.filter(b=>pmStand(b)==="Uitgevoerd").reverse();
-    const knoppen='<button data-m="doen" aria-pressed="'+(tab==="doen")+'">Te doen<span>'+(doen.filter(b=>datum(b.datum)<=nu).length+cmDoen.length)+'</span></button><button data-m="af" aria-pressed="'+(tab==="af")+'">Afgemeld<span>'+(af.length+cmAf.length)+"</span></button>";
+    const ols=onder?olLijst():[],olDoen=ols.filter(x=>!olKlaar(x)),olAf=ols.filter(x=>olKlaar(x));
+    const knoppen='<button data-m="doen" aria-pressed="'+(tab==="doen")+'">Te doen<span>'+(doen.filter(b=>datum(b.datum)<=nu).length+cmDoen.length+olDoen.length)+'</span></button><button data-m="af" aria-pressed="'+(tab==="af")+'">Afgemeld<span>'+(af.length+cmAf.length+olAf.length)+"</span></button>";
     if(tabs)tabs.innerHTML=knoppen;
     let h=(onder?'<div class="seg pmsub" data-pmsub role="group" aria-label="Bonnen">'+knoppen+"</div>":"")+'<p class="pmwie">'+esc([pmDag(new Date()),D.naam].filter(Boolean).join(", "))+"</p>"+(PMFOUT?'<p class="pmmelding">Eerder afgemelde bonnen zijn nu niet op te halen. Afmelden kan wel.</p>':"");
-    if(tab==="af"){h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
+    const olSectie=r=>'<section class="dag pmdag"><h2>Opnamelijsten<span>'+r.length+"</span></h2>"+r.map(olKaart).join("")+"</section>";
+    if(tab==="af"){h+=olAf.length?olSectie(olAf):"";h+=cmAf.length?cmGroep("Bonnen",cmAf):"";h+=af.length?groep("Afgemeld",af):cmAf.length||olAf.length?"":'<div class="leegmelding">Nog niets afgemeld.</div>'}
     else{
       /* Opnamebonnen staan apart bovenaan. De rest staat per dag: de CM- en SQD-bonnen van die dag en daaronder de PM-bonnen. Bonnen zonder dag staan onderaan. */
       /* Een bon met een opdracht die nog open staat (bijvoorbeeld maat opnemen) hoort ook bij de opnamebonnen, ook als hij met Plannen voor monteurs is klaargezet. */
       const isOpn=b=>b.soort==="opname"||(!!b.opdracht&&!opdGedaan(b));
       const opnames=cmDoen.filter(isOpn),gewoon=cmDoen.filter(b=>!isOpn(b));
+      if(olDoen.length)h+=olSectie(olDoen);
       if(opnames.length)h+=cmGroep("Opnamebonnen",opnames);
       const cmD=b=>isDag(b.dag)?datum(b.dag):null;
       const sectie=(t,cms,pms,leeg)=>'<section class="dag pmdag"><h2>'+esc(t)+"<span>"+(cms.length+pms.length)+"</span></h2>"+(cms.length||pms.length?cms.slice().sort(cmVolg).map(cmKaart).join("")+pms.map(kaart).join(""):'<p class="pmgeen">'+esc(leeg)+"</p>")+"</section>";
@@ -2935,6 +3148,23 @@ function pmVak(vak,tabs){
   pmKlik=e=>{
     const sb=e.target.closest("[data-pmsub] button");if(sb){tab=sb.dataset.m;lijst();return}
     const wk=e.target.closest("[data-weekbon]");if(wk){cmBon(wk.dataset.weekbon);window.scrollTo(0,0);return}
+    const ok_=e.target.closest("[data-ol]");if(ok_){olForm(ok_.dataset.ol,0);window.scrollTo(0,0);return}
+    if(olOpen){
+      const t=e.target;
+      const sp=t.closest("[data-olstap]");if(sp){olNaar(+sp.dataset.olstap);return}
+      if(t.closest("[data-olvolg]")){olNaar(olS+1);return}
+      if(t.closest("[data-olvorig]")){olNaar(olS-1);return}
+      const kz=t.closest("[data-olkies]");
+      if(kz){const p=kz.dataset.olkies,w=kz.dataset.w;if(kz.dataset.multi){const v=(olGet(p)||[]).slice(),i=v.indexOf(w);if(i>=0)v.splice(i,1);else v.push(w);olSet(p,v)}else olSet(p,olGet(p)===w?"":w);kz.parentNode.querySelectorAll("[data-olkies]").forEach(b=>b.setAttribute("aria-pressed",kz.dataset.multi?(olGet(p)||[]).includes(b.dataset.w):olGet(p)===b.dataset.w));olLokaal();return}
+      const ad=t.closest("[data-oladd]");if(ad){olG[ad.dataset.oladd].push({});olBewaar(olOpen,olG);olForm(olOpen);const r=vak.querySelectorAll(".olrij");if(r.length){r[r.length-1].scrollIntoView({block:"center"});const i=r[r.length-1].querySelector("input");if(i)i.focus()}return}
+      const wg=t.closest("[data-olweg]");if(wg){const [s_,i]=wg.dataset.olweg.split("|");olG[s_].splice(+i,1);olBewaar(olOpen,olG);olForm(olOpen);return}
+      const fw=t.closest("[data-olfweg]");if(fw){const [p,i]=fw.dataset.olfweg.split("|"),l=olGet(p)||[];l.splice(+i,1);olBewaar(olOpen,olG);olForm(olOpen);return}
+      if(t.closest("[data-olneem]")){const b=olBev(olG);olG.H.wat=b.join("; ");if(b.length)olG.H.correctief="Ja";olBewaar(olOpen,olG);olForm(olOpen);return}
+      const op=t.closest("[data-olop]");if(op){olBewaar(olOpen,olG);olStuur(op,"Deels");return}
+      const af=t.closest("[data-olaf]");if(af){olAfmelden(af,false);return}
+      if(t.closest("[data-olnee]")){olVraag=null;olForm(olOpen);return}
+      const ja=t.closest("[data-olja]");if(ja){olVraag=null;const k=vak.querySelector("[data-olaf]")||ja;olAfmelden(k,true);return}
+    }
     const wa=e.target.closest("[data-wbaf]");if(wa){cmAfmelden(wa);return}
     const ob=e.target.closest("[data-opbon]");if(ob){opnameBon(ob);return}
     const od=e.target.closest("[data-opdaf]");if(od){opdrachtAfmelden(od);return}
@@ -2954,6 +3184,10 @@ function pmVak(vak,tabs){
       $("#pmform").dispatchEvent(new Event("change"));
     }
   };
+  if(olIn){vak.removeEventListener("input",olIn);vak.removeEventListener("change",olCh)}
+  olIn=e=>{const el=e.target.closest("[data-olv]");if(el&&olOpen&&olG){olSet(el.dataset.olv,el.value);olLokaal()}};
+  olCh=e=>{const el=e.target.closest("[data-olfoto]");if(el&&olOpen)olFotoKies(el)};
+  vak.addEventListener("input",olIn);vak.addEventListener("change",olCh);
   vak.addEventListener("click",pmKlik);
   pmTeken=()=>{if(!open)lijst()};rteken=pmTeken;
   lijst();
@@ -4573,6 +4807,8 @@ function tdItems(alles){
     /* Apart gezet om zelf te beoordelen (cm[].beoordelen). Een datum of een andere status dan Open haalt hem hier weg. */
     if(bo)zet("beoordelen","bo:"+c.nr,{c,tijd:"",tekst:c.beoordelen});
   });
+  /* Een opnamelijst die in de monteursapp is afgemeld: de bevindingen met Bon maken, twee weken lang. */
+  (D.opnamelijsten||[]).forEach(r=>{const x=olStandWv(r),g=r.digitaal?r.digitaal.gegevens:x.g;if((x.s==="klaar"||x.s==="af")&&g&&tdRecent(x.tijd))zet("opname","ol:"+r.ol+":"+x.tijd,{ol:r,g,tijd:x.tijd,door:x.door,tekst:"Opnamelijst "+r.machine})});
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
   bev.forEach(x=>{const nr=bonVan(x.id),c=nr?(D.cm||[]).find(y=>y.nr===nr)||null:null;if(c?zonderPrio(c):tdRecent(x.tijd))zet("afgekeurd","bev:"+x.id,{c,bev:x,b:tdPm(x.nr),tijd:x.tijd,door:x.door,tekst:x.opmerking})});
   (PMAF||[]).forEach(a=>{const b=tdPm(a.nr);if(a.status==="Deels uitgevoerd")zet("deels","pmd:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking});else if(a.opmerking&&tdRecent(a.tijd))zet("pmopm","pmo:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking})});
@@ -4595,7 +4831,7 @@ function tdTel(){
 const tdLabel=c=>{const g=tdMag()&&TDMAP[c.nr],x=g&&TDGROEP.find(y=>y.id===g);return x&&x.l?'<span class="tdlabel">'+esc(x.l)+"</span>":""};
 const tdPlek=x=>x.c?[x.c.lijn,x.c.machine].filter(Boolean).join(", "):x.b?pmPlek(x.b):"";
 const tdReg=x=>{const nr=x.a?x.a.nr:x.bev?x.bev.nr:"";return nr?(pmAf(nr)||{}).reg||"":""};
-const tdKopTekst=x=>{const g=TDGROEP.find(y=>y.id===x.groep);return[g.t,x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||"",x.c?x.c.omschrijving:x.tekst].filter(Boolean).join(" · ")};
+const tdKopTekst=x=>{const g=TDGROEP.find(y=>y.id===x.groep);return[g.t,x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||(x.ol&&x.ol.ol)||"",x.c?x.c.omschrijving:x.tekst].filter(Boolean).join(" · ")};
 /* ---- Te doen als controlepaneel ---- */
 /* Zevensegmentcijfers zoals op een paneelmeter: onverlichte segmenten blijven vaag zichtbaar. */
 const SEG7={a:[30,6,"h"],b:[53,28,"v"],c:[53,72,"v"],d:[30,94,"h"],e:[7,72,"v"],f:[7,28,"v"],g:[30,50,"h"]},CIJFER7={"0":"abcdef","1":"bc","2":"abged","3":"abgcd","4":"fgbc","5":"afgcd","6":"afgedc","7":"abc","8":"abcdefg","9":"abfgcd"," ":""};
@@ -4618,7 +4854,7 @@ const lijstTekst=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" en "+a[a.le
 /* Dicht laat een lade in één regel zien wat het eerst aandacht vraagt. */
 function tdVoorbeeld(g,l,open){
   if(open)return esc(g.u);
-  const x=l[0],nr=x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"";
+  const x=l[0],nr=x.c?x.c.nr:tdReg(x)||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||(x.ol&&x.ol.ol)||"";
   const tekst=x.bev?x.bev.opmerking||x.bev.naam:x.c?(["beoordelen","klopt","deels","afgemeld","opdracht"].includes(g.id)&&x.tekst?x.c.omschrijving+". "+x.tekst:x.c.omschrijving):x.tekst||"";
   return(nr?"<b>"+esc(nr)+"</b> ":"")+esc(tekst)+(l.length>1?'<span class="zacht"> en nog '+(l.length-1)+"</span>":"");
 }
@@ -4635,7 +4871,15 @@ function tdRegel(x,g){
   let nr=c?c.nr:reg||(x.a&&x.a.nr)||(x.bev&&x.bev.nr)||"",titel=c?c.omschrijving:x.tekst||"",plek=tdPlek(x),waarom="",best="",fotos=[];
   const wie=[[x.door,x.tijd?tdWanneer(x.tijd):""].filter(Boolean).join(", "),c&&reg?reg:""].filter(Boolean).join(" · ");
   if(id==="beoordelen"||id==="klopt")waarom=x.tekst;
-  else if(id==="opname"){
+  if(x.ol){
+    const bev=olBevLijst(x.g),f=(bonnen().ol||{})[x.ol.ol];
+    nr=x.ol.ol;titel="Opnamelijst "+x.ol.machine;plek=x.ol.lijn;
+    if(bev.length)feit.push(["Bevindingen","<ul>"+bev.map((t,i)=>"<li>"+esc(t)+' <button type="button" class="tekstknop" data-tdolbon="'+esc(x.key)+"|"+i+'">Bon maken</button></li>').join("")+"</ul>"]);
+    else waarom="Geen bevindingen. Werk de lijst uit tot PM-taken.";
+    if(x.g.I)feit.push(["Notities",esc(x.g.I)]);
+    if(f)knop.push(["Opnamelijst in Word","data-olbestand",x.ol.ol+"|docx"]);
+  }
+  else if(id==="opname"&&c){
     const o=c.opname||{};
     feit.push(["Opgenomen",(o.regels||[]).length?"<ul>"+o.regels.map(y=>"<li>"+esc([y.onderdeel,y.spec].filter(Boolean).join(": ")+(y.aantal?" ("+y.aantal+" st.)":""))+"</li>").join("")+"</ul>":of(null)]);
     if(o.tekst)feit.push(["Opmerking",esc(o.tekst)]);
@@ -5127,21 +5371,73 @@ function vPrio(){
       {k:"o",l:"Open bonnen",w:"100px",n:1,c:"m-status",r:x=>(x.open_cm||[]).length||'<span class="zacht">0</span>',s:x=>-(x.open_cm||[]).length}],
     detail:x=>({klein:x.pm_code,titel:x.machine,velden:[["Prio",prio(x.prio),true],["Lijn",x.lijn],["Opnamelijst",x.ol_bon],["Voedselveiligheid",x.score_voedselveiligheid],["Veiligheid",x.score_veiligheid],["Open bonnen",(x.open_cm||[]).join(", ")],["Opmerking",x.opmerking]]})});
 }
+/* Opnamelijsten in de monteursapp: de werkvoorbereider zet een lijst klaar met Naar monteurs, met of zonder dag (rij.olplan). Dat werkt meteen. */
+const olNorm=t=>String(t||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+const olPmVan=r=>{const m=olNorm(r.machine);return m?(D.pm||[]).filter(p=>{const l=olNorm(p.lijndeel);return p.lijn===r.lijn&&(l===m||m.startsWith(l)||l.startsWith(m))}):[]};
+function olPlanWv(r){
+  const p=OLPLANLIVE[r.ol];
+  if(p&&(!r.plan||tdVolg(p.tijd)>=tdVolg(r.plan.tijd)))return p.aan?{dag:p.dag,tijd:p.tijd}:null;
+  return r.plan||null;
+}
+function olStandWv(r){
+  if(r.digitaal)return{s:"klaar",door:r.digitaal.door,tijd:r.digitaal.tijd};
+  const p=olPlanWv(r),l=olLive(r.ol);
+  if(l&&l.status==="Opgenomen"&&(!p||tdVolg(l.tijd)>=tdVolg(p.tijd)))return{s:"af",door:l.door,tijd:l.tijd,g:l.g};
+  if(p)return{s:"bij",dag:p.dag,n:l&&l.g&&(!p.tijd||tdVolg(l.tijd)>=tdVolg(p.tijd))?(l.g.gezien||[]).length:0,door:l&&l.door,tijd:l&&l.tijd};
+  return{s:""};
+}
+function olCel(r){
+  const x=olStandWv(r),f=(bonnen().ol||{})[r.ol],wv=wvMag();
+  if(x.s==="klaar")return'<span class="olknop"><span class="st ok"><i></i>In de app, '+esc(String(x.tijd||"").slice(0,10))+"</span>"+(f&&MODE==="enc"?'<button type="button" class="tekstknop" data-olbestand="'+esc(r.ol)+'|docx">Word</button><button type="button" class="tekstknop" data-olbestand="'+esc(r.ol)+'|pdf">PDF</button>':"")+"</span>";
+  if(x.s==="af")return'<span class="st ok"><i></i>Afgemeld, Word volgt</span>';
+  if(x.s==="bij")return'<span class="olknop"><span class="st info"><i></i>Bij monteurs'+(x.dag?", "+esc(x.dag.slice(0,5)):"")+"</span>"+(x.n?'<span class="zacht">'+x.n+" van 9</span>":"")+(wv?'<button type="button" class="tekstknop" data-olvan="'+esc(r.ol)+'">Van monteurs halen</button>':"")+"</span>";
+  if(!wv||r.opname_gedaan)return of(null);
+  return'<span class="olknop"><input type="date" min="'+n0()+'" data-oldag="'+esc(r.ol)+'" aria-label="'+esc("Dag voor "+r.ol+", mag leeg")+'"><button type="button" class="knop" data-olnaar="'+esc(r.ol)+'">Naar monteurs</button></span>';
+}
+async function olKlaarzetten(ol,aan,dag){
+  const r=(D.opnamelijsten||[]).find(x=>x.ol===ol);if(!r||!MELD())return;
+  const t=olPmVan(r),p={ol,aan,dag:dag||null,lijn:r.lijn,machine:r.machine,pm_code:r.pm_code};
+  if(aan)Object.assign(p,{comps:uniek(t.map(x=>x.onderdeel).filter(Boolean)).slice(0,30),pm:t.slice(0,40).map(x=>({id:x.id,taak:x.taak}))});
+  const oud=OLPLANLIVE[ol],her=()=>{if(HUIDIG==="opname")vOpname()};
+  OLPLANLIVE[ol]=Object.assign({},p,{tijd:nuTekst()});her();
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:olNr(ol),status:"Open",rij:{olplan:p},door:wvDoor()});laatste="";melder(aan?ol+" staat in de monteursapp":ol+" is uit de monteursapp gehaald")}
+  catch(_){if(oud)OLPLANLIVE[ol]=oud;else delete OLPLANLIVE[ol];her();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
+}
+async function olBestand(k){
+  const [ol,soort]=k.dataset.olbestand.split("|"),f=(bonnen().ol||{})[ol];if(!f)return;
+  k.disabled=true;
+  try{await geefBestand(new File([await bonBytes(f[soort])],f.naam+"."+soort,{type:BONTYPE[soort]}))}
+  catch(_){melder("Downloaden is niet gelukt. Probeer het opnieuw.")}
+  k.disabled=false;
+}
+document.addEventListener("click",e=>{
+  const inP=!!e.target.closest("#paneel");
+  const n=e.target.closest("[data-olnaar]");if(n){const i=n.parentNode.querySelector("[data-oldag]"),v=i&&i.value;if(inP)sluitPaneel();olKlaarzetten(n.dataset.olnaar,true,v?v.split("-").reverse().join("-"):null);return}
+  const v=e.target.closest("[data-olvan]");if(v){if(inP)sluitPaneel();olKlaarzetten(v.dataset.olvan,false,null);return}
+  const b=e.target.closest("[data-olbestand]");if(b)olBestand(b);
+});
+/* Wat de monteur invulde, kort in het paneel. De hele lijst staat in Word en PDF. */
+function olSamenvatting(g){
+  if(!g)return null;
+  const a=g.A||{},bev=olBevLijst(g),b=(g.B||[]).filter(x=>x.c&&x.staat).length;
+  return'<ul class="pmvink">'+[["Typeplaat",[a.fabrikant,a.type,a.bouwjaar].filter(Boolean).join(", ")],["Componenten",b?b+" beoordeeld":""],["Smeerpunten",g.Cgeen?"geen":(g.C||[]).filter(x=>x.p).length||""],["PM-punten",(g.D||[]).filter(x=>x.s).length?(g.D||[]).filter(x=>x.s==="OK").length+" OK, "+(g.D||[]).filter(x=>x.s==="NOK").length+" niet OK":""],["LOTO-punt",(g.F||{}).loto],["Correctieve bon",(g.H||{}).correctief],["Notities",g.I]].filter(x=>x[1]).map(x=>"<li><b>"+esc(x[0])+":</b> "+esc(String(x[1]))+"</li>").join("")+"</ul>"+(bev.length?"<p><b>Bevindingen</b></p><ul>"+bev.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul>":"");
+}
 function vOpname(){
   const o=D.opnamelijsten,g=o.filter(x=>x.opname_gedaan).length,u=o.filter(x=>x.uitgewerkt).length;
   const ja=(v,t,n)=>v?'<span class="st ok"><i></i>'+t+"</span>":'<span class="st"><i></i>'+n+"</span>";
-  const f=x=>x.uitgewerkt?"Uitgewerkt":x.opname_gedaan?"Opgenomen":"Nog te doen";
-  lijstScherm({key:"opname",titel:"Opnamelijsten",sub:g+" van "+o.length+" opgenomen, "+u+" uitgewerkt. "+stand("opname"),rijen:o,eenheid:["lijst","lijsten"],
-    seg:{get:f,o:["Nog te doen","Opgenomen","Uitgewerkt"]},
+  const f=x=>x.uitgewerkt?"Uitgewerkt":x.opname_gedaan||olStandWv(x).s==="af"?"Opgenomen":olStandWv(x).s==="bij"?"Bij monteurs":"Nog te doen";
+  lijstScherm({key:"opname",titel:"Opnamelijsten",sub:g+" van "+o.length+" opgenomen, "+u+" uitgewerkt. "+(wvMag()?"Met Naar monteurs staat een lijst meteen in de monteursapp, de dag mag leeg. ":"")+stand("opname"),rijen:o,eenheid:["lijst","lijsten"],
+    seg:{get:f,o:["Nog te doen","Bij monteurs","Opgenomen","Uitgewerkt"]},
     selects:[{k:"lijn",l:"Alle lijnen",o:uniek(o.map(x=>x.lijn)),get:x=>x.lijn}],
     tekst:x=>[x.ol,x.machine,x.lijn,x.pm_code,x.opmerking].join(" "),
     kolommen:[
       {k:"ol",l:"Lijst",w:"80px",c:"m-nr",x:"nr",r:x=>of(x.ol),s:x=>{const m=/(\d+)\.(\d+)/.exec(x.ol||"");return m?+m[1]*1000+ +m[2]:1e9}},
       {k:"m",l:"Machine",c:"m-main",x:"titel",r:x=>esc(x.machine),s:x=>norm(x.machine)},
-      {k:"l",l:"Lijn",w:"90px",c:"m-sub",r:x=>of(x.lijn),s:x=>norm(x.lijn)},
-      {k:"g",l:"Opname",w:"130px",c:"m-status",r:x=>ja(x.opname_gedaan,"Gedaan","Open"),s:x=>x.opname_gedaan?0:1},
-      {k:"u",l:"Uitwerking",w:"130px",c:"m-sub",ml:"Uitwerking",r:x=>ja(x.uitgewerkt,"Klaar","Open"),s:x=>x.uitgewerkt?0:1}],
-    detail:x=>({klein:x.ol,titel:x.machine,velden:[["Lijn",x.lijn],["PM-code",x.pm_code],["Opname",x.opname_gedaan?"Gedaan":"Open"],["Uitwerking",x.uitgewerkt?"Klaar":"Open"],["Opmerking",x.opmerking]]})});
+      {k:"l",l:"Lijn",w:"80px",c:"m-sub",r:x=>of(x.lijn),s:x=>norm(x.lijn)},
+      {k:"g",l:"Opname",w:"110px",c:"m-status",r:x=>ja(x.opname_gedaan,"Gedaan","Open"),s:x=>x.opname_gedaan?0:1},
+      {k:"u",l:"Uitwerking",w:"110px",c:"m-sub",ml:"Uitwerking",r:x=>ja(x.uitgewerkt,"Klaar","Open"),s:x=>x.uitgewerkt?0:1},
+      {k:"a",l:"Monteursapp",w:"300px",c:"m-sub",ml:"Monteursapp",r:olCel,s:x=>({klaar:0,af:1,bij:2,"":3})[olStandWv(x).s]}],
+    detail:x=>{const st_=olStandWv(x),gg=x.digitaal?x.digitaal.gegevens:st_.g||(olLive(x.ol)||{}).g;return{klein:x.ol,titel:x.machine,velden:[["Lijn",x.lijn],["PM-code",x.pm_code],["Opname",x.opname_gedaan?"Gedaan":"Open"],["Uitwerking",x.uitgewerkt?"Klaar":"Open"],["Monteursapp",olCel(x),true],["Ingevuld door",st_.door],["Laatst opgeslagen",st_.tijd],["In de app",olSamenvatting(gg),true],["Opmerking",x.opmerking]]}}});
 }
 function vPm(){
   const p=D.pm;

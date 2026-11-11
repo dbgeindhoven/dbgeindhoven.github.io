@@ -276,7 +276,7 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de bonnen die de werkvoorbereider heeft ingepland. Geen bonbestanden.
-    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
+    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "olbonnen": olbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
     if pub.get("sleutel_monteur"):
         boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
     for wie, sleutel in (pub.get("monteurs") or {}).items():
@@ -333,6 +333,42 @@ def weekbonnen(data, stand, kopie):
             x.update(soort="opname", klaar=True, af={k: o.get(k) for k in ("door", "tijd", "tekst")})
         if aan and r["nr"] in kopie:
             x["bon"] = kopie[r["nr"]]
+        uit.append(x)
+    return uit
+
+
+def ol_norm(t):
+    return re.sub(r"[^a-z0-9]+", " ", str(t or "").lower()).strip()
+
+
+def ol_pm(data, r):
+    """De PM-taken van de machine van een opnamelijst: zelfde lijn en het lijndeel past op de machine."""
+    m = ol_norm(r.get("machine"))
+    return [p for p in data.get("pm", []) if p.get("lijn") == r.get("lijn") and m and (ol_norm(p.get("lijndeel")) == m or m.startswith(ol_norm(p.get("lijndeel"))) or ol_norm(p.get("lijndeel")).startswith(m))]
+
+
+def olbonnen(data, stand):
+    """Opnamelijsten voor de monteursapp: wat de werkvoorbereider klaarzette, met de onderdelen en PM-punten van die machine al ingevuld.
+    Wat al is ingevuld staat in de Sheet (tabblad Opnamelijst) en niet hier. Een afgemelde lijst blijft twee weken bij Afgemeld staan."""
+    grens = datetime.datetime.strptime(stand, "%d-%m-%Y") - datetime.timedelta(days=14)
+    uit = []
+    for r in data.get("opnamelijsten", []):
+        d = r.get("digitaal") or {}
+        try:
+            recent = datetime.datetime.strptime(str(d.get("tijd"))[:10], "%d-%m-%Y") >= grens
+        except ValueError:
+            recent = False
+        if not (r.get("plan") and not d) and not recent:
+            continue
+        x = {k: r.get(k) for k in ("ol", "lijn", "machine", "pm_code")}
+        if d:
+            x["af"] = {"door": d.get("door"), "tijd": d.get("tijd")}
+        else:
+            x["dag"] = (r.get("plan") or {}).get("dag")
+            x["plantijd"] = (r.get("plan") or {}).get("tijd")
+            taken = ol_pm(data, r)
+            x["comps"] = list(dict.fromkeys(p.get("onderdeel") for p in taken if p.get("onderdeel")))[:30]
+            x["pm"] = [{"id": p["id"], "taak": p.get("taak")} for p in taken][:40]
         uit.append(x)
     return uit
 

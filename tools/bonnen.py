@@ -26,6 +26,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fill_bon
+import opnamelijst
 import pm
 
 REPO = Path(__file__).resolve().parent.parent
@@ -651,6 +652,12 @@ def wijzig(a):
         if extra.get("zatkop"):
             zat_kop(data, extra["zatkop"])
             continue
+        if "olplan" in extra:
+            ol_plan(data, extra["olplan"], w)
+            continue
+        if extra.get("olopname"):
+            ol_opname(data, extra["olopname"], w)
+            continue
         if extra.get("week"):
             rij = next((r for r in data["cm"] if r.get("nr") == extra["week"].get("nr")), None)
             if rij is not None:
@@ -996,6 +1003,89 @@ def pm_registratie(data, r, wm):
     klaar[r["nr"]] = {"reg": r["reg"], "naam": spec["naam"], "pdf": versleutel(pdf.read_bytes(), b["sleutel"])}
 
 
+OL_RE = r"OL\d{1,2}\.\d{1,3}"
+
+
+def ol_rij(data, ol):
+    return next((r for r in data.get("opnamelijsten", []) if r.get("ol") == ol), None)
+
+
+def ol_plan(data, p, w):
+    """De werkvoorbereider zet een opnamelijst bij de monteurs (status-OL-<n>-<m>.txt met rij.olplan), met een dag of zonder."""
+    r = ol_rij(data, str((p or {}).get("ol")))
+    if r is None:
+        print("opnamelijst", (p or {}).get("ol"), "staat niet in het overzicht")
+        return
+    if p.get("aan"):
+        dag = str(p.get("dag") or "")
+        r["plan"] = {"dag": dag if re.fullmatch(r"\d{2}-\d{2}-\d{4}", dag) else None, "door": str(w.get("door") or "")[:100], "tijd": w.get("tijd")}
+        print(r["ol"], "bij de monteurs", r["plan"]["dag"] or "zonder dag")
+    else:
+        r.pop("plan", None)
+        print(r["ol"], "van de monteurs gehaald")
+
+
+def ol_opname(data, o, w):
+    """De monteur meldde een opnamelijst af in de app (status-OLA-<n>-<m>-<tijd>.txt met rij.olopname). Wat hij invulde komt in
+    opnamelijsten[].digitaal; de opname staat dan op gedaan en de lijst gaat van de monteurs af. olbon maakt er Word en PDF van."""
+    r = ol_rij(data, str((o or {}).get("ol")))
+    if r is None or not isinstance(o.get("gegevens"), dict):
+        print("opnamelijst", (o or {}).get("ol"), "niet verwerkt")
+        return
+    g = rca_schoon(o["gegevens"])
+    r["digitaal"] = {"door": str(o.get("door") or "")[:200], "tijd": o.get("tijd") or w.get("tijd"), "gegevens": g}
+    r["opname_gedaan"] = True
+    r.pop("plan", None)
+    oud = stand(data).setdefault("ol", {}).pop(r["ol"], None)
+    for k in ("docx", "pdf"):
+        if oud and str(oud.get(k, "")).startswith("bonnen/"):
+            (REPO / oud[k]).unlink(missing_ok=True)
+    regel = "Opgenomen in de app door %s op %s." % (g.get("wie") or o.get("door") or "monteur", str(r["digitaal"]["tijd"])[:10])
+    r["opmerking"] = " ".join(filter(None, ((r.get("opmerking") or "").replace(regel, "").strip(), regel)))
+    print(r["ol"], "opgenomen in de app door", o.get("door"))
+
+
+def olwerk(a):
+    """Welke opnamelijsten nog een Word- en PDF-bestand nodig hebben, met de Drive-id's van hun foto's."""
+    data = laad(a.site)
+    klaar = (data["meta"].get("bonnen") or {}).get("ol") or {}
+    uit = [{"ol": r["ol"], "fotos": [f for f, _ in opnamelijst.fotolijst(r["digitaal"]["gegevens"])]} for r in data.get("opnamelijsten", []) if r.get("digitaal") and r["ol"] not in klaar]
+    print(json.dumps(uit, ensure_ascii=False))
+
+
+def olbon(a):
+    """Maakt de opnamelijst machine in Word en PDF en zet ze versleuteld in bonnen/ (meta.bonnen.ol[<ol>]). De foto's staan als <id>.jpg in de map."""
+    data = laad(a.site)
+    b = stand(data)
+    wm = Path(a.map)
+    wm.mkdir(parents=True, exist_ok=True)
+    logo = None
+    try:
+        import io, zipfile
+        logo = zipfile.ZipFile(io.BytesIO(ontsleutel(TEMPLATE, b["sleutel"]))).read("word/media/image1.png")
+    except Exception as e:
+        print("geen logo:", e)
+    klaar = b.setdefault("ol", {})
+    for r in data.get("opnamelijsten", []):
+        if not r.get("digitaal") or (r["ol"] in klaar and not a.opnieuw):
+            continue
+        g = dict(r["digitaal"]["gegevens"], _tijd=r["digitaal"].get("tijd"), _door=r["digitaal"].get("door"))
+        naam = "Opnamelijst %s %s %s" % (r["ol"], r.get("lijn") or "", re.sub(r"[\\/:*?\"<>|]", "", r.get("machine") or ""))
+        naam = " ".join(naam.split())
+        pad = wm / (naam + ".docx")
+        opnamelijst.maak(r, g, logo, wm, pad)
+        naar_pdf([pad], wm)
+        pdf = pad.with_suffix(".pdf")
+        mist = [f for f, _ in opnamelijst.fotolijst(g) if not (wm / (f + ".jpg")).exists()]
+        oud = klaar.get(r["ol"]) or {}
+        for k in ("docx", "pdf"):
+            if str(oud.get(k, "")).startswith("bonnen/"):
+                (REPO / oud[k]).unlink(missing_ok=True)
+        klaar[r["ol"]] = {"naam": naam, "docx": versleutel(pad.read_bytes(), b["sleutel"]), "pdf": versleutel(pdf.read_bytes(), b["sleutel"]), "tijd": r["digitaal"].get("tijd")}
+        print(r["ol"], "opnamelijst gemaakt,", paginas(pdf), "pagina's", ("ontbrekende foto's: " + ", ".join(mist)) if mist else "")
+    bewaar(a.site, data)
+
+
 def zatbon(a):
     """Maakt de bestanden voor een bon die al in het overzicht staat maar nog geen Word-bon op de site heeft."""
     data = laad(a.site)
@@ -1041,6 +1131,8 @@ x = sub.add_parser("zaterdag"); x.add_argument("site"); x.add_argument("map"); x
 x = sub.add_parser("pmdag"); x.add_argument("site"); x.add_argument("map"); x.add_argument("--datum", required=True); x.set_defaults(fn=pmdag)
 x = sub.add_parser("zatbon"); x.add_argument("site"); x.add_argument("map"); x.add_argument("nr"); x.set_defaults(fn=zatbon)
 x = sub.add_parser("zoekwerk"); x.add_argument("site"); x.add_argument("--aantal", type=int, default=8); x.set_defaults(fn=zoekwerk)
+x = sub.add_parser("olwerk"); x.add_argument("site"); x.set_defaults(fn=olwerk)
+x = sub.add_parser("olbon"); x.add_argument("site"); x.add_argument("map"); x.add_argument("--opnieuw", action="store_true"); x.set_defaults(fn=olbon)
 x = sub.add_parser("zoek"); x.add_argument("site"); x.add_argument("bestand"); x.set_defaults(fn=zoek)
 a = ap.parse_args()
 a.fn(a)
