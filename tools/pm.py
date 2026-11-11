@@ -85,7 +85,7 @@ def verdeel(plan, g):
 
     def tel(extra):
         for p, n in extra.items():
-            druk[p] += n
+            druk[p] = druk.get(p, 0) + n
 
     for k, v in vak.items():
         if k in g:
@@ -157,7 +157,9 @@ def bijwerken(data, vandaag):
     bonnen, d = [b for b in plan.get("bonnen", []) if dat(b["datum"]) <= tot and (b["nr"] in vast or nu - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]))], tot + EEN_DAG
     while d <= eind:
         if d >= start:
-            dagbonnen = bonnen_op(plan, g, d) if d.weekday() < 5 and d <= nu + datetime.timedelta(days=VOORUIT) else []
+            # Een lijndeel met dag 6 in vak doet ook zijn taken in bedrijf op zaterdag, zoals de oven van lijn 3.
+            gdag = g if d.weekday() < 5 else {k: v for k, v in g.items() if plan["vak"][k]["dag"] == 6}
+            dagbonnen = bonnen_op(plan, gdag, d) if d.weekday() < 6 and gdag and d <= nu + datetime.timedelta(days=VOORUIT) else []
             gd = {k: v for k, v in gu.items() if lijnen[v[0]["lijn"]].get("vanaf") and d >= dat(lijnen[v[0]["lijn"]]["vanaf"])}
             if gd:
                 bonnen_op(plan, gd, d, dagbonnen)
