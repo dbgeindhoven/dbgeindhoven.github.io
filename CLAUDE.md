@@ -44,6 +44,7 @@ Elke status zonder dag haalt de bon van de agenda. Van een plan halen of een pla
 Boven de pagina staan voor de werkvoorbereider Bonnen in Word, Bonnen in PDF en Zaterdaglijst.
 - **Word:** de browser vult de bonnen (`cm[].bon.docx`) op het moment van downloaden, dus altijd met de laatste wijzigingen.
 - **PDF:** de lijst met alle bonnen erachter, `meta.bonnen.zaterdag.pdf`.
+- **Preventief en wat klaar is:** de lijst en de PDF van elk plan zetten bij Preventief ook de PM-bonnen van die dag (`plan_pm` in `tools/bonnen.py`; bij een stop van één lijn alleen die lijn, zonder registratie), altijd met prio 1 en met de PM-bon in F.95.602 achter de andere bonnen. Bonnen die Uitgevoerd, Gereed of Vervallen zijn staan niet op de lijst en niet in de PDF. Een wijziging in de PM-bonnen maakt de lijst opnieuw (`pmstempel`).
 - **Zaterdaglijst:** altijd de PDF `meta.bonnen.zaterdag.lijstpdf`, nooit Word. `bonnen.py zaterdag` maakt die uit het lege format (`meta.bonnen.lijst`, `bonnen/zaterdaglijst.bin`). Lange regels zijn hoger dan het format rekent, dus de lijst wordt eerst zonder lege regels opgemaakt, daarna vullen lege regels de pagina en valt de laatste regel niet op een eigen pagina.
 
 De geplande taak maakt beide PDF's opnieuw. Klopt de `stempel` niet met de pagina, dan meldt de site dat de PDF achterloopt en komt er geen bestand.

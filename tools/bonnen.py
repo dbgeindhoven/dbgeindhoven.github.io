@@ -35,6 +35,7 @@ TEMPLATE = "template.bin"
 LIJST = "zaterdaglijst.bin"
 WEEKDAGEN = ("Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag")
 KLAAR = ("Uitgevoerd", "Gereed")
+DICHT = KLAAR + ("Vervallen",)
 # De statussen van een bon. Besteld en Leverdatum hebben een eigen datum (besteld_op, leverdatum), Gepland de dag van zijn plan.
 BONSTATUS = ("Open", "Te plannen", "Uitzoeken voor bestelling", "Besteld", "Leverdatum", "Gepland", "Uitgevoerd", "Vervallen")
 # Oudere statussen uit een oude pagina of een oud wachtrijbestand. Deels uitgevoerd is ook wat de monteur kiest bij het afmelden.
@@ -866,27 +867,51 @@ def plan_print(data, z, wm, oud):
     if zonder:
         print("Geen bonbestand:", ", ".join(zonder))
     stempel = zat_stempel(data, z)
-    if not nieuw and oud.get("lijstpdf") and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel:
+    pmb = plan_pm(data, z)
+    pmst = ";".join(x["nr"] + ":" + ",".join(x["taken"]) for x in pmb)
+    if not nieuw and oud.get("lijstpdf") and oud.get("datum") == z.get("datum") and oud.get("stempel") == stempel and oud.get("pmstempel", "") == pmst:
         print(plan_naam(z) + ": printversie is actueel.")
         return oud
     regel = lambda r: (r["nr"], r.get("werkzaamheid"), r.get("lijn_machine"), *zat_regel(r, cm.get(r["nr"])))
     docx = wm / "zaterdaglijst.docx"
     datum = str(z.get("datum")) + (" – " + str(z.get("lijn")) if z.get("lijn") else "")
     leeg = ontsleutel(LIJST, b["sleutel"])
-    lijsten = [[regel(r) for r in z.get(k) or []] for k in ("correctief", "preventief")]
+    # Wat al klaar is staat niet meer op de lijst en de bon zit niet in de PDF. De PM-bonnen van die dag staan bij preventief, altijd prio 1.
+    open_ = lambda r: (cm.get(r["nr"]) or {}).get("status") not in DICHT
+    rijen = {x["id"]: x for x in data.get("pm", [])}
+    specs = [pm_spec(x, rijen) for x in pmb]
+    lijsten = [[regel(r) for r in z.get(k) or [] if open_(r)] for k in ("correctief", "preventief")]
+    lijsten[1] = [(sp["werkbon_nr"], sp["omschrijving"], sp["lijn_machine"], 1, "", "") for sp in specs] + lijsten[1]
     lijstpdf = lijst_opmaken(lambda vrij: fill_bon.zaterdaglijst(leeg, datum, lijsten, z, plan_tekst(z), vrij), docx, wm)
     stukken = [lijstpdf]
-    for i, r in enumerate(zat_rijen(z)):
+    for i, r in enumerate(r for r in zat_rijen(z) if open_(r)):
         bon = (cm.get(r["nr"]) or {}).get("bon")
         if bon and bon.get("pdf"):
             p = wm / ("stuk-%03d.pdf" % i)
             p.write_bytes(ontsleutel(Path(bon["pdf"]).name, b["sleutel"]))
             stukken.append(p)
+    if specs:
+        sjabloon = wm / "template.docx"
+        sjabloon.write_bytes(ontsleutel(TEMPLATE, b["sleutel"]))
+        docx = []
+        for sp in specs:
+            pad = wm / (sp["naam"] + ".docx")
+            fill_bon.maak(sp, sjabloon, pad)
+            pad.write_bytes(fill_bon.zet_zaterdag(pad.read_bytes(), 1, "", dag))
+            docx.append(pad)
+        naar_pdf(docx, wm)
+        stukken += [p.with_suffix(".pdf") for p in docx]
     alles = wm / "zaterdagwerk.pdf"
     subprocess.run(["pdfunite", *map(str, stukken), str(alles)], check=True, capture_output=True)
     plan_print_weg(oud)
     print(plan_naam(z) + ": printversie gemaakt,", len(stukken) - 1, "bonnen,", len(nieuw), "bijgewerkt")
-    return {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "lijstpdf": versleutel(lijstpdf.read_bytes(), b["sleutel"]), "stempel": stempel}
+    return {"datum": z.get("datum"), "pdf": versleutel(alles.read_bytes(), b["sleutel"]), "lijstpdf": versleutel(lijstpdf.read_bytes(), b["sleutel"]), "stempel": stempel, "pmstempel": pmst}
+
+
+def plan_pm(data, z):
+    """De PM-bonnen op de dag van een plan, bij een stop van één lijn alleen die lijn. Wat al een registratie heeft is klaar."""
+    klaar = stand(data).get("pmreg") or {}
+    return [x for x in (data.get("pmplan") or {}).get("bonnen") or [] if x["datum"] == z.get("datum") and x["nr"] not in klaar and (not z.get("lijn") or x["lijn"] == z["lijn"])]
 
 
 def zaterdag(a):
