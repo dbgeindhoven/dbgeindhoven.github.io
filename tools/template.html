@@ -211,6 +211,9 @@ html.present .deelkop .knop{display:none}
 .actieregel{display:flex;gap:8px;align-items:flex-start}
 .actieregel input[type=checkbox]{flex:none;width:20px;height:20px;margin:9px 0 0}
 .actieregel.info{padding-left:28px}
+#o_info .actieregel.info{padding-left:0}
+.meldform #o_oorzaak{min-height:0;resize:none;overflow:hidden}
+#o_infoveld[hidden]{display:none}
 .meldform .actieregel textarea{min-height:0;resize:none;overflow:hidden}
 .actieregel.klaar textarea{color:var(--ink2);text-decoration:line-through}
 .actieveld .tekstknop{align-self:flex-start}
@@ -3378,28 +3381,35 @@ async function laadFoto(m){
   catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
 // Acties staan regel voor regel in de kolom oplossing; "[x] " vooraan betekent gedaan.
-const ACTIE_VAST=/^Uit de actielijst, ingevoerd/,ACTIE_INFO=/^(Stand|Afwijking|Zie)\b/,MAX_ACTIE=1000;
-function actieRij(tekst,klaar){
-  const rij=document.createElement("div"),info=ACTIE_INFO.test(tekst);
+// Regels met Oorzaak: staan onder een eigen kopje, Afwijking, Stand en Zie onder Toelichting; die hebben geen vinkje.
+const ACTIE_VAST=/^Uit de actielijst, ingevoerd/,ACTIE_INFO=/^(Stand|Afwijking|Zie)\b/,ACTIE_OORZAAK=/^Oorzaak\s*:\s*/i,MAX_ACTIE=1000;
+function rekRegel(v){const h=()=>{v.style.height="auto";v.style.height=v.scrollHeight+2+"px"};v.addEventListener("input",h);h();return v}
+function actieRij(tekst,klaar,vak){
+  const rij=document.createElement("div"),info=!!vak;
   rij.className="actieregel"+(info?" info":"")+(klaar?" klaar":"");
-  rij.innerHTML=(info?"":'<input type="checkbox" aria-label="Actie gedaan"'+(klaar?" checked":"")+">")+'<textarea rows="1" aria-label="Actie">'+esc(tekst)+"</textarea>";
-  const v=rij.querySelector("textarea"),k=rij.querySelector("input"),hoogte=()=>{v.style.height="auto";v.style.height=v.scrollHeight+2+"px"};
-  v.addEventListener("input",hoogte);
+  rij.innerHTML=(info?"":'<input type="checkbox" aria-label="Actie gedaan"'+(klaar?" checked":"")+">")+'<textarea rows="1" aria-label="'+(info?"Toelichting":"Actie")+'">'+esc(tekst)+"</textarea>";
+  const v=rij.querySelector("textarea"),k=rij.querySelector("input");
   if(k)k.addEventListener("change",()=>rij.classList.toggle("klaar",k.checked));
-  $("#o_acties").append(rij);hoogte();return v;
+  $(vak||"#o_acties").append(rij);rekRegel(v);return v;
 }
 function vulActies(tekst){
   const regels=String(tekst||"").split("\n").map(s=>s.trim()).filter(Boolean),vast=regels.filter(s=>ACTIE_VAST.test(s));
-  regels.filter(s=>!ACTIE_VAST.test(s)).forEach(s=>actieRij(s.replace(/^\[x\]\s*/i,""),/^\[x\]/i.test(s)));
+  const rest=regels.filter(s=>!ACTIE_VAST.test(s)),oorz=rest.filter(s=>ACTIE_OORZAAK.test(s)).map(s=>s.replace(ACTIE_OORZAAK,""));
+  const info=rest.filter(s=>ACTIE_INFO.test(s));
+  $("#o_infoveld").hidden=!info.length;info.forEach(s=>actieRij(s,false,"#o_info"));
+  rekRegel(Object.assign($("#o_oorzaak"),{value:oorz.join("\n")}));
+  rest.filter(s=>!ACTIE_INFO.test(s)&&!ACTIE_OORZAAK.test(s)).forEach(s=>actieRij(s.replace(/^\[x\]\s*/i,""),/^\[x\]/i.test(s)));
   if(!$("#o_acties").children.length)actieRij("",false);
   $("#o_actieplus").addEventListener("click",()=>actieRij("",false).focus());
   return vast;
 }
 function leesActies(vast){
-  const uit=[];
+  const uit=[],regels=v=>v.split("\n").map(s=>s.trim()).filter(Boolean);
+  document.querySelectorAll("#o_info textarea").forEach(v=>regels(v.value).forEach(s=>uit.push(s)));
+  regels($("#o_oorzaak").value).forEach(s=>uit.push("Oorzaak: "+s.replace(ACTIE_OORZAAK,"")));
   document.querySelectorAll("#o_acties .actieregel").forEach(r=>{
     const k=r.querySelector("input");
-    r.querySelector("textarea").value.split("\n").map(s=>s.trim()).filter(Boolean).forEach(s=>uit.push((k&&k.checked?"[x] ":"")+s));
+    regels(r.querySelector("textarea").value).forEach(s=>uit.push((k&&k.checked?"[x] ":"")+s));
   });
   return uit.concat(vast).join("\n");
 }
@@ -3407,8 +3417,8 @@ function openDetailMelding(m){
   terug=document.activeElement;
   const dir=m.letter==="DIR",p=$("#paneel"),kijk=alleenKijken();
   const iso=(m.datum||"").split("-").reverse().join("-");
-  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Deadline",m.datum],["Voortgang",m.voortgang]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",meldTijd(m)],["Melder",m.melder],["CM-bon",bonStand(m)],["Voortgang",m.voortgang]].concat(kijk?[["Prio",m.prio?"Prio "+m.prio:""],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum],["Actie",String(m.oplossing||"").replace(/\[x\] /g,"Gedaan: ")],["Op het SQD-overzicht",["S","Q","D"].includes(m.letter)?LETTERS[m.letter]:"Nog niet"]]:[]);
-  const opvolging=dir||kijk?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Prio<select id="o_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(x=>'<option value="'+x[0]+'"'+(x[0]===String(m.prio||"")?" selected":"")+">"+x[1]+"</option>").join("")+'</select></label><div class="actieveld"><span>Actie</span><div id="o_acties"></div><button type="button" class="tekstknop" id="o_actieplus">Actie toevoegen</button></div>'+
+  const v=dir?[["Gemeld",m.tijd],["Door",m.melder],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Deadline",m.datum],["Voortgang",m.voortgang]]:[["Nummer",m.code],["Risico",m.risico],["Gemeld",meldTijd(m)],["Melder",m.melder],["CM-bon",bonStand(m)],["Voortgang",m.voortgang]].concat(kijk?[["Prio",m.prio?"Prio "+m.prio:""],["Lijn",m.lijn],["Machine",m.machine],["Actiehouder",m.actiehouder||"Nog toewijzen"],["Datum",m.datum],["Oorzaak",String(m.oplossing||"").split("\n").filter(r=>ACTIE_OORZAAK.test(r.trim())).map(r=>r.trim().replace(ACTIE_OORZAAK,"")).join("\n")],["Actie",String(m.oplossing||"").split("\n").filter(r=>!ACTIE_OORZAAK.test(r.trim())).join("\n").replace(/\[x\] /g,"Gedaan: ")],["Op het SQD-overzicht",["S","Q","D"].includes(m.letter)?LETTERS[m.letter]:"Nog niet"]]:[]);
+  const opvolging=dir||kijk?"":'<form class="meldform opvolging" id="m_opv"><h3>Opvolging</h3><label>Prio<select id="o_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(x=>'<option value="'+x[0]+'"'+(x[0]===String(m.prio||"")?" selected":"")+">"+x[1]+"</option>").join("")+'</select></label><div class="actieveld" id="o_infoveld" hidden><span>Toelichting</span><div id="o_info"></div></div><label class="actieveld"><span>Oorzaak</span><textarea id="o_oorzaak" rows="1" placeholder="Nog niet bekend"></textarea></label><div class="actieveld"><span>Actie</span><div id="o_acties"></div><button type="button" class="tekstknop" id="o_actieplus">Actie toevoegen</button></div>'+
     '<div class="twee"><label>Lijn<select id="o_lijn">'+["","Lijn 1","Lijn 2","Lijn 3","Overig"].map(x=>"<option"+(x===(m.lijn||"")?" selected":"")+">"+x+"</option>").join("")+'</select></label><label>Machine<input type="text" id="o_mach" value="'+esc(m.machine)+'"></label></div>'+
     '<div class="twee"><label>Actiehouder<input type="text" id="o_actie" value="'+esc(m.actiehouder)+'"></label><label>Datum<input type="date" id="o_dat" value="'+esc(iso)+'"></label></div>'+
     '<label class="vink"><input type="checkbox" id="o_bon"'+(m.bon_nodig==="Ja"?" checked":"")+'> Technische dienst nodig: maak een CM-bon</label><button class="knop" type="submit">Opvolging opslaan</button></form>';
