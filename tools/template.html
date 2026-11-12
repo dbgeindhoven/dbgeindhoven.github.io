@@ -5541,7 +5541,7 @@ function vOverleg(){
 }
 document.addEventListener("click",e=>{
   if(HUIDIG!=="overleg")return;
-  const d=e.target.closest("[data-ovldag]");if(d){OVLDAG=d.dataset.ovldag;BONKIES.clear();vOverleg();return}
+  const d=e.target.closest("[data-ovldag]");if(d){const open=BV&&$("#bonvenster")&&!$("#bonvenster").hidden;OVLDAG=d.dataset.ovldag;BONKIES.clear();vOverleg();if(open)ovlEersteBon();return}
   const b=e.target.closest("[data-ovlbespr]");if(b){const aan=b.getAttribute("aria-pressed")!=="true";ovlBesprZet(ovlKeuze(),b.dataset.ovlbespr,aan);vOverleg();return}
   if(e.target.closest("[data-ovlpres]")){document.documentElement.classList.toggle("ovlpres");vOverleg();return}
   const pl=e.target.closest("[data-ovlplan]");if(pl){DAGKEUZE=pl.dataset.ovlplan;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};return}
@@ -5549,6 +5549,17 @@ document.addEventListener("click",e=>{
   const r=e.target.closest("[data-ovlbon]");
   if(r&&!e.target.closest("input,button,a,select,label")){bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovl-rij").forEach(x=>x.classList.toggle("ovl-aan",x===r))}
 });
+/* Bij het openen van het Zaterdagoverleg staat het meteen klaar voor het overleg: zonder balken en met de eerste bon van de dag rechts.
+   Alleen voor de werkvoorbereider op een breed scherm; Stoppen met presenteren zet de balken terug. */
+function ovlEersteBon(){
+  const r=document.querySelector(".ovl-rij[data-ovlbon]");if(!r)return;
+  bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovl-rij").forEach(x=>x.classList.toggle("ovl-aan",x===r));
+}
+function ovlStart(){
+  if(HUIDIG!=="overleg"||!wvMag()||alleenKijken()||window.innerWidth<1000)return;
+  if(!document.documentElement.classList.contains("ovlpres")){document.documentElement.classList.add("ovlpres");vOverleg()}
+  if(!BV||!$("#bonvenster")||$("#bonvenster").hidden)ovlEersteBon();
+}
 /* Alle open bonnen van de dag in één keer in de monteursapp, zoals Plannen voor monteurs. */
 async function ovlApp(){
   const p=planOpDatum(ovlKeuze());if(!p)return;
@@ -6541,7 +6552,8 @@ function route(){
     if(h==="zaterdag")naarZaterdag();
     h=n;history.replaceState(null,"","#"+n);
   }
-  HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
+  const wasHier=HUIDIG;HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
+  if(HUIDIG==="overleg"&&wasHier!=="overleg")setTimeout(ovlStart,0);
   markeerMenu();groetTeken();
   document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca","prod"].includes(HUIDIG));
   document.documentElement.classList.toggle("ovl",HUIDIG==="overleg");if(HUIDIG!=="overleg")document.documentElement.classList.remove("ovlpres");
