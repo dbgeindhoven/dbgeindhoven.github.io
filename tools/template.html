@@ -757,6 +757,33 @@ html.bvopen{overflow:hidden}
 .agchip{display:block;padding:2px 5px;border-radius:5px;background:var(--info-soft);font-size:.75rem;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agchip.pm{background:var(--sunken)}
 .agchip.af{background:none;box-shadow:inset 0 0 0 1px var(--ok);color:var(--ok)}
+.agchip.gm{background:var(--warn-soft);color:var(--warn-ink)}
+.dagpop{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(20,22,24,.38)}
+.dagpop[hidden]{display:none}
+.dp-vak{display:flex;flex-direction:column;width:min(1500px,100%);height:calc(100vh - 40px);border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(20,22,24,.3);overflow:hidden}
+.dp-kop{display:flex;justify-content:space-between;gap:16px;padding:18px 24px 12px;border-bottom:1px solid var(--line)}
+.dp-kop h2{margin:0;font:600 1.375rem/1.25 var(--kop)}
+.dp-kop p{margin:3px 0 0;color:var(--ink2);font-size:.875rem}
+.dp-kop .dp-let{color:var(--warn-ink);font-weight:500}
+.dp-lijf{flex:1;min-height:0;overflow:hidden;padding:12px 24px 18px;columns:1;column-gap:28px;column-fill:auto}
+.dp-lijf section{break-inside:avoid-column;margin:0 0 .9em}
+.dp-lijf h3{margin:0 0 .3em;font-size:1em;font-weight:600;break-after:avoid}
+.dp-lijf h3 span{margin-left:.4em;color:var(--ink3);font-weight:400}
+.dp-lijf ul{margin:0;padding:0;list-style:none}
+.dp-lijf li{display:grid;grid-template-columns:7.4em minmax(0,1fr) 12em 2.4em 7em 10.5em;gap:.6em;align-items:baseline;padding:.28em 0;border-bottom:1px solid var(--line);font-size:.82em;line-height:1.3;break-inside:avoid}
+.dp-lijf li b{font-weight:600;white-space:nowrap}
+.dp-lijf li span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-lijf .dp-wat{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dp-lijf .dp-waar,.dp-lijf .dp-wie{color:var(--ink2)}
+.dp-lijf .dp-st .st{font-size:1em}.dp-lijf .dp-st small{margin-left:.4em;color:var(--ink3)}
+.dp-lijf .p{font-size:.85em}
+.dp-leeg{color:var(--ink3)}
+@media (max-width:700px){.dp-lijf{columns:1;overflow:auto}.dp-lijf li{grid-template-columns:5em minmax(0,1fr) 2.4em;}.dp-lijf .dp-waar,.dp-lijf .dp-wie,.dp-lijf .dp-st{display:none}}
+/* In de presentatie vult de kalender het scherm; de dag opent in het venster. */
+html.present .stopsplit,.stopsplit.alleenkal{display:block}
+html.present .stoprechts,.stopsplit.alleenkal .stoprechts{display:none}
+html.present .stoplinks,.stopsplit.alleenkal .stoplinks{position:static}
+html.present .stoplinks .agcel,.stopsplit.alleenkal .agcel{min-height:calc((100vh - 280px) / 6)}
 .agchip.laat{box-shadow:inset 0 0 0 1px var(--crit);color:var(--crit-ink)}
 .agkort{display:none}
 .dagkop h2{margin:0;font:600 1.375rem/1.3 var(--kop)}
@@ -1893,7 +1920,8 @@ document.addEventListener("click",e=>{
   const zb=e.target.closest("[data-zatbon]");if(zb)zatBonHaal(zb);
   if(e.target.closest("[data-zattoe]"))zatPaneel();
   if(e.target.closest("[data-nieuwestop]"))openNieuweStop();
-  const ad=e.target.closest("[data-agdag]");if(ad){DAGKEUZE=ad.dataset.agdag;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
+  const ad=e.target.closest("[data-agdag]");if(ad){DAGKEUZE=ad.dataset.agdag;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop();if(dagPopAan())dagPop(DAGKEUZE)}
+  if(e.target.closest("[data-dagpopdicht]")||e.target.id==="dagpop")dagPopDicht();
   const am=e.target.closest("[data-agmaand]");if(am){const d=new Date(MAAND.j,MAAND.m+Number(am.dataset.agmaand),1);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
   if(e.target.closest("[data-agnu]")){const d=pmNu();DAGKEUZE=dagTekst(d);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
   if(e.target.closest("[data-agzat]")){naarZaterdag();vStop()}
@@ -4314,6 +4342,8 @@ async function zatDownload(k){
 const weekNr=d=>{const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));return Math.ceil(((x-Date.UTC(x.getUTCFullYear(),0,1))/864e5+1)/7)};
 /* Storingen die op deze dag zijn afgemeld. Alleen TD en werkvoorbereider hebben het CM-overzicht. */
 const afOp=t=>(D.cm||[]).filter(c=>c.uitgevoerd_op===t&&GESLOTEN.includes(c.status));
+/* Storingen die de monteurs op deze dag in het dienstrapport meldden (RAPPORT, letter TD). */
+const gemeldOp=t=>(RAPPORT||[]).filter(x=>String(x.tijd||"").slice(0,10)===t);
 function agendaCel(d,nu,gekozen){
   const t=dagTekst(d),p=planOpDatum(t),r=p?planRijen(p):[],pm=pmPlan().bonnen.filter(b=>b.datum===t),af=afOp(t),open=r.filter(x=>{const c=zatBon(x.nr);return!c||!KLAAR.includes(c.status)}).length,pmOpen=pm.filter(b=>pmStand(b)==="Achterstallig").length;
   const naam=p?(p.id?p.lijn:"Zaterdag"):"",chip=(k,lang,kort)=>'<span class="agchip '+k+'"><span class="aglang">'+esc(lang)+'</span><span class="agkort">'+esc(kort)+"</span></span>";
@@ -4322,6 +4352,7 @@ function agendaCel(d,nu,gekozen){
   if(p&&(r.length||p.lijn||p.naam))bij.push(chip(d<nu&&open?"laat":"",(naam?naam+": ":"")+r.length+(r.length===1?" bon":" bonnen"),String(r.length)));
   if(pm.length)bij.push(chip("pm"+(pmOpen?" laat":""),"PM: "+pm.length,"PM"));
   if(af.length)bij.push(chip("af","Afgemeld: "+af.length,"✓"+af.length));
+  const gm=gemeldOp(t);if(gm.length)bij.push(chip("gm","Gemeld: "+gm.length,"!"+gm.length));
   return'<button type="button" class="agcel'+(d.getMonth()!==MAAND.m?" buiten":"")+(+d===+nu?" nu":"")+'" data-agdag="'+t+'" aria-pressed="'+(t===gekozen)+'" aria-label="'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+", "+r.length+" bonnen")+'"><span class="agnr">'+d.getDate()+"</span>"+bij.join("")+"</button>";
 }
 function agendaHtml(){
@@ -4358,6 +4389,7 @@ function pmDagHtml(t){
 /* De knop Zaterdag en het oude adres van Zaterdagwerk openen de eerstvolgende zaterdag in de agenda. */
 function naarZaterdag(){const z=zatNu(),d=z&&datum(z.datum);if(!d)return;DAGKEUZE=z.datum;MAAND={j:d.getFullYear(),m:d.getMonth()}}
 function vStop(){
+  if(RAPPORT===null&&MELD()&&!vStop.haal){vStop.haal=1;haalRapport().then(()=>{if(HUIDIG==="stop"&&$("#paneel").hidden)vStop()})}
   const s=dagPlan(),d=datum(s.datum),wv=wvMag(),pm=pmDagHtml(s.datum)+afDagHtml(s.datum);
   if(!MAAND)MAAND={j:d.getFullYear(),m:d.getMonth()};
   const boven=kop("Onderhoudsplanning","Klik op een datum om te zien welke bonnen er die dag gedaan worden.",true)+agendaHtml();
@@ -4370,11 +4402,40 @@ function vStop(){
   vPlan(s,{voor:boven,kop:kopje,onder:pm+(wv&&s.id?'<div class="weg stopweg"><button class="tekstknop gevaar" type="button" data-stopweg="vraag">Planning van deze dag verwijderen</button></div>':"")});
   stopSplit();
 }
+/* In de presentatie en bij wie de planning alleen bekijkt opent een klik op een dag een venster met alles van die dag op één scherm.
+   De letters krimpen tot het past (dagPopPas), zonder scrollen. */
+const dagPopAan=()=>document.documentElement.classList.contains("present")||!wvMag();
+function dagPop(t){
+  const p=planOpDatum(t),d=datum(t),pm=pmPlan().bonnen.filter(b=>b.datum===t),gm=gemeldOp(t),af=afOp(t).filter(c=>!p||!planRijen(p).some(r=>r.nr===c.nr));
+  const bonSt=r=>{const c=zatBon(r.nr)||(D.storingen||[]).find(x=>x.nr===r.nr);return c?c.status:""};
+  const rij=(nr,wat,waar,pr,wie,stt)=>'<li><b>'+esc(nr||"")+'</b><span class="dp-wat">'+esc(wat||"")+'</span><span class="dp-waar">'+esc(waar||"")+'</span><span class="dp-p">'+(pr?prio(pr):"")+'</span><span class="dp-wie">'+esc(wie||"")+'</span><span class="dp-st">'+stt+"</span></li>";
+  const blok=(t2,l)=>l.length?'<section><h3>'+esc(t2)+"<span>"+l.length+"</span></h3><ul>"+l.join("")+"</ul></section>":"";
+  const pc=p?(p.correctief||[]):[],pp=p?(p.preventief||[]):[],cv2=r=>cv("bon",r.nr);
+  const uit=r=>{const q=cv2(r);return"uitvoerder" in q?q.uitvoerder:r.uitvoerder};
+  const bon=r=>rij(r.nr,r.werkzaamheid,r.lijn_machine,zatPrio(r),uit(r),st(bonSt(r)));
+  const uren=p?planRijen(p).reduce((n,r)=>n+(Number(r.uren)||0),0):0;
+  const kop=[p&&p.lijn,p&&p.naam,p&&p.teamleider?"Teamleider "+p.teamleider:"",p&&p.monteurs?"Monteurs "+p.monteurs:"",uren?uren+" uur ingepland"+(p.capaciteit?" van "+p.capaciteit:""):""].filter(Boolean).join(", ");
+  let v=$("#dagpop");if(!v){v=document.createElement("div");v.id="dagpop";v.className="dagpop";document.body.append(v)}
+  v.innerHTML='<div class="dp-vak" role="dialog" aria-modal="true" aria-labelledby="dp-titel"><div class="dp-kop"><div><h2 id="dp-titel">'+esc(hoofd(langeDatum(d)))+"</h2>"+(kop?"<p>"+esc(kop)+"</p>":"")+(p&&p.letop?'<p class="dp-let">Let op: '+esc(p.letop)+"</p>":"")+'</div><button class="icoonknop" type="button" data-dagpopdicht aria-label="Sluiten">'+ico("sluit")+'</button></div><div class="dp-lijf">'+
+    (blok("Correctief",pc.map(bon))+blok("Preventief",pp.map(bon))+blok("PM-bonnen",pm.map(b=>rij(b.nr,pmTitel(b)+" ("+b.taken.length+(b.taken.length===1?" taak)":" taken)"),b.lijn,1,b.monteur||"",st(pmStand(b)))))+
+     blok("Gemeld door monteurs",gm.map(x=>{const v2=bonDicht(x)&&x.vervolg!=="Gereed"?"Bon gesloten":x.vervolg;return rij(bonVan(x.id)||String(x.tijd||"").slice(11),x.melding,[x.lijn,x.machine].filter(Boolean).join(", "),"",x.melder,st(v2))}))+
+     blok("Afgemeld op deze dag",af.map(c=>rij(c.nr,c.omschrijving,[c.lijn,c.machine].filter(Boolean).join(", "),c.prio,c.monteur,st(c.status))))||'<p class="dp-leeg">Op deze dag staat niets.</p>')+"</div></div>";
+  v.hidden=false;document.documentElement.classList.add("dagpopopen");dagPopPas();v.querySelector("[data-dagpopdicht]").focus();
+}
+function dagPopPas(){
+  const l=$("#dagpop .dp-lijf");if(!l)return;
+  /* Eerst in één kolom (leest het best); past het dan niet met letters van minstens 13 px, dan twee kolommen. */
+  const pas=(k,min)=>{l.style.columns=k;let f=17;l.style.fontSize=f+"px";while(f>min&&l.scrollHeight>l.clientHeight+1){f-=.5;l.style.fontSize=f+"px"}return l.scrollHeight<=l.clientHeight+1};
+  if(window.innerWidth<700||!pas("1",13))pas(window.innerWidth<700?"1":"2",9);
+}
+function dagPopDicht(){const v=$("#dagpop");if(v){v.hidden=true;document.documentElement.classList.remove("dagpopopen")}}
+document.addEventListener("keydown",e=>{const v=$("#dagpop");if(v&&!v.hidden&&["Escape","ArrowRight","ArrowLeft","PageDown","PageUp"," "].includes(e.key)){e.stopPropagation();e.preventDefault();if(e.key==="Escape")dagPopDicht()}},true);
+window.addEventListener("resize",()=>{const v=$("#dagpop");if(v&&!v.hidden)dagPopPas()});
 /* Links de kalender, rechts de bonnen van de gekozen dag (op een breed scherm, zie .stopsplit). */
 function stopSplit(){
   const v=$("#view"),a=v&&v.querySelector(":scope > .agenda");if(!a)return;
   const w=document.createElement("div"),l=document.createElement("div"),r=document.createElement("div");
-  w.className="stopsplit";l.className="stoplinks";r.className="stoprechts";
+  w.className="stopsplit"+(wvMag()?"":" alleenkal");l.className="stoplinks";r.className="stoprechts";
   let n=a.nextSibling;const rest=[];while(n){rest.push(n);n=n.nextSibling}
   a.before(w);l.append(a);rest.forEach(x=>r.append(x));w.append(l,r);
 }
