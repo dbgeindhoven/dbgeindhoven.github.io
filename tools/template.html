@@ -95,6 +95,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .dock{position:fixed;z-index:14;bottom:22px;left:calc(50% + 23px);transform:translateX(-50%);display:flex;align-items:center;max-width:calc(100vw - 150px);padding:6px;border-radius:999px;background:rgba(255,255,255,.76);border:1px solid var(--glas-rand);box-shadow:0 14px 44px rgba(70,45,10,.14),inset 0 1px 0 rgba(255,255,255,.95);backdrop-filter:var(--vervaag);-webkit-backdrop-filter:var(--vervaag)}
 .dockrol{display:flex;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none}
 .dockrol::-webkit-scrollbar{display:none}
+.dockkop{display:none}
 .dtab{display:inline-flex;align-items:center;gap:7px;flex:none;height:40px;padding:0 15px;border-radius:999px;color:var(--ink2);font-size:.8125rem;font-weight:500;text-decoration:none;white-space:nowrap}
 .dtab:hover{background:rgba(255,255,255,.9);color:var(--ink)}
 .dtab[aria-current="page"]{background:var(--gold);color:var(--on-gold);font-weight:600;box-shadow:0 4px 12px rgba(168,111,0,.25)}
@@ -1583,6 +1584,29 @@ html.ovlpres body{font-size:1.15rem}
 .alweek:empty{display:none}
 .alwie.aan{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:600}
 html.present .alwie{display:none}
+/* Op de computer staan de pagina's van het kopje links onder elkaar, naast de kopjes (of zonder kopjes helemaal links). */
+@media (min-width:981px){
+  :root{--dockruimte:40px;--dockbreed:212px}
+  .dock{top:96px;bottom:auto;left:105px;transform:none;flex-direction:column;align-items:stretch;width:var(--dockbreed);max-width:none;max-height:calc(100vh - 114px);padding:8px;border-radius:24px}
+  html:has(#rail[hidden]) .dock{left:18px}
+  .dockrol{flex-direction:column;gap:2px;overflow-x:hidden;overflow-y:auto;-webkit-mask-image:none;mask-image:none}
+  .dtab{justify-content:flex-start;height:auto;min-height:38px;padding:8px 14px;border-radius:14px;white-space:normal;line-height:1.25}
+  .dtab .lang{display:inline}.dtab .kort{display:none}
+  .dtab .tdtel{margin-left:auto}
+  .dockkop{display:block;padding:6px 14px 8px;color:var(--ink3);font-size:.75rem;font-weight:600}
+  .plusknop{align-self:flex-start;margin:8px 0 2px 6px}
+  .rail{top:96px}
+  .shell{margin-left:calc(105px + var(--dockbreed) + 14px)}
+  html:has(#rail[hidden]) .shell{margin-left:calc(18px + var(--dockbreed) + 14px)}
+  .page{padding-left:30px}
+  @media (max-width:1280px){:root{--dockbreed:176px}}
+  html.alzij .dock,html.ovl.bvopen .dock{left:105px;max-width:none}
+  html:has(#rail[hidden]).alzij .dock{left:18px}
+  html.alzij .page,html.ovl.bvopen .page{padding-left:22px}
+  .opslaanbalk{left:calc(50% + 160px);bottom:22px}
+  html.present .shell,html.ovlpres .shell{margin-left:0}
+  html.ovlpres .shell{margin-left:18px}
+}
 </style>
 
 <div id="lock" hidden>
@@ -5374,7 +5398,7 @@ function ovlDagen(){
 }
 function ovlKeuze(){
   const {komend}=ovlDagen();
-  if(OVLDAG&&(OVLDAG.startsWith("x:")||plannen().some(p=>p.datum===OVLDAG)))return OVLDAG;
+  if(OVLDAG&&komend.some(p=>p.datum===OVLDAG))return OVLDAG;
   const zat=komend.find(p=>datum(p.datum).getDay()===6&&datum(p.datum)>=pmNu());
   return OVLDAG=(zat||komend[0]||{datum:"x:stop"}).datum;
 }
@@ -5398,9 +5422,7 @@ function vOverleg(){
   const pnaam=x=>{const d=datum(x.datum);return d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+x.datum.slice(0,5)};
   const ptal=x=>{const o=planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length,q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return o+(q?" + "+q+" PM":"")};
   const psub=x=>x.lijn||(planIsZat(x)?"Zaterdag":"Onderhoud");
-  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+
-    '<small class="ovl-sep">Nog geen dag</small>'+knopDag("x:stop","Eerstvolgende stop","bonnen zonder dag",ovlZonder("stop").length)+knopDag("x:tp","Te plannen","klaar om te plannen",ovlZonder("tp").length)+
-    (geweest.length?'<small class="ovl-sep">Geweest, nog open</small>'+geweest.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x)+" open")).join(""):"")+"</nav>";
+  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+(komend.length?"":'<p class="ovl-zacht">Geen dagen gepland.</p>')+"</nav>";
   const bespr=new Set(ovlBespr()[dag]||[]);
   const nBespr=bonnenVan.filter(x=>bespr.has(x.c.nr)).length;
   const urenTot=bonnenVan.reduce((n,x)=>{const q=cv("bon",x.c.nr),u="uren" in q?q.uren:x.r&&x.r.uren;return n+(Number(u)||0)},0);
@@ -6274,7 +6296,7 @@ function tekenMenu(){
   rail.hidden=!meer;
   rail.innerHTML=meer?MODEL.map(k=>'<button type="button" class="railknop" data-kopje="'+esc(k.t)+'" aria-label="'+esc(k.t)+'"'+(k===zelf?' aria-current="true"':"")+">"+ico(k.i)+'<span class="tdtel" data-kteller="'+esc(k.t)+'" hidden></span><span class="tip" aria-hidden="true">'+esc(k.t)+"</span></button>").join("")+
     (wvMag()?'<hr><button type="button" class="railknop" data-menuindelen aria-label="Menu indelen">'+ico("indelen")+'<span class="tip" aria-hidden="true">Menu indelen</span></button>':""):"";
-  $("#dock").innerHTML='<div class="dockrol">'+(akt?akt.p.map(p=>'<a class="dtab" href="#'+p.id+'" data-v="'+p.id+'"'+(p.id===HUIDIG?' aria-current="page"':"")+'><span class="lang">'+esc(p.t)+'</span><span class="kort">'+esc(KORT[p.id]||p.kort||p.t)+'</span><span class="tdtel" data-tel="'+p.id+'" hidden></span></a>').join(""):"")+"</div>"+
+  $("#dock").innerHTML=(akt?'<b class="dockkop">'+esc(akt.t)+"</b>":"")+'<div class="dockrol">'+(akt?akt.p.map(p=>'<a class="dtab" href="#'+p.id+'" data-v="'+p.id+'"'+(p.id===HUIDIG?' aria-current="page"':"")+'><span class="lang">'+esc(p.t)+'</span><span class="kort">'+esc(KORT[p.id]||p.kort||p.t)+'</span><span class="tdtel" data-tel="'+p.id+'" hidden></span></a>').join(""):"")+"</div>"+
     (plus.length?'<button type="button" class="plusknop" id="plusknop" aria-haspopup="menu" aria-expanded="false" aria-label="Nieuw">'+ico("plus")+"</button>":"");
   $("#kiezertekst").textContent=zelf?zelf.t:"Menu";
   $("#kiesblad").innerHTML=MODEL.map(k=>'<section class="kbkop"><button type="button" class="kbkopje" data-kopje="'+esc(k.t)+'"'+(k===zelf?' aria-current="true"':"")+'><span class="ic">'+ico(k.i)+"</span><span>"+esc(k.t)+'</span><span class="tdtel" data-kteller="'+esc(k.t)+'" hidden></span></button>'+
