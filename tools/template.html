@@ -1567,6 +1567,12 @@ html.ovlpres body{font-size:1.15rem}
   html.alzij .kr>:first-child{grid-column:1/-1}
   html.alzij .head .headknoppen{flex-wrap:wrap}
 }
+
+.alwie{max-width:220px;padding:7px 12px;border:1px solid var(--line2);border-radius:999px;background:rgba(255,255,255,.85);font-size:.8125rem}
+.alweek .knop{padding:4px 11px;font-size:.75rem}
+.alweek:empty{display:none}
+.alwie.aan{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:600}
+html.present .alwie{display:none}
 </style>
 
 <div id="lock" hidden>
@@ -3442,11 +3448,22 @@ function sqdVensterHtml(v,live){
   const t=(n,soort,lang,kort)=>'<span class="avt '+soort+(n?"":" nul")+'">'+seg7(n,30,true)+'<small><span class="lang">'+lang+'</span><span class="kort">'+kort+"</span></small></span>";
   return'<button type="button" class="av sv" style="--c:'+c+'" data-sqdvenster="'+v.g+'" aria-label="'+esc(v.naam+": "+laat+" te laat, "+week+" deze week")+'"><span class="svl'+(v.g==="DIR"?" dir":"")+'" aria-hidden="true">'+(v.g==="DIR"?"Dir.":v.g)+'</span><span class="svr"><span class="avnaam">'+esc(v.naam)+'</span><span class="avtot">'+(v.l.length?alAantal(v.l.length):"niets deze week")+'</span><span class="avtel">'+t(laat,"rood","te laat","laat")+t(week,"goud","deze week","week")+"</span></span></button>";
 }
+/* Filter op actiehouder voor het SQD-overzicht en de actielijst. Het apparaat onthoudt de keuze (td-hub-alwie); het rode getal in het menu telt altijd alles. */
+let AL_WIE=(()=>{try{return localStorage.getItem("td-hub-alwie")||""}catch(_){return""}})();
+const alWieK=a=>String(a.wie||"").trim().toLowerCase()||"-";
+const alFilter=l=>AL_WIE?l.filter(a=>alWieK(a)===AL_WIE):l;
+function alWieKeuze(){
+  const n={};alActies().forEach(a=>{const k=alWieK(a);if(!n[k])n[k]=k==="-"?"Zonder actiehouder":a.wie.trim()});
+  const ks=Object.keys(n).sort((x,y)=>x==="-"?1:y==="-"?-1:n[x].localeCompare(n[y],"nl"));
+  if(AL_WIE&&!n[AL_WIE])n[AL_WIE]=AL_WIE,ks.push(AL_WIE);
+  return'<select class="statuskeuze alwie'+(AL_WIE?" aan":"")+'" data-alwie aria-label="Filter op actiehouder"><option value="">Alle actiehouders</option>'+ks.map(k=>'<option value="'+esc(k)+'"'+(k===AL_WIE?" selected":"")+">"+esc(n[k])+"</option>").join("")+"</select>";
+}
+document.addEventListener("change",e=>{const w=e.target.closest("[data-alwie]");if(!w)return;AL_WIE=w.value;try{localStorage.setItem("td-hub-alwie",AL_WIE)}catch(_){}SCHERM[HUIDIG]()});
 function vSqd(){
-  const s=D.sqdc||{},m=MELD(),kan=m&&!alleenKijken(),l=alActies(),op=alSqd(l),rest=l.filter(a=>!alOpSqd(a)),live=!!(m&&MELDINGEN&&!MELDFOUT);
+  const s=D.sqdc||{},m=MELD(),kan=m&&!alleenKijken(),l=alFilter(alActies()),op=alSqd(l),rest=l.filter(a=>!alOpSqd(a)),live=!!(m&&MELDINGEN&&!MELDFOUT);
   const vakken=AL_GROEP.map(([g,naam])=>({g,naam,l:op.filter(a=>a.g===g),punten:((s.vakken||[]).find(v=>v.letter===g)||{}).punten||[]}));
   const laat=alLaat(op),sub=hoofd(langeDatum(new Date()))+". "+(!MELDINGEN?"":op.length?alAantal(op.length)+" te laat of deze week, waarvan "+laat+" te laat.":"Niets te laat en niets dat deze week afloopt.");
-  let h='<div class="tdkop"><div><h1>SQD-overzicht</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
+  let h='<div class="tdkop"><div><h1>SQD-overzicht</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(MELDINGEN?alWieKeuze():"")+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
   if(!m)h+='<div class="alleeg">Het SQD-overzicht werkt met de meldingen uit de Sheet. Die staan nog niet aan.</div>';
   else if(!MELDINGEN)h+='<div class="alleeg">'+(MELDFOUT?"De acties konden niet worden opgehaald. Controleer je verbinding.":"Acties ophalen.")+"</div>";
   else{
@@ -3535,13 +3552,13 @@ function alVensterHtml(p,huidig){
   return'<button type="button" class="av'+(huidig?" huidig":"")+'" style="--c:transparent" data-alvenster="'+esc(p.k)+'" aria-label="'+esc(p.naam+": "+volg+" volgende week, "+geen+" zonder deadline, "+alAantal(p.l.length))+'"'+(huidig?' aria-current="true"':"")+'><span class="avnaam">'+esc(p.naam)+'</span><span class="avtot">'+alAantal(p.l.length)+'</span><span class="avtel">'+t(volg,"volgende week","volgend")+t(geen,"zonder deadline","geen")+"</span></button>";
 }
 function alRij(a,metWie){
-  const kleur=alKleur(a),mag=alMag(a),bon=a.m?bonVan(a.m.id):"",c=bon&&(D.cm||[]).find(x=>x.nr===bon);
+  const kleur=alKleur(a),mag=alMag(a),bon=a.m?alBonNr(a.m):"",c=bon&&(D.cm||[]).find(x=>x.nr===bon);
   const meta=[a.prio?prio(a.prio):"",metWie?'<span class="wie">'+(a.wie?esc(a.wie):"Nog geen actiehouder")+"</span>":"",a.code?"<span>"+esc(a.code)+"</span>":"",a.plek?"<span>"+esc(a.plek)+"</span>":"",bon?"<span>Bon "+esc(bon)+(c?": "+esc(stTekst(c)):"")+"</span>":""].join("");
   const cp=cv("actie",a.id),cd="datum" in cp?cp.datum:a.datum,iso=datum(cd)?cd.split("-").reverse().join("-"):"",st="voortgang" in cp?(cp.voortgang?"Bezig":"Open"):a.bezig?"Bezig":"Open";
   const dag=mag?'<input type="date" class="kveld'+("datum" in cp?" gewijzigd":"")+'" data-aldatum="'+esc(a.id)+'" value="'+esc(iso)+'" aria-label="'+esc("Deadline: "+a.wat)+'">':'<span class="kvast">'+(a.datum?esc(a.datum):"Geen deadline")+"</span>";
   const stat=AL_GEREED===a.id?'<div class="krja"><button type="button" class="knop hoofd" data-algereed="'+esc(a.id)+'">Gereed melden</button><button type="button" class="knop" data-alnee>Annuleren</button></div>':
     mag?'<select class="kveld'+("voortgang" in cp?" gewijzigd":"")+'" data-alstatus="'+esc(a.id)+'" aria-label="'+esc("Status: "+a.wat)+'">'+["Open","Bezig","Gereed"].map(s=>"<option"+(s===st?" selected":"")+">"+s+"</option>").join("")+"</select>":'<span class="kvast">'+st+"</span>";
-  return'<div class="kr '+kleur+'"><div class="wat">'+(a.m?'<button type="button" class="krwat" data-alopen="'+esc(a.id)+'">'+esc(a.wat)+"</button>":'<span class="krwat">'+esc(a.wat)+"</span>")+(meta?'<span class="meta">'+meta+"</span>":"")+'</div><div class="wanneer">'+dag+"<small>"+esc(alWanneer(a))+"</small></div><div>"+stat+"</div></div>";
+  return'<div class="kr '+kleur+'"><div class="wat">'+(a.m?'<button type="button" class="krwat" data-alopen="'+esc(a.id)+'">'+esc(a.wat)+"</button>":'<span class="krwat">'+esc(a.wat)+"</span>")+(meta?'<span class="meta">'+meta+"</span>":"")+(c&&!document.documentElement.classList.contains("present")?'<span class="meta alweek">'+weekKnop(c)+"</span>":"")+'</div><div class="wanneer">'+dag+"<small>"+esc(alWanneer(a))+"</small></div><div>"+stat+"</div></div>";
 }
 function alBlok(l,metWie,id){
   return AL_GROEP.map(([g,naam])=>{
@@ -3560,11 +3577,11 @@ function alLadeHtml(p,open){
 /* In het menu staat bij het SQD-overzicht hoeveel acties te laat zijn. */
 function alTel(){TEL.sqd=MELDINGEN?alLaat(alActies()):0;telMenu()}
 function vActies(){
-  const l=alLijst(),p=alPersonen(l),pres=document.documentElement.classList.contains("present"),m=MELD(),kan=m&&!alleenKijken();
+  const l=alFilter(alLijst()),p=alPersonen(l),pres=document.documentElement.classList.contains("present"),m=MELD(),kan=m&&!alleenKijken();
   if(!alOpen()){const e=p.find(x=>x.l.some(alVolgend))||p[0];AL_OPEN=new Set(e?[e.k]:[])}
   const volg=l.filter(alVolgend).length,geen=l.filter(alGeen).length,nu=new Date();
   const sub=hoofd(nu.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"}))+". "+(l.length?alAantal(l.length)+" bij "+p.length+(p.length===1?" actiehouder":" actiehouders")+", "+volg+" volgende week en "+geen+" zonder deadline.":"Er staan geen acties voor later.");
-  let h='<div class="tdkop"><div><h1>Actielijst</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+(p.length>1?'<button type="button" class="knop" data-alalles="1">Alles open</button><button type="button" class="knop" data-alalles="0">Alles dicht</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
+  let h='<div class="tdkop"><div><h1>Actielijst</h1><p>'+esc(sub)+'</p></div><div class="headknoppen">'+(MELDINGEN?alWieKeuze():"")+(kan?'<button type="button" class="knop hoofd" data-actie="">Actie toevoegen</button>':"")+(p.length>1?'<button type="button" class="knop" data-alalles="1">Alles open</button><button type="button" class="knop" data-alalles="0">Alles dicht</button>':"")+'<button type="button" class="knop" data-present>'+ico("scherm")+"Presenteren</button></div></div>";
   if(!m)h+='<div class="alleeg">De actielijst werkt met de meldingen uit de Sheet. Die staan nog niet aan.</div>';
   else if(!MELDINGEN)h+='<div class="alleeg">'+(MELDFOUT?"De acties konden niet worden opgehaald. Controleer je verbinding.":"Acties ophalen.")+"</div>";
   else if(!p.length)h+='<div class="alleeg">Er staan geen acties voor later. Wat te laat is of deze week afloopt, staat op het SQD-overzicht.</div>';
