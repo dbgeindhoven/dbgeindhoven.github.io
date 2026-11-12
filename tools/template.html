@@ -1493,6 +1493,57 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
 @media (max-width:1140px) and (min-width:981px){.standpil{display:none}.groet small{display:none}}
 /* Wie op het apparaat minder transparantie vraagt, krijgt vlakke panelen. */
 @media (prefers-reduced-transparency:reduce){.opslaanbalk,.topglas,.rail,.dock,.shell,.paneel,.plusmenu,.kiesblad,.gzlijst,#lockform,.meldkaart,.mkop,#minhoud{background:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* Zaterdagoverleg: links de dagen, in het midden de bonnen, het bonvenster op de rechter helft. */
+.ovl-wrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+.ovl-dagen{position:sticky;top:var(--kopruimte);display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
+.ovl-dagen h3{margin:2px 4px 6px;font-size:.875rem;font-weight:600}
+.ovl-dagen small.ovl-sep{margin:8px 6px 2px;color:var(--ink3);font-size:.6875rem;font-weight:600}
+.ovl-dag{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:12px;background:rgba(255,255,255,.7);color:var(--ink);text-align:left;cursor:pointer}
+.ovl-dag:hover{background:#fff}
+.ovl-dag b{display:block;font-size:.8125rem;font-weight:600}
+.ovl-dag span{display:block;color:var(--ink3);font-size:.6875rem}
+.ovl-dag i{flex:none;padding:1px 7px;border-radius:999px;background:var(--sunken);color:var(--ink2);font-size:.6875rem;font-style:normal;font-weight:600}
+.ovl-dag[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.ovl-dag[aria-current="true"] span{color:rgba(255,255,255,.7)}
+.ovl-dag[aria-current="true"] i{background:rgba(255,255,255,.18);color:#fff}
+.ovl-stand{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 12px;color:var(--ink2);font-size:.8125rem}
+.ovl-balk{display:inline-block;width:120px;height:7px;border-radius:99px;background:var(--sunken);overflow:hidden;vertical-align:middle}
+.ovl-balk i{display:block;height:100%;background:var(--ok)}
+.ovl-tbl td{vertical-align:middle}
+.ovl-tbl tr.ovl-sec td{padding:6px 12px;background:rgba(238,240,243,.9);color:var(--ink2);font-size:.75rem;font-weight:600}
+.ovl-tbl tr.ovl-rij{cursor:pointer}
+.ovl-tbl tr.ovl-rij:hover td{background:rgba(255,255,255,.75)}
+.ovl-tbl tr.ovl-aan td{background:var(--gold-soft)}
+.ovl-tbl tr.ovl-aan td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+.ovl-tbl tr.ovl-pm td{color:var(--ink2)}
+.ovl-wl{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.ovl-w{display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6875rem;font-weight:600;background:var(--warn-soft);color:var(--warn-ink)}
+.ovl-w.oker{background:var(--wacht-soft);color:var(--wacht)}
+.ovl-bespr{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:1.5px solid var(--line2);border-radius:6px;background:#fff;cursor:pointer}
+.ovl-bespr[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.ovl-bespr .i{width:14px;height:14px;stroke-width:2.4}
+.ovl-zacht{color:var(--ink3)}
+@media (min-width:1000px){
+  html.ovl #bonvenster.bvdim{left:50%;align-items:stretch;padding:96px 18px 18px 0;background:transparent;overflow:hidden}
+  html.ovl #bonvenster .bvpop{width:100%;height:100%;overflow-y:auto;box-shadow:0 18px 50px rgba(20,22,24,.22)}
+  html.ovl #bonvenster .bvlijf{grid-template-columns:1fr}
+  html.ovl.bvopen{overflow:auto}
+  html.ovl.bvopen .shell{margin-right:calc(50% + 8px)}
+  html.ovl.bvopen .ovl-wrap{grid-template-columns:110px minmax(0,1fr)}
+  html.ovl.bvopen .ovl-dag span,html.ovl.bvopen .ovl-dag i,html.ovl.bvopen .ovl-kol{display:none}
+  html.ovl.bvopen .dock{left:25%;max-width:calc(50% - 90px)}
+  html.ovl.bvopen .page{padding:20px 18px var(--dockruimte) 56px}
+  html.ovl.bvopen .head p,html.ovl.bvopen .head .headknoppen{display:none}
+  html.ovl.bvopen .ovl-wrap{grid-template-columns:92px minmax(0,1fr);gap:10px}
+  html.ovl.bvopen .ovl-dagen small.ovl-sep{font-size:.625rem}
+}
+@media (max-width:760px){.ovl-wrap{grid-template-columns:1fr}.ovl-dagen{position:static;flex-direction:row;overflow-x:auto}.ovl-dag{flex:none;width:auto}.ovl-kol{display:none}}
+/* Presenteren in het overleg: zonder balken, grotere letters. */
+html.ovlpres .topglas,html.ovlpres .rail,html.ovlpres .dock{display:none!important}
+html.ovlpres .shell{margin-top:18px;margin-left:18px}
+html.ovlpres .page{padding-left:30px}
+html.ovlpres body{font-size:1.15rem}
 </style>
 
 <div id="lock" hidden>
@@ -1624,7 +1675,7 @@ const P_RAPPORT={id:"rapport",t:"Dienstrapport",i:"rapport",kort:"Dienstrapport"
 /* De agenda toont de zaterdag ook, dus die heeft geen eigen stap. */
 const P_PRES=P_DAG.flatMap(p=>p.id==="meldingen"||p.id==="zaterdag"?[]:p.id==="output"?P_LIJN:p.id==="storingen"?[P_RAPPORT]:[p]);
 const P_TD=[{id:"start",t:"Overzicht",i:"start"},{id:"cm",t:"CM-bonnen",i:"bon"},{id:"bestel",t:"Bestellijst",i:"doos"},{id:"prio",t:"Priolijst",i:"vlag"},{id:"opname",t:"Opnamelijsten",i:"lijst"},{id:"pm",t:"PM-taken",i:"sleutel"},{id:"pmbonnen",t:"PM-bonnen",i:"afvink"},{id:"rapport",t:"Dienstrapport",i:"rapport"},{id:"docs",t:"Machinedocumentatie",i:"lijst"}];
-const P_WV=[{id:"rca",t:"RCA analyse",i:"zoek"},{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
+const P_WV=[{id:"overleg",t:"Zaterdagoverleg",i:"agenda"},{id:"rca",t:"RCA analyse",i:"zoek"},{id:"sqdbonnen",t:"SQD-bonnen",i:"bord"},{id:"leveranciers",t:"Leveranciers",i:"vracht"}];
 /* Oude adressen blijven werken: ze openen de pagina die ervoor in de plaats kwam, op het juiste tabblad. */
 const OUD={zaterdag:["stop"],cmbonnen:["cm",""],pgeen:["cm","Open"],pbestel:["cm","Bestellen en leveren"],pgepland:["cm","Gepland"],pafgerond:["cm","Afgerond"],cpgeen:["cm","Open"],cpbestel:["cm","Bestellen en leveren"],cpgepland:["cm","Gepland"],cpafgerond:["cm","Afgerond"],spgeen:["sqdbonnen","Open"],spbestel:["sqdbonnen","Bestellen en leveren"],spgepland:["sqdbonnen","Gepland"],spafgerond:["sqdbonnen","Afgerond"],start:["tedoen"]};
 
@@ -5150,6 +5201,103 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#bon_balles")){document.querySelectorAll("#tabel [data-bonkies]").forEach(x=>{x.checked=true;BONKIES.add(x.dataset.bonkies)});bonBulkTeken()}
 });
 
+
+/* ---- Zaterdagoverleg: elke donderdag het werk van de komende dagen doorlopen.
+   Links de dagen uit de planning en de bonnen zonder dag, in het midden de bonnen, een klik opent het bonvenster op de rechter helft.
+   Besproken onthoudt het apparaat per dag (td-hub-besproken). ---- */
+let OVLDAG=null;
+const ovlBespr=()=>{try{return JSON.parse(localStorage.getItem("td-hub-besproken")||"{}")}catch(_){return{}}};
+function ovlBesprZet(dag,nr,aan){const b=ovlBespr();const l=new Set(b[dag]||[]);if(aan)l.add(nr);else l.delete(nr);b[dag]=[...l];Object.keys(b).forEach(k=>{const d=datum(k);if(d&&pmNu()-d>30*864e5)delete b[k]});try{localStorage.setItem("td-hub-besproken",JSON.stringify(b))}catch(_){}}
+const ovlZonder=soort=>(D.cm||[]).filter(c=>isOpen(c)&&!planVanBon(c.nr)&&(soort==="stop"?/onderhoudstop|stop/i.test(c.uitvoeren||""):c.status==="Te plannen"&&!/onderhoudstop|stop/i.test(c.uitvoeren||"")));
+const ovlPm=t=>(pmPlan().bonnen||[]).filter(b=>b.datum===t);
+function ovlDagen(){
+  const nu=pmNu(),gisteren=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate()),ps=plannen().slice().sort((a,b)=>datum(a.datum)-datum(b.datum));
+  return{komend:ps.filter(p=>datum(p.datum)>=gisteren),geweest:ps.filter(p=>datum(p.datum)<gisteren&&planRijen(p).some(r=>{const c=zatBon(r.nr);return c&&isOpen(c)})).slice(-3)};
+}
+function ovlKeuze(){
+  const {komend}=ovlDagen();
+  if(OVLDAG&&(OVLDAG.startsWith("x:")||plannen().some(p=>p.datum===OVLDAG)))return OVLDAG;
+  const zat=komend.find(p=>datum(p.datum).getDay()===6&&datum(p.datum)>=pmNu());
+  return OVLDAG=(zat||komend[0]||{datum:"x:stop"}).datum;
+}
+/* Waarom een bon misschien niet door kan. */
+function ovlWaarom(c,r){
+  const w=[],p=cv("bon",c.nr),q="prio" in p?p.prio:(r?zatPrio(r):c.prio),u="uitvoerder" in p?p.uitvoerder:(r?r.uitvoerder:"x");
+  const ws=wachtOpStand(c);
+  if(ws&&ws.k==="rood")w.push(["",ws.t]);else if(ws&&ws.k==="oker")w.push(["oker",ws.t]);
+  if(!q)w.push(["","Geen prio"]);
+  if(r&&!u)w.push(["","Geen uitvoerder"]);
+  if(c.status==="Uitzoeken voor bestelling")w.push(["oker","Eerst uitzoeken wat er besteld moet worden"]);
+  return w;
+}
+function vOverleg(){
+  const wv=wvMag(),kijk=alleenKijken(),dag=ovlKeuze(),{komend,geweest}=ovlDagen();
+  const p=dag.startsWith("x:")?null:planOpDatum(dag);
+  const bonnenVan=p?planRijen(p).map(r=>({r,c:zatBon(r.nr)})).filter(x=>x.c&&isOpen(x.c)):ovlZonder(dag.slice(2)).map(c=>({r:null,c}));
+  const pm=p?ovlPm(p.datum):[];
+  const pmTal=pm.reduce((n,b)=>n+b.taken.length,0);
+  const knopDag=(id,t,sub,n)=>'<button type="button" class="ovl-dag" data-ovldag="'+esc(id)+'" aria-current="'+(id===dag)+'"><span style="display:block;min-width:0"><b>'+esc(t)+"</b><span>"+esc(sub)+"</span></span><i>"+esc(n)+"</i></button>";
+  const pnaam=x=>{const d=datum(x.datum);return d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+x.datum.slice(0,5)};
+  const ptal=x=>{const o=planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length,q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return o+(q?" + "+q+" PM":"")};
+  const psub=x=>x.lijn||(planIsZat(x)?"Zaterdag":"Onderhoud");
+  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+
+    '<small class="ovl-sep">Nog geen dag</small>'+knopDag("x:stop","Eerstvolgende stop","bonnen zonder dag",ovlZonder("stop").length)+knopDag("x:tp","Te plannen","klaar om te plannen",ovlZonder("tp").length)+
+    (geweest.length?'<small class="ovl-sep">Geweest, nog open</small>'+geweest.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x)+" open")).join(""):"")+"</nav>";
+  const bespr=new Set(ovlBespr()[dag]||[]);
+  const nBespr=bonnenVan.filter(x=>bespr.has(x.c.nr)).length;
+  const urenTot=bonnenVan.reduce((n,x)=>{const q=cv("bon",x.c.nr),u="uren" in q?q.uren:x.r&&x.r.uren;return n+(Number(u)||0)},0);
+  const cap=p&&p.capaciteit;
+  const nWaar=bonnenVan.filter(x=>ovlWaarom(x.c,x.r).length).length;
+  const titel=p?hoofd(langeDatum(datum(p.datum)))+(p.lijn?", "+p.lijn:""):dag==="x:stop"?"Eerstvolgende stop":"Te plannen";
+  const rij=x=>{
+    const {c,r}=x,w=ovlWaarom(c,r),q=cv("bon",c.nr),pr="prio" in q?q.prio:(r?zatPrio(r):c.prio),u="uitvoerder" in q?q.uitvoerder:r&&r.uitvoerder,h="uren" in q?q.uren:r&&r.uren;
+    return'<tr class="ovl-rij'+(BV&&BV.nr===c.nr?" ovl-aan":"")+'" data-ovlbon="'+esc(c.nr)+'">'+
+      (wv?'<td style="width:34px"><input type="checkbox" data-bonkies="'+esc(c.nr)+'"'+(BONKIES.has(c.nr)?" checked":"")+' aria-label="'+esc(c.nr)+' kiezen"></td>':'<td hidden><input type="checkbox" data-bonkies="'+esc(c.nr)+'" hidden></td>')+
+      '<td style="width:38px"><button type="button" class="ovl-bespr" data-ovlbespr="'+esc(c.nr)+'" aria-pressed="'+bespr.has(c.nr)+'" aria-label="'+esc(c.nr)+' besproken" title="Besproken">'+(bespr.has(c.nr)?ico("afvink"):"")+"</button></td>"+
+      '<td class="nr">'+esc(c.nr)+"</td>"+
+      '<td><span class="titel">'+esc(c.omschrijving)+"</span>"+(w.length?'<span class="ovl-wl">'+w.map(([k,t])=>'<span class="ovl-w '+k+'">'+esc(t)+"</span>").join("")+"</span>":"")+"</td>"+
+      '<td class="ovl-kol">'+esc(r&&r.lijn_machine||[c.lijn,c.machine].filter(Boolean).join(" / "))+"</td>"+
+      "<td>"+prio(pr)+"</td><td>"+stBon(c)+"</td>"+
+      '<td class="ovl-kol">'+wachtOp(c)+"</td>"+
+      '<td class="ovl-kol num">'+(h!=null&&h!==""?esc(urenTekst(h)):'<span class="ovl-zacht">–</span>')+"</td>"+
+      '<td class="ovl-kol">'+(u?esc(u):'<span class="ovl-zacht">–</span>')+"</td></tr>";
+  };
+  const pmRijen=pm.flatMap(b=>b.taken.map(t=>{const x=(pmPlan().taken||{})[t]||{};return'<tr class="ovl-pm"><td'+(wv?"":" hidden")+'></td><td></td><td class="nr">'+esc(t)+'</td><td>'+esc(x.taak||t)+'<span class="ovl-wl"><span class="ovl-w oker" style="background:var(--sunken);color:var(--ink2)">'+esc(pmFreq({taken:[t]})||x.frequentie||"")+(b.uit?" · uit bedrijf (LOTOTO)":" · in bedrijf")+'</span></span></td><td class="ovl-kol">'+esc(b.lijn+" / "+b.lijndeel)+"</td><td>"+prio(1)+'</td><td><span class="ovl-zacht">'+esc(b.nr)+'</span></td><td class="ovl-kol"></td><td class="ovl-kol"></td><td class="ovl-kol"></td></tr>'}));
+  const kol=(wv?'<th style="width:34px"></th>':'<th hidden></th>')+'<th title="Besproken">✓</th><th>Bon</th><th>Werkzaamheid</th><th class="ovl-kol">Lijn / machine</th><th>Prio</th><th>Status</th><th class="ovl-kol">Wacht op</th><th class="ovl-kol num">Uren</th><th class="ovl-kol">Uitvoerder</th>';
+  const ncol=10;
+  const corr=p?bonnenVan.filter(x=>!(p.preventief||[]).some(y=>y.nr===x.c.nr)):bonnenVan,prev=p?bonnenVan.filter(x=>(p.preventief||[]).some(y=>y.nr===x.c.nr)):[];
+  const tabel='<div class="tblwrap"><table class="tbl ovl-tbl" id="tabel"><thead><tr>'+kol+"</tr></thead><tbody>"+
+    (corr.length?'<tr class="ovl-sec"><td colspan="'+ncol+'">'+(p?"Correctief":"Bonnen")+" ("+corr.length+")</td></tr>"+corr.map(rij).join(""):'<tr><td colspan="'+ncol+'" class="leegmelding">Geen open bonnen op deze dag.</td></tr>')+
+    (prev.length||pmRijen.length?'<tr class="ovl-sec"><td colspan="'+ncol+'">Preventief, altijd prio 1 ('+(prev.length+pmTal)+")</td></tr>"+prev.map(rij).join("")+pmRijen.join(""):"")+
+    "</tbody></table></div>";
+  const knoppen=(p&&wv&&!kijk?'<button class="knop" type="button" data-ovlapp>'+ico("sleutel")+"Hele dag naar monteursapp</button>":"")+(p?'<a class="knop" href="#stop" data-ovlplan="'+esc(p.datum)+'">'+ico("agenda")+"Openen in planning</a>":"")+'<button class="knop" type="button" data-ovlpres>'+(document.documentElement.classList.contains("ovlpres")?"Stoppen met presenteren":"Presenteren")+"</button>";
+  const stand='<p class="ovl-stand"><span>Besproken <b>'+nBespr+" van "+bonnenVan.length+'</b> <span class="ovl-balk"><i style="width:'+(bonnenVan.length?Math.round(100*nBespr/bonnenVan.length):0)+'%"></i></span></span>'+(p?"<span>Ingepland <b>"+urenTekst(urenTot)+" uur</b>"+(cap?" van "+urenTekst(cap)+" manuren":"")+"</span>":"")+(nWaar?'<span><b>'+nWaar+"</b> "+(nWaar===1?"bon kan":"bonnen kunnen")+" misschien niet door</span>":'<span>Alle bonnen kunnen door</span>')+(p&&(p.teamleider||p.monteurs)?"<span>"+esc([p.teamleider&&"Teamleider "+p.teamleider,p.monteurs&&"Monteurs "+p.monteurs].filter(Boolean).join(" · "))+"</span>":"")+"</p>";
+  const bulk=wv?'<div class="zatbulk bonbulk" id="bon_bulk" hidden><span id="bon_bulktal"></span><select class="statuskeuze" id="bon_bstatus" aria-label="Status voor de gekozen bonnen"><option value="">Status kiezen</option>'+BONSTATUS.concat(BONSLOT).map(x=>"<option>"+x+"</option>").join("")+'</select><input type="date" class="zatinvoer" id="bon_bdatum" aria-label="Dag voor de gekozen bonnen"><button class="knop" type="button" id="bon_bstat">Status zetten</button><button class="knop" type="button" id="bon_bdat">Verplaatsen naar deze dag</button><button class="tekstknop" type="button" id="bon_balles">Alles kiezen</button><button class="tekstknop" type="button" id="bon_bwis">Wissen</button></div>':"";
+  $("#view").innerHTML=kop("Zaterdagoverleg","Kies links een dag. Een klik op een bon opent hem rechts, daar pas je dag, status, prio, uitvoerder en uren aan.",false,knoppen)+
+    '<div class="ovl-wrap">'+links+'<div style="min-width:0"><h2 style="margin:0 0 6px;font-size:1.125rem;font-weight:600">'+esc(titel)+"</h2>"+stand+bulk+tabel+"</div></div>";
+  if(wv)bonBulkTeken();
+}
+document.addEventListener("click",e=>{
+  if(HUIDIG!=="overleg")return;
+  const d=e.target.closest("[data-ovldag]");if(d){OVLDAG=d.dataset.ovldag;BONKIES.clear();vOverleg();return}
+  const b=e.target.closest("[data-ovlbespr]");if(b){const aan=b.getAttribute("aria-pressed")!=="true";ovlBesprZet(ovlKeuze(),b.dataset.ovlbespr,aan);vOverleg();return}
+  if(e.target.closest("[data-ovlpres]")){document.documentElement.classList.toggle("ovlpres");vOverleg();return}
+  const pl=e.target.closest("[data-ovlplan]");if(pl){DAGKEUZE=pl.dataset.ovlplan;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};return}
+  if(e.target.closest("[data-ovlapp]")){ovlApp();return}
+  const r=e.target.closest("[data-ovlbon]");
+  if(r&&!e.target.closest("input,button,a,select,label")){bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovl-rij").forEach(x=>x.classList.toggle("ovl-aan",x===r))}
+});
+/* Alle open bonnen van de dag in één keer in de monteursapp, zoals Plannen voor monteurs. */
+async function ovlApp(){
+  const p=planOpDatum(ovlKeuze());if(!p)return;
+  const l=planRijen(p).map(r=>zatBon(r.nr)).filter(c=>c&&isOpen(c)&&!c.week);
+  if(!l.length){melder("Alle open bonnen van deze dag staan al in de monteursapp.");return}
+  let n=0,mis=0;
+  for(const c of l){
+    try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor(),nr:"WEEK-"+c.nr,status:"Open",rij:{week:weekVelden(c,true,"")}});c.week=true;n++}catch(_){mis++}
+  }
+  vOverleg();melder(mis?n+" bonnen staan in de monteursapp, "+mis+" niet gelukt. Probeer het opnieuw.":n+(n===1?" bon staat":" bonnen staan")+" nu in de monteursapp.");
+}
 /* ---- Bonvenster: alles van één bon in één venster (CM-bonnen en SQD-bonnen bij de werkvoorbereider).
    De lijst is alleen om te lezen. In het venster pas je status en dag, prio, uitvoerder en uren, de monteurs met de opdracht en de onderdelen aan.
    Opslaan bewaart alleen deze bon, via dezelfde wachtrij als Alles opslaan (de regels in CONCEPT voor deze bon en zijn onderdelen). ---- */
@@ -5513,7 +5661,7 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={overleg:vOverleg,tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- Productie (pilot) ----
    De teamleider productie vult per dienst in op de telefoon: inlog productie, voorlopig één testaccount waarin hij zijn naam invult.
@@ -5900,7 +6048,7 @@ function prodPaneelVelden(){
    RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
@@ -5922,7 +6070,7 @@ function menuKopjes(m){
 /* De kopjes staan links als ronde knoppen (rail), de pagina's van het kopje onderin (dock), zoals in het voorbeeld met het glas.
    Een klik op een kopje opent de pagina waar je in dat kopje het laatst was (td-hub-kopjes). Onderin staat ook de + voor iets nieuws.
    Op de telefoon kies je het kopje bovenin (kiezer) en staan alle pagina's per kopje in de kiezer. De getallen staan bij de pagina en opgeteld bij het kopje. */
-const KORT={sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
+const KORT={overleg:"Overleg",sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
 const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Productie":"output","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
 const TEL={},KOPLAATST="td-hub-kopjes";
 let KOPJE=null,MODEL=[];
@@ -6115,6 +6263,7 @@ function route(){
   HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   markeerMenu();groetTeken();
   document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca","prod"].includes(HUIDIG));
+  document.documentElement.classList.toggle("ovl",HUIDIG==="overleg");if(HUIDIG!=="overleg")document.documentElement.classList.remove("ovlpres");
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
