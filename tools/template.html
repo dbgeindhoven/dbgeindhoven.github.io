@@ -740,6 +740,7 @@ html.bvopen{overflow:hidden}
 .stopweg{margin-top:16px}
 #zat_doel{width:160px}
 .agenda{margin:0 0 22px}
+@media (min-width:1100px){.stopsplit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:22px;align-items:start}.stoplinks{position:sticky;top:96px}.stoplinks .agenda{margin:0}.stoplinks .agcel{min-height:64px}.stoprechts{min-width:0;overflow-x:auto}.stoprechts>.head.dagkop:first-child{margin-top:0}}
 .agkop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .agkop b{min-width:150px;text-align:center;font-size:1rem}
 .agkop .knop{padding:4px 12px;font-size:1rem;line-height:1.2}
@@ -1604,8 +1605,8 @@ html.present .alwie{display:none}
   html:has(#rail[hidden]).alzij .dock{left:18px}
   html.alzij .page,html.ovl.bvopen .page{padding-left:22px}
   .opslaanbalk{left:calc(50% + 160px);bottom:22px}
-  html.present .shell,html.ovlpres .shell{margin-left:0}
-  html.ovlpres .shell{margin-left:18px}
+  html.present .shell{margin-left:0!important}
+  html.ovlpres .shell{margin-left:18px!important}
 }
 </style>
 
@@ -4364,9 +4365,18 @@ function vStop(){
   const kopje=k=>'<div class="head dagkop"><div><h2>'+esc(hoofd(langeDatum(d)))+"</h2>"+(sub?"<p>"+esc(sub)+"</p>":"")+"</div>"+(k?'<div class="headknoppen">'+k+"</div>":"")+"</div>";
   if(s.leeg){
     $("#view").innerHTML=boven+kopje(wv?'<button class="knop hoofd" type="button" data-zattoe>Bon toevoegen</button><button class="knop" type="button" data-nieuwestop>Stop toevoegen</button>':"")+(pm||'<div class="leegmelding">Op deze dag staat niets gepland.</div>');
-    return;
+    stopSplit();return;
   }
   vPlan(s,{voor:boven,kop:kopje,onder:pm+(wv&&s.id?'<div class="weg stopweg"><button class="tekstknop gevaar" type="button" data-stopweg="vraag">Planning van deze dag verwijderen</button></div>':"")});
+  stopSplit();
+}
+/* Links de kalender, rechts de bonnen van de gekozen dag (op een breed scherm, zie .stopsplit). */
+function stopSplit(){
+  const v=$("#view"),a=v&&v.querySelector(":scope > .agenda");if(!a)return;
+  const w=document.createElement("div"),l=document.createElement("div"),r=document.createElement("div");
+  w.className="stopsplit";l.className="stoplinks";r.className="stoprechts";
+  let n=a.nextSibling;const rest=[];while(n){rest.push(n);n=n.nextSibling}
+  a.before(w);l.append(a);rest.forEach(x=>r.append(x));w.append(l,r);
 }
 function vPlan(s,o){
   if(vPlan.vorig!==planSleutel(s)){ZATKIES.clear();ZATF.lijn="";ZATF.soort="";vPlan.vorig=planSleutel(s)}
