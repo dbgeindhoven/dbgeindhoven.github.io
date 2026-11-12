@@ -139,6 +139,40 @@ def zet_registratie(inhoud, regel):
     return schrijf_zip(delen)
 
 
+def zet_extra(inhoud, oud, nieuw):
+    """Extra instructies van de werkvoorbereider bij 1 Werkinstructie van een bestaande Word-bon: na de taakstappen, voor de stap werkplek schoon.
+    De regels van de vorige keer (oud) gaan er eerst af, zodat opnieuw opslaan niets dubbel zet. Opmaak en nummering komen van de stap ervoor."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    cel = alinea(root, "Stop de machine").getparent()
+    ps = [p for p in cel.findall(q("p"))]
+    weg = set(t.strip() for t in oud or [])
+    for p in ps:
+        if tekst(p).strip() in weg:
+            cel.remove(p)
+    ps = [p for p in cel.findall(q("p"))]
+    na = next((p for p in ps if tekst(p).startswith("Maak de omgeving")), None)
+    if na is None:
+        na = next((p for p in ps if tekst(p).startswith("Vul het")), None)
+    i = ps.index(na) if na is not None else len(ps)
+    voor = next((p for p in reversed(ps[:i]) if tekst(p).strip()), ps[0])
+    opmaak, voorbeeld = voor.find(q("pPr")), voor.find(q("r"))
+    plek = voor
+    for t in nieuw or []:
+        p = etree.Element(q("p"))
+        if opmaak is not None:
+            p.append(copy.deepcopy(opmaak))
+        r = copy.deepcopy(voorbeeld)
+        for x in r.findall(q("t"))[1:]:
+            r.remove(x)
+        r.find(q("t")).text = t
+        p.append(r)
+        plek.addnext(p)
+        plek = p
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
+
+
 def zet_foto(cel, spec, delen):
     p = cel.find(q("p"))
     if not spec.get("foto"):

@@ -372,6 +372,40 @@ def bon_registratie(data, rij, regel, wm):
     bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
 
 
+def bon_extra(data, x, wm):
+    """Extra instructies van de werkvoorbereider (Zaterdagoverleg en bonvenster): in cm[].extra en bij 1 Werkinstructie op de Word- en PDF-bon.
+    De vorige regels gaan eerst van de bon af. Prio, uitvoerder en dag blijven, dus de stempel ook."""
+    nr = x.get("nr")
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None:
+        print(nr, "staat niet in het overzicht, extra instructies overgeslagen")
+        return
+    nieuw = [" ".join(str(t).split())[:200] for t in x.get("regels") or [] if str(t).strip()][:8]
+    oud = rij.get("extra") or []
+    if nieuw == oud:
+        print(nr, "extra instructies ongewijzigd")
+        return
+    if nieuw:
+        rij["extra"] = nieuw
+    else:
+        rij.pop("extra", None)
+    bon = rij.get("bon") or {}
+    if not bon.get("docx"):
+        print(nr, "extra instructies opgeslagen, nog geen bonbestand")
+        return
+    b = stand(data)
+    wm.mkdir(parents=True, exist_ok=True)
+    docx = wm / (bon["naam"] + ".docx")
+    docx.write_bytes(fill_bon.zet_extra(ontsleutel(Path(bon["docx"]).name, b["sleutel"]), oud, nieuw))
+    naar_pdf([docx], wm)
+    pdf = docx.with_suffix(".pdf")
+    for k in ("docx", "pdf", "beeld"):
+        if bon.get(k):
+            (REPO / bon[k]).unlink(missing_ok=True)
+    bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
+    print(nr, len(nieuw), "extra instructies op de bon")
+
+
 def opdracht_af(data, o, w, wm):
     """De monteur meldde de opdracht van de werkvoorbereider af. De bon blijft open: de opdracht gaat eraf en wat de monteur schreef
     komt als registratie op de bon (opmerking, Word en PDF) en in cm[].opdrachtaf, voor Te doen en het detailpaneel."""
@@ -680,6 +714,9 @@ def wijzig(a):
             continue
         if extra.get("opdrachtaf"):
             opdracht_af(data, extra["opdrachtaf"], w, Path(a.map) / "registratie")
+            continue
+        if extra.get("extra"):
+            bon_extra(data, extra["extra"], Path(a.map) / "extra")
             continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         # Deels uitgevoerd is wat de monteur koos. De bon is dan niet klaar en moet opnieuw worden gepland.

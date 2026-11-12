@@ -1544,6 +1544,14 @@ html.ovlpres .topglas,html.ovlpres .rail,html.ovlpres .dock{display:none!importa
 html.ovlpres .shell{margin-top:18px;margin-left:18px}
 html.ovlpres .page{padding-left:30px}
 html.ovlpres body{font-size:1.15rem}
+
+.bvextra{margin:0 0 8px;padding:0 0 0 20px;display:flex;flex-direction:column;gap:4px}
+.bvextra li{padding:4px 0}
+.bvextra li>*{vertical-align:middle}
+.bvextra li span{margin-right:6px}
+.bvextra .icoonknop{width:26px;height:26px;padding:0;font-size:.8125rem}
+.bvextra .icoonknop .i{width:14px;height:14px}
+.bvextrarij input{flex:1}
 </style>
 
 <div id="lock" hidden>
@@ -1994,6 +2002,7 @@ function pasBonToe(w){
   if(extra.rca!==undefined){pasRcaToe(extra.rca);return}
   if(extra.menu!==undefined){const oud=JSON.stringify(MENU_LIVE===undefined?null:MENU_LIVE);MENU_LIVE=extra.menu;if(MENU_WV&&JSON.stringify(MENU_LIVE)!==oud)bouwMenu();return}
   if(extra.opdrachtaf){const o=extra.opdrachtaf,v=(D.cm||[]).find(x=>x.nr===o.nr);if(v){const af={opdracht:o.opdracht||"",tekst:o.tekst||"",door:o.door||"Monteur",tijd:String(o.tijd||w.tijd||"").slice(0,16)};v.opdrachtaf=v.opdrachtaf||[];if(!v.opdrachtaf.some(x=>x.tijd===af.tijd&&x.tekst===af.tekst))v.opdrachtaf.push(af);if(v.opdracht===af.opdracht)delete v.opdracht}return}
+  if(extra.extra){const v=(D.cm||[]).find(x=>x.nr===extra.extra.nr);if(v){const r=(extra.extra.regels||[]).filter(Boolean);if(r.length)v.extra=r;else delete v.extra}return}
   if(extra.week){const v=(D.cm||[]).find(x=>x.nr===extra.week.nr);if(v){v.week=!!extra.week.aan;if(v.week&&extra.week.soort)v.weeksoort=extra.week.soort;else delete v.weeksoort;if(extra.week.opdracht!==undefined){if(extra.week.opdracht)v.opdracht=extra.week.opdracht;else delete v.opdracht}}return}
   if(extra.opname){pasOpnameToe(extra.opname,w);return}
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
@@ -5325,10 +5334,11 @@ function bvBegin(nr){
   const orig={prio:op&&r?zatPrio(r):c.prio||null,uitvoerder:r?r.uitvoerder||"":"",uren:r&&r.uren!=null?r.uren:null};
   const monteur=c.week?(c.weeksoort==="opname"?"opn":"uit"):"niet";
   const best={};tdRegels(nr).forEach(x=>{if(x.id){const q=cv("bestel",x.id);best[x.id]="groep" in q?q.groep:x.groep}});
-  const k={status:cStatus(c),dag:cDag(c),prio:"prio" in pv?pv.prio:orig.prio,uitvoerder:"uitvoerder" in pv?pv.uitvoerder:orig.uitvoerder,uren:"uren" in pv?pv.uren:orig.uren,monteur,opdracht:cOpdracht(c),best};
-  return{nr,c,op,r,orig,monteur,k,start:JSON.stringify(k),fout:"",vraag:null};
+  const k={status:cStatus(c),dag:cDag(c),prio:"prio" in pv?pv.prio:orig.prio,uitvoerder:"uitvoerder" in pv?pv.uitvoerder:orig.uitvoerder,uren:"uren" in pv?pv.uren:orig.uren,monteur,opdracht:cOpdracht(c),best,extra:(c.extra||[]).slice(),nieuweRegel:""};
+  return{nr,c,op,r,orig,monteur,k,start:bvSig(k),fout:"",vraag:null};
 }
-const bvVuil=()=>!!BV&&JSON.stringify(BV.k)!==BV.start;
+const bvSig=k=>JSON.stringify(Object.assign({},k,{nieuweRegel:""}));
+const bvVuil=()=>!!BV&&(bvSig(BV.k)!==BV.start||!!(BV.k.nieuweRegel||"").trim());
 function bonVenster(nr){
   if(BV&&bvVuil()&&BV.nr!==nr){bvVraag(()=>{BV=null;bonVenster(nr)});return}
   BV=bvBegin(nr);if(!BV)return;
@@ -5373,6 +5383,11 @@ function bvTeken(){
         (k.opdracht&&k.monteur==="niet"?'<small class="bvlet">Kies Uitvoeren of Opnemen, anders ziet de monteur de opdracht niet.</small>':"")+
         (gedaan?'<div class="bvsub">'+gedaan+"</div>":"")+(opn?'<div class="bvsub">'+opn+"</div>":"")+
       "</section>"+
+      '<section class="bvvak"><h3>Extra instructies <small>komen op de bon bij 1 Werkinstructie</small></h3>'+
+        (k.extra.length?'<ol class="bvextra">'+k.extra.map((t,i)=>'<li><span>'+esc(t)+'</span>'+(i?'<button type="button" class="icoonknop" data-bvextraop="'+i+'" aria-label="Regel omhoog" title="Omhoog">↑</button>':"")+'<button type="button" class="icoonknop" data-bvextraweg="'+i+'" aria-label="Regel weghalen">'+ico("sluit")+"</button></li>").join("")+"</ol>":"")+
+        (k.extra.length<8&&!alleenKijken()?'<div class="bvrij bvextrarij"><input type="text" class="zatinvoer" id="bv_extranieuw" maxlength="200" placeholder="Bijvoorbeeld: eerst kettingspanning nalopen" value="'+esc(k.nieuweRegel||"")+'"><button type="button" class="knop" data-bvextraplus>Regel toevoegen</button></div>':"")+
+        (JSON.stringify(k.extra)!==JSON.stringify(c.extra||[])?'<small class="bvlet">Na opslaan maakt de volgende uurronde de Word- en PDF-bon opnieuw met deze regels.</small>':"")+
+      "</section>"+
       '<section class="bvvak"><h3>Opmerking</h3><p class="bvopm">'+esc(c.opmerking||"Geen opmerking.")+"</p></section>"+
     "</div><div>"+
       '<section class="bvvak"><h3>Onderdelen'+(regels.length?" <small>"+(nietB?nietB+" niet besteld":"alles besteld of binnen")+"</small>":"")+"</h3>"+ondHtml+"</section>"+
@@ -5381,7 +5396,8 @@ function bvTeken(){
     '<footer class="bvvoet">'+(vraag||'<span class="bvfout" role="alert">'+esc(BV.fout||"")+'</span><span class="bvknoppen"><button type="button" class="knop" data-bvdicht>Annuleren</button><button type="button" class="knop hoofd" data-bvop="1">Opslaan</button>'+(volgende?'<button type="button" class="knop hoofd" data-bvop="2">Opslaan en volgende ›</button>':"")+"</span>")+"</footer>";
 }
 function bvLees(){
-  if(!BV)return;const k=BV.k,s=$("#bv_status"),d=$("#bv_dag"),u=$("#bv_uitv"),h=$("#bv_uren"),o=$("#bv_opdr");
+  if(!BV)return;const k=BV.k,s=$("#bv_status"),d=$("#bv_dag"),u=$("#bv_uitv"),h=$("#bv_uren"),o=$("#bv_opdr"),xn=$("#bv_extranieuw");
+  if(xn)k.nieuweRegel=xn.value;
   if(o)k.opdracht=o.value.trim();
   if(u)k.uitvoerder=u.value.trim();
   if(h){const t=h.value.trim().replace(",",".");k.uren=t===""?null:Number(t)}
@@ -5405,8 +5421,10 @@ async function bvOpslaan(volgende){
   if(op&&r)cZet("bon",nr,{uitvoerder:k.uitvoerder,uren:k.uren},{uitvoerder:orig.uitvoerder,uren:orig.uren});
   if(CONCEPT.has(cSleutel("bon",nr)))keys.push(cSleutel("bon",nr));
   tdRegels(nr).forEach(x=>{if(x.id&&k.best[x.id]!==undefined){cZet("bestel",x.id,{groep:k.best[x.id]},{groep:x.groep});if(CONCEPT.has(cSleutel("bestel",x.id)))keys.push(cSleutel("bestel",x.id))}});
+  if((k.nieuweRegel||"").trim()&&k.extra.length<8){k.extra.push(k.nieuweRegel.trim().slice(0,200));k.nieuweRegel=""}
+  const extraNodig=JSON.stringify(k.extra)!==JSON.stringify(c.extra||[]);
   const aan=k.monteur!=="niet",soort=k.monteur==="opn"?"opname":"",weekNodig=aan!==!!c.week||(aan&&soort!==(c.weeksoort||""))||k.opdracht!==(c.opdracht||"");
-  if(!keys.length&&!weekNodig){bvNa(volgende);return}
+  if(!keys.length&&!weekNodig&&!extraNodig){bvNa(volgende);return}
   BV.fout="Bezig met opslaan…";bvTeken();
   document.querySelectorAll("#bonvenster button,#bonvenster select,#bonvenster input,#bonvenster textarea").forEach(x=>{x.disabled=true});
   let goed=keys.length?await cOpslaan(keys):true;
@@ -5418,12 +5436,16 @@ async function bvOpslaan(volgende){
       laatste="";if(SCHERM[HUIDIG])SCHERM[HUIDIG]();
     }catch(_){goed=false}
   }
+  if(goed&&extraNodig){
+    const w={nr:"EXTRA-"+nr,status:"Open",rij:{extra:{nr,regels:k.extra}}};
+    try{await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);laatste="";if(SCHERM[HUIDIG])SCHERM[HUIDIG]()}catch(_){goed=false}
+  }
   if(!goed){const b=bvBegin(nr);BV=Object.assign(b,{k,fout:"Niet alles is opgeslagen. Probeer het opnieuw."});bvTeken();return}
-  melder(nr+" is opgeslagen");BV.start=JSON.stringify(BV.k);bvNa(volgende);
+  melder(nr+" is opgeslagen");BV.start=bvSig(BV.k);bvNa(volgende);
 }
 function bvNa(volgende){
   const lijst=bvLijst(),i=lijst.indexOf(BV.nr),nv=i>=0?lijst[i+1]:null;
-  BV.start=JSON.stringify(BV.k);
+  BV.start=bvSig(BV.k);
   if(volgende&&nv)bonVenster(nv);else bvDicht(true);
 }
 document.addEventListener("click",e=>{
@@ -5435,9 +5457,13 @@ document.addEventListener("click",e=>{
   const g=e.target.closest("[data-bvga]");if(g&&g.dataset.bvga){bvLees();bonVenster(g.dataset.bvga);return}
   const o=e.target.closest("[data-bvop]");if(o){bvOpslaan(o.dataset.bvop==="2");return}
   if(e.target.closest("[data-bvterug]")){BV.vraag=null;bvTeken();return}
-  if(e.target.closest("[data-bvweg]")){const d=BV.vraag;BV.vraag=null;BV.start=JSON.stringify(BV.k);d();return}
+  if(e.target.closest("[data-bvweg]")){const d=BV.vraag;BV.vraag=null;BV.k.nieuweRegel="";BV.start=bvSig(BV.k);d();return}
+  if(e.target.closest("[data-bvextraplus]")){bvLees();const t=(BV.k.nieuweRegel||"").trim();if(t&&BV.k.extra.length<8){BV.k.extra.push(t.slice(0,200));BV.k.nieuweRegel=""}bvTeken();const n=$("#bv_extranieuw");if(n)n.focus();return}
+  const xw=e.target.closest("[data-bvextraweg]");if(xw){bvLees();BV.k.extra.splice(+xw.dataset.bvextraweg,1);bvTeken();return}
+  const xo=e.target.closest("[data-bvextraop]");if(xo){bvLees();const i=+xo.dataset.bvextraop,a=BV.k.extra;if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]]}bvTeken();return}
 });
 document.addEventListener("change",e=>{if(BV&&e.target.closest("#bonvenster")&&e.target.id==="bv_status"){bvLees();BV.fout="";bvTeken()}});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="bv_extranieuw"){e.preventDefault();const b=document.querySelector("[data-bvextraplus]");if(b)b.click()}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&BV&&!$("#bonvenster").hidden){e.stopPropagation();bvLees();bvDicht()}},true);
 /* Wat de uurronde op internet vond. Contactgegevens staan per leverancier één keer in D.leveranciers. */
 const levVan=n=>(D.leveranciers||[]).find(x=>norm(x.naam)===norm(n));
