@@ -5394,12 +5394,15 @@ const ovlZonder=soort=>(D.cm||[]).filter(c=>isOpen(c)&&!planVanBon(c.nr)&&(soort
 const ovlPm=t=>(pmPlan().bonnen||[]).filter(b=>b.datum===t);
 function ovlDagen(){
   const nu=pmNu(),gisteren=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate()),ps=plannen().slice().sort((a,b)=>datum(a.datum)-datum(b.datum));
-  return{komend:ps.filter(p=>datum(p.datum)>=gisteren),geweest:ps.filter(p=>datum(p.datum)<gisteren&&planRijen(p).some(r=>{const c=zatBon(r.nr);return c&&isOpen(c)})).slice(-3)};
+  /* Elke dag vanaf vandaag op volgorde, ook dagen zonder planning: 4 weken, of tot de laatste geplande dag. */
+  const laatst=ps.length?datum(ps[ps.length-1].datum):gisteren,eind=new Date(Math.max(laatst,new Date(gisteren.getFullYear(),gisteren.getMonth(),gisteren.getDate()+27))),dagen=[];
+  for(let d=new Date(gisteren);d<=eind;d.setDate(d.getDate()+1)){const k=String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+d.getFullYear();dagen.push(planOpDatum(k)||{datum:k,leeg:true})}
+  return{komend:dagen,geweest:ps.filter(p=>datum(p.datum)<gisteren&&planRijen(p).some(r=>{const c=zatBon(r.nr);return c&&isOpen(c)})).slice(-3)};
 }
 function ovlKeuze(){
   const {komend}=ovlDagen();
   if(OVLDAG&&komend.some(p=>p.datum===OVLDAG))return OVLDAG;
-  const zat=komend.find(p=>datum(p.datum).getDay()===6&&datum(p.datum)>=pmNu());
+  const zat=komend.find(p=>!p.leeg&&datum(p.datum).getDay()===6&&datum(p.datum)>=pmNu())||komend.find(p=>!p.leeg);
   return OVLDAG=(zat||komend[0]||{datum:"x:stop"}).datum;
 }
 /* Waarom een bon misschien niet door kan. */
@@ -5415,20 +5418,20 @@ function ovlWaarom(c,r){
 function vOverleg(){
   const wv=wvMag(),kijk=alleenKijken(),dag=ovlKeuze(),{komend,geweest}=ovlDagen();
   const p=dag.startsWith("x:")?null:planOpDatum(dag);
-  const bonnenVan=p?planRijen(p).map(r=>({r,c:zatBon(r.nr)})).filter(x=>x.c&&isOpen(x.c)):ovlZonder(dag.slice(2)).map(c=>({r:null,c}));
-  const pm=p?ovlPm(p.datum):[];
+  const bonnenVan=p?planRijen(p).map(r=>({r,c:zatBon(r.nr)})).filter(x=>x.c&&isOpen(x.c)):dag.startsWith("x:")?ovlZonder(dag.slice(2)).map(c=>({r:null,c})):[];
+  const pm=dag.startsWith("x:")?[]:ovlPm(dag);
   const pmTal=pm.reduce((n,b)=>n+b.taken.length,0);
   const knopDag=(id,t,sub,n)=>'<button type="button" class="ovl-dag" data-ovldag="'+esc(id)+'" aria-current="'+(id===dag)+'"><span style="display:block;min-width:0"><b>'+esc(t)+"</b><span>"+esc(sub)+"</span></span><i>"+esc(n)+"</i></button>";
   const pnaam=x=>{const d=datum(x.datum);return d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+x.datum.slice(0,5)};
-  const ptal=x=>{const o=planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length,q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return o+(q?" + "+q+" PM":"")};
-  const psub=x=>x.lijn||(planIsZat(x)?"Zaterdag":"Onderhoud");
-  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+(komend.length?"":'<p class="ovl-zacht">Geen dagen gepland.</p>')+"</nav>";
+  const ptal=x=>{if(x.leeg){const q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return q?q+" PM":"–"}const o=planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length,q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return o+(q?" + "+q+" PM":"")};
+  const psub=x=>x.leeg?"Geen planning":x.lijn||(planIsZat(x)?"Zaterdag":"Onderhoud");
+  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+"</nav>";
   const bespr=new Set(ovlBespr()[dag]||[]);
   const nBespr=bonnenVan.filter(x=>bespr.has(x.c.nr)).length;
   const urenTot=bonnenVan.reduce((n,x)=>{const q=cv("bon",x.c.nr),u="uren" in q?q.uren:x.r&&x.r.uren;return n+(Number(u)||0)},0);
   const cap=p&&p.capaciteit;
   const nWaar=bonnenVan.filter(x=>ovlWaarom(x.c,x.r).length).length;
-  const titel=p?hoofd(langeDatum(datum(p.datum)))+(p.lijn?", "+p.lijn:""):dag==="x:stop"?"Eerstvolgende stop":"Te plannen";
+  const titel=p?hoofd(langeDatum(datum(p.datum)))+(p.lijn?", "+p.lijn:""):dag==="x:stop"?"Eerstvolgende stop":dag==="x:tp"?"Te plannen":hoofd(langeDatum(datum(dag)))+", nog geen planning";
   const rij=x=>{
     const {c,r}=x,w=ovlWaarom(c,r),q=cv("bon",c.nr),pr="prio" in q?q.prio:(r?zatPrio(r):c.prio),u="uitvoerder" in q?q.uitvoerder:r&&r.uitvoerder,h="uren" in q?q.uren:r&&r.uren;
     return'<tr class="ovl-rij'+(BV&&BV.nr===c.nr?" ovl-aan":"")+'" data-ovlbon="'+esc(c.nr)+'">'+
@@ -6245,8 +6248,10 @@ function prodPaneelVelden(){
    RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","meldingen","storingen","output"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","storingen","output","stop"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","meldingen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
+/* De Onderhoudsplanning mag onder twee kopjes staan: Dagstart (om in te zien) en Werkvoorbereiding. */
+const MENU_DUBBEL=["stop"];
 const menuIndeling=()=>MENU_LIVE!==undefined?MENU_LIVE||MENU_STANDAARD:((D.meta||{}).menu||MENU_STANDAARD);
 const menuPagina=id=>PAGINAS.find(p=>p.id===id);
 /* Alle pagina's die in deze inlog onder een kopje kunnen: niet het Overzicht bovenaan en niet de stappen per lijn. */
@@ -6254,7 +6259,7 @@ const menuPaginas=()=>PAGINAS.filter(p=>p.id!=="start"&&!P_LIJN.includes(p)).map
 function menuKopjes(m){
   m=m||menuIndeling();
   const kan=new Set(menuPaginas()),al=new Set(),weg=new Set(m.weg||[]);
-  const kopjes=(m.kopjes||[]).map(k=>({t:String(k.t||"Kopje"),dicht:!!k.dicht,p:(k.p||[]).filter(id=>kan.has(id)&&!al.has(id)&&al.add(id))}));
+  const kopjes=(m.kopjes||[]).map(k=>({t:String(k.t||"Kopje"),dicht:!!k.dicht,p:(k.p||[]).filter(id=>kan.has(id)&&(MENU_DUBBEL.includes(id)&&!(k.p||[]).slice(0,(k.p||[]).indexOf(id)).includes(id)||!al.has(id))&&al.add(id))}));
   MENU_STANDAARD.kopjes.forEach(s=>s.p.forEach(id=>{
     if(!kan.has(id)||al.has(id)||weg.has(id))return;
     let doel=kopjes.find(k=>k.t===s.t)||kopjes[kopjes.length-1];
@@ -6285,7 +6290,7 @@ function menuModel(){
   return m.map(k=>Object.assign(k,{p:k.p.filter(Boolean),i:KOPICO[k.t]||"map"})).filter(k=>k.p.length);
 }
 const kopTel=k=>k.p.reduce((n,p)=>n+(TEL[p.id]||0),0),telTekst=n=>n>99?"99+":String(n);
-const kopjeHier=()=>MODEL.find(k=>k.p.some(p=>p.id===HUIDIG));
+const kopjeHier=()=>MODEL.find(k=>k.t===KOPJE&&k.p.some(p=>p.id===HUIDIG))||MODEL.find(k=>k.p.some(p=>p.id===HUIDIG));
 function tekenMenu(){
   MODEL=menuModel();
   const hier=kopjeHier();
