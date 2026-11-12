@@ -780,6 +780,8 @@ html.bvopen{overflow:hidden}
 .dp-leeg{color:var(--ink3)}
 @media (max-width:700px){.dp-lijf{columns:1;overflow:auto}.dp-lijf li{grid-template-columns:5em minmax(0,1fr) 2.4em;}.dp-lijf .dp-waar,.dp-lijf .dp-wie,.dp-lijf .dp-st{display:none}}
 /* In de presentatie vult de kalender het scherm; de dag opent in het venster. */
+.dp-knoppen{display:flex;align-items:flex-start;gap:8px}
+.stopsplit.bewerk{display:block}.stopsplit.bewerk .stoplinks{display:none}.stopterug{margin:0 0 14px}
 html.present .stopsplit,.stopsplit.alleenkal{display:block}
 html.present .stoprechts,.stopsplit.alleenkal .stoprechts{display:none}
 html.present .stoplinks,.stopsplit.alleenkal .stoplinks{position:static}
@@ -1922,6 +1924,8 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-nieuwestop]"))openNieuweStop();
   const ad=e.target.closest("[data-agdag]");if(ad){DAGKEUZE=ad.dataset.agdag;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop();if(dagPopAan())dagPop(DAGKEUZE)}
   if(e.target.closest("[data-dagpopdicht]")||e.target.id==="dagpop")dagPopDicht();
+  if(e.target.closest("[data-dagbewerk]")){dagPopDicht();STOPBEWERK=true;vStop();window.scrollTo(0,0)}
+  if(e.target.closest("[data-stopkal]")){STOPBEWERK=false;vStop();window.scrollTo(0,0)}
   const am=e.target.closest("[data-agmaand]");if(am){const d=new Date(MAAND.j,MAAND.m+Number(am.dataset.agmaand),1);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
   if(e.target.closest("[data-agnu]")){const d=pmNu();DAGKEUZE=dagTekst(d);MAAND={j:d.getFullYear(),m:d.getMonth()};vStop()}
   if(e.target.closest("[data-agzat]")){naarZaterdag();vStop()}
@@ -4404,7 +4408,8 @@ function vStop(){
 }
 /* In de presentatie en bij wie de planning alleen bekijkt opent een klik op een dag een venster met alles van die dag op één scherm.
    De letters krimpen tot het past (dagPopPas), zonder scrollen. */
-const dagPopAan=()=>document.documentElement.classList.contains("present")||!wvMag();
+const dagPopAan=()=>true;
+let STOPBEWERK=false;
 function dagPop(t){
   const p=planOpDatum(t),d=datum(t),pm=pmPlan().bonnen.filter(b=>b.datum===t),gm=gemeldOp(t),af=afOp(t).filter(c=>!p||!planRijen(p).some(r=>r.nr===c.nr));
   const bonSt=r=>{const c=zatBon(r.nr)||(D.storingen||[]).find(x=>x.nr===r.nr);return c?c.status:""};
@@ -4416,7 +4421,7 @@ function dagPop(t){
   const uren=p?planRijen(p).reduce((n,r)=>n+(Number(r.uren)||0),0):0;
   const kop=[p&&p.lijn,p&&p.naam,p&&p.teamleider?"Teamleider "+p.teamleider:"",p&&p.monteurs?"Monteurs "+p.monteurs:"",uren?uren+" uur ingepland"+(p.capaciteit?" van "+p.capaciteit:""):""].filter(Boolean).join(", ");
   let v=$("#dagpop");if(!v){v=document.createElement("div");v.id="dagpop";v.className="dagpop";document.body.append(v)}
-  v.innerHTML='<div class="dp-vak" role="dialog" aria-modal="true" aria-labelledby="dp-titel"><div class="dp-kop"><div><h2 id="dp-titel">'+esc(hoofd(langeDatum(d)))+"</h2>"+(kop?"<p>"+esc(kop)+"</p>":"")+(p&&p.letop?'<p class="dp-let">Let op: '+esc(p.letop)+"</p>":"")+'</div><button class="icoonknop" type="button" data-dagpopdicht aria-label="Sluiten">'+ico("sluit")+'</button></div><div class="dp-lijf">'+
+  v.innerHTML='<div class="dp-vak" role="dialog" aria-modal="true" aria-labelledby="dp-titel"><div class="dp-kop"><div><h2 id="dp-titel">'+esc(hoofd(langeDatum(d)))+"</h2>"+(kop?"<p>"+esc(kop)+"</p>":"")+(p&&p.letop?'<p class="dp-let">Let op: '+esc(p.letop)+"</p>":"")+'</div><div class="dp-knoppen">'+(wvMag()&&!document.documentElement.classList.contains("present")?'<button class="knop hoofd" type="button" data-dagbewerk>Aanpassen</button>':"")+'<button class="icoonknop" type="button" data-dagpopdicht aria-label="Sluiten">'+ico("sluit")+'</button></div></div><div class="dp-lijf">'+
     (blok("Correctief",pc.map(bon))+blok("Preventief",pp.map(bon))+blok("PM-bonnen",pm.map(b=>rij(b.nr,pmTitel(b)+" ("+b.taken.length+(b.taken.length===1?" taak)":" taken)"),b.lijn,1,b.monteur||"",st(pmStand(b)))))+
      blok("Gemeld door monteurs",gm.map(x=>{const v2=bonDicht(x)&&x.vervolg!=="Gereed"?"Bon gesloten":x.vervolg;return rij(bonVan(x.id)||String(x.tijd||"").slice(11),x.melding,[x.lijn,x.machine].filter(Boolean).join(", "),"",x.melder,st(v2))}))+
      blok("Afgemeld op deze dag",af.map(c=>rij(c.nr,c.omschrijving,[c.lijn,c.machine].filter(Boolean).join(", "),c.prio,c.monteur,st(c.status))))||'<p class="dp-leeg">Op deze dag staat niets.</p>')+"</div></div>";
@@ -4435,8 +4440,11 @@ window.addEventListener("resize",()=>{const v=$("#dagpop");if(v&&!v.hidden)dagPo
 function stopSplit(){
   const v=$("#view"),a=v&&v.querySelector(":scope > .agenda");if(!a)return;
   const w=document.createElement("div"),l=document.createElement("div"),r=document.createElement("div");
-  w.className="stopsplit"+(wvMag()?"":" alleenkal");l.className="stoplinks";r.className="stoprechts";
+  const bew=STOPBEWERK&&wvMag()&&!document.documentElement.classList.contains("present");
+  w.className="stopsplit "+(bew?"bewerk":"alleenkal");
+l.className="stoplinks";r.className="stoprechts";
   let n=a.nextSibling;const rest=[];while(n){rest.push(n);n=n.nextSibling}
+  if(bew)rest.unshift(Object.assign(document.createElement("div"),{className:"stopterug",innerHTML:'<button class="knop" type="button" data-stopkal>‹ Terug naar de kalender</button>'}));
   a.before(w);l.append(a);rest.forEach(x=>r.append(x));w.append(l,r);
 }
 function vPlan(s,o){
