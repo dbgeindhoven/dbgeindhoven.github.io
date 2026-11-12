@@ -244,7 +244,7 @@ def build(a):
     # Welke melding welke bon werd, zonder de sleutel van de bonnen. Die staat alleen in het TD-deel.
     verwerkt = (data["meta"].get("bonnen") or {}).get("verwerkt", {})
     monteur_bonnen = {k: v for k, v in verwerkt.items() if not v.startswith("SQDM")}
-    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "output": kort_rapport(data.get("output", {}), 14), "zaterdag": data.get("zaterdag", {}), "stops": data.get("stops", [])}
+    dagstart = {"meta": {"stand": a.stand, "meldingen": mld, "bonnen": {"verwerkt": verwerkt, "gesloten": gesloten}}, "sqdc": data.get("sqdc", {}), "storingen": data["storingen"], "machines": data["machines"], "output": kort_rapport(data.get("output", {}), 14), "zaterdag": data.get("zaterdag", {}), "stops": data.get("stops", [])}
     # Alleen het werkvoorbereidingsdeel kan bonnen openen. Het TD-deel krijgt de regels zonder bestanden en sleutel.
     wv = copy.deepcopy(td)
     # RCA analyse: de feiten en het effect van een maatregel kijken verder terug dan het RCA-signaal.

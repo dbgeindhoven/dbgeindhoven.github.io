@@ -212,6 +212,13 @@ html.present .deelkop .knop{display:none}
 .actieregel input[type=checkbox]{flex:none;width:20px;height:20px;margin:9px 0 0}
 .actieregel.info{padding-left:28px}
 #o_info .actieregel.info{padding-left:0}
+.lsdeel .deelkop{align-items:center;margin-bottom:10px}.lsdeel .deelkop h2{margin:0}
+.lsgeen{margin:0;padding:14px 16px;border:1px dashed var(--line2);border-radius:16px;color:var(--ink3);font-size:.8125rem}
+.lstbl tr.lsstil td:first-child{box-shadow:inset 4px 0 0 var(--crit)}
+.lsoorz{margin-top:2px;color:var(--ink2);font-size:.75rem;font-weight:400}
+.lslaat{color:var(--crit-ink);font-weight:600}.lsaf{color:var(--ok);font-weight:600}
+.lskeus{display:flex;flex-direction:column;gap:6px;font-size:.8125rem;font-weight:500}.lskeus .seg{margin:0;align-self:flex-start;flex-wrap:wrap;border-radius:18px}
+.lsknoppen{display:flex;flex-wrap:wrap;gap:8px}
 .meldform #o_oorzaak{min-height:0;resize:none;overflow:hidden}
 #o_infoveld[hidden]{display:none}
 .meldform .actieregel textarea{min-height:0;resize:none;overflow:hidden}
@@ -2486,7 +2493,7 @@ function wegVak(vak,x,tekst,klaar,bonNr){
 const MELD=()=>(D.meta&&D.meta.meldingen&&D.meta.meldingen.url)?D.meta.meldingen:null;
 let MELDINGEN=null,MELDFOUT=false,klok=null,laatste="",OUTPUT=[],NIEUWBON=[];
 /* Regels met letter CM zijn bonnen van de werkvoorbereider, geen meldingen. */
-const meldZicht=x=>x.letter!=="CM"&&!(bonnen().gesloten||[]).includes(x.id);
+const meldZicht=x=>x.letter!=="CM"&&x.letter!=="LS"&&!(bonnen().gesloten||[]).includes(x.id);
 const LETTERS={"":"Meldingen",S:"Safety",Q:"Quality",D:"Delivery",DIR:"Directie-acties"};
 const herteken=()=>{planTel();alTel();if(HUIDIG==="tedoen"&&$("#paneel").hidden&&!(document.activeElement&&document.activeElement.closest("#view input,#view select"))&&tdSleutels()!==TDVORIG)vTeDoen();if($("#paneel").hidden&&["meldingen","storingen","output","lijn1","lijn2","lijn3","inpak","ompak","start","actielijst"].concat(document.activeElement&&document.activeElement.closest("#view input,#view select")||BONKIES.size?[]:["stop","pmbonnen","cm","sqdbonnen","acties","sqd","opname"]).includes(HUIDIG))SCHERM[HUIDIG]();if(HUIDIG==="rca"&&!RCA_SEL&&$("#paneel").hidden)vRca()};
 function naam(w){try{if(w!==undefined)localStorage.setItem("td-hub-naam",w);return localStorage.getItem("td-hub-naam")||""}catch(_){return w||""}}
@@ -2497,7 +2504,7 @@ async function haalMeldingen(){
   try{
     const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(j.fout)throw 0;
     MELDFOUT=false;LIVE_TIJD=new Date();standTeken();const t=JSON.stringify([j.meldingen||[],j.bonstatus||[],j.output||[],j.pm||[],j.bevindingen||[],j.olopname||[]]);
-    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);OLLIVE=j.olopname||[];(j.bonstatus||[]).forEach(olToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);bordPrio();NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
+    if(t!==laatste||fout){laatste=t;OUTPUT=j.output||[];PMAF=(j.pm||[]).map(tijdNorm);PMBEV=(j.bevindingen||[]).map(tijdNorm);(j.bonstatus||[]).slice().sort((a,b)=>!!(b.rij&&b.rij.stop)-!!(a.rij&&a.rij.stop)).forEach(pasBonToe);OLLIVE=j.olopname||[];(j.bonstatus||[]).forEach(olToe);MELDINGEN=(j.meldingen||[]).filter(meldZicht);LOPEND=(j.meldingen||[]).filter(x=>x.letter==="LS");bordPrio();NIEUWBON=(j.meldingen||[]).filter(x=>x.letter==="CM"&&!bonVan(x.id));if(rteken)rteken();herteken()}
   }catch(_){MELDFOUT=true;standTeken();if(!fout)herteken()}
 }
 async function stuur(d){
@@ -3688,27 +3695,110 @@ function vMeldingen(){
       {k:"s",l:"Status",w:"136px",c:"m-status",r:x=>st(soort(x)),s:x=>soort(x)}],
     detail:x=>{openDetailMelding(x);return null}});
 }
-/* Lopende storingen brengen SQD direct in gevaar: alleen de hoogste prio, uit de bonnen en uit de meldingen. */
-function vStoringen(){
-  const m=(MELDINGEN||[]).filter(x=>x.letter!=="DIR"&&String(x.prio)==="1");
-  const r=(D.storingen||[]).filter(x=>String(x.prio)==="1"&&!m.some(y=>y.code===x.nr)).concat(m.map(x=>{const s=(D.storingen||[]).find(y=>y.nr===x.code);return{nr:x.code||"Melding",storing:x.melding,lijn:x.lijn,machine:x.machine,status:s?s.status:"Open",actiehouder:x.actiehouder,prio:1,_m:x}}));
-  const bonVeld=x=>!x._m?of(null):bonVan(x._m.id)?"Gemaakt":alleenKijken()?(x._m.bon_nodig==="Ja"?"Wordt gemaakt":"Geen bon"):(()=>{const p=cv("bonvink",x._m.id),g="bon_nodig" in p,aan=g?p.bon_nodig:x._m.bon_nodig==="Ja";return'<label class="bonvink'+(g?" gewijzigd":"")+'"><input type="checkbox" data-lsbon="'+esc(x._m.id)+'"'+(aan?" checked":"")+"> Bon maken</label>"})();
-  lijstScherm({key:"storingen",titel:"Lopende storingen",sub:"Storingen met prio 1: deze brengen SQD direct in gevaar. Gereedgemelde storingen verdwijnen automatisch.",dagstart:true,rijen:r,eenheid:["storing","storingen"],
-    geen:"Geen storingen met prio 1.",
-    seg:{get:x=>x.status,o:["Open","In bestelling","Gepland"]},
-    selects:[{k:"lijn",l:"Alle lijnen",o:LIJNEN.filter(l=>r.some(x=>lijnGroep(x)===l)),get:lijnGroep}],
-    tekst:x=>[x.nr,x.storing,x.lijn,x.machine,x.actiehouder].join(" "),
-    kolommen:[
-      {k:"nr",l:"Nummer",w:"96px",c:"m-nr",x:"nr",r:x=>esc(x.nr),s:x=>nummer(x.nr)},
-      {k:"st",l:"Storing",c:"m-main",x:"titel",r:x=>esc(x.storing),s:x=>norm(x.storing)},
-      {k:"mach",l:"Machine",w:"22%",c:"m-sub",r:x=>esc([x.lijn,x.machine].filter(Boolean).join(", ")),s:x=>norm(x.lijn)+norm(x.machine)},
-      {k:"status",l:"Status",w:"120px",c:"m-status",r:x=>st(x.status),s:x=>x.status},
-      {k:"h",l:"Actiehouder",w:"130px",c:"m-sub",ml:"Actiehouder",r:x=>of(x.actiehouder,"Nog toewijzen"),s:x=>norm(x.actiehouder)||"zzz"},
-      {k:"b",l:"Bon",w:"130px",c:"m-sub",ml:"Bon",r:bonVeld,s:x=>x._m?1:0}],
-    detail:x=>{if(x._m){openDetailMelding(x._m);return null}const c=(D.cm||[]).find(y=>y.nr===x.nr);return c?cmDetail(c):{klein:x.nr,titel:x.storing,velden:[["Status",st(x.status),true],["Prio",x.prio?prio(x.prio):null,true],["Lijn",x.lijn],["Machine",x.machine],["Actiehouder",x.actiehouder||"Nog toewijzen"]]}}
-  });
+/* Lopende storingen: een eigen lijst die de dagstart, TD en werkvoorbereider per lijn bijhouden.
+   Elke storing is een regel met letter LS in de Sheet van de meldingen. Status, stilstand en CM-bon staan als vaste regels vooraan in oplossing
+   (Status: …, Stilstand: …, Bon: …), daarna toelichting, oorzaak en acties zoals bij een melding. Opgelost is de actie gereed: dan verdwijnt hij. */
+const LS_LIJNEN=["Lijn 1","Lijn 2","Lijn 3","Inpak","Ompak","Overig"],LS_STATUS=["Open","Bezig","Wacht op onderdelen","Wacht op leverancier"],LS_STIL=["Stilstand","Halve capaciteit","Geen stilstand"];
+const LS_META=/^(Status|Stilstand|Bon)\s*:\s*/i;
+STATUS["Bezig"]=STATUS["Bezig"]||"info";STATUS["Wacht op onderdelen"]="wacht";STATUS["Wacht op leverancier"]="wachtleeg";STATUS["Geen stilstand"]="leeg";
+let LOPEND=null;
+const lsLijn=x=>LS_LIJNEN.includes(x.lijn)?x.lijn:"Overig";
+function lsDeel(x){
+  const o={status:"Open",stil:"Geen stilstand",bon:"",rest:[]};
+  String(x.oplossing||"").split("\n").forEach(r=>{const t=r.trim(),m=LS_META.exec(t);if(!m){if(t)o.rest.push(t);return}const v=t.slice(m[0].length).trim(),k=m[1].toLowerCase();if(k==="status"&&LS_STATUS.includes(v))o.status=v;else if(k==="stilstand"&&LS_STIL.includes(v))o.stil=v;else if(k==="bon")o.bon=v});
+  const act=o.rest.filter(r=>!ACTIE_INFO.test(r)&&!ACTIE_OORZAAK.test(r)&&!ACTIE_VAST.test(r));
+  o.acties=act.length;o.gedaan=act.filter(r=>/^\[x\]/i.test(r)).length;
+  o.oorzaak=o.rest.filter(r=>ACTIE_OORZAAK.test(r)).map(r=>r.replace(ACTIE_OORZAAK,"")).join("; ");
+  return o;
 }
-document.addEventListener("change",e=>{if(e.target.matches("[data-lsbon]"))cBonvinkKies(e.target)});
+const lsSinds=x=>{const m=/^(\d{2})-(\d{2})-(\d{4})\s+(\d{1,2}):(\d{2})/.exec(x.tijd||"");if(!m)return x.tijd||"";const d=new Date(+m[3],m[2]-1,+m[1],+m[4],+m[5]),u=Math.max(0,(Date.now()-d)/36e5);return m[1]+"-"+m[2]+" "+m[4].padStart(2,"0")+":"+m[5]+(u<48?" ("+(u<1?"net":Math.floor(u)+" uur")+")":" ("+Math.floor(u/24)+" dagen)")};
+const lsTijdSort=x=>{const m=/^(\d{2})-(\d{2})-(\d{4})\s+(\d{1,2}):(\d{2})/.exec(x.tijd||"");return m?m[3]+m[2]+m[1]+m[4].padStart(2,"0")+m[5]:""};
+const lsDeadline=x=>{const t=datum(x.datum);if(!t)return of(null);const v=new Date();v.setHours(0,0,0,0);return'<span class="'+(t<v?"lslaat":"")+'">'+esc(x.datum)+"</span>"};
+function lsBonTekst(nr){if(!nr)return"";const c=(D.cm||[]).find(y=>y.nr===nr)||(D.storingen||[]).find(y=>y.nr===nr);return nr+(c&&c.status?", "+c.status:"")}
+function vStoringen(){
+  const s=mem.lopend||(mem.lopend={status:"",lijn:""}),aan=MELD(),kijk=alleenKijken(),l=LOPEND||[];
+  const alle=l.map(x=>Object.assign({x},lsDeel(x)));
+  const tel=v=>alle.filter(r=>!s.lijn||lsLijn(r.x)===s.lijn).filter(r=>!v||r.status===v).length;
+  let h=kop("Lopende storingen",kijk?"De storingen die nu spelen, per lijn.":"De storingen die nu spelen, per lijn. Voeg een storing toe bij de lijn, houd status en acties bij en meld hem op als hij is opgelost.",true,aan&&!kijk?'<button class="knop hoofd" data-lsnieuw="">Storing toevoegen</button>':"");
+  if(!aan){$("#view").innerHTML=h+'<p class="leegmelding">De koppeling met de Sheet staat niet aan.</p>';return}
+  if(LOPEND===null){$("#view").innerHTML=h+'<p class="leegmelding">'+(MELDFOUT?"De storingen zijn nu niet bereikbaar.":"Storingen ophalen.")+"</p>";return}
+  h+='<div class="seg" role="group" aria-label="Filter op status"><button data-lsst="" aria-pressed="'+(!s.status)+'">Alles<span>'+tel("")+"</span></button>"+LS_STATUS.map(v=>'<button data-lsst="'+esc(v)+'" aria-pressed="'+(s.status===v)+'">'+esc(v)+"<span>"+tel(v)+"</span></button>").join("")+"</div>";
+  h+='<div class="toolbar"><select id="ls_lijn" aria-label="Lijn"><option value="">Alle lijnen</option>'+LS_LIJNEN.map(v=>"<option"+(s.lijn===v?" selected":"")+">"+v+"</option>").join("")+"</select></div>";
+  const kol='<thead><tr><th style="width:118px">Sinds</th><th>Storing</th><th style="width:150px">Stilstand</th><th style="width:150px">Status</th><th style="width:120px">Actiehouder</th><th style="width:84px">Acties</th><th style="width:100px">Deadline</th><th style="width:56px">Prio</th></tr></thead>';
+  h+=LS_LIJNEN.filter(v=>!s.lijn||v===s.lijn).map(lijn=>{
+    const r=alle.filter(a=>lsLijn(a.x)===lijn&&(!s.status||a.status===s.status)).sort((a,b)=>(String(a.x.prio||9)).localeCompare(String(b.x.prio||9))||LS_STIL.indexOf(a.stil)-LS_STIL.indexOf(b.stil)||lsTijdSort(a.x).localeCompare(lsTijdSort(b.x)));
+    const plus=kijk?"":'<button class="knop" data-lsnieuw="'+esc(lijn)+'">'+ico("plus")+"Storing op "+esc(lijn.replace("Overig","overig"))+"</button>";
+    const stil=r.filter(a=>a.stil==="Stilstand").length;
+    return'<section class="deel lsdeel"><div class="deelkop"><h2>'+esc(lijn)+"<span>"+(r.length?r.length+(r.length===1?" storing":" storingen")+(stil?", "+stil+" met stilstand":""):"geen storingen")+"</span></h2>"+plus+"</div>"+
+      (r.length?'<div class="tblwrap"><table class="tbl lstbl">'+kol+"<tbody>"+r.map(a=>{const x=a.x;return'<tr class="klik'+(a.stil==="Stilstand"?" lsstil":"")+'" data-lsopen="'+esc(x.id)+'" tabindex="0"><td class="nowrap" data-l="Sinds">'+esc(lsSinds(x))+'</td><td class="titel" data-l="Storing">'+esc(x.melding)+(x.machine?'<div class="zacht">'+esc(x.machine)+"</div>":"")+(a.oorzaak?'<div class="lsoorz">Oorzaak: '+esc(a.oorzaak)+"</div>":"")+(a.bon?'<div class="zacht">Bon '+esc(lsBonTekst(a.bon))+"</div>":"")+'</td><td data-l="Stilstand">'+st(a.stil)+'</td><td data-l="Status">'+st(a.status)+'</td><td data-l="Actiehouder">'+of(x.actiehouder,"Nog toewijzen")+'</td><td data-l="Acties">'+(a.acties?'<span class="'+(a.gedaan===a.acties?"lsaf":"")+'">'+a.gedaan+" van "+a.acties+"</span>":of(null))+'</td><td data-l="Deadline">'+lsDeadline(x)+'</td><td data-l="Prio">'+prio(x.prio)+"</td></tr>"}).join("")+"</tbody></table></div>":'<p class="lsgeen">Geen lopende storingen.</p>')+"</section>";
+  }).join("");
+  $("#view").innerHTML=h;
+  const lj=$("#ls_lijn");if(lj)lj.addEventListener("change",()=>{s.lijn=lj.value;vStoringen()});
+}
+document.addEventListener("click",e=>{
+  const st_=e.target.closest("[data-lsst]");if(st_){mem.lopend.status=st_.dataset.lsst;vStoringen();return}
+  const n=e.target.closest("[data-lsnieuw]");if(n){openLopend(null,n.dataset.lsnieuw);return}
+  const o=e.target.closest("[data-lsopen]");if(o){const x=(LOPEND||[]).find(y=>y.id===o.dataset.lsopen);if(x)openLopend(x)}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches&&e.target.matches("[data-lsopen]"))e.target.click()});
+function openLopend(x,lijn){
+  terug=document.activeElement;
+  const p=$("#paneel"),kijk=alleenKijken(),nieuw=!x,d=x?lsDeel(x):{status:"Open",stil:"Geen stilstand",bon:"",rest:[]};
+  const iso=x?(x.datum||"").split("-").reverse().join("-"):"",l=x?lsLijn(x):(lijn||"");
+  const opties=(a,v)=>a.map(o=>"<option"+(o===v?" selected":"")+">"+esc(o)+"</option>").join("");
+  const mach=[...new Set(((D.machines||{})[l]||[]).concat((D.machines||{})[l==="Inpak"||l==="Ompak"?"Overig":""]||[]))];
+  const kopV=x?[["Gemeld",x.tijd],["Door",x.melder]]:[];
+  if(kijk){
+    const v=kopV.concat([["Lijn",l],["Machine",x.machine],["Stilstand",d.stil],["Status",d.status],["Actiehouder",x.actiehouder||"Nog toewijzen"],["Deadline",x.datum],["Prio",x.prio?"Prio "+x.prio:""],["CM-bon",lsBonTekst(d.bon)],["Toelichting",d.rest.filter(r=>ACTIE_INFO.test(r)).join("\n")],["Oorzaak",d.rest.filter(r=>ACTIE_OORZAAK.test(r)).map(r=>r.replace(ACTIE_OORZAAK,"")).join("\n")],["Acties",d.rest.filter(r=>!ACTIE_INFO.test(r)&&!ACTIE_OORZAAK.test(r)).join("\n").replace(/\[x\] /gi,"Gedaan: ")]]);
+    p.innerHTML='<div class="pkopbalk"><div><small>Lopende storing</small><h2 id="ptitel">'+esc(x.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+'</button></div><dl class="velden">'+v.filter(y=>!leeg(y[1])).map(y=>"<dt>"+esc(y[0])+"</dt><dd>"+esc(y[1])+"</dd>").join("")+"</dl>";
+  }else{
+    p.innerHTML='<div class="pkopbalk"><div><small>'+(nieuw?"Nieuwe lopende storing":"Lopende storing")+'</small><h2 id="ptitel">'+esc(nieuw?"Storing toevoegen":x.melding)+'</h2></div><button class="icoonknop" id="psl" aria-label="Sluiten">'+ico("sluit")+"</button></div>"+
+      (x?'<dl class="velden">'+kopV.filter(y=>!leeg(y[1])).map(y=>"<dt>"+esc(y[0])+"</dt><dd>"+esc(y[1])+"</dd>").join("")+"</dl>":"")+
+      '<form class="meldform" id="ls_form">'+
+      '<label>Storing<textarea id="ls_wat" rows="2" required placeholder="Wat is er aan de hand?">'+esc(x?x.melding:"")+"</textarea></label>"+
+      '<div class="twee"><label>Lijn<select id="ls_l" required><option value="">Kies</option>'+opties(LS_LIJNEN,l)+'</select></label><label>Machine<input type="text" id="ls_m" list="ls_ml" value="'+esc(x?x.machine:"")+'"><datalist id="ls_ml">'+mach.map(m=>'<option value="'+esc(m)+'">').join("")+"</datalist></label></div>"+
+      '<div class="lskeus"><span>Stilstand</span><div class="seg" id="ls_stil" role="group" aria-label="Stilstand">'+LS_STIL.map(v=>'<button type="button" data-v="'+esc(v)+'" aria-pressed="'+(d.stil===v)+'">'+esc(v)+"</button>").join("")+"</div></div>"+
+      '<div class="lskeus"><span>Status</span><div class="seg" id="ls_st" role="group" aria-label="Status">'+LS_STATUS.map(v=>'<button type="button" data-v="'+esc(v)+'" aria-pressed="'+(d.status===v)+'">'+esc(v)+"</button>").join("")+"</div></div>"+
+      '<div class="twee"><label>Actiehouder<input type="text" id="ls_wie" value="'+esc(x?x.actiehouder:"")+'"></label><label>Deadline<input type="date" id="ls_dat" value="'+esc(iso)+'"></label></div>'+
+      '<div class="twee"><label>Prio<select id="ls_prio">'+[["","Geen prio"],["1","Prio 1"],["2","Prio 2"],["3","Prio 3"]].map(o=>'<option value="'+o[0]+'"'+(o[0]===String(x&&x.prio||"")?" selected":"")+">"+o[1]+"</option>").join("")+'</select></label><label>CM-bon<input type="text" id="ls_bon" placeholder="Bijvoorbeeld CM230" value="'+esc(d.bon)+'"></label></div>'+
+      (nieuw?'<label>Gemeld door<input type="text" id="ls_door" value="'+esc(naam())+'"></label>':"")+
+      '<div class="actieveld" id="o_infoveld" hidden><span>Toelichting</span><div id="o_info"></div></div><label class="actieveld"><span>Oorzaak</span><textarea id="o_oorzaak" rows="1" placeholder="Nog niet bekend"></textarea></label><div class="actieveld"><span>Acties</span><div id="o_acties"></div><button type="button" class="tekstknop" id="o_actieplus">Actie toevoegen</button></div>'+
+      '<p class="fout" id="ls_fout" hidden>Dat is niet gelukt. Probeer het opnieuw.</p>'+
+      '<div class="lsknoppen"><button class="knop hoofd" type="submit">'+(nieuw?"Storing toevoegen":"Opslaan")+"</button>"+(x?'<button class="knop" type="button" id="ls_klaar">'+ico("afvink")+"Opgelost</button>":"")+"</div></form>"+
+      (x&&wvMag()?'<div class="bonweg"><div class="weg" id="ls_weg"></div></div>':"");
+  }
+  p.hidden=false;$("#paneelwaas").hidden=false;$("#psl").addEventListener("click",sluitPaneel);
+  if(kijk)return;
+  const vast=vulActies(d.rest.join("\n"));
+  if(nieuw)$("#ls_wat").focus();
+  ["#ls_stil","#ls_st"].forEach(id=>$(id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;$(id).querySelectorAll("button").forEach(y=>y.setAttribute("aria-pressed",y===b))}));
+  $("#ls_l").addEventListener("change",()=>{const v=$("#ls_l").value,m=[...new Set(((D.machines||{})[v]||[]).concat((D.machines||{})[v==="Inpak"||v==="Ompak"?"Overig":""]||[]))];$("#ls_ml").innerHTML=m.map(y=>'<option value="'+esc(y)+'">').join("")});
+  const keus=id=>($(id+' [aria-pressed="true"]')||{}).dataset.v;
+  $("#ls_form").addEventListener("submit",async e=>{
+    e.preventDefault();const k=e.target.querySelector('button[type="submit"]'),f=$("#ls_fout");f.hidden=true;f.textContent="Dat is niet gelukt. Probeer het opnieuw.";
+    const bon=$("#ls_bon").value.trim().toUpperCase().replace(/\s+/g,"");
+    if(bon&&!/^(CM\d+|SQDM-\d+)$/.test(bon)){f.textContent="Een CM-bon is CM met een nummer, of SQDM- met een nummer.";f.hidden=false;$("#ls_bon").focus();return}
+    const meta=["Status: "+(keus("#ls_st")||"Open"),"Stilstand: "+(keus("#ls_stil")||"Geen stilstand")].concat(bon?["Bon: "+bon]:[]);
+    const rest=leesActies(vast),opl=meta.concat(rest?[rest]:[]).join("\n");
+    if(opl.length>MAX_ACTIE){f.textContent="De acties zijn te lang om op te slaan. Maak de tekst korter.";f.hidden=false;return}
+    const v={melding:$("#ls_wat").value.trim(),lijn:$("#ls_l").value,machine:$("#ls_m").value.trim(),actiehouder:$("#ls_wie").value.trim(),datum:$("#ls_dat").value.split("-").reverse().join("-"),prio:$("#ls_prio").value,oplossing:opl,bon_nodig:false};
+    if(!v.melding||!v.lijn)return;
+    k.disabled=true;
+    try{
+      if(nieuw){const door=$("#ls_door").value.trim();if(door)naam(door);const j=await stuur(Object.assign({actie:"nieuw",letter:"LS",melder:door,risico:"",vervolg:""},v));LOPEND=(LOPEND||[]).concat([Object.assign({},v,{id:j.id,tijd:j.tijd,letter:"LS",melder:door,status:"Open",bon_nodig:"Nee"})])}
+      else{await stuur(Object.assign({actie:"bijwerken",id:x.id},v));Object.assign(x,v,{bon_nodig:"Nee"})}
+      laatste="";sluitPaneel();vStoringen();melder(nieuw?"Storing toegevoegd op "+v.lijn:"Storing opgeslagen");
+    }catch(_){f.hidden=false;k.disabled=false}
+  });
+  if($("#ls_klaar"))$("#ls_klaar").addEventListener("click",async e=>{
+    const b=e.target.closest("button");
+    if(b.dataset.zeker!=="1"){b.dataset.zeker="1";b.innerHTML=ico("afvink")+"Zeker? Klik nog een keer";return}
+    b.disabled=true;
+    try{await stuur({actie:"gereed",id:x.id,door:naam()});LOPEND=LOPEND.filter(y=>y.id!==x.id);laatste="";sluitPaneel();vStoringen();melder("Storing opgelost en van de lijst")}
+    catch(_){$("#ls_fout").hidden=false;b.disabled=false}
+  });
+  if($("#ls_weg"))wegVak($("#ls_weg"),x,"Storing verwijderen",()=>{LOPEND=LOPEND.filter(y=>y.id!==x.id);laatste="";sluitPaneel();vStoringen();melder("Storing verwijderd")});
+}
 /* Output per lijn: startcijfers uit het Excel-bestand (D.output), aangevuld met wat de ploegen invullen (OUTPUT). */
 const PLOEGEN=[["ochtend","Ochtend","05:50-13:50"],["middag","Middag","13:50-21:50"],["nacht a","Nacht a","21:50-24:00"],["nacht b","Nacht b","00:00-05:50"]];
 const kgTekst=n=>n==null?"–":Math.round(n).toLocaleString("nl-NL");
