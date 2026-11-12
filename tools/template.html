@@ -1554,6 +1554,19 @@ html.ovlpres body{font-size:1.15rem}
 .bvextra .icoonknop{width:26px;height:26px;padding:0;font-size:.8125rem}
 .bvextra .icoonknop .i{width:14px;height:14px}
 .bvextrarij input{flex:1}
+
+/* SQD-overzicht en actielijst: het detailpaneel neemt de rechter helft, de lijst blijft links leesbaar. */
+@media (min-width:1000px){
+  html.alzij .paneel{top:96px;right:18px;bottom:18px;width:calc(50% - 26px)}
+  html.alzij .shell{margin-right:calc(50% + 8px)}
+  html.alzij .page{padding-left:56px;padding-right:18px}
+  html.alzij .dock{left:25%;max-width:calc(50% - 90px)}
+  html.alzij #paneelwaas{display:none!important}
+  html.alzij .meldpaneel{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html.alzij .kr{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  html.alzij .kr>:first-child{grid-column:1/-1}
+  html.alzij .head .headknoppen{flex-wrap:wrap}
+}
 </style>
 
 <div id="lock" hidden>
@@ -1888,6 +1901,10 @@ function openPaneel(d){
   $("#psl").addEventListener("click",sluitPaneel);
   if(d.weg)d.weg($("#b_weg"));
 }
+/* Op het SQD-overzicht en de actielijst staat het paneel op de rechter helft en blijft de lijst links bruikbaar (html.alzij). */
+function alZij(){const p=$("#paneel");document.documentElement.classList.toggle("alzij",!!p&&!p.hidden&&["sqd","acties"].includes(HUIDIG)&&!document.documentElement.classList.contains("present"))}
+document.addEventListener("DOMContentLoaded",()=>{const p=$("#paneel");if(p)new MutationObserver(alZij).observe(p,{attributes:true,attributeFilter:["hidden"]})});
+window.addEventListener("hashchange",()=>setTimeout(alZij,0));
 function sluitPaneel(){PANEELBON=null;const p=$("#paneel");p.onclick=p.onchange=p.oninput=null;p.hidden=true;$("#paneelwaas").hidden=true;if(terug&&terug.focus)terug.focus()}
 /* Wat de monteur bij de opname noteerde, met de foto. De specificaties staan ook op de bestellijst. */
 const opnameHtml=r=>{
@@ -3441,6 +3458,8 @@ function vSqd(){
     h+=punten;
     const later=rest.filter(a=>datum(a.datum)).length,geen=rest.length-later;
     h+='<a class="actiestrook" href="#acties"><span><b>Actielijst</b><span class="tel"><span>'+alAantal(later)+" met een latere deadline</span><span>"+alAantal(geen)+' zonder deadline</span></span></span><span class="knop">Naar de actielijst</span></a>';
+    const weg=alWeg();
+    if(weg.length){const g=weg.filter(x=>alOpgepakt(x)==="gepland").length,u=weg.length-g;h+='<p class="alstand">'+alAantal(weg.length)+(weg.length===1?" staat":" staan")+" niet meer op het bord omdat de bon "+(g&&u?g+"× gepland en "+u+"× uitgevoerd is":g?"gepland is":"uitgevoerd is")+": "+weg.map(x=>esc(alBonNr(x))).join(", ")+".</p>"}
   }
   $("#view").innerHTML=h;
   presLabel();alTel();
@@ -3455,8 +3474,19 @@ const AL_C={rood:"var(--al-rood)",goud:"var(--al-goud)","":"transparent"};
 const AL_LADEN="td-hub-actieladen";
 let AL_OPEN,AL_I=0,AL_GEREED=null;
 const alGroep=x=>x.letter==="DIR"||isDirectie(x)?"DIR":x.letter;
+/* Een actie met een bon die al is uitgevoerd of gepland staat niet meer op het bord en in de actielijst: die is opgepakt.
+   De bon volgt uit de melding (verwerkt), de code SQDM-n of de CM-bon bij de actie. Bij de dagstart komen status en plan uit de storingen en de planning. */
+const alBonNr=x=>bonVan(x.id)||(/^SQDM-\d+$/.test(x.code||"")?x.code:"")||(/^CM\d+$/.test(String(x.cm||"").trim())?String(x.cm).trim():"");
+function alOpgepakt(x){
+  const nr=alBonNr(x);if(!nr)return"";
+  const c=(D.cm||[]).find(b=>b.nr===nr)||(D.storingen||[]).find(b=>b.nr===nr);
+  if(c&&GESLOTEN.includes(c.status))return"uitgevoerd";
+  if(plannen().some(p=>planRijen(p).some(r=>r.nr===nr))||(c&&c.status==="Gepland"))return"gepland";
+  return"";
+}
+const alWeg=()=>(MELDINGEN||[]).filter(x=>["S","Q","D","DIR"].includes(x.letter)&&alOpgepakt(x));
 function alActies(){
-  const m=(MELDINGEN||[]).filter(x=>["S","Q","D","DIR"].includes(x.letter)).map(x=>({m:x,id:x.id,wat:x.melding,wie:String(x.actiehouder||"").trim(),g:alGroep(x),datum:String(x.datum||"").slice(0,10),prio:x.prio||"",code:x.code||"",plek:[x.lijn,x.machine].filter(Boolean).join(", "),bezig:x.voortgang==="Bezig"}));
+  const m=(MELDINGEN||[]).filter(x=>["S","Q","D","DIR"].includes(x.letter)&&!alOpgepakt(x)).map(x=>({m:x,id:x.id,wat:x.melding,wie:String(x.actiehouder||"").trim(),g:alGroep(x),datum:String(x.datum||"").slice(0,10),prio:x.prio||"",code:x.code||"",plek:[x.lijn,x.machine].filter(Boolean).join(", "),bezig:x.voortgang==="Bezig"}));
   const vast=((D.sqdc||{}).directie_acties||[]).filter(a=>!a.gereed).map((a,i)=>({id:"vast"+i,wat:a.actie,wie:String(a.actiehouder||"").trim(),g:"DIR",datum:String(a.datum||"").slice(0,10),prio:"",code:"",plek:""}));
   return m.concat(vast);
 }
