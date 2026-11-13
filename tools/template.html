@@ -360,6 +360,10 @@ html.inapp .mkop{display:none}
 .ex-vb{display:flex;flex-wrap:wrap;gap:4px}
 .ex-vb span{padding:1px 8px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--crit);color:var(--crit-ink);font-size:.75rem;font-weight:600}
 .ex-extra{margin:0;padding-left:18px;font-size:.875rem}
+.ex-punten{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.ex-punten h3{margin:6px 0 0;font-size:.8125rem;font-weight:600;color:var(--ink2)}
+.ex-punten h3:first-child{margin-top:0}
+.ex-punten ul{margin:0;padding-left:18px;font-size:.9375rem;line-height:1.45}
 .exfoto img{max-width:100%;border-radius:8px;margin-top:6px;background:#fff}
 /* Productie-app (pilot): hetzelfde glas als de monteurs-app. Eén lange pagina met per onderdeel een blok en bovenaan de stand van dat blok. */
 #prodscherm{min-height:100vh;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -1082,6 +1086,8 @@ svg.seg7{display:block;overflow:visible}
 .legeregel .led{--c:#CBD0D6;box-shadow:0 0 0 2px #fff}
 .tdlet{margin:0 0 12px;color:var(--warn-ink);font-size:.8125rem}
 .tdweg{margin-top:26px;padding:14px 18px;border-radius:18px;border:1px solid var(--glas-rand);background:var(--glas-binnen)}
+.tdweg h2{margin:0;font-size:.9375rem;font-weight:600;display:flex;align-items:baseline;gap:8px}
+.tdweg h2 span{color:var(--ink3);font-weight:500;font-size:.8125rem}
 .tdweglijst{margin:10px 0 0;padding:0;list-style:none;font-size:.8125rem}
 .tdweglijst li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:7px 0;border-top:1px solid var(--line)}
 .tdweglijst li span{flex:1;min-width:0;color:var(--ink2)}
@@ -2088,6 +2094,7 @@ document.addEventListener("click",e=>{
   const reg=e.target.closest("[data-pmpdf]");if(reg)haalRegistratie(reg);
   const zk=e.target.closest("[data-bestelzoek]");if(zk)zoekOpnieuw(zk);
   const tg=e.target.closest("[data-tdgezien]");if(tg)tdZet(tg.dataset.tdgezien,false);
+  const tx=e.target.closest("[data-tdextok]");if(tx)tdExternOk(tx.dataset.tdextok,tx);
   const tt=e.target.closest("[data-tdterug]");if(tt)tdZet(tt.dataset.tdterug,true);
   const tc=e.target.closest("[data-tdcm]");if(tc){const c=(D.cm||[]).find(x=>x.nr===tc.dataset.tdcm);if(c)openPaneel(cmDetail(c))}
   const tp=e.target.closest("[data-tdpm]");if(tp){const b=tdPm(tp.dataset.tdpm);if(b)openPaneel(pmDetail(b))}
@@ -2096,10 +2103,9 @@ document.addEventListener("click",e=>{
   const tf=e.target.closest("[data-tdfoto]");if(tf)tf.closest(".fotos").classList.toggle("groot");
   const tm=e.target.closest("[data-tdmeer]");if(tm){TDMEER[tm.dataset.tdmeer]=!TDMEER[tm.dataset.tdmeer];vTeDoen()}
   const tq=e.target.closest("[data-tdprio]");if(tq)cPrioKies(tq.dataset.tdprio,tq.dataset.p);
-  if(e.target.closest("[data-tdoud]")){TDOUD=!TDOUD;vTeDoen()}
   const tl=e.target.closest("[data-tdlade]");if(tl)tdLade(tl.dataset.tdlade);
   const tv=e.target.closest("[data-tdvenster]");
-  if(tv){const id=tv.dataset.tdvenster;if(id==="weg"){TDOUD=true;vTeDoen();const w=$("#tdweg");if(w)w.scrollIntoView({block:"start"})}else tdLade(id,true,true)}
+  if(tv){const id=tv.dataset.tdvenster;if(id==="weg"){const w=$("#tdweg");if(w)w.scrollIntoView({block:"start"})}else tdLade(id,true,true)}
   const ta=e.target.closest("[data-tdalles]");
   if(ta){const aan=ta.dataset.tdalles==="1";TDOPEN=new Set(aan?TDGROEP.map(g=>g.id):[]);tdOpenBewaar();vTeDoen()}
   const kj=e.target.closest("[data-kopje]");if(kj)kopjeKies(kj.dataset.kopje);
@@ -2856,7 +2862,7 @@ async function verzendUitbak(){
       else if(x.d.actie==="opname")opnameAf(x.d,x.d.status,j.tijd);
       else if(x.d.actie==="pmbev")pmBevZet(x.d,j);
       else if(x.d.actie==="productie")prodPasToe(x.d,j);
-      else if(x.d.actie==="extern"){EXTLIVE=EXTLIVE.concat([{nr:x.d.nr,status:x.d.status,uitvoerder:x.d.uitvoerder,uren:x.d.uren,teamleider:x.d.teamleider,tijd:j.tijd}]);if(extTeken)extTeken()}
+      else if(x.d.actie==="extern"){EXTLIVE=EXTLIVE.concat([{nr:x.d.nr,pmbon:x.d.pmbon||"",status:x.d.status,uitvoerder:x.d.uitvoerder,uren:x.d.uren,teamleider:x.d.teamleider,tijd:j.tijd}]);if(extTeken)extTeken()}
       else{RAPPORT=(RAPPORT||[]).concat([Object.assign({},x.d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste=""}
     }
   }catch(_){}
@@ -4765,14 +4771,14 @@ const TDGROEP=[
   {id:"afgekeurd",t:"Afgekeurd bij PM",c:"rood",kort:"plan de CM-bon",leeg:"niets afgekeurd",u:"Er is een CM-bon van gemaakt. Plan hem of geef hem een status.",l:"Afgekeurd bij PM"},
   {id:"deels",t:"Deels uitgevoerd",c:"oranje",kort:"plan de rest in",leeg:"alles is afgemaakt",u:"Niet alles is gedaan. Plan in wat nog moet gebeuren.",l:"Deels uitgevoerd"},
   {id:"afgemeld",t:"Afgemeld met opmerking",c:"groen",kort:"lees wat er staat",leeg:"geen opmerkingen",u:"Lees wat de monteur schreef: misschien is er een vervolg nodig.",l:"Afgemeld met opmerking"},
-  {id:"extern",t:"Externe ploeg",c:"groen",kort:"controleer de afmelding",leeg:"niets afgemeld",u:"De externe ploeg meldde af met handtekening. Controleer status en uren en zet de volgende stap.",l:"Externe ploeg"},
+  {id:"extern",t:"Externe ploeg",c:"groen",kort:"controleer en verwerk",leeg:"niets afgemeld",u:"De externe ploeg meldde af met handtekening. Klopt het, klik dan Uitgevoerd: dan wordt de afmelding verwerkt op de bon, het plan en de bestellijst, of bij een PM-taak in de PM-registratie.",l:"Externe ploeg"},
   {id:"pmopm",t:"Opmerking bij PM-bon",c:"wit",kort:"beslis wat ermee moet",leeg:"geen opmerkingen",u:"Er is geen bon van gemaakt. Beslis wat ermee moet.",l:""},
   {id:"binnen",t:"Onderdelen binnen",c:"groen",kort:"geef een dag",leeg:"niets binnengekomen",u:"Alles is binnen. Kies Gepland en een dag.",l:"Onderdelen binnen"},
   {id:"klopt",t:"Klopt niet",c:"oranje",kort:"zet dag of status recht",leeg:"alles klopt",u:"Geef een nieuwe dag of de juiste status.",l:"Klopt niet"},
   {id:"nieuw",t:"Nieuwe bonnen controleren",c:"wit",kort:"nog niet gecontroleerd",leeg:"alles gecontroleerd",u:"Automatisch gemaakt en nog niet gecontroleerd.",l:"Nog controleren",gz:"Gecontroleerd"},
   {id:"prio",t:"Prio voorstel",c:"blauw",kort:"telt niet mee",leeg:"alles heeft een prio",u:"Open bonnen zonder prio. Neem het voorstel over met één tik. Telt niet mee in het getal.",l:"",info:true}];
 const TDKLEUR={wit:"var(--k-beslis)",oker:"var(--k-oker)",rood:"var(--k-rood)",oranje:"var(--k-oranje)",groen:"var(--k-groen)",blauw:"var(--k-blauw)"};
-let GEZIEN_LIVE={},TDMAP={},TDVORIG="",TDMEER={},TDOUD=false,TDOPEN;
+let GEZIEN_LIVE={},TDMAP={},TDVORIG="",TDMEER={},TDOPEN;
 const FOTOS={};
 const tdMag=()=>wvMag();
 const tdCode=k=>{let a=2166136261,b=5381;for(let i=0;i<k.length;i++){const c=k.charCodeAt(i);a=Math.imul(a^c,16777619)>>>0;b=(Math.imul(b,33)+c)>>>0}return"GZ-"+a.toString(16).padStart(8,"0")+b.toString(16).padStart(8,"0")};
@@ -4874,7 +4880,7 @@ function rcaDetail(s){
 const rcaKolommen=gezien=>[
   {k:"m",l:"Machine",c:"m-main",x:"titel",r:x=>esc(x.s.machine||"Regels zonder machine")+'<span class="bonplek">'+esc(x.s.waar)+"</span>"},
   {k:"w",l:"Waarom",w:"34%",c:"m-sub",r:x=>esc(x.s.w.join(", "))},
-  {k:"l",l:"Laatste",w:"80px",c:"m-sub",ml:"Laatste",r:x=>esc(x.s.laatste.slice(0,5))}].concat(gezien?[{k:"g",l:"",w:"120px",c:"m-sub",r:x=>'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>'}]:[]);
+  {k:"l",l:"Laatste",w:"80px",c:"m-sub",ml:"Laatste",r:x=>esc(x.s.laatste.slice(0,5))}].concat(gezien?[{k:"g",l:"",w:"120px",c:"m-sub",r:x=>'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Klaar</button>'}]:[]);
 /* ---- RCA analyse: van signaal naar grondoorzaak, en een maatregel die blijft werken ----
    Eén pagina voor de signalen en de RCA's. Bovenaan staan de signalen zonder RCA (herhaling of veel stilstand in het dienstrapport), met Start RCA en Gezien.
    Daaronder het bord: Analyse (stap 1 tot 5), Maatregelen (stap 6), Borgen en effect (stap 7 en 8) en Afgesloten. #rca/RCA-n opent een RCA met de acht stappen.
@@ -4892,7 +4898,7 @@ const RCA_WORDT=["CM-bon","Actie","PM-taak","Bestellijst","Werkinstructie","Ande
 const RCA_MST=["Voorstel","Gepland","Bezig","Klaar"];
 const RCA_BORGEN=["PM-taak staat in het PM-overzicht en is ingepland","Instelling, aanhaalmoment of borging staat op de bon en in de PM-taak","Werkinstructie of OPL gemaakt en uitgelegd aan de ploegen","Storingsinstructie in Machinedocumentatie","Reservedelen met minimum en maximum op voorraad","Dezelfde machines en plekken elders nagelopen"];
 const RCA_FEITDAGEN=120;
-let RCA_SEL=null,RCAF="",RCAOUD=false,RCAALLES=false,RCA_VRAAG="",RCA_W=null,RCA_REGELS=false,RCASIG=false;
+let RCA_SEL=null,RCAF="",RCAALLES=false,RCA_VRAAG="",RCA_W=null,RCA_REGELS=false,RCASIG=false;
 const RCA_SIGMAX=6;
 const rcaItems=()=>rcaSignalen().map(s=>{const key="rca:"+s.waar+"|"+s.machine+"|"+s.laatste+"|"+s.r.length;return{key,s,gezien:tdGezien(key)}});
 const rcaMag=()=>wvMag()&&!alleenKijken();
@@ -5091,7 +5097,7 @@ function rcaSigKaart(x){
   const s=x.s,r=rcaBijSignaal(s),kan=rcaMag();
   return'<article class="rc-sig'+(r?" heeft":"")+'"><div class="rc-sigt"><div class="rc-sig1"><b>'+esc(s.waar+", "+(s.machine||"zonder machine"))+"</b><small>Laatste op "+esc(s.laatste.slice(0,5))+"</small></div><span>"+esc(hoofd(s.w.join(", ")))+"</span></div>"+
     '<div class="rc-sigk">'+(r?'<button type="button" class="knop" data-rcaopen="'+esc(r.id)+'">'+esc(r.id)+" openen</button>":kan?'<button type="button" class="knop hoofd" data-rcastart="'+esc(x.key)+'">Start RCA</button>':"")+
-    '<button type="button" class="knop" data-rcaregels="'+esc(x.key)+'">Bekijk de regels</button>'+(tdMag()&&!r?'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Gezien</button>':"")+"</div></article>";
+    '<button type="button" class="knop" data-rcaregels="'+esc(x.key)+'">Bekijk de regels</button>'+(tdMag()&&!r?'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">Klaar</button>':"")+"</div></article>";
 }
 function vRca(){
   if(RCA_SEL){if(rcaWerk(RCA_SEL)){rcaDetailTeken();return}RCA_SEL=null;history.replaceState(null,"","#rca")}
@@ -5101,14 +5107,14 @@ function vRca(){
   const zicht=RCASIG||RCAF||volg.length<=RCA_SIGMAX+2?volg:volg.slice(0,RCA_SIGMAX);
   const open=lijst.filter(r=>!r.afgesloten),grens=new Date(+pmNu()-90*864e5),af=lijst.filter(r=>r.afgesloten).sort((a,b)=>tdVolg(b.afgesloten).localeCompare(tdVolg(a.afgesloten)));
   const afZicht=RCAALLES?af:af.filter(r=>(datum(r.afgesloten)||0)>=grens);
-  const sub=(open.length?(open.length===1?"1 RCA loopt":open.length+" RCA's lopen"):"Er loopt geen RCA")+". "+(zonder.length?(zonder.length===1?"1 signaal heeft":zonder.length+" signalen hebben")+" nog geen RCA.":"Elk signaal heeft een RCA of is weggezet.");
+  const sub=(open.length?(open.length===1?"1 RCA loopt":open.length+" RCA's lopen"):"Er loopt geen RCA")+". "+(zonder.length?(zonder.length===1?"1 signaal heeft":zonder.length+" signalen hebben")+" nog geen RCA.":"Elk signaal heeft een RCA of staat op Klaar.");
   let h='<div class="tdkop"><div><h1>RCA analyse</h1><p>'+esc(sub)+"</p></div>"+(kan?'<div class="headknoppen"><button type="button" class="knop hoofd" data-rcanieuw>'+ico("plus")+"Nieuwe RCA</button></div>":"")+"</div>";
   h+='<div class="seg rc-filter" role="group" aria-label="Lijn">'+[["","Alles"]].concat(RCA_WAAR.map(w=>[w,w])).map(([w,t])=>{const n=items.filter(x=>!x.gezien&&(!w||x.s.waar===w)&&!rcaBijSignaal(x.s)).length+rcaLijst().filter(r=>!r.afgesloten&&(!w||r.lijn===w)).length;return'<button type="button" data-rcaf="'+esc(w)+'" aria-pressed="'+(RCAF===w)+'">'+esc(t)+(n?"<span>"+n+"</span>":"")+"</button>"}).join("")+"</div>";
   h+='<section class="deel rc-sigdeel"><div class="deelkop"><h2>Signalen'+(zonder.length?"<span>"+zonder.length+" zonder RCA</span>":"")+'</h2></div>'+(sig.length?'<div class="rc-sigs">'+zicht.map(rcaSigKaart).join("")+"</div>"+(zicht.length<volg.length||RCASIG&&!RCAF&&volg.length>RCA_SIGMAX+2?'<button type="button" class="tekstknop rc-meer" data-rcasigalles aria-expanded="'+RCASIG+'">'+(RCASIG?"Minder signalen tonen":"Alle "+volg.length+" signalen")+"</button>":""):'<p class="tdleeg">'+(RCAF?"Geen signaal bij "+esc(RCAF)+".":"Er is nu geen herhaling of lange stilstand in het dienstrapport.")+"</p>")+"</section>";
   const kol=(id,t,sub,l,extra)=>'<section class="rc-kol"><h3>'+esc(t)+(sub?"<small>"+esc(sub)+"</small>":"")+'<span class="rc-tel">'+l.length+"</span></h3>"+(l.length?l.map(rcaKaart).join(""):'<p class="rc-kolleeg">Niets</p>')+(extra||"")+"</section>";
   const meerAf=af.length>afZicht.length||RCAALLES&&af.length?'<button type="button" class="tekstknop rc-meer" data-rcaalles>'+(RCAALLES?"Alleen de laatste 90 dagen":"Alle "+af.length+" afgesloten RCA's")+"</button>":"";
   h+='<section class="deel"><div class="deelkop"><h2>RCA\'s</h2></div><div class="rc-bord">'+kol("analyse","Analyse","stap 1 tot 5",open.filter(r=>rcaKolom(r)==="analyse"))+kol("maatregel","Maatregelen","stap 6",open.filter(r=>rcaKolom(r)==="maatregel"))+kol("borg","Borgen en effect","stap 7 en 8",open.filter(r=>rcaKolom(r)==="borg"))+kol("af","Afgesloten","",afZicht,meerAf)+"</div></section>";
-  if(tdMag()&&weg.length)h+='<section class="tdweg" id="rcaweg"><button type="button" class="tekstknop" data-rcaoud aria-expanded="'+RCAOUD+'">'+(RCAOUD?"Verbergen wat je hebt weggezet":"Weggezet met Gezien ("+weg.length+")")+"</button>"+(RCAOUD?'<ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(x.s.waar+", "+(x.s.machine||"zonder machine")+": "+x.s.w.join(", "))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul>":"")+"</section>";
+  if(tdMag()&&weg.length)h+='<section class="tdweg" id="rcaweg"><h2>Klaar <span>'+weg.length+'</span></h2><ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(x.s.waar+", "+(x.s.machine||"zonder machine")+": "+x.s.w.join(", "))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul></section>";
   h+='<p class="rcauitleg">Een signaal komt bij 3 storingen aan dezelfde machine, meer dan 4 uur stilstand of één stilstand van meer dan 2 uur in '+RCA_DAGEN+" dagen. Veiligheid en voedselveiligheid geven altijd een signaal."+(kan?" Met Gezien verdwijnt een signaal tot er een nieuwe regel bij komt. Start RCA maakt er een RCA van.":"")+"</p>";
   $("#view").innerHTML=h;
 }
@@ -5333,7 +5339,6 @@ function rcaKlik(e){
   const f=t.closest("[data-rcaf]");if(f){RCAF=f.dataset.rcaf;vRca();return}
   if(t.closest("[data-rcaalles]")){RCAALLES=!RCAALLES;vRca();return}
   if(t.closest("[data-rcasigalles]")){RCASIG=!RCASIG;vRca();return}
-  if(t.closest("[data-rcaoud]")){RCAOUD=!RCAOUD;vRca();return}
   const rr=t.closest("[data-rcaregels]");if(rr){const x=rcaItems().find(y=>y.key===rr.dataset.rcaregels);if(x)openPaneel(rcaDetail(x.s));return}
   if(t.closest("[data-rcaprint]")){window.print();return}
   if(t.closest("[data-rcarapportdicht]")){rcaRapportDicht();return}
@@ -5369,9 +5374,6 @@ function tdItems(alles){
     if(o&&o.klaar&&tdRecent(o.tijd)&&isOpen(c)&&(!r.length||r.some(x=>!BESTVINK.includes(x.groep))))zet("opname","opn:"+c.nr+":"+o.tijd,{c,tijd:o.tijd,door:o.door,tekst:o.tekst});
     if(w&&w.tijd&&w.status==="Deels uitgevoerd"&&c.status==="Te plannen"&&!planVanBon(c.nr))zet("deels","wkd:"+c.nr+":"+w.tijd,{c,tijd:w.tijd,door:w.door,tekst:w.tekst});
     else if(w&&w.tijd&&KLAAR.includes(w.status)&&w.tekst&&tdRecent(w.tijd))zet("afgemeld","wka:"+c.nr+":"+w.tijd,{c,tijd:w.tijd,door:w.door,tekst:w.tekst});
-    /* De externe ploeg op zaterdag: de laatste afmelding, twee weken lang. */
-    const ex=(c.extern||[]).slice(-1)[0];
-    if(ex&&tdRecent(ex.tijd))zet("extern","ext:"+c.nr+":"+ex.tijd,{c,tijd:ex.tijd,door:ex.teamleider,ext:ex});
     const oa=(c.opdrachtaf||[]).slice(-1)[0];
     if(oa&&tdRecent(oa.tijd))zet("opdracht","opd:"+c.nr+":"+oa.tijd,{c,tijd:oa.tijd,door:oa.door,tekst:(oa.opdracht?oa.opdracht+": ":"")+oa.tekst});
     if(!bo&&isOpen(c)&&c.status!=="Gepland"&&!planVanBon(c.nr)&&r.length&&r.every(x=>x.groep==="Binnen"))zet("binnen","bin:"+c.nr,{c,tijd:""});
@@ -5382,8 +5384,20 @@ function tdItems(alles){
   /* Een opnamelijst die in de monteursapp is afgemeld: de bevindingen met Bon maken, twee weken lang. */
   (D.opnamelijsten||[]).forEach(r=>{const x=olStandWv(r),g=r.digitaal?r.digitaal.gegevens:x.g;if((x.s==="klaar"||x.s==="af")&&g&&tdRecent(x.tijd))zet("opname","ol:"+r.ol+":"+x.tijd,{ol:r,g,tijd:x.tijd,door:x.door,tekst:"Opnamelijst "+r.machine})});
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
+  /* De externe ploeg op zaterdag: per bon of PM-taak de laatste afmelding, meteen uit het tabblad Extern. Uitgevoerd verwerkt hem (tdExternOk). */
+  const exl=(EXTLIVE||[]).map(x=>Object.assign({},x,{pmbon:extPmBon(x)})),exLaatst={};
+  (D.cm||[]).forEach(c=>(c.extern||[]).forEach(e=>{if(e.verwerkt===false&&!exl.some(y=>y.nr===c.nr&&y.tijd===e.tijd))exl.push(Object.assign({nr:c.nr},e))}));
+  exl.forEach(e=>{const k=e.nr+"|"+(e.pmbon||"");if(!exLaatst[k]||tijdSleutel(e.tijd)>tijdSleutel(exLaatst[k].tijd))exLaatst[k]=e});
+  Object.values(exLaatst).forEach(e=>{
+    if(!e.tijd||!tdRecent(e.tijd))return;
+    const c=e.pmbon?null:(D.cm||[]).find(y=>y.nr===e.nr)||null;
+    if(!e.pmbon&&!c)return;
+    if(c&&(c.extern||[]).some(y=>y.tijd===e.tijd&&y.verwerkt!==false))return;
+    const b=e.pmbon?tdPm(e.pmbon):null,t=((D.pmplan||{}).taken||{})[e.nr]||{};
+    zet("extern","ext:"+e.nr+":"+e.tijd,{c,b,ext:e,tijd:e.tijd,door:e.teamleider,tekst:e.pmbon?t.taak||e.nr:""});
+  });
   bev.forEach(x=>{const nr=bonVan(x.id),c=nr?(D.cm||[]).find(y=>y.nr===nr)||null:null;if(c?zonderPrio(c):tdRecent(x.tijd))zet("afgekeurd","bev:"+x.id,{c,bev:x,b:tdPm(x.nr),tijd:x.tijd,door:x.door,tekst:x.opmerking})});
-  (PMAF||[]).forEach(a=>{const b=tdPm(a.nr);if(a.status==="Deels uitgevoerd")zet("deels","pmd:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking});else if(a.opmerking&&tdRecent(a.tijd))zet("pmopm","pmo:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking})});
+  (PMAF||[]).forEach(a=>{if(/\(externe ploeg\)$/.test(a.door||""))return;const b=tdPm(a.nr);if(a.status==="Deels uitgevoerd")zet("deels","pmd:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking});else if(a.opmerking&&tdRecent(a.tijd))zet("pmopm","pmo:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking})});
   /* Een bon die al in een andere groep staat, komt niet nog eens bij Klopt niet of het prio-voorstel. */
   const al=new Set(uit.filter(x=>x.c&&!x.gezien).map(x=>x.c.nr));
   (D.cm||[]).forEach(c=>{if(al.has(c.nr))return;const w=kloptNiet(c);if(w.length){const d=knDag(c);zet("klopt","kn:"+c.nr+":"+(d?d.t:"")+":"+c.status,{c,tijd:"",tekst:w.join(". ")});al.add(c.nr)}});
@@ -5470,6 +5484,7 @@ function tdRegel(x,g){
   }else if(id==="deels"||id==="afgemeld"||id==="opdracht"){if(x.tekst)waarom="“"+x.tekst+"”"}
   else if(id==="extern"){
     const e=x.ext,g=e.gegevens||e,ond=g.onderdelen||[];
+    if(!c){nr=e.nr;titel=x.tekst||e.nr;feit.push(["PM-bon",esc(b?pmTitel(b)+", "+b.datum:e.pmbon)])}
     waarom=e.status+", "+[e.uitvoerder,e.uren?urenTekst(e.uren)+" uur":""].filter(Boolean).join(", ");
     if(g.gedaan)feit.push(["Gedaan",esc(g.gedaan)]);if(g.nog)feit.push(["Nog te doen",esc(g.nog)]);
     if(ond.length)feit.push(["Bestellen",esc(ond.map(o=>o.onderdeel+(o.spec?" ("+o.spec+")":"")).join("; "))]);
@@ -5479,7 +5494,7 @@ function tdRegel(x,g){
   }
   else if(id==="binnen")waarom="Binnen: "+tdRegels(c.nr).map(y=>y.onderdeel).join(", ");
   else if(id==="nieuw")waarom=["Gemeld"+(c.melder?" door "+c.melder:""),x.tijd?tdWanneer(x.tijd):""].filter(Boolean).join(", ");
-  if(b&&(id==="pmopm"||id==="deels"&&x.a||id==="afgekeurd"&&!c))knop.push(["Open PM-bon","data-tdpm",b.nr]);
+  if(b&&(id==="pmopm"||id==="deels"&&x.a||id==="afgekeurd"&&!c||id==="extern"))knop.push(["Open PM-bon","data-tdpm",b.nr]);
   if(id==="pmopm"||id==="afgekeurd"&&!c&&x.bev.bon!=="Ja")knop.push(["Bon maken","data-tdbon",x.key]);
   if(c)knop.unshift(["Open bon","data-tdcm",c.nr]);
   const rechts=[tdVandaag(x.tijd)?'<span class="vandaag">Vandaag</span>':"",wie&&id!=="nieuw"?"<span>"+esc(wie)+"</span>":""].filter(Boolean).join("");
@@ -5487,7 +5502,7 @@ function tdRegel(x,g){
     (feit.length?'<dl class="tdr-feit">'+feit.map(f=>"<dt>"+esc(f[0])+"</dt><dd>"+f[1]+"</dd>").join("")+"</dl>":"")+
     (best?'<div class="tdbest">'+best+"</div>":"")+
     (fotos.length?'<div class="fotos">'+fotos.map(f=>'<button type="button" class="tdfoto" data-tdfoto="'+esc(f)+'" aria-label="Foto vergroten">Foto laden</button>').join("")+"</div>":"")+
-    '<div class="tdr-bedien">'+(c?bonBediening(c,g):"")+'<div class="acties">'+knop.map(k=>'<button type="button" class="knop" '+k[1]+'="'+esc(k[2])+'">'+esc(k[0])+"</button>").join("")+'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">'+esc(g.gz||"Gezien")+"</button></div></div></article>";
+    '<div class="tdr-bedien">'+(c&&id!=="extern"?bonBediening(c,g):"")+'<div class="acties">'+knop.map(k=>'<button type="button" class="knop" '+k[1]+'="'+esc(k[2])+'">'+esc(k[0])+"</button>").join("")+(id==="extern"?'<button type="button" class="knop hoofd" data-tdextok="'+esc(x.key)+'">Uitgevoerd</button>':'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">'+esc(g.gz||"Klaar")+"</button>")+"</div></div></article>";
 }
 const TDPER=8;
 function ladeHtml(g,l,open){
@@ -5504,11 +5519,11 @@ function vTeDoen(){
   let h='<div class="tdkop"><div><h1>Te doen</h1><p>'+esc(sub)+'</p></div><div class="headknoppen"><button type="button" class="knop" data-tdalles="1">Alles open</button><button type="button" class="knop" data-tdalles="0">Alles dicht</button></div></div>';
   if(MELDFOUT)h+='<p class="tdlet">De gegevens uit de Sheet konden niet worden opgehaald. Afgekeurde PM-punten en opmerkingen bij PM-bonnen ontbreken daardoor even.</p>';
   h+='<section class="meldpaneel" aria-label="Groepen">'+per.map(({g,l})=>{const aan=l.length>0;return'<button type="button" class="venster'+(aan?g.info?" info":" aan":"")+'" style="--c:'+TDKLEUR[g.c]+'" data-tdvenster="'+g.id+'" aria-label="'+esc(g.t+": "+l.length)+'"'+(aan?"":" disabled")+'><span><span class="leg">'+esc(g.t)+'</span><span class="sub">'+esc(aan?g.kort:g.leeg)+'</span></span><span class="cijfer">'+seg7(l.length,40)+"</span></button>"}).join("")+
-    '<button type="button" class="venster terug" data-tdvenster="weg" aria-label="Weggezet: '+weg.length+'"'+(weg.length?"":" disabled")+'><span><span class="leg">Weggezet</span><span class="sub">met Gezien, terugzetten kan</span></span><span class="cijfer">'+seg7(weg.length,40)+"</span></button></section>";
+    '<button type="button" class="venster terug" data-tdvenster="weg" aria-label="Klaar: '+weg.length+'"'+(weg.length?"":" disabled")+'><span><span class="leg">Klaar</span><span class="sub">terugzetten kan</span></span><span class="cijfer">'+seg7(weg.length,40)+"</span></button></section>";
   const met=per.filter(x=>x.l.length),leeg=per.filter(x=>!x.l.length&&!x.g.info);
   h+=met.length?'<div class="laden">'+met.map(({g,l})=>ladeHtml(g,l,TDOPEN.has(g.id))).join("")+"</div>":'<div class="tdleeg">Er staat niets open.</div>';
   if(met.length&&leeg.length)h+='<p class="legeregel"><span class="led"></span>Niets te doen bij '+esc(lijstTekst(leeg.map(x=>x.g.t)))+".</p>";
-  if(weg.length)h+='<section class="tdweg" id="tdweg"><button type="button" class="tekstknop" data-tdoud aria-expanded="'+TDOUD+'">'+(TDOUD?"Verbergen wat je hebt weggezet":"Weggezet met Gezien ("+weg.length+")")+"</button>"+(TDOUD?'<ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(tdKopTekst(x))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul>":"")+"</section>";
+  if(weg.length)h+='<section class="tdweg" id="tdweg"><h2>Klaar <span>'+weg.length+'</span></h2><ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(tdKopTekst(x))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul></section>";
   $("#view").innerHTML=h+tdStand();
   tdFotos();
 }
@@ -5537,8 +5552,36 @@ function tdFotos(){document.querySelectorAll("#view [data-tdfoto]").forEach(k=>{
 async function tdZet(key,terug){
   const oud=GEZIEN_LIVE[key],her=()=>{tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]()};
   GEZIEN_LIVE[key]=!terug;her();
-  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";const plek=key.startsWith("rca:")?"RCA analyse":"Te doen";melder(terug?"Staat weer bij "+plek:"Weggezet. Terugzetten kan onderaan "+plek+".")}
+  try{await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:!!terug},door:wvDoor()});laatste="";const plek=key.startsWith("rca:")?"RCA analyse":"Te doen";melder(terug?"Staat weer bij "+plek:"Klaar. Terugzetten kan onderaan "+plek+".")}
   catch(_){if(oud===undefined)delete GEZIEN_LIVE[key];else GEZIEN_LIVE[key]=oud;her();melder("Opslaan is niet gelukt. Probeer het opnieuw.")}
+}
+/* Uitgevoerd bij de externe ploeg: de werkvoorbereider keurt de afmelding goed en dan wordt hij verwerkt.
+   Een bon gaat als rij.extern met rij.gezien de wachtrij in (bonnen.py extern_af), een PM-taak gaat met de actie externpm (versie 27) naar de PM-registratie. */
+const EXTWORDT={"Uitgevoerd":"Uitgevoerd","Deels uitgevoerd":"Te plannen","Onderdeel bestellen":"Uitzoeken voor bestelling"};
+async function tdExternOk(key,knop){
+  const x=tdItems(true).find(y=>y.key===key);if(!x)return;
+  const e=x.ext,g=e.gegevens||e,m=MELD(),t=v=>String(v==null?"":v);
+  if(knop){knop.disabled=true;knop.textContent="Bezig met verwerken"}
+  try{
+    if(e.pmbon){
+      const b=x.b||{};
+      await stuur({actie:"externpm",k:m.sleutel_wv,pmbon:e.pmbon,taak:e.nr,status:e.status,datum:b.datum||"",alle:(b.taken&&b.taken.length?b.taken:[e.nr]).join(","),uitvoerder:t(e.uitvoerder),uren:e.uren,teamleider:t(e.teamleider),
+        opmerking:[g.gedaan&&"gedaan: "+g.gedaan,g.nog&&"nog te doen: "+g.nog,g.opmerking].filter(Boolean).join("; "),onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),lijn:t(b.lijn),machine:t(b.lijndeel),door:wvDoor()});
+      await stuur({actie:"bonstatus",k:m.sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:false},door:wvDoor()});
+      GEZIEN_LIVE[key]=true;melder(e.nr+" verwerkt in de PM-registratie"+(e.status==="Onderdeel bestellen"?". De CM-bon voor het onderdeel komt bij de volgende ronde.":"."));
+    }else{
+      await stuur({actie:"bonstatus",k:m.sleutel_wv,nr:tdCode(key),status:"Open",door:wvDoor(),rij:{gezien:key,terug:false,extern:{nr:e.nr,status:e.status,uitvoerder:t(e.uitvoerder),uren:e.uren,teamleider:t(e.teamleider),handtekening:t(e.handtekening),tijd:t(e.tijd),
+        gedaan:t(g.gedaan),nog:t(g.nog),opmerking:t(g.opmerking),veegschoon:!!g.veegschoon,vrij:!!g.vrij,onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),fotos:fotoIds(g.fotos)}}});
+      GEZIEN_LIVE[key]=true;
+      const c=x.c,st=EXTWORDT[e.status];
+      if(c&&isOpen(c)&&st){c.status=st;if(st==="Uitgevoerd")c.uitgevoerd_op=t(e.tijd).slice(0,10);else if(planVanBon(c.nr)){zatWeg(c.nr);c.uitvoeren=st==="Te plannen"?"In overleg":"Na levering"}}
+      melder(e.nr+" verwerkt: "+(st||e.status).toLowerCase()+". De bon en de bestellijst volgen bij de volgende ronde.");
+    }
+    laatste="";tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]();
+  }catch(err){
+    if(knop){knop.disabled=false;knop.textContent="Uitgevoerd"}
+    melder(err&&err.message==="geen toegang"?"Apps Script kent dit nog niet. Zet versie 27 van het script erin.":"Verwerken is niet gelukt. Probeer het opnieuw.");
+  }
 }
 /* Bon maken vult Nieuwe bon met de lijn, het lijndeel en de opmerking. Na het versturen staat de regel op Gezien. */
 function tdBonMaken(key){
@@ -6889,15 +6932,21 @@ function externZat(){
   const nu=pmNu(),van=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate());
   return plannen().filter(p=>{const d=datum(p.datum);return d&&d>=van&&d.getDay()===6}).sort((a,b)=>datum(a.datum)-datum(b.datum))[0]||null;
 }
+/* De PM-taken van een dag, elk apart: zoals de externe ploeg ze in zijn app ziet (extern_deel in tools/site.py). */
+function externPmTaken(dag){
+  const pp=D.pmplan||{},uit=[];
+  (pp.bonnen||[]).filter(b=>b.datum===dag).forEach(b=>(b.taken||[]).forEach(t=>{const x=(pp.taken||{})[t]||{};uit.push({nr:t,pm:true,pmbon:b.nr,alle:(b.taken||[]).slice(),omschrijving:x.taak||t,lijn:b.lijn,machine:b.lijndeel,frequentie:x.frequentie||""})}));
+  return uit;
+}
 function vExtern(){
   const z=externZat(),kop='<div class="tdkop"><div><h1>Externe ploeg</h1><p>Wat de teamleider van de externe ploeg ziet en afmeldt: de bonnen van de eerstvolgende zaterdag, met handtekening per bon.</p></div></div>';
   if(!z){$("#view").innerHTML=kop+'<div class="tdleeg">Er staat nog geen zaterdag in de planning.</div>';return}
   const rijen=planRijen(z).map(r=>zatBon(r.nr)).filter(c=>c&&c.status!=="Vervallen");
   const ook=(D.cm||[]).filter(c=>!rijen.includes(c)&&(c.extern||[]).length&&(datum(z.datum)-datum(String(c.extern.slice(-1)[0].tijd).slice(0,10)))/864e5<7&&datum(String(c.extern.slice(-1)[0].tijd).slice(0,10))<=datum(z.datum));
-  const alle=rijen.concat(ook),af=c=>extAf(c.nr,alle.map(x=>({nr:x.nr,extern:x.extern||[]}))),n=alle.filter(af).length;
+  const alle=rijen.concat(ook,externPmTaken(z.datum)),af=c=>extAf(c.nr,alle.map(x=>x.pm?x:{nr:x.nr,extern:x.extern||[]})),n=alle.filter(af).length;
   const uren=alle.reduce((t,c)=>t+(Number((af(c)||{}).uren)||0),0);
   const rij=c=>{const a=af(c),g=a&&(a.gegevens||a)||{},ids=a?[a.handtekening].concat((g.onderdelen||[]).map(o=>o.foto),fotoIds(a.fotos)).filter(Boolean).filter((v,i,l)=>l.indexOf(v)===i):[];
-    return"<tr><td class=\"nr\">"+esc(c.nr)+'</td><td><span class="titel">'+esc(c.omschrijving)+'</span><span class="bonplek">'+esc([c.lijn,c.machine].filter(Boolean).join(", "))+"</span></td><td>"+stBon(c)+"</td><td>"+(a?extStChip(a.status)+'<span class="bonlos">'+esc([a.uitvoerder,a.uren?urenTekst(a.uren)+" uur":"",a.teamleider?"afgetekend door "+a.teamleider:"",a.tijd].filter(Boolean).join(" · "))+"</span>"+(g.gedaan||g.nog?'<span class="bonlos">'+esc([g.gedaan&&"Gedaan: "+g.gedaan,g.nog&&"Nog: "+g.nog].filter(Boolean).join(" "))+"</span>":"")+((g.onderdelen||[]).length?'<span class="bonlos">'+esc("Bestellen: "+g.onderdelen.map(o=>o.onderdeel).join("; "))+"</span>":""):'<span class="zacht">Nog niet afgemeld</span>')+'</td><td class="exfoto">'+(ids.length&&!alleenKijken()?'<button type="button" class="tekstknop" data-rfoto="'+esc(ids.join(","))+'">'+(ids.length>1?"Handtekening en foto's":"Handtekening")+"</button>":"")+"</td></tr>"};
+    return"<tr><td class=\"nr\">"+esc(c.nr)+'</td><td><span class="titel">'+esc(c.omschrijving)+'</span><span class="bonplek">'+esc([c.lijn,c.machine].filter(Boolean).join(", "))+"</span></td><td>"+(c.pm?'<span class="bonlos">PM-taak, '+esc(c.pmbon)+"</span>":stBon(c))+"</td><td>"+(a?extStChip(a.status)+'<span class="bonlos">'+esc([a.uitvoerder,a.uren?urenTekst(a.uren)+" uur":"",a.teamleider?"afgetekend door "+a.teamleider:"",a.tijd].filter(Boolean).join(" · "))+"</span>"+(g.gedaan||g.nog?'<span class="bonlos">'+esc([g.gedaan&&"Gedaan: "+g.gedaan,g.nog&&"Nog: "+g.nog].filter(Boolean).join(" "))+"</span>":"")+((g.onderdelen||[]).length?'<span class="bonlos">'+esc("Bestellen: "+g.onderdelen.map(o=>o.onderdeel).join("; "))+"</span>":""):'<span class="zacht">Nog niet afgemeld</span>')+'</td><td class="exfoto">'+(ids.length&&!alleenKijken()?'<button type="button" class="tekstknop" data-rfoto="'+esc(ids.join(","))+'">'+(ids.length>1?"Handtekening en foto's":"Handtekening")+"</button>":"")+"</td></tr>"};
   $("#view").innerHTML=kop+'<p class="tellen"><b>'+esc(hoofd(langeDatum(datum(z.datum))))+"</b>: "+n+" van "+alle.length+" bonnen afgemeld, "+urenTekst(Math.round(uren*10)/10)+" uur ingevuld"+(z.capaciteit?" van "+urenTekst(z.capaciteit)+" manuren":"")+".</p>"+
     '<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:90px">Bon</th><th>Werkzaamheid</th><th style="width:150px">Status bon</th><th>Afmelding externe ploeg</th><th style="width:150px"></th></tr></thead><tbody>'+alle.map(rij).join("")+"</tbody></table></div>"+
     (MODE==="enc"&&D.appextern&&!alleenKijken()?'<h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van de teamleider</h2><div class="appvak"><iframe id="externframe" title="App externe ploeg" src="'+esc(location.pathname)+'?app=1&v='+Date.now()+'"></iframe></div>':"");
@@ -7261,14 +7310,16 @@ let EXTLIVE=[],extTeken=null,EXT={open:null,form:{}};
 const tijdSleutel=t=>{const m=String(t||"").match(/(\d\d)-(\d\d)-(\d{4})(?:\s+(\d\d):(\d\d))?/);return m?m[3]+m[2]+m[1]+(m[4]||"00")+(m[5]||"00"):"0"};
 const extStChip=st=>{const k=(EXTSTATUS.find(x=>x[0]===st)||[st,""])[1];return'<span class="st '+k+'"><i></i>'+esc(st)+"</span>"};
 /* De laatste afmelding van een bon: wachtend op deze telefoon, live uit de Sheet, of al verwerkt door de uurronde. */
+const extPmBon=x=>x.pmbon||(x.gegevens||{}).pmbon||"";
 function extAf(nr,bonnen){
-  const w=UIT.filter(x=>x.d.actie==="extern"&&x.d.nr===nr).map(x=>Object.assign({},x.d,{tijd:x.tijd,wacht:true}));
-  const b=(bonnen||[]).find(x=>x.nr===nr),l=w.concat(EXTLIVE.filter(x=>x.nr===nr),(b&&b.extern)||[]);
+  const b=(bonnen||[]).find(x=>x.nr===nr),hoort=x=>x.nr===nr&&(!b||!b.pm||extPmBon(x)===b.pmbon);
+  const w=UIT.filter(x=>x.d.actie==="extern"&&hoort(x.d)).map(x=>Object.assign({},x.d,{tijd:x.tijd,wacht:true}));
+  const l=w.concat(EXTLIVE.filter(hoort),(b&&b.extern)||[]);
   return l.sort((a,c)=>(c.wacht?1:0)-(a.wacht?1:0)||tijdSleutel(c.tijd).localeCompare(tijdSleutel(a.tijd)))[0]||null;
 }
 async function haalExtern(){
   const m=MELD();if(!m||!m.url)return;
-  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(Array.isArray(j.extern)){EXTLIVE=j.extern.map(x=>({nr:x.nr,status:x.status,uitvoerder:x.uitvoerder,uren:x.uren,teamleider:x.teamleider,tijd:x.tijd}));if(extTeken)extTeken()}}catch(_){}
+  try{const r=await fetch(m.url+"?k="+encodeURIComponent(m.sleutel)),j=await r.json();if(Array.isArray(j.extern)){EXTLIVE=j.extern.map(x=>({nr:x.nr,pmbon:extPmBon(x),status:x.status,uitvoerder:x.uitvoerder,uren:x.uren,teamleider:x.teamleider,tijd:x.tijd}));if(extTeken)extTeken()}}catch(_){}
 }
 function externScherm(){
   $("#lock").hidden=true;$("#externscherm").hidden=false;document.title="Externe ploeg";
@@ -7282,7 +7333,7 @@ function externScherm(){
   function lijst(){
     EXT.open=null;
     const l=volg(),open=l.filter(b=>!af(b.nr)),klaar=l.filter(b=>af(b.nr)),uren=klaar.reduce((n,b)=>n+(Number(af(b.nr).uren)||0),0);
-    const kaart=b=>{const a=af(b.nr);return'<button type="button" class="pmkaart ex-kaart" data-extopen="'+esc(b.nr)+'">'+prio(b.prio)+'<span><b>'+esc(b.omschrijving)+"</b><small>"+esc([b.nr,[b.lijn,b.machine].filter(Boolean).join(" / "),b.deel==="preventief"?"preventief":"",a?(a.uitvoerder||"")+(a.uren?", "+urenTekst(a.uren)+" uur":""):""].filter(Boolean).join(" · "))+"</small></span>"+(a?(a.wacht?'<span class="st warn2"><i></i>Wacht op bereik</span>':extStChip(a.status)):'<span class="st leeg"><i></i>Open</span>')+"</button>"};
+    const kaart=b=>{const a=af(b.nr);return'<button type="button" class="pmkaart ex-kaart" data-extopen="'+esc(b.nr)+'">'+prio(b.prio)+'<span><b>'+esc(b.omschrijving)+"</b><small>"+esc([b.nr,[b.lijn,b.machine].filter(Boolean).join(" / "),b.pm?"PM-taak, "+(b.frequentie||"preventief").toLowerCase():b.deel==="preventief"?"preventief":"",a?(a.uitvoerder||"")+(a.uren?", "+urenTekst(a.uren)+" uur":""):""].filter(Boolean).join(" · "))+"</small></span>"+(a?(a.wacht?'<span class="st warn2"><i></i>Wacht op bereik</span>':extStChip(a.status)):'<span class="st leeg"><i></i>Open</span>')+"</button>"};
     vak.innerHTML='<div class="ex-stand"><div><b>'+klaar.length+" van "+l.length+" afgemeld</b><span>Ingevuld "+urenTekst(Math.round(uren*10)/10)+' uur</span></div><div class="ex-balk"><i style="width:'+(l.length?Math.round(100*klaar.length/l.length):0)+'%"></i></div></div>'+
       (z.letop?'<p class="ex-let"><b>Let op:</b> '+esc(z.letop)+"</p>":"")+
       (open.length?'<div class="ex-band">Nog te doen · '+open.length+"</div>"+open.map(kaart).join(""):'<p class="pa-staat ok">'+ico("afvink")+"<span>Alle bonnen zijn afgemeld.</span></p>")+
@@ -7307,7 +7358,8 @@ function externScherm(){
       '<div class="pmb1"><div><small>'+esc([b.nr,[b.lijn,b.machine].filter(Boolean).join(" / "),"bon "+(i+1)+" van "+l.length].filter(Boolean).join(" · "))+"</small><h2>"+esc(b.omschrijving)+"</h2></div>"+prio(b.prio)+"</div>"+
       ((b.veilig||[]).length?'<div class="ex-vb">'+b.veilig.map(v=>"<span>"+esc((VEILIG.find(x=>x[0]===v)||[v,v])[1])+"</span>").join("")+"</div>":"")+
       ((b.extra||[]).length?'<div class="pmlet"><b>Extra instructies</b><ol class="ex-extra">'+b.extra.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ol></div>":"")+
-      (b.kopie?'<button type="button" class="knop" data-exbon>'+ico("bon")+"Bon openen (PDF)</button>":'<p class="pmaf">De bon als PDF komt binnen een uur.</p>')+
+      (b.pm?'<div class="pmlet"><b>PM-taak'+(b.uit?", lijn staat stil (LOTOTO)":", machine in bedrijf")+"</b>"+(b.onderdeel?'<span style="display:block">'+esc(b.onderdeel)+"</span>":"")+'</div><div class="ex-punten">'+(b.punten||[]).map(g=>(g.o?"<h3>"+esc(g.o)+"</h3>":"")+"<ul>"+(g.p||[]).map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul>").join("")+"</div>":
+        b.kopie?'<button type="button" class="knop" data-exbon>'+ico("bon")+"Bon openen (PDF)</button>":'<p class="pmaf">De bon als PDF komt binnen een uur.</p>')+
       (a?'<p class="pa-staat '+(a.wacht?"wacht":"ok")+'">'+ico(a.wacht?"klok":"afvink")+"<span>"+(a.wacht?"Afmelding staat op deze telefoon en gaat vanzelf zodra er bereik is.":"Afgemeld als "+esc(a.status.toLowerCase())+" door "+esc(a.teamleider||"de teamleider")+(a.tijd?" op "+esc(a.tijd):"")+".")+" Opnieuw afmelden mag: de werkvoorbereider ziet dan de laatste.</span></p>":"")+
       '<form class="meldform ex-form" id="extform" novalidate>'+
         r("ex_uitv","Uitvoerder",'<input type="text" id="ex_uitv" maxlength="200" autocomplete="off" placeholder="Naam van de monteur of monteurs" value="'+esc(f.uitv)+'">',1)+
@@ -7359,9 +7411,10 @@ function externScherm(){
     let ond=[];
     try{if(f.st==="Onderdeel bestellen")ond=await Promise.all(f.ond.map(async o=>({onderdeel:o.onderdeel.trim(),spec:o.spec.trim(),foto:await verklein(o.file)})))}
     catch(_){k.disabled=false;k.textContent="Afmelden en volgende ›";mis("ex_of0","Een foto kan niet worden gelezen. Maak de foto opnieuw.");return}
-    const d={actie:"extern",nr,status:f.st,uitvoerder:f.uitv.trim(),uren:Number(String(f.uren).replace(",",".")),opmerking:f.opm.trim(),teamleider:f.tl.trim(),door:f.tl.trim(),handtekening:f.hand.split(",")[1],
+    const bb=z.bonnen.find(x=>x.nr===nr)||{};
+    const d={actie:"extern",nr,pmbon:bb.pm?bb.pmbon:"",status:f.st,uitvoerder:f.uitv.trim(),uren:Number(String(f.uren).replace(",",".")),opmerking:f.opm.trim(),teamleider:f.tl.trim(),door:f.tl.trim(),handtekening:f.hand.split(",")[1],
       gedaan:f.st==="Deels uitgevoerd"?f.gedaan.trim():"",nog:f.st==="Deels uitgevoerd"?f.nog.trim():"",veegschoon:f.st==="Uitgevoerd"&&f.veeg,vrij:f.st==="Uitgevoerd"&&f.vrij,onderdelen:ond};
-    try{const j=await stuur(d);EXTLIVE=EXTLIVE.concat([{nr,status:d.status,uitvoerder:d.uitvoerder,uren:d.uren,teamleider:d.teamleider,tijd:j.tijd}]);delete EXT.form[nr];melder(nr+" afgemeld als "+d.status.toLowerCase());volgende(nr)}
+    try{const j=await stuur(d);EXTLIVE=EXTLIVE.concat([{nr,pmbon:d.pmbon||"",status:d.status,uitvoerder:d.uitvoerder,uren:d.uren,teamleider:d.teamleider,tijd:j.tijd}]);delete EXT.form[nr];melder(nr+" afgemeld als "+d.status.toLowerCase());volgende(nr)}
     catch(e){
       if(prodNetwerk(e)){try{await UITBAK.zet({d,tijd:nuTekst()});await leesUitbak();delete EXT.form[nr];melder("Geen bereik. De afmelding van "+nr+" gaat vanzelf zodra er bereik is.");volgende(nr);return}catch(_){}}
       k.disabled=false;k.textContent="Afmelden en volgende ›";const fo=$("#ex_fout");fo.textContent=e.message==="geen toegang"?"De Sheet kent de externe ploeg nog niet. Vraag de werkvoorbereider het script bij te werken.":e.message==="foto te groot"?"Een foto is te groot. Maak hem opnieuw.":"Afmelden is niet gelukt. Probeer het opnieuw.";fo.hidden=false;

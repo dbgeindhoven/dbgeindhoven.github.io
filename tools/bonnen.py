@@ -745,8 +745,9 @@ def rooster_wijzig(data, extra):
         del r["dagen"][dag]
 
 
-def extern_af(data, x, w, opnieuw, wm):
-    """De teamleider van de externe ploeg meldde een bon van de zaterdag af (rij.extern). Uitvoerder en uren komen op de regel van het plan,
+def extern_af(data, x, w, opnieuw, wm, toepassen=True):
+    """De teamleider van de externe ploeg meldde een bon van de zaterdag af (rij.extern). Zijn eigen bestand (van extern) zet de afmelding alleen klaar
+    in cm[].extern met verwerkt False: de werkvoorbereider ziet hem op Te doen. Pas zijn Uitgevoerd (van wv, toepassen) verwerkt hem. Uitvoerder en uren komen op de regel van het plan,
     de afmelding in cm[].extern (voor Te doen en de pagina Externe ploeg) en als registratie in de opmerking en op de Word- en PDF-bon.
     Uitgevoerd sluit de bon, Deels uitgevoerd maakt hem Te plannen en Onderdeel bestellen zet de onderdelen op de bestellijst (Uitzoeken voor bestelling)."""
     nr, st = x.get("nr"), x.get("status")
@@ -764,10 +765,22 @@ def extern_af(data, x, w, opnieuw, wm):
           "gedaan": tekst("gedaan")[:1000], "nog": tekst("nog")[:1000], "opmerking": tekst("opmerking")[:1000], "veegschoon": bool(x.get("veegschoon")), "vrij": bool(x.get("vrij")),
           "onderdelen": ond, "fotos": [f for f in x.get("fotos") or [] if isinstance(f, str)][:2], "tijd": str(x.get("tijd") or w.get("tijd"))[:16]}
     lijst = rij.setdefault("extern", [])
-    if af in lijst:
+    oud = next((e for e in lijst if e.get("tijd") == af["tijd"]), None)
+    if not toepassen:
+        if oud is None:
+            af["verwerkt"] = False
+            lijst.append(af)
+            print(nr, "afmelding externe ploeg klaargezet voor de werkvoorbereider")
+        return
+    if oud is not None and oud.get("verwerkt") is not False:
         print(nr, "afmelding externe ploeg al verwerkt")
         return
-    lijst.append(af)
+    af["verwerkt"] = True
+    if oud is not None:
+        oud.clear()
+        oud.update(af)
+    else:
+        lijst.append(af)
     dag = af["tijd"][:10]
     plan = next((z for z in plannen(data) if any(r.get("nr") == nr for r in zat_rijen(z))), None)
     if plan:
@@ -844,7 +857,8 @@ def wijzig(a):
                 gezien.pop(extra["gezien"], None)
             else:
                 gezien[extra["gezien"]] = str(w.get("tijd"))[:10]
-            continue
+            if not extra.get("extern"):
+                continue
         if extra.get("vervolg"):
             vervolg_wijzig(data, extra["vervolg"], w, opnieuw)
             continue
@@ -896,10 +910,14 @@ def wijzig(a):
             opdracht_af(data, extra["opdrachtaf"], w, Path(a.map) / "registratie")
             continue
         if extra.get("extern"):
+            # Van de externe ploeg: alleen klaarzetten. Van de werkvoorbereider (Uitgevoerd op Te doen): verwerken.
             if w.get("van") not in (None, "", "extern", "wv"):
                 print(nr, "afmelding externe ploeg geweigerd: van", w.get("van"))
                 continue
-            extern_af(data, extra["extern"], w, opnieuw, Path(a.map) / "registratie")
+            if extra["extern"].get("pmbon"):
+                print(nr, "PM-taak van de externe ploeg: verwerkt de werkvoorbereider in de PM-registratie")
+                continue
+            extern_af(data, extra["extern"], w, opnieuw, Path(a.map) / "registratie", toepassen=w.get("van") == "wv")
             continue
         if extra.get("extra"):
             bon_extra(data, extra["extra"], Path(a.map) / "extra")

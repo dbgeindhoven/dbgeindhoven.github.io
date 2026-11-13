@@ -349,6 +349,16 @@ def extern_deel(data, stand):
             bonnen.append({"nr": c["nr"], "deel": "correctief", "prio": c.get("prio"), "omschrijving": c.get("omschrijving"), "lijn": c.get("lijn"), "machine": c.get("machine"),
                            "status": c.get("status"), "veilig": c.get("veilig") or [], "extra": c.get("extra") or [],
                            "extern": [{k: v for k, v in y.items() if k in ("status", "uitvoerder", "uren", "teamleider", "tijd")} for y in c.get("extern") or []]})
+    # De PM-taken van die zaterdag: elke taak apart, met de controlepunten. Aftekenen in de PM-registratie doet de werkvoorbereider na zijn akkoord.
+    pp = data.get("pmplan") or {}
+    for b in pp.get("bonnen") or []:
+        if b.get("datum") != z["datum"]:
+            continue
+        for t in b.get("taken") or []:
+            x = (pp.get("taken") or {}).get(t) or {}
+            bonnen.append({"nr": t, "pm": True, "pmbon": b["nr"], "alle": list(b.get("taken") or []), "deel": "preventief", "prio": 1, "omschrijving": x.get("taak") or t,
+                           "lijn": b.get("lijn"), "machine": b.get("lijndeel"), "onderdeel": x.get("onderdeel") or "", "frequentie": x.get("frequentie") or "",
+                           "uit": bool(b.get("uit")), "punten": x.get("punten") or [{"o": "", "p": [x.get("taak") or t]}], "veilig": [], "extra": []})
     return {"datum": z["datum"], "lijn": z.get("lijn") or "", "letop": z.get("letop") or "", "bonnen": bonnen}
 
 
