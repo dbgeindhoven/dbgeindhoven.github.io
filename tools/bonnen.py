@@ -132,11 +132,14 @@ def maak(a):
         if w.get("overslaan"):
             continue
         docx = wm / (w["nr"] + ".docx")
-        fill_bon.maak(laad(wm / (w["nr"] + ".json")), sjabloon, docx)
+        spec = laad(wm / (w["nr"] + ".json"))
+        fill_bon.maak(spec, sjabloon, docx)
         subprocess.run(["soffice", "--headless", "--convert-to", "pdf", "--outdir", str(wm), str(docx)], check=True, capture_output=True, timeout=180)
         aantal = paginas(docx.with_suffix(".pdf"))
         afbeelding(docx.with_suffix(".pdf"))
-        print(w["nr"], "1 pagina" if aantal == 1 else "%d pagina's: maak de tekst korter" % aantal)
+        # De bon zelf is 1 pagina; foto's die niet in het fotovak passen staan erachter als bijlage, twee per pagina.
+        bij = (len([b for b in spec.get("bijlagen") or [] if b.get("foto")]) + 1) // 2
+        print(w["nr"], ("1 pagina" if aantal == 1 + bij else "%d pagina's: maak de tekst korter" % aantal) + (", met %d bijlagepagina('s)" % bij if bij else ""))
 
 
 def rij_voor(w, spec, datum):

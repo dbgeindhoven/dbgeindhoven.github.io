@@ -2772,9 +2772,11 @@ function koppelStoring(klaar){
     const vervolg=document.querySelector('input[name="r_verv"]:checked').value;
     const delen=[[foto1(),"Storing"],[foto2(),"Oplossing"]].filter(x=>x[0]);
     let foto="";
-    if(delen.length){try{foto=await fotoSamen(delen)}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
+    /* Elke foto los, met zijn label erop: de eerste komt in het fotovak van de bon, de tweede als bijlage achter de bon. */
+    let fotos=[];
+    if(delen.length){try{fotos=await Promise.all(delen.map(x=>fotoSamen([x])));foto=fotos.shift()}catch(_){fout.textContent="Deze foto kan niet worden gelezen. Kies een andere foto.";fout.hidden=false;k.disabled=false;return}}
     const deel=w("#r_deel");
-    const d={actie:"nieuw",letter:"TD",melder:wie,lijn:w("#r_lijn"),machine:deel?welke()+" – "+deel:welke(),melding:w("#r_st"),oplossing:w("#r_opl"),vervolg,foto};
+    const d={actie:"nieuw",letter:"TD",melder:wie,lijn:w("#r_lijn"),machine:deel?welke()+" – "+deel:welke(),melding:w("#r_st"),oplossing:w("#r_opl"),vervolg,foto};if(fotos.length)d.fotos=fotos;
     try{const j=await stuur(d);RAPPORT=(RAPPORT||[]).concat([Object.assign({},d,{foto:j.foto||"",id:j.id,tijd:j.tijd})]);rlaatste="";klaar();melder("Storing opgeslagen")}
     catch(e){
       if(e instanceof TypeError||e.name==="TimeoutError"||navigator.onLine===false){
@@ -2815,7 +2817,7 @@ function rapportLijst(vak,toolbar){
     const dagen=[];r.forEach(x=>{const k=(x.tijd||"").slice(0,10);let d=dagen.find(y=>y.k===k);if(!d){d={k,r:[]};dagen.push(d)}d.r.push(x)});
     doel.innerHTML=dagen.map(d=>{const dt=datum(d.k);return'<section class="dag"><h2>'+esc(dt?hoofd(dt.toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"})):d.k)+"<span>"+d.r.length+"</span></h2>"+d.r.map(x=>{
       const v=bonDicht(x)&&x.vervolg!=="Gereed"?["Bon gesloten","ok"]:VERVOLG.find(y=>y[0]===x.vervolg);
-      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+(x.vervolg==="Gereed"&&x.gereed_door&&!x.wacht?'<p class="rafm">Afgemeld door '+esc(x.gereed_door)+(x.gereed_op?", "+esc(x.gereed_op):"")+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div>"+(rapportMag()&&!x.wacht&&nogOpen(x)?(bewerk===x.id?rapportForm(x):'<button class="knop rbewerk" data-rbewerk="'+esc(x.id)+'">Status aanpassen</button>'):"")+(wvMag()&&!x.wacht?'<div class="weg" data-rweg="'+esc(x.id)+'"></div>':"")+"</article>";
+      return'<article class="regel"><div class="rkop"><b>'+esc([x.lijn,x.machine].filter(Boolean).join(", "))+"</b><time>"+esc((x.tijd||"").slice(11))+"</time></div><p>"+esc(x.melding)+"</p>"+(x.oplossing?'<p class="ropl"><span>'+(x.vervolg===OVERDRAGEN?"Al gedaan: ":"Oplossing: ")+"</span>"+esc(x.oplossing)+"</p>":"")+(x.vervolg==="Gereed"&&x.gereed_door&&!x.wacht?'<p class="rafm">Afgemeld door '+esc(x.gereed_door)+(x.gereed_op?", "+esc(x.gereed_op):"")+"</p>":"")+'<div class="rvoet"><span>'+esc([x.melder,bonVan(x.id)].filter(Boolean).join(", "))+"</span>"+(x.foto&&!x.wacht?'<button class="tekstknop" data-rfoto="'+esc(x.foto)+'">'+fotoKnop(x.foto)+'</button>':"")+(x.wacht?'<span class="st crit"><i></i>Nog niet verstuurd</span>':v?'<span class="st '+v[1]+'"><i></i>'+esc(v[0])+"</span>":"")+"</div>"+(rapportMag()&&!x.wacht&&nogOpen(x)?(bewerk===x.id?rapportForm(x):'<button class="knop rbewerk" data-rbewerk="'+esc(x.id)+'">Status aanpassen</button>'):"")+(wvMag()&&!x.wacht?'<div class="weg" data-rweg="'+esc(x.id)+'"></div>':"")+"</article>";
     }).join("")+"</section>"}).join("");
     doel.querySelectorAll("[data-rweg]").forEach(v=>{const x=r.find(y=>y.id===v.dataset.rweg);wegVak(v,x,"Melding verwijderen",()=>{RAPPORT=RAPPORT.filter(y=>y.id!==x.id);rlaatste="";teken();melder("Melding verwijderd")})});
     doel.querySelectorAll("[data-rbewerk]").forEach(k=>k.addEventListener("click",()=>{bewerk=k.dataset.rbewerk;teken()}));
@@ -2827,10 +2829,15 @@ function rapportLijst(vak,toolbar){
   /* Een open formulier blijft staan als er nieuwe regels binnenkomen, anders is wat de monteur typte weg. */
   rteken=()=>{if(!bewerk)teken()};teken();
 }
+/* In de kolom foto kunnen meer Drive-id's staan, met een komma ertussen: de eerste staat op de bon, de rest als bijlage. */
+const fotoKnop=v=>fotoIds(v).length>1?fotoIds(v).length+" foto's bekijken":"Foto bekijken";
+const fotoIds=v=>String(v||"").split(",").map(x=>x.trim()).filter(Boolean);
+const pmBevFoto=id=>(PMBEV||[]).some(x=>fotoIds(x.foto).includes(id));
+async function haalFoto(id,sl){const m=MELD(),r=await fetch(m.url+"?k="+encodeURIComponent((pmBevFoto(id)&&m.sleutel_pm)||sl||m.sleutel)+"&foto="+encodeURIComponent(id)),j=await r.json();if(!j.foto)throw 0;return j.foto}
 async function toonFoto(b){
-  const m=MELD(),vak=document.createElement("div");vak.className="rfoto";vak.textContent="Foto laden";
+  const vak=document.createElement("div");vak.className="rfoto";vak.textContent="Foto laden";
   b.closest(".regel,.pmbev,.pmbevlijst li,.opnameblok").appendChild(vak);b.remove();
-  try{const r=await fetch(m.url+"?k="+encodeURIComponent((PMBEV.some(x=>x.foto===b.dataset.rfoto)&&m.sleutel_pm)||m.sleutel)+"&foto="+encodeURIComponent(b.dataset.rfoto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto bij de storing" src="data:image/jpeg;base64,'+j.foto+'">'}
+  try{const f=await Promise.all(fotoIds(b.dataset.rfoto).map(id=>haalFoto(id)));vak.innerHTML=f.map((x,i)=>'<img alt="Foto '+(i+1)+'" src="data:image/jpeg;base64,'+x+'">').join("")}
   catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
 function vRapport(){
@@ -2902,7 +2909,7 @@ const pmBevZet=(d,j)=>{PMBEV=PMBEV.concat([Object.assign({},d,{id:j.id,tijd:j.ti
 const pmBevBon=x=>x.bon==="Ja"?bonVan(x.id)||"CM-bon wordt gemaakt":"Geen CM-bon";
 const pmAfgekeurd=nr=>uniek(pmBevVan(nr).map(x=>x.punt)).length;
 const pmBevAantal=nr=>{const n=pmAfgekeurd(nr);return n?n+" afgekeurd":""};
-const pmBevHtml=x=>'<div class="pmbev"><p>'+esc(x.opmerking)+"</p><small>"+esc([x.wacht?"Wacht op bereik":x.door,pmBevBon(x)].filter(Boolean).join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+"</div>";
+const pmBevHtml=x=>'<div class="pmbev"><p>'+esc(x.opmerking)+"</p><small>"+esc([x.wacht?"Wacht op bereik":x.door,pmBevBon(x)].filter(Boolean).join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">'+fotoKnop(x.foto)+'</button>':"")+"</div>";
 function pmLaatst(id){
   const volg=t=>t.slice(6,10)+t.slice(3,5)+t.slice(0,2)+t.slice(11);
   return(PMAF||[]).filter(r=>pmGedaan(r).includes(id)).map(r=>r.tijd).sort((a,b)=>volg(b).localeCompare(volg(a)))[0]||null;
@@ -3306,8 +3313,11 @@ function pmVak(vak,tabs,modus){
     if(!pmDoor()){meld("Vul eerst bovenaan je naam in.");return}
     k.disabled=true;k.textContent="Bezig";
     let foto="";
-    if(gekozen.length){try{foto=gekozen.length>1?await fotoSamen(gekozen.map((f,i)=>[f,"Foto "+(i+1)])):await verklein(gekozen[0])}catch(_){meld("Een foto kan niet worden gelezen. Kies een andere foto of sla op zonder foto.");return}}
+    /* Los verstuurd: de eerste foto komt in het fotovak van de CM-bon, de tweede als bijlage achter de bon. */
+    let fotos=[];
+    if(gekozen.length){try{fotos=await Promise.all(gekozen.map(f=>verklein(f)));foto=fotos.shift()}catch(_){meld("Een foto kan niet worden gelezen. Kies een andere foto of sla op zonder foto.");return}}
     const d={actie:"pmbev",nr:open,punt:bevRij.dataset.punt,naam:bevRij.dataset.naam,lijn:b.lijn,machine:b.lijndeel+" – "+bevRij.dataset.mach,opmerking:opm,bon:$("#pb_bon").checked?"Ja":"Nee",door:pmDoor(),foto};
+    if(fotos.length)d.fotos=fotos;
     let tekst="Punt afgekeurd";
     try{pmBevZet(d,await stuur(d))}
     catch(e){
@@ -3427,7 +3437,7 @@ function pmDetail(b){
     const vol=g.includes(t.id),alle=pmPunten(t).flatMap((x,i)=>x.p.map((p,j)=>({c:pmCode(t.id,i,j),n:(x.o?x.o+": ":"")+p}))),afg=alle.filter(y=>bev.some(x=>x.punt===y.c)),mis=alle.filter(y=>!g.includes(y.c)&&!afg.includes(y));
     return"<li"+(vol&&!afg.length?' class="af"':"")+">"+esc(t.onderdeel||t.taak)+(a&&!vol&&mis.length?"<small>Niet afgevinkt: "+esc(mis.length===alle.length?"alles":mis.map(y=>y.n).join(", "))+"</small>":"")+(afg.length?"<small>Afgekeurd: "+esc(afg.map(y=>y.n).join(", "))+"</small>":"")+"</li>";
   };
-  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Registratie",regVeld(b),true],["Opmerking",a&&a.opmerking],["Afgekeurd",bev.length?'<ul class="pmbevlijst">'+bev.map(x=>"<li><b>"+esc(x.naam)+"</b>"+esc(x.opmerking)+"<small>"+esc([x.door,x.tijd,pmBevBon(x)].join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">Foto bekijken</button>':"")+"</li>").join("")+"</ul>":null,true]]};
+  return{klein:b.nr,titel:pmTitel(b),velden:[["Status",st(pmStand(b)),true],["Uitvoeren op",b.datum],["Lijn",b.lijn],["Lijndeel",b.lijndeel],["Taken",'<ul class="pmvink">'+pmTaken(b).map(regel).join("")+"</ul>",true],["Afgemeld door",a&&a.door],["Afgemeld op",a&&a.tijd],["Registratie",regVeld(b),true],["Opmerking",a&&a.opmerking],["Afgekeurd",bev.length?'<ul class="pmbevlijst">'+bev.map(x=>"<li><b>"+esc(x.naam)+"</b>"+esc(x.opmerking)+"<small>"+esc([x.door,x.tijd,pmBevBon(x)].join(" · "))+"</small>"+(x.foto?'<button type="button" class="tekstknop" data-rfoto="'+esc(x.foto)+'">'+fotoKnop(x.foto)+'</button>':"")+"</li>").join("")+"</ul>":null,true]]};
 }
 function vPmBonnen(){
   /* Bonnen met een registratiebon blijven altijd staan, andere gaan na 8 weken uit de planning. De telling kijkt daarom alleen naar die 8 weken. */
@@ -3486,7 +3496,7 @@ async function fotoSamen(delen){
 }
 async function laadFoto(m){
   const vak=$("#m_fotovak");if(!vak)return;
-  try{const c=MELD(),r=await fetch(c.url+"?k="+encodeURIComponent(c.sleutel)+"&foto="+encodeURIComponent(m.foto)),j=await r.json();if(!j.foto)throw 0;vak.innerHTML='<img alt="Foto bij de melding" src="data:image/jpeg;base64,'+j.foto+'">'}
+  try{const f=await Promise.all(fotoIds(m.foto).map(id=>haalFoto(id,MELD().sleutel)));vak.innerHTML=f.map((x,i)=>'<img alt="Foto '+(i+1)+' bij de melding" src="data:image/jpeg;base64,'+x+'">').join("")}
   catch(_){vak.textContent="De foto kan niet worden geladen."}
 }
 // Acties staan regel voor regel in de kolom oplossing; "[x] " vooraan betekent gedaan.
@@ -5271,7 +5281,7 @@ function tdRegel(x,g){
     feit.push(["Punt",esc(x.bev.naam)]);
     if(!c)feit.push(["CM-bon",esc(x.bev.bon==="Ja"?"Wordt bij de volgende run gemaakt":"De monteur vroeg geen CM-bon")]);
     else nr=c.nr;
-    fotos=x.bev.foto?[x.bev.foto]:[];
+    fotos=fotoIds(x.bev.foto);
   }else if(id==="pmopm"||(id==="deels"&&x.a)){
     titel=x.tekst?"“"+x.tekst+"”":"Niet alle punten zijn nagelopen";
     const bij=tdTaakBij(b,x.tekst);
@@ -5331,7 +5341,7 @@ function tdStand(){
 }
 /* Foto's komen via Apps Script, net als bij Foto bekijken. Een foto wordt per bezoek één keer opgehaald. */
 function tdFoto(id){
-  if(!FOTOS[id]){const m=MELD();FOTOS[id]=fetch(m.url+"?k="+encodeURIComponent(((PMBEV||[]).some(x=>x.foto===id)&&m.sleutel_pm)||m.sleutel)+"&foto="+encodeURIComponent(id)).then(r=>r.json()).then(j=>{if(!j.foto)throw new Error("foto");return"data:image/jpeg;base64,"+j.foto}).catch(e=>{delete FOTOS[id];throw e})}
+  if(!FOTOS[id]){const m=MELD();FOTOS[id]=fetch(m.url+"?k="+encodeURIComponent((pmBevFoto(id)&&m.sleutel_pm)||m.sleutel)+"&foto="+encodeURIComponent(id)).then(r=>r.json()).then(j=>{if(!j.foto)throw new Error("foto");return"data:image/jpeg;base64,"+j.foto}).catch(e=>{delete FOTOS[id];throw e})}
   return FOTOS[id];
 }
 function tdFotos(){document.querySelectorAll("#view [data-tdfoto]").forEach(k=>{tdFoto(k.dataset.tdfoto).then(u=>{k.innerHTML='<img alt="Foto van de monteur" src="'+u+'">'}).catch(()=>{k.textContent="Foto niet geladen"})})}

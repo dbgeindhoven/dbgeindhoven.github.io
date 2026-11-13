@@ -20,15 +20,16 @@ VELDEN = {
     "Melder": "melder", "Installatie": "installatie", "Afdeling": "afdeling",
     "Uitvoerder": "uitvoerder", "Leverancier": "leverancier", "Onderdelen": "onderdelen",
 }
+BIJ_B, BIJ_H = 5760000, 3780000  # foto op de bijlagepagina in EMU: twee per pagina
 FOTO_XML = (
     '<w:r xmlns:w="' + W + '" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
     'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
     'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
     'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
     '<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{cx}" cy="{cy}"/>'
-    '<wp:docPr id="901" name="Foto"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
-    '<pic:pic><pic:nvPicPr><pic:cNvPr id="901" name="foto_bon.jpg"/><pic:cNvPicPr/></pic:nvPicPr>'
-    '<pic:blipFill><a:blip r:embed="rIdFoto1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+    '<wp:docPr id="{id}" name="Foto"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+    '<pic:pic><pic:nvPicPr><pic:cNvPr id="{id}" name="{naam}"/><pic:cNvPicPr/></pic:nvPicPr>'
+    '<pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
     '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm>'
     '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic>'
     "</wp:inline></w:drawing></w:r>"
@@ -198,28 +199,72 @@ def zet_foto(cel, spec, delen):
         if spec.get("foto_tekst"):
             p.append(run(spec["foto_tekst"], 16, i=True, kleur="808080"))
         return
-    im = Image.open(spec["foto"]).convert("RGB")
-    im.thumbnail((1000, 1000))
-    uit = io.BytesIO()
-    im.save(uit, "JPEG", quality=78)
-    delen["word/media/foto_bon.jpg"] = uit.getvalue()
-    w, h = im.size
-    schaal = min(MAX_B / w, spec.get("foto_maxh", MAX_H) / h)
-    p.append(etree.fromstring(FOTO_XML.format(cx=int(w * schaal), cy=int(h * schaal))))
+    p.append(plaatje(delen, spec["foto"], "foto_bon.jpg", "rIdFoto1", 901, MAX_B, spec.get("foto_maxh", MAX_H), 1000))
     if spec.get("foto_bijschrift"):
         s = etree.Element(q("p"))
         s.append(run(spec["foto_bijschrift"], 14, i=True, kleur="808080"))
         p.addnext(s)
+
+
+def plaatje(delen, pad, naam, rid, nr, max_b, max_h, px):
+    """Zet een foto in word/media met een verwijzing en geeft de run terug die hem toont, zo groot als in max_b bij max_h past."""
+    im = Image.open(pad)
+    try:
+        from PIL import ImageOps
+        im = ImageOps.exif_transpose(im)
+    except Exception:
+        pass
+    im = im.convert("RGB")
+    im.thumbnail((px, px))
+    uit = io.BytesIO()
+    im.save(uit, "JPEG", quality=80)
+    delen["word/media/" + naam] = uit.getvalue()
+    w, h = im.size
+    schaal = min(max_b / w, max_h / h)
     rels = delen["word/_rels/document.xml.rels"].decode("utf-8")
     delen["word/_rels/document.xml.rels"] = rels.replace(
         "</Relationships>",
-        '<Relationship Id="rIdFoto1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" '
-        'Target="media/foto_bon.jpg"/></Relationships>',
+        '<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" '
+        'Target="media/' + naam + '"/></Relationships>',
     ).encode("utf-8")
     ct = delen["[Content_Types].xml"].decode("utf-8")
     if 'Extension="jpg"' not in ct:
         ct = ct.replace("<Default ", '<Default Extension="jpg" ContentType="image/jpeg"/><Default ', 1)
     delen["[Content_Types].xml"] = ct.encode("utf-8")
+    return etree.fromstring(FOTO_XML.format(cx=int(w * schaal), cy=int(h * schaal), id=nr, naam=naam, rid=rid))
+
+
+def zet_bijlagen(root, spec, delen):
+    """De andere foto's staan achter de bon op een bijlagepagina, twee per pagina, elk met een bijschrift.
+    Op de bon zelf staat alleen de eerste foto, in het fotovak."""
+    lijst = [b for b in spec.get("bijlagen") or [] if b.get("foto")]
+    if not lijst:
+        return 0
+    body = root.find(q("body"))
+    sect = body.find(q("sectPr"))
+    def zet(el):
+        if sect is not None:
+            sect.addprevious(el)
+        else:
+            body.append(el)
+    def alinea_(*runs, midden=False, breuk=False, na=120):
+        p = etree.Element(q("p"))
+        pp = etree.SubElement(p, q("pPr"))
+        if breuk:
+            etree.SubElement(pp, q("pageBreakBefore"))
+        etree.SubElement(pp, q("spacing")).attrib.update({q("before"): "0", q("after"): str(na)})
+        if midden:
+            etree.SubElement(pp, q("jc")).set(q("val"), "center")
+        for r in runs:
+            p.append(r)
+        return p
+    titel = "Bijlage bij werkbon " + str(spec.get("werkbon_nr") or "") + ": foto's"
+    for i, b in enumerate(lijst):
+        if i % 2 == 0:
+            zet(alinea_(run(titel + (" (vervolg)" if i else ""), 20, b=True), breuk=True, na=200))
+        zet(alinea_(plaatje(delen, b["foto"], "foto_bijlage%d.jpg" % (i + 1), "rIdBijlage%d" % (i + 1), 911 + i, BIJ_B, BIJ_H, 1600), midden=True, na=60))
+        zet(alinea_(run("Foto %d. %s" % (i + 2, b.get("bijschrift") or ""), 16, i=True, kleur="595959"), midden=True, na=360))
+    return (len(lijst) + 1) // 2
 
 
 def in_bedrijf(root):
@@ -267,6 +312,7 @@ def maak(spec, template, uit):
     if spec.get("afmelding"):
         zet_afmelding(root, spec["afmelding"])
     zet_foto(volgende_cel(cel), spec, delen)
+    zet_bijlagen(root, spec, delen)
     delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
     with zipfile.ZipFile(uit, "w", zipfile.ZIP_DEFLATED) as z:
         for n in namen + [n for n in delen if n not in namen]:

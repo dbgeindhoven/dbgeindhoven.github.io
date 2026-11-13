@@ -1,4 +1,6 @@
-// TD Hub meldingen, versie 24: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 25: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// Versie 25: meer foto's per storing en per afgekeurd PM-punt (veld fotos). In de kolom foto staan de Drive-id's met een komma ertussen;
+// de eerste foto komt op de CM-bon, de rest als bijlage achter de bon.
 // Versie 24: opnamelijsten in de monteursapp (tabblad Opnamelijst, acties olopname en olfoto).
 // Versie 22: het tabblad Productie voor de productie-app (pilot), met een eigen sleutel.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
@@ -250,6 +252,18 @@ function pmRijen_() {
   });
 }
 
+// Een of meer foto's naar Drive: foto en eventueel fotos (een lijst), samen hooguit 4. Geeft de id's met een komma ertussen, of null als een foto te groot is.
+function fotosOp_(d, naam) {
+  const lijst = [d.foto].concat(Array.isArray(d.fotos) ? d.fotos : []).filter(Boolean).slice(0, 4);
+  if (lijst.some(f => String(f).length > MAX_FOTO)) return null;
+  return lijst.map((f, i) => map_().createFile(Utilities.newBlob(Utilities.base64Decode(f), 'image/jpeg', naam + (i ? '-' + (i + 1) : '') + '.jpg')).getId()).join(',');
+}
+
+// Hoort dit Drive-id bij de waarde in een kolom foto (een of meer id's met een komma ertussen)?
+function heeftFoto_(waarde, id) {
+  return String(waarde || '').split(',').indexOf(id) >= 0;
+}
+
 // Bevindingen bij controlepunten van PM-bonnen staan op een eigen tabblad.
 function bevRijen_() {
   const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Bevindingen');
@@ -265,11 +279,8 @@ function bevRijen_() {
 function zetBevinding_(b, d) {
   const id = Utilities.getUuid().slice(0, 8);
   const tijd = nu_();
-  let foto = '';
-  if (d.foto) {
-    if (d.foto.length > MAX_FOTO) return { fout: 'foto te groot' };
-    foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'bevinding-' + id + '.jpg')).getId();
-  }
+  const foto = fotosOp_(d, 'bevinding-' + id);
+  if (foto === null) return { fout: 'foto te groot' };
   const s = SpreadsheetApp.openById(SHEET_ID);
   const t = s.getSheetByName('Bevindingen') || s.insertSheet('Bevindingen', s.getNumSheets());
   t.getRange('A:I').setNumberFormat('@');
@@ -450,10 +461,10 @@ function doGet(e) {
   const rijen = blad_().getDataRange().getDisplayValues().slice(1).filter(r => r[10] !== 'Verwijderd');
   if (p.foto) {
     // Alleen foto's die bij een regel horen, nooit andere bestanden uit Drive. De PM-inlog ziet alleen foto's van bevindingen.
-    const bevinding = !monteur && bevRijen_().some(x => x.foto === p.foto);
+    const bevinding = !monteur && bevRijen_().some(x => heeftFoto_(x.foto, p.foto));
     const opname = !pm && opnameRijen_().some(x => x.foto === p.foto);
     const ol = !pm && !opname && String(p.foto).length > 15 && olRijen_().some(x => x.gegevens.indexOf('"' + p.foto + '"') >= 0);
-    if (!bevinding && !opname && !ol && (pm || !rijen.some(r => r[14] === p.foto && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
+    if (!bevinding && !opname && !ol && (pm || !rijen.some(r => heeftFoto_(r[14], p.foto) && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
   if (monteur || p.rapport) {
@@ -500,11 +511,8 @@ function doPost(e) {
       const tijd = nu_();
       b.getRange(1, 1, 1, KOP.length).setValues([KOP]);
       const code = d.letter === '' ? code_(b) : '';
-      let foto = '';
-      if (d.foto) {
-        if (d.foto.length > MAX_FOTO) return uit_({ fout: 'foto te groot' });
-        foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.foto), 'image/jpeg', 'melding-' + id + '.jpg')).getId();
-      }
+      const foto = fotosOp_(d, 'melding-' + id);
+      if (foto === null) return uit_({ fout: 'foto te groot' });
       b.appendRow([id, tijd, schoon_(d.letter), schoon_(d.melding), schoon_(d.lijn), schoon_(d.machine), schoon_(d.melder), schoon_(d.actiehouder), schoon_(d.datum), d.bon_nodig ? 'Ja' : 'Nee', d.letter === 'TD' ? 'Rapport' : 'Open', '', '', schoon_(d.oplossing), foto, schoon_(d.risico), schoon_(d.vervolg), code, '', prio_(d.prio)]);
       naarWachtrij_(b);
       return uit_({ ok: true, id: id, tijd: tijd, foto: foto, code: code });
