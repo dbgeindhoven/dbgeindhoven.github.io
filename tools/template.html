@@ -273,6 +273,48 @@ html.present .deelkop .knop{display:none}
 #minhoud{flex:1;min-width:0;padding:16px;border-radius:24px;background:var(--glas);border:1px solid var(--glas-rand);box-shadow:var(--glas-schaduw)}
 #minhoud .meldform{padding:0}
 #monteurscherm .merk{text-align:center}
+/* Monteursapp in het menu van de werkvoorbereider: de app draait in een eigen venster met de gedeelde monteurinlog. */
+.appvak{border-radius:24px;overflow:hidden;border:1px solid var(--glas-rand);background:#E9E9E9}
+.appvak iframe{display:block;width:100%;height:max(640px,calc(100vh - 250px));border:0}
+html.inapp body{background:#E9E9E9}
+html.inapp #monteurscherm{min-height:0;padding-top:12px}
+html.inapp .mkop{display:none}
+.appnoot{margin:0;padding:9px 14px;border-radius:14px;background:var(--wacht-soft);font-size:.8125rem}
+/* Rooster van de TD: per groep de mensen, per dag van de productieweek (zondag tot en met zaterdag) een dienst. */
+.rstw{overflow-x:auto;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
+.rst{width:100%;min-width:300px;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:.8125rem}
+.rst th,.rst td{padding:0;text-align:center;vertical-align:middle}
+.rst thead th{padding:6px 2px 4px;color:var(--ink2);font-weight:500}
+.rst thead th b{display:block;color:var(--ink);font-weight:600}
+.rst thead th.vandaag b{width:fit-content;margin:0 auto;padding:0 7px;border-radius:999px;background:var(--gold);color:var(--on-gold)}
+.rst thead th:first-child{width:118px}
+.rst .rgr th{padding:10px 6px 2px;text-align:left;font-size:.8125rem;font-weight:600}
+.rst .rnaam{padding:4px 8px;text-align:left;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rst tr.jij .rnaam{font-weight:700}
+.rst tr.jij .rnaam::after{content:" (jij)";color:var(--ink3);font-weight:400}
+.rc{display:flex;align-items:center;justify-content:center;height:34px;border-radius:9px;background:rgba(255,255,255,.7);border:1px solid var(--line);font-weight:600;color:var(--ink3)}
+.rc.c-O{background:var(--info-soft);border-color:color-mix(in srgb,var(--info) 30%,transparent);color:var(--info)}
+.rc.c-M{background:var(--wacht-soft);border-color:color-mix(in srgb,var(--wacht) 35%,transparent);color:var(--wacht)}
+.rc.c-N{background:#2B3038;border-color:#2B3038;color:#fff}
+.rc.c-D{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ok)}
+.rc.c-Z{background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,transparent);color:#8A5A00}
+.rc.c-OP{background:#F1ECFB;border-color:#D9CCF3;color:#5B3FA6}
+.rc.c-V,.rc.c-VL,.rc.c-A{background:var(--sunken);color:var(--ink2)}
+.rst select.rc{width:100%;padding:0 2px;font:inherit;font-weight:600;text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none}
+.rlegenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 0;padding:0;list-style:none;font-size:.75rem;color:var(--ink2)}
+.rlegenda li{display:flex;align-items:center;gap:6px}
+.rlegenda .rc{width:30px;height:22px;font-size:.6875rem}
+.rweek{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.rweek b{min-width:150px;text-align:center;font-size:.875rem}
+.rmensen{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.rmensen li{display:grid;grid-template-columns:minmax(0,1fr) 170px auto auto auto;gap:6px;align-items:center}
+.rmensen input,.rmensen select{width:100%;padding:7px 10px;border:1px solid var(--line2);border-radius:999px;background:#fff;font:inherit;font-size:.8125rem}
+.rbalk{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 0}
+.rbalk .rlos{color:var(--wacht);font-size:.8125rem;font-weight:600}
+@media (max-width:640px){.rmensen li{grid-template-columns:minmax(0,1fr) 120px auto auto auto}}
+@media (max-width:520px){.rst{border-spacing:2px;font-size:.75rem}.rst thead th:first-child{width:72px}.rst .rnaam{padding:4px 4px}.rc{height:30px;border-radius:7px}.rst tr.jij .rnaam::after{content:none}.rst tr.jij .rnaam{text-decoration:underline;text-underline-offset:3px}#minhoud .rweek b{min-width:0;font-size:.8125rem}}
+.seg.mtabs{flex-wrap:nowrap}
+@media (max-width:520px){.seg.mtabs button{padding:8px 2px;font-size:.75rem}}
 /* Productie-app (pilot): hetzelfde glas als de monteurs-app. Eén lange pagina met per onderdeel een blok en bovenaan de stand van dat blok. */
 #prodscherm{min-height:100vh;width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-block:14px 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 #prodscherm .merk{text-align:center}
@@ -1687,7 +1729,7 @@ html.present .alwie{display:none}
 
 <div id="monteurscherm" hidden>
   <header class="mkop"><span class="mark" aria-hidden="true">TD</span><div><b>Technische dienst</b><small>Dutch Bakery Group Eindhoven</small></div><button class="uitlog bovenaan" data-uitlog hidden>Uitloggen</button></header>
-  <div class="seg mtabs" id="mtabs" role="group" aria-label="Schermen"><button data-m="melden" aria-pressed="true">Storing melden</button><button data-m="rapport" aria-pressed="false">Dienstrapport</button><button data-m="uitvoer" aria-pressed="false">Uitvoerbare bonnen</button><button data-m="ol" aria-pressed="false">Opname&shy;lijsten</button></div>
+  <div class="seg mtabs" id="mtabs" role="group" aria-label="Schermen"><button data-m="melden" aria-pressed="true">Storing melden</button><button data-m="rapport" aria-pressed="false">Dienstrapport</button><button data-m="uitvoer" aria-pressed="false">Uitvoerbare bonnen</button><button data-m="ol" aria-pressed="false">Opname&shy;lijsten</button><button data-m="rooster" aria-pressed="false">Rooster</button></div>
   <main id="minhoud"></main>
   <span class="merk">Muller Technical Solutions</span>
 </div>
@@ -1741,6 +1783,9 @@ html.present .alwie{display:none}
 (function(){
 "use strict";
 const MODE="__MODE__";
+/* De monteursapp in het menu van de werkvoorbereider: dezelfde pagina in een eigen venster (?app=1), geopend met de sleutel van de gedeelde monteurinlog.
+   Die sleutel komt van de pagina eromheen en wordt nergens bewaard; de uitbak heeft een eigen opslag, zodat de werkvoorbereider nooit iets van de app verstuurt. */
+const APPMODE=MODE==="enc"&&window.parent!==window&&new URLSearchParams(location.search).get("app")==="1";
 let D=null,HUIDIG="sqd",PAGINAS=[];
 const TITEL=document.title||"TD Hub";
 const mem={};
@@ -2122,6 +2167,7 @@ function pasBonToe(w){
   if(extra.veilig){const v=(D.cm||[]).find(x=>x.nr===extra.veilig.nr);if(v){const r=VEILIG.map(x=>x[0]).filter(x=>(extra.veilig.punten||[]).includes(x));if(r.length)v.veilig=r;else delete v.veilig}return}
   if(extra.volgorde){pasVolgordeToe(extra.volgorde);return}
   if(extra.pmskip){pasPmSkip(extra.pmskip);return}
+  if(extra.rooster||extra.roostermensen){pasRoosterToe(extra);return}
   if(extra.week){const v=(D.cm||[]).find(x=>x.nr===extra.week.nr);if(v){v.week=!!extra.week.aan;if(v.week&&extra.week.soort)v.weeksoort=extra.week.soort;else delete v.weeksoort;if(extra.week.opdracht!==undefined){if(extra.week.opdracht)v.opdracht=extra.week.opdracht;else delete v.opdracht}}return}
   if(extra.opname){pasOpnameToe(extra.opname,w);return}
   if(extra.vervolg){const nr=bonVan(extra.vervolg.id);if(extra.vervolg.vervolg==="Gereed"&&nr)pasBonToe({nr,status:"Uitgevoerd",rij:null});return}
@@ -2657,7 +2703,7 @@ let RAPPORT=null,RFOUT=false,rlaatste="",rteken=null,UIT=[],verzendt=false;
 /* Storingen die door slecht bereik nog niet verstuurd zijn. Ze blijven op de telefoon staan tot het wel lukt. */
 const UITBAK={
   db:null,
-  open(){return this.db||(this.db=new Promise((ok,nee)=>{const r=indexedDB.open("td-hub",1);r.onupgradeneeded=()=>r.result.createObjectStore("uitbak",{keyPath:"n",autoIncrement:true});r.onsuccess=()=>ok(r.result);r.onerror=()=>nee(r.error)}))},
+  open(){return this.db||(this.db=new Promise((ok,nee)=>{const r=indexedDB.open(APPMODE?"td-hub-app":"td-hub",1);r.onupgradeneeded=()=>r.result.createObjectStore("uitbak",{keyPath:"n",autoIncrement:true});r.onsuccess=()=>ok(r.result);r.onerror=()=>nee(r.error)}))},
   async doe(modus,f){const db=await this.open();return new Promise((ok,nee)=>{const t=db.transaction("uitbak",modus),r=f(t.objectStore("uitbak"));t.oncomplete=()=>ok(r.result);t.onerror=()=>nee(t.error)})},
   zet(v){return this.doe("readwrite",s=>s.add(v))},
   alles(){return this.doe("readonly",s=>s.getAll())},
@@ -2851,12 +2897,14 @@ function monteurScherm(){
   const vak=$("#minhoud");
   if(D.naam)$(".mkop small").textContent="Ingelogd als "+D.naam;
   if(D.tekst){const t=document.createElement("p");t.className="mtekst";t.textContent=D.tekst;$(".mkop").after(t)}
+  if(APPMODE){const t=document.createElement("p");t.className="appnoot";t.textContent="Je kijkt mee in de monteursapp. Wat je hier meldt of afmeldt, gaat echt door, net als bij een monteur.";$("#mtabs").before(t)}
   function toon(t){
     document.querySelectorAll("#mtabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===t)));
     rteken=null;pmTeken=null;
     if(t==="uitvoer"){pmVak(vak,null);return}
     if(t==="ol"){pmVak(vak,null,"ol");return}
     if(t==="rapport"){rapportLijst(vak);return}
+    if(t==="rooster"){roosterApp(vak);return}
     if(!MELD()){vak.innerHTML='<div class="leegmelding">Storing melden staat nog niet aan.</div>';return}
     vak.innerHTML='<form class="meldform" id="stform">'+storingVelden()+"</form>";
     koppelStoring(()=>toon("rapport"));
@@ -2946,6 +2994,7 @@ function opnameAf(o,status,tijd){
 }
 function weekToe(w){
   const e=w.rij||{};
+  if(e.rooster||e.roostermensen){pasRoosterToe(e);if(roosterTeken)roosterTeken();return}
   if(e.week){
     const oud=weekLijst().find(x=>x.nr===e.week.nr);
     WEEK=weekLijst().filter(x=>x.nr!==e.week.nr||e.week.aan);
@@ -6075,7 +6124,7 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={overleg:vOverleg,tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={mapp:vMapp,rooster:vRooster,overleg:vOverleg,tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- Productie (pilot) ----
    De teamleider productie vult per dienst in op de telefoon: inlog productie, voorlopig één testaccount waarin hij zijn naam invult.
@@ -6373,6 +6422,99 @@ function prodCel(t,dienst,afd){
   if(tt&&nu>=tt.eind)return'<button type="button" class="pd-cel leeg" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Niet ingevuld</b></button>';
   return'<span class="pd-cel toekomst" aria-hidden="true"></span>';
 }
+/* ---- Rooster van de TD ----
+   Per groep de mensen en per dag van de productieweek (zondag tot en met zaterdag) een dienst. Alleen de werkvoorbereider past het aan (pagina Rooster);
+   de monteurs zien het in hun app bij de tab Rooster. Opslaan gaat via de wachtrij: status-ROOSTER-<jjjjmmdd>.txt per week met rij.rooster (van, dagen)
+   en status-ROOSTERMENS.txt met rij.roostermensen. bonnen.py wijzig (rooster_wijzig) zet het in rooster. */
+const RCODES=[["O","Ochtend"],["M","Middag"],["N","Nacht"],["D","Dagdienst"],["Z","Zaterdag"],["V","Vrij"],["VL","Verlof"],["OP","Opleiding"],["A","Afwezig"]];
+const RGROEP=["Storingsdienst","Dagdienst","Zaterdagploeg","Overig"];
+let ROOSTERWK=0,RWERK=null,RLOS=new Set(),RMENSLOS=false,roosterTeken=null;
+const roosterData=()=>{const r=D.rooster||(D.rooster={mensen:[],dagen:{}});r.mensen=r.mensen||[];r.dagen=r.dagen||{};return r};
+function roosterDagen(wk){const z=rcaZondag(pmNu());z.setDate(z.getDate()+7*wk);return Array.from({length:7},(_,i)=>{const d=new Date(z);d.setDate(d.getDate()+i);return d})}
+const rcodeNaam=c=>(RCODES.find(x=>x[0]===c)||["",""])[1];
+function pasRoosterToe(e){
+  const r=roosterData();
+  if(Array.isArray(e.roostermensen))r.mensen=e.roostermensen.filter(x=>x&&x.naam).map(x=>({naam:String(x.naam),groep:String(x.groep||"")}));
+  const w=e.rooster;
+  if(w&&isDag(w.van)){const v=datum(w.van);for(let i=0;i<7;i++){const d=new Date(v);d.setDate(d.getDate()+i);const t=dagTekst(d),x=(w.dagen||{})[t];if(x&&Object.keys(x).length)r.dagen[t]=x;else delete r.dagen[t]}}
+  if(HUIDIG==="rooster"&&!RLOS.size&&!RMENSLOS){RWERK=null;vRooster()}
+}
+function roosterWeekKop(wk,attr){
+  const d=roosterDagen(wk),f=x=>x.getDate()+" "+x.toLocaleDateString("nl-NL",{month:"short"}).replace(".","");
+  return'<div class="rweek"><button type="button" class="knop" '+attr+'="-1" aria-label="Vorige week">‹</button><b>Week '+prodWeek(d[0])+": "+f(d[0])+" – "+f(d[6])+'</b><button type="button" class="knop" '+attr+'="1" aria-label="Volgende week">›</button>'+(wk?'<button type="button" class="tekstknop" '+attr+'="0">Deze week</button>':"")+"</div>";
+}
+function roosterTabel(r,wk,bewerk){
+  const dagen=roosterDagen(wk),vandaag=dagTekst(pmNu()),mensen=r.mensen||[];
+  if(!mensen.length)return'<div class="leegmelding">'+(bewerk?"Zet eerst mensen op het rooster, hieronder bij Mensen.":"Er staat nog niemand op het rooster.")+"</div>";
+  const groepen=uniek(RGROEP.concat(mensen.map(m=>m.groep||"Overig"))).filter(g=>mensen.some(m=>(m.groep||"Overig")===g));
+  const cel=(m,d)=>{const t=dagTekst(d),c=((r.dagen||{})[t]||{})[m.naam]||"";
+    if(bewerk)return'<td><select class="rc'+(c?" c-"+c:"")+'" data-rcel="'+esc(t)+'|'+esc(m.naam)+'" aria-label="'+esc(m.naam+", "+pmDag(d))+'"><option value=""'+(c?"":" selected")+'>–</option>'+RCODES.map(x=>'<option value="'+x[0]+'"'+(x[0]===c?" selected":"")+">"+x[0]+" "+x[1]+"</option>").join("")+"</select></td>";
+    return'<td><span class="rc'+(c?" c-"+c:"")+'" title="'+esc(c?rcodeNaam(c):"Niet ingeroosterd")+'">'+(c||"–")+"</span></td>"};
+  return'<div class="rstw"><table class="rst"><thead><tr><th></th>'+dagen.map(d=>{const t=dagTekst(d);return'<th class="'+(t===vandaag?"vandaag":"")+'">'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"short"})))+"<b>"+d.getDate()+"</b></th>"}).join("")+"</tr></thead><tbody>"+
+    groepen.map(g=>'<tr class="rgr"><th colspan="8">'+esc(g)+"</th></tr>"+mensen.filter(m=>(m.groep||"Overig")===g).map(m=>'<tr class="'+(D.naam&&norm(D.naam)===norm(m.naam)?"jij":"")+'"><th class="rnaam" title="'+esc(m.naam)+'">'+esc(m.naam)+"</th>"+dagen.map(d=>cel(m,d)).join("")+"</tr>").join("")).join("")+
+    '</tbody></table></div><ul class="rlegenda">'+RCODES.map(x=>'<li><span class="rc c-'+x[0]+'">'+x[0]+"</span>"+x[1]+"</li>").join("")+"</ul>";
+}
+/* De tab Rooster in de monteursapp: alleen lezen. */
+function roosterApp(vak){
+  let wk=0;
+  const teken=()=>{vak.innerHTML=roosterWeekKop(wk,"data-rawk")+roosterTabel(roosterData(),wk,false)};
+  roosterTeken=teken;
+  vak.onclick=e=>{const b=e.target.closest("[data-rawk]");if(!b)return;const v=+b.dataset.rawk;wk=v?wk+v:0;teken()};
+  teken();
+}
+/* De pagina Rooster: de werkvoorbereider past het aan, de kijkinlog leest. Wijzigingen staan klaar tot Rooster opslaan. */
+function vRooster(){
+  const mag=wvMag()&&!alleenKijken();
+  if(!RWERK)RWERK=JSON.parse(JSON.stringify(roosterData()));
+  const r=mag?RWERK:roosterData(),los=RLOS.size+(RMENSLOS?1:0);
+  let h='<div class="tdkop"><div><h1>Rooster</h1><p>Wie wanneer werkt, per productieweek van zondag tot en met zaterdag. De monteurs zien dit in hun app bij de tab Rooster.'+(mag?" Alleen jij kunt het aanpassen.":"")+"</p></div></div>";
+  h+=roosterWeekKop(ROOSTERWK,"data-rwk")+roosterTabel(r,ROOSTERWK,mag);
+  if(mag){
+    h+='<div class="rbalk"><button type="button" class="knop" data-rkopie>Vorige week overnemen</button><button type="button" class="knop" data-rleeg>Week leegmaken</button><span style="flex:1"></span>'+(los?'<span class="rlos">'+(los===1?"1 wijziging":los+" wijzigingen")+' nog niet opgeslagen</span><button type="button" class="knop" data-rterug>Ongedaan maken</button>':"")+'<button type="button" class="knop hoofd" data-rop'+(los?"":" disabled")+'>Rooster opslaan</button></div><p class="fout" id="r_fout" role="alert" hidden></p>';
+    h+='<section class="deel"><h2>Mensen</h2><ul class="rmensen">'+r.mensen.map((m,i)=>'<li><input type="text" value="'+esc(m.naam)+'" data-rnaam="'+i+'" aria-label="Naam"><select data-rgroep="'+i+'" aria-label="Groep">'+uniek(RGROEP.concat(m.groep?[m.groep]:[])).map(g=>"<option"+(g===(m.groep||"Overig")?" selected":"")+">"+esc(g)+"</option>").join("")+'</select><button type="button" class="knop" data-rop1="'+i+'" aria-label="Hoger"'+(i?"":" disabled")+'>↑</button><button type="button" class="knop" data-rneer="'+i+'" aria-label="Lager"'+(i<r.mensen.length-1?"":" disabled")+'>↓</button><button type="button" class="knop gevaar" data-rweg="'+i+'">Weg</button></li>').join("")+'</ul><div class="rbalk"><button type="button" class="knop" data-rnieuw>'+ico("plus")+"Persoon toevoegen</button></div></section>";
+  }
+  $("#view").innerHTML=h;
+  if(!mag)return;
+  const v=$("#view");
+  const opnieuw=()=>{const y=window.scrollY;vRooster();window.scrollTo(0,y)};
+  v.onchange=e=>{
+    const t=e.target;
+    if(t.dataset.rcel){const [dag,naam]=t.dataset.rcel.split("|"),x=r.dagen[dag]||(r.dagen[dag]={});if(t.value)x[naam]=t.value;else delete x[naam];if(!Object.keys(x).length)delete r.dagen[dag];RLOS.add(dagTekst(rcaZondag(datum(dag))));t.className="rc"+(t.value?" c-"+t.value:"");opnieuw();return}
+    if(t.dataset.rnaam!==undefined){const i=+t.dataset.rnaam,oud=r.mensen[i].naam,nieuw=t.value.trim();if(!nieuw||r.mensen.some((m,j)=>j!==i&&norm(m.naam)===norm(nieuw))){t.value=oud;melder(nieuw?"Die naam staat er al.":"Vul een naam in.");return}
+      r.mensen[i].naam=nieuw;Object.entries(r.dagen).forEach(([dag,x])=>{if(x[oud]!==undefined){x[nieuw]=x[oud];delete x[oud];RLOS.add(dagTekst(rcaZondag(datum(dag))))}});RMENSLOS=true;opnieuw();return}
+    if(t.dataset.rgroep!==undefined){r.mensen[+t.dataset.rgroep].groep=t.value;RMENSLOS=true;opnieuw()}
+  };
+  v.onclick=async e=>{
+    const t=e.target.closest("button");if(!t)return;
+    if(t.dataset.rwk!==undefined){const x=+t.dataset.rwk;ROOSTERWK=x?ROOSTERWK+x:0;opnieuw();return}
+    if(t.dataset.rkopie!==undefined||t.dataset.rleeg!==undefined){const nu=roosterDagen(ROOSTERWK),vorig=roosterDagen(ROOSTERWK-1);nu.forEach((d,i)=>{const x=t.dataset.rkopie!==undefined?r.dagen[dagTekst(vorig[i])]:null;if(x&&Object.keys(x).length)r.dagen[dagTekst(d)]=Object.assign({},x);else delete r.dagen[dagTekst(d)]});RLOS.add(dagTekst(nu[0]));opnieuw();return}
+    if(t.dataset.rnieuw!==undefined){let n="Nieuwe monteur",k=2;while(r.mensen.some(m=>m.naam===n))n="Nieuwe monteur "+k++;r.mensen.push({naam:n,groep:"Storingsdienst"});RMENSLOS=true;opnieuw();const i=v.querySelectorAll("[data-rnaam]");if(i.length){i[i.length-1].focus();i[i.length-1].select()}return}
+    if(t.dataset.rweg!==undefined){const i=+t.dataset.rweg,m=r.mensen[i];if(t.dataset.zeker!=="1"){t.dataset.zeker="1";t.textContent="Zeker?";return}r.mensen.splice(i,1);RMENSLOS=true;opnieuw();return}
+    if(t.dataset.rop1!==undefined||t.dataset.rneer!==undefined){const i=+(t.dataset.rop1??t.dataset.rneer),j=t.dataset.rop1!==undefined?i-1:i+1;[r.mensen[i],r.mensen[j]]=[r.mensen[j],r.mensen[i]];RMENSLOS=true;opnieuw();return}
+    if(t.dataset.rterug!==undefined){RWERK=null;RLOS.clear();RMENSLOS=false;opnieuw();return}
+    if(t.dataset.rop!==undefined){
+      const f=$("#r_fout");f.hidden=true;t.disabled=true;t.textContent="Bezig";
+      try{
+        if(RMENSLOS){await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"ROOSTERMENS",status:"Open",rij:{roostermensen:r.mensen},door:wvDoor()});RMENSLOS=false}
+        for(const van of [...RLOS]){const v0=datum(van),dagen={};for(let i=0;i<7;i++){const d=new Date(v0);d.setDate(d.getDate()+i);const x=r.dagen[dagTekst(d)];if(x&&Object.keys(x).length)dagen[dagTekst(d)]=x}
+          await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"ROOSTER-"+van.split("-").reverse().join(""),status:"Open",rij:{rooster:{van,dagen}},door:wvDoor()});RLOS.delete(van)}
+        D.rooster=JSON.parse(JSON.stringify(r));RWERK=null;laatste="";melder("Rooster opgeslagen. De monteurs zien het meteen.");opnieuw();
+      }catch(_){f.textContent="Opslaan is niet gelukt. Probeer het opnieuw.";f.hidden=false;t.disabled=false;t.textContent="Rooster opslaan"}
+    }
+  };
+}
+/* De monteursapp in het menu van de werkvoorbereider. De app draait in een eigen venster met de gedeelde monteurinlog, zodat alles werkt zoals bij de monteurs. */
+function vMapp(){
+  const kop='<div class="tdkop"><div><h1>Monteursapp</h1><p>Precies wat de monteurs zien, met al hun tabs: storing melden, dienstrapport, uitvoerbare bonnen, opnamelijsten en het rooster.</p></div></div>';
+  if(MODE!=="enc"||!D.appsleutel){$("#view").innerHTML=kop+'<div class="tdleeg">De monteursapp opent alleen op de site zelf.</div>';return}
+  $("#view").innerHTML=kop+'<div class="appvak"><iframe id="appframe" title="Monteursapp" src="'+esc(location.pathname)+'?app=1"></iframe></div>';
+}
+window.addEventListener("message",e=>{
+  if(e.origin!==location.origin||!e.data||e.data.tdapp!=="klaar")return;
+  const f=$("#appframe");if(!f||e.source!==f.contentWindow||!D||!D.appsleutel)return;
+  f.contentWindow.postMessage({tdappsleutel:D.appsleutel},location.origin);
+});
+window.addEventListener("beforeunload",e=>{if(RLOS.size||RMENSLOS){e.preventDefault();e.returnValue=""}});
 function vProd(){
   const dagen=prodWeekDagen(),vandaag=dagTekst(pmNu()),wk=prodWeek(dagen[0]);
   const open=(PROD||[]).filter(r=>r.status!=="Gecontroleerd").sort((a,b)=>tdVolg(a.datum).localeCompare(tdVolg(b.datum))||PROD_DIENST.findIndex(x=>x.d===a.dienst)-PROD_DIENST.findIndex(x=>x.d===b.dienst));
@@ -6462,7 +6604,9 @@ function prodPaneelVelden(){
    RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","storingen","output","stop"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","meldingen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","storingen","output","stop"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","meldingen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Monteursapp",p:["mapp","rooster"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+/* Een kopje dat er later bij kwam, komt ook in een eigen indeling als eigen kopje, niet onder het laatste kopje. */
+const MENU_NIEUW=["Monteursapp"];
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
 /* De Onderhoudsplanning mag onder twee kopjes staan: Dagstart (om in te zien) en Werkvoorbereiding. */
 const MENU_DUBBEL=["stop"];
@@ -6476,7 +6620,7 @@ function menuKopjes(m){
   const kopjes=(m.kopjes||[]).map(k=>({t:String(k.t||"Kopje"),dicht:!!k.dicht,p:(k.p||[]).filter(id=>kan.has(id)&&(MENU_DUBBEL.includes(id)&&!(k.p||[]).slice(0,(k.p||[]).indexOf(id)).includes(id)||!al.has(id))&&al.add(id))}));
   MENU_STANDAARD.kopjes.forEach(s=>s.p.forEach(id=>{
     if(!kan.has(id)||al.has(id)||weg.has(id))return;
-    let doel=kopjes.find(k=>k.t===s.t)||kopjes[kopjes.length-1];
+    let doel=kopjes.find(k=>k.t===s.t)||(MENU_NIEUW.includes(s.t)?null:kopjes[kopjes.length-1]);
     if(!doel){doel={t:s.t,dicht:false,p:[]};kopjes.push(doel)}
     doel.p.push(id);al.add(id);
   }));
@@ -6486,8 +6630,8 @@ function menuKopjes(m){
 /* De kopjes staan links als ronde knoppen (rail), de pagina's van het kopje onderin (dock), zoals in het voorbeeld met het glas.
    Een klik op een kopje opent de pagina waar je in dat kopje het laatst was (td-hub-kopjes). Onderin staat ook de + voor iets nieuws.
    Op de telefoon kies je het kopje bovenin (kiezer) en staan alle pagina's per kopje in de kiezer. De getallen staan bij de pagina en opgeteld bij het kopje. */
-const KORT={overleg:"Overleg",sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht"};
-const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Productie":"output","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
+const KORT={overleg:"Overleg",sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht",mapp:"App",rooster:"Rooster"};
+const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Productie":"output","Monteursapp":"scherm","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
 const TEL={},KOPLAATST="td-hub-kopjes";
 let KOPJE=null,MODEL=[];
 function kopLaatst(t,id){
@@ -6730,7 +6874,7 @@ function start(data){
   if(D.niveau==="productie"){prodScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   /* Productie (pilot): alleen de werkvoorbereider, nog niet de kijkinlog. */
-  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[],!alleenKijken()?[{id:"prod",t:"Diensten",i:"output"}]:[]);
+  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[],!alleenKijken()?[{id:"prod",t:"Diensten",i:"output"}]:[],D.appsleutel&&!alleenKijken()?[{id:"mapp",t:"Monteursapp",i:"scherm"}]:[],[{id:"rooster",t:"Rooster",i:"kalender"}]);
   PAGINAS=(tdMag()?[P_TEDOEN]:[]).concat(P_DAG,P_LIJN,td?P_TD.filter(p=>!(tdMag()&&p.id==="start")):[P_RAPPORT],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];D.rca=(D.rca||[]).map(rcaVolledig);
   MENU_TD=td;MENU_WV=wv;bouwMenu();
@@ -6764,6 +6908,7 @@ async function gedeeld(d,box){
   const p=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(box.deel.iv)},k,b64(box.deel.ct)),x=JSON.parse(new TextDecoder().decode(p));
   x.meta.meldingen=d.meldingen;
   if(d.niveau)x.niveau=d.niveau;
+  if(d.app)x.appsleutel=d.app;
   return x;
 }
 async function ontsleutel(k,box){
@@ -6800,6 +6945,19 @@ async function boot(){
   document.querySelectorAll("[data-uitlog]").forEach(b=>{b.hidden=MODE!=="enc";b.insertAdjacentHTML("afterbegin",ico("uit"))});
   const p=JSON.parse($("#payload").textContent);
   if(MODE!=="enc"){start(p);return}
+  if(APPMODE){
+    document.documentElement.classList.add("inapp");
+    document.querySelectorAll("[data-uitlog]").forEach(b=>{b.hidden=true});
+    let klaar=false;
+    window.addEventListener("message",async e=>{
+      if(klaar||e.origin!==location.origin||e.source!==window.parent||!e.data||!e.data.tdappsleutel)return;
+      klaar=true;
+      try{const k=await crypto.subtle.importKey("raw",b64(e.data.tdappsleutel),"AES-GCM",false,["decrypt"]),d=await ontsleutel(k,p);if(d.niveau!=="monteur")throw 0;start(d)}
+      catch(_){document.body.innerHTML='<p style="padding:24px;font:15px Inter,sans-serif">De monteursapp kan niet worden geopend.</p>'}
+    });
+    window.parent.postMessage({tdapp:"klaar"},location.origin);
+    return;
+  }
   let s=null;try{s=localStorage.getItem(SLEUTEL)}catch(_){}
   if(s){try{const k=await crypto.subtle.importKey("raw",b64(s),"AES-GCM",false,["decrypt"]);start(await ontsleutel(k,p));return}catch(_){}}
   slot(p);

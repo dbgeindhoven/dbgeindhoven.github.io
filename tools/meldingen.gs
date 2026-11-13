@@ -1,6 +1,6 @@
 // TD Hub meldingen, versie 25: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // Versie 25: meer foto's per storing en per afgekeurd PM-punt (veld fotos). In de kolom foto staan de Drive-id's met een komma ertussen;
-// de eerste foto komt op de CM-bon, de rest als bijlage achter de bon.
+// de eerste foto komt op de CM-bon, de rest als bijlage achter de bon. De monteursapp leest ook het rooster uit de wachtrij (rij.rooster, rij.roostermensen).
 // Versie 24: opnamelijsten in de monteursapp (tabblad Opnamelijst, acties olopname en olfoto).
 // Versie 22: het tabblad Productie voor de productie-app (pilot), met een eigen sleutel.
 // De echte waarden van SHEET_ID en SLEUTEL staan niet in deze repository.
@@ -470,7 +470,7 @@ function doGet(e) {
   if (monteur || p.rapport) {
     const rapport = rijen.filter(r => r[2] === 'TD').slice(-500).map(object_);
     // De monteur ziet aangevinkte en afgemelde bonnen meteen, verder niets uit de wachtrij.
-    if (monteur) return uit_({ rapport: rapport, olopname: olRijen_(), bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf || x.rij.olplan || x.rij.olopname)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf, olplan: x.rij.olplan, olopname: x.rij.olopname && { ol: x.rij.olopname.ol, status: x.rij.olopname.status, door: x.rij.olopname.door, tijd: x.rij.olopname.tijd } } })) });
+    if (monteur) return uit_({ rapport: rapport, olopname: olRijen_(), bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf || x.rij.olplan || x.rij.olopname || x.rij.rooster || x.rij.roostermensen)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf, olplan: x.rij.olplan, rooster: x.rij.rooster, roostermensen: x.rij.roostermensen, olopname: x.rij.olopname && { ol: x.rij.olopname.ol, status: x.rij.olopname.status, door: x.rij.olopname.door, tijd: x.rij.olopname.tijd } } })) });
     return uit_({ rapport: rapport });
   }
   return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_(), olopname: olRijen_() });

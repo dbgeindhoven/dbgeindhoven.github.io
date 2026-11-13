@@ -225,6 +225,9 @@ def build(a):
     # Meldingen waarvan de bon is afgesloten, zodat ze uit "Nog open" in het dienstrapport verdwijnen.
     gesloten = [r["melding"] for r in data.get("cm", []) if r.get("melding") and r.get("status") in GESLOTEN]
     data["meta"].setdefault("bonnen", {})["gesloten"] = gesloten
+    # Rooster van de TD: bij de eerste keer staan de monteurs met een eigen inlog er al op, in de storingsdienst.
+    if "rooster" not in data:
+        data["rooster"] = {"mensen": [{"naam": n, "groep": "Storingsdienst"} for n in sorted((data["meta"].get("publiek") or {}).get("monteurs") or {})], "dagen": {}}
     tpl = (TOOLS / "template.html").read_text("utf-8")
     Path(a.plain).write_text(fill(tpl, "plain", json.dumps(data, ensure_ascii=False, separators=(",", ":"))), "utf-8")
 
@@ -267,7 +270,8 @@ def build(a):
     deel_sleutel = b64(secrets.token_bytes(32))
     deel = box(wv, deel_sleutel)
     if pub.get("sleutel_wv"):
-        boxes.append(box({"deel": deel_sleutel, "meldingen": wv_meld}, pub["sleutel_wv"]))
+        # Met de sleutel van de gedeelde monteurinlog opent de werkvoorbereider de monteursapp in zijn eigen menu (pagina Monteursapp).
+        boxes.append(box(dict({"deel": deel_sleutel, "meldingen": wv_meld}, **({"app": pub["sleutel_monteur"]} if pub.get("sleutel_monteur") else {})), pub["sleutel_wv"]))
     if pub.get("sleutel_kijk"):
         boxes.append(box({"deel": deel_sleutel, "niveau": "kijk", "meldingen": {"url": mld.get("url"), "sleutel": kijk_sleutel}}, pub["sleutel_kijk"]))
     if pub.get("sleutel_dagstart"):
@@ -276,7 +280,7 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de bonnen die de werkvoorbereider heeft ingepland. Geen bonbestanden.
-    monteur_deel = {"niveau": "monteur", "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "olbonnen": olbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
+    monteur_deel = {"niveau": "monteur", "rooster": rooster_deel(data, a.stand), "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "olbonnen": olbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
     if pub.get("sleutel_monteur"):
         boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
     for wie, sleutel in (pub.get("monteurs") or {}).items():
@@ -294,6 +298,14 @@ def build(a):
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes, "deel": deel}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
+
+
+def rooster_deel(data, stand):
+    """Het rooster voor de monteursapp: de mensen en de dagen van twee weken terug tot acht weken vooruit."""
+    r = data.get("rooster") or {}
+    nu = datetime.datetime.strptime(stand, "%d-%m-%Y")
+    van, tot = nu - datetime.timedelta(days=14), nu + datetime.timedelta(days=56)
+    return {"mensen": r.get("mensen") or [], "dagen": {d: v for d, v in (r.get("dagen") or {}).items() if van <= datetime.datetime.strptime(d, "%d-%m-%Y") <= tot}}
 
 
 def weekbonnen(data, stand, kopie):
