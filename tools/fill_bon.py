@@ -173,6 +173,25 @@ def zet_extra(inhoud, oud, nieuw):
     return schrijf_zip(delen)
 
 
+VEILIG_LABEL = {"LOTOTO": "LOTOTO", "Hoogte": "werken op hoogte", "Heet werk": "heet werk"}
+
+
+def zet_veilig(inhoud, punten):
+    """Veiligheid van de werkvoorbereider (LOTOTO, werken op hoogte, heet werk) op de Let op-regel van een bestaande Word-bon.
+    Een vorige regel Veiligheid gaat er eerst af, zodat opnieuw opslaan niets dubbel zet."""
+    delen = lees_zip(inhoud)
+    root = etree.fromstring(delen["word/document.xml"])
+    p = alinea(root, "⚠ Let op")
+    for r in [r for r in p.findall(q("r")) if "".join(t.text or "" for t in r.iter(q("t"))).startswith(" Veiligheid:")]:
+        p.remove(r)
+    namen = [VEILIG_LABEL[x] for x in VEILIG_LABEL if x in (punten or [])]
+    if namen:
+        tekst_ = ", ".join(namen)
+        p.append(run(" Veiligheid: " + tekst_[0].upper() + tekst_[1:] + ".", 16, b=True, kleur="C00000"))
+    delen["word/document.xml"] = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+    return schrijf_zip(delen)
+
+
 def zet_foto(cel, spec, delen):
     p = cel.find(q("p"))
     if not spec.get("foto"):

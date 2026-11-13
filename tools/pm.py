@@ -171,6 +171,14 @@ def bijwerken(data, vandaag):
                 bonnen_op(plan, gd, d, dagbonnen)
             bonnen += dagbonnen
         d += EEN_DAG
+    # Overgeslagen PM-taken (Zaterdagoverleg): van de bon van die dag af; een bon zonder taken vervalt. De reden blijft in overslaan staan.
+    skip = {(x.get("datum"), x.get("taak")) for x in plan.get("overslaan") or []}
+    if skip:
+        for b in bonnen:
+            if b["nr"] not in vast:
+                b["taken"] = [t for t in b["taken"] if (b["datum"], t) not in skip]
+        bonnen = [b for b in bonnen if b["taken"] or b["nr"] in vast]
+    plan["overslaan"] = [x for x in plan.get("overslaan") or [] if dat(x["datum"]) >= nu - datetime.timedelta(days=BEWAAR)]
     plan["bonnen"] = bonnen
     if nu > tot:
         plan["vast_tot"] = tekst(nu)
@@ -186,4 +194,4 @@ def monteur_deel(data, vandaag):
         return None
     grens = dat(vandaag) + datetime.timedelta(days=MONTEUR_VOORUIT)
     bonnen = [b for b in plan.get("bonnen", []) if dat(vandaag) - datetime.timedelta(days=BEWAAR) <= dat(b["datum"]) <= grens]
-    return {"bonnen": bonnen, "taken": {t: plan["taken"][t] for b in bonnen for t in b["taken"]}}
+    return {"bonnen": bonnen, "taken": {t: plan["taken"][t] for b in bonnen for t in b["taken"]}, "overslaan": [x for x in plan.get("overslaan") or [] if dat(x["datum"]) <= grens]}

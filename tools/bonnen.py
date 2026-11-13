@@ -372,6 +372,81 @@ def bon_registratie(data, rij, regel, wm):
     bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
 
 
+def bon_opnieuw(data, rij, wm, maak_docx):
+    """Maakt de Word-, PDF- en beeldbon van een regel opnieuw uit de bestaande Word-bon, met maak_docx(oude docx-bytes) -> nieuwe docx-bytes."""
+    bon = rij.get("bon") or {}
+    if not bon.get("docx"):
+        return False
+    b = stand(data)
+    wm.mkdir(parents=True, exist_ok=True)
+    docx = wm / (bon["naam"] + ".docx")
+    docx.write_bytes(maak_docx(ontsleutel(Path(bon["docx"]).name, b["sleutel"])))
+    naar_pdf([docx], wm)
+    pdf = docx.with_suffix(".pdf")
+    for k in ("docx", "pdf", "beeld"):
+        if bon.get(k):
+            (REPO / bon[k]).unlink(missing_ok=True)
+    bon.update(docx=versleutel(docx.read_bytes(), b["sleutel"]), pdf=versleutel(pdf.read_bytes(), b["sleutel"]), beeld=versleutel(afbeelding(pdf).read_bytes(), b["sleutel"]))
+    return True
+
+
+VEILIG = ("LOTOTO", "Hoogte", "Heet werk")
+
+
+def bon_veilig(data, x, wm):
+    """Veiligheid per bon uit het bonvenster: cm[].veilig en op de Let op-regel van de Word- en PDF-bon (fill_bon.zet_veilig)."""
+    nr = x.get("nr")
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None:
+        print(nr, "staat niet in het overzicht, veiligheid overgeslagen")
+        return
+    nieuw = [v for v in VEILIG if v in (x.get("punten") or [])]
+    if nieuw == (rij.get("veilig") or []):
+        print(nr, "veiligheid ongewijzigd")
+        return
+    if nieuw:
+        rij["veilig"] = nieuw
+    else:
+        rij.pop("veilig", None)
+    if bon_opnieuw(data, rij, wm, lambda oud: fill_bon.zet_veilig(oud, nieuw)):
+        print(nr, "veiligheid op de bon:", ", ".join(nieuw) or "geen")
+    else:
+        print(nr, "veiligheid opgeslagen, nog geen bonbestand")
+
+
+def volgorde_wijzig(data, v):
+    """Volgorde van de bonnen op een dag uit het Zaterdagoverleg. Geldt voor de planning, de daglijst en de PDF (de stempel volgt de volgorde)."""
+    if v.get("plan"):
+        z = next((s for s in data.get("stops") or [] if s.get("id") == v["plan"]), None)
+    else:
+        z = data.get("zaterdag") if (data.get("zaterdag") or {}).get("datum") == v.get("datum") else None
+    if z is None:
+        print("volgorde: plan", v.get("plan") or v.get("datum"), "niet gevonden")
+        return
+    for k in ("correctief", "preventief"):
+        nrs = [n for n in v.get(k) or [] if isinstance(n, str)]
+        if not nrs:
+            continue
+        pos = {n: i for i, n in enumerate(nrs)}
+        oud = z.get(k) or []
+        z[k] = sorted([r for r in oud if r.get("nr") in pos], key=lambda r: pos[r["nr"]]) + [r for r in oud if r.get("nr") not in pos]
+    print("volgorde", z.get("id") or "zaterdag", z.get("datum"), "aangepast")
+
+
+def pm_skip(data, x, w):
+    """Een PM-taak voor één dag overslaan, met een reden, of terugzetten. pm.bijwerken haalt hem van de bon van die dag."""
+    plan = data.get("pmplan")
+    datum, taak = str(x.get("datum") or ""), str(x.get("taak") or "")
+    if not plan or not re.fullmatch(r"\d{2}-\d{2}-\d{4}", datum) or not any(r.get("id") == taak for r in data.get("pm", [])):
+        print("PM overslaan: onbekende dag of taak", datum, taak)
+        return
+    lijst = [y for y in plan.get("overslaan") or [] if not (y.get("datum") == datum and y.get("taak") == taak)]
+    if not x.get("terug"):
+        lijst.append({"datum": datum, "taak": taak, "reden": " ".join(str(x.get("reden") or "").split())[:200], "door": str(x.get("door") or w.get("door") or "")[:60], "tijd": str(x.get("tijd") or w.get("tijd") or "")[:16], "bon": str(x.get("bon") or "")[:20]})
+    plan["overslaan"] = lijst
+    print(taak, "op", datum, "teruggezet" if x.get("terug") else "overgeslagen")
+
+
 def bon_extra(data, x, wm):
     """Extra instructies van de werkvoorbereider (Zaterdagoverleg en bonvenster): in cm[].extra en bij 1 Werkinstructie op de Word- en PDF-bon.
     De vorige regels gaan eerst van de bon af. Prio, uitvoerder en dag blijven, dus de stempel ook."""
@@ -717,6 +792,15 @@ def wijzig(a):
             continue
         if extra.get("extra"):
             bon_extra(data, extra["extra"], Path(a.map) / "extra")
+            continue
+        if extra.get("veilig"):
+            bon_veilig(data, extra["veilig"], Path(a.map) / "veilig")
+            continue
+        if extra.get("volgorde"):
+            volgorde_wijzig(data, extra["volgorde"])
+            continue
+        if extra.get("pmskip"):
+            pm_skip(data, extra["pmskip"], w)
             continue
         rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
         # Deels uitgevoerd is wat de monteur koos. De bon is dan niet klaar en moet opnieuw worden gepland.
