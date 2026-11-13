@@ -5,7 +5,7 @@ De gegevens staan NIET in deze repository. Ze staan leesbaar in de privépagina
 bij Claude en versleuteld in index.html. Zie CLAUDE.md voor de werkwijze.
 
   site.py extract <privepagina.html> <site.json>
-  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|kijk|output|pm]
+  site.py setkey  <site.json> --password "..." [--niveau td|dagstart|melden|monteur|wv|kijk|output|pm|productie|extern]
   site.py build   <site.json> --stand DD-MM-JJJJ --plain <uit.html> --public <index.html>
 """
 import argparse, base64, copy, datetime, hashlib, hmac, json, re, secrets
@@ -60,7 +60,7 @@ def extract(a):
 
 
 def setkey(a):
-    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), kijk (alles van wv, alleen lezen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen), output (alleen het outputformulier) of productie (alleen de productie-app, pilot)."""
+    """Zet het wachtwoord voor een niveau: wv (alles plus de bonnen), kijk (alles van wv, alleen lezen), td (alles), dagstart (dagstartpagina's), melden (alleen het meldformulier), monteur (storing melden en dienstrapport), pm (alleen de PM-bonnen), output (alleen het outputformulier) of productie (alleen de productie-app, pilot) of extern (de externe ploeg: alleen de bonnen van de zaterdag afmelden)."""
     from cryptography.hazmat.primitives.hashes import SHA256
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -76,7 +76,7 @@ def setkey(a):
         pub.setdefault("monteurs", {})[a.naam] = b64(key)
         p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
         return
-    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "kijk": "sleutel_kijk", "output": "sleutel_output", "pm": "sleutel_pm", "productie": "sleutel_productie"}[a.niveau]] = b64(key)
+    pub[{"td": "sleutel", "dagstart": "sleutel_dagstart", "melden": "sleutel_melden", "monteur": "sleutel_monteur", "wv": "sleutel_wv", "kijk": "sleutel_kijk", "output": "sleutel_output", "pm": "sleutel_pm", "productie": "sleutel_productie", "extern": "sleutel_extern"}[a.niveau]] = b64(key)
     p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
 
 
@@ -163,7 +163,7 @@ def kopie_kenmerk(b, soort, pad):
     return hmac.new(base64.b64decode(b["sleutel"]), (soort + ":" + pad).encode("utf-8"), hashlib.sha256).digest()
 
 
-def opname_kopieen(data):
+def opname_kopieen(data, ook=()):
     """De monteurs hebben de sleutel van de bonnen niet. Elke open bon bij de monteurs (Uitvoerbare bonnen en opnamebonnen) krijgt daarom
     een eigen kopie van de originele bon, met een eigen sleutel die alleen in het monteursdeel staat. Gaat de bon van de lijst of dicht, dan verdwijnt de kopie."""
     b, map_, uit = data["meta"].get("bonnen") or {}, TOOLS.parent, {}
@@ -176,7 +176,7 @@ def opname_kopieen(data):
             continue
         sleutel = kopie_kenmerk(b, "sleutel", bon["pdf"])
         paden = {s: "bonnen/%s.bin" % kopie_kenmerk(b, "bestand", bon[s])[:8].hex() for s in ("pdf", "beeld") if bon.get(s)}
-        if not (r.get("week") and r.get("status") not in GESLOTEN):
+        if not ((r.get("week") or r.get("nr") in ook) and r.get("status") not in GESLOTEN):
             for p in paden.values():
                 (map_ / p).unlink(missing_ok=True)
             continue
@@ -241,6 +241,7 @@ def build(a):
     output_sleutel = mld.pop("sleutel_output", None)
     pm_sleutel = mld.pop("sleutel_pm", None)
     productie_sleutel = mld.pop("sleutel_productie", None)
+    extern_sleutel = mld.pop("sleutel_extern", None)
     kijk_sleutel = mld.pop("sleutel_kijk", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
@@ -271,7 +272,7 @@ def build(a):
     deel = box(wv, deel_sleutel)
     if pub.get("sleutel_wv"):
         # Met de sleutel van de gedeelde monteurinlog opent de werkvoorbereider de monteursapp in zijn eigen menu (pagina Monteursapp).
-        boxes.append(box(dict({"deel": deel_sleutel, "meldingen": wv_meld}, **({"app": pub["sleutel_monteur"]} if pub.get("sleutel_monteur") else {})), pub["sleutel_wv"]))
+        boxes.append(box(dict({"deel": deel_sleutel, "meldingen": wv_meld}, **({"app": pub["sleutel_monteur"]} if pub.get("sleutel_monteur") else {}), **({"appextern": pub["sleutel_extern"]} if pub.get("sleutel_extern") and extern_sleutel else {})), pub["sleutel_wv"]))
     if pub.get("sleutel_kijk"):
         boxes.append(box({"deel": deel_sleutel, "niveau": "kijk", "meldingen": {"url": mld.get("url"), "sleutel": kijk_sleutel}}, pub["sleutel_kijk"]))
     if pub.get("sleutel_dagstart"):
@@ -280,7 +281,10 @@ def build(a):
         # Alleen het webadres en de meldsleutel: geen enkele lijst.
         boxes.append(box({"niveau": "melden", "meta": {"meldingen": {"url": mld.get("url"), "sleutel": meld_sleutel}}}, pub["sleutel_melden"]))
     # Storing melden en het dienstrapport, plus de machinenamen, de PM-bonnen en de bonnen die de werkvoorbereider heeft ingepland. Geen bonbestanden.
-    monteur_deel = {"niveau": "monteur", "rooster": rooster_deel(data, a.stand), "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, opname_kopieen(data)), "olbonnen": olbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
+    # De externe ploeg op zaterdag: de bonnen van de eerstvolgende zaterdag. Hun kopieën van de bon delen ze met de monteurs.
+    ext = extern_deel(data, a.stand)
+    kopie = opname_kopieen(data, {b["nr"] for b in ext["bonnen"]} if ext and pub.get("sleutel_extern") and extern_sleutel else ())
+    monteur_deel = {"niveau": "monteur", "rooster": rooster_deel(data, a.stand), "machines": data["machines"], "pmplan": pm.monteur_deel(data, a.stand), "weekbonnen": weekbonnen(data, a.stand, kopie), "olbonnen": olbonnen(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": monteur_sleutel, "sleutel_pm": pm_sleutel}, "bonnen": {"verwerkt": monteur_bonnen, "gesloten": gesloten}}}
     if pub.get("sleutel_monteur"):
         boxes.append(box(monteur_deel, pub["sleutel_monteur"]))
     for wie, sleutel in (pub.get("monteurs") or {}).items():
@@ -292,12 +296,60 @@ def build(a):
     if pub.get("sleutel_pm"):
         # Alleen de PM-bonnen en een sleutel die niets anders kan dan die bonnen afmelden.
         boxes.append(box({"niveau": "pm", "naam": data["meta"].get("pm_monteur") or "Monteur", "pmplan": pm.monteur_deel(data, a.stand), "meta": {"meldingen": {"url": mld.get("url"), "sleutel": pm_sleutel}}}, pub["sleutel_pm"]))
+    if pub.get("sleutel_extern") and extern_sleutel:
+        # Alleen de zaterdag en een sleutel die niets anders kan dan die bonnen afmelden. Geen andere lijsten, namen of prijzen.
+        for b in (ext or {}).get("bonnen", []):
+            if b["nr"] in kopie:
+                b["kopie"] = kopie[b["nr"]]
+        boxes.append(box({"niveau": "extern", "zat": ext, "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": extern_sleutel}}}, pub["sleutel_extern"]))
     if pub.get("sleutel_productie") and productie_sleutel:
         # Productie-app (pilot): de machines uit het dienstrapport en de planning. Geen andere lijsten; de sleutel kan alleen het tabblad Productie lezen en schrijven.
         boxes.append(box({"niveau": "productie", "machines": prod_machines(data), "plan": prod_plan(data, a.stand), "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": productie_sleutel}}}, pub["sleutel_productie"]))
     inhoud = json.dumps({"iter": pub["iter"], "salt": pub["salt"], "boxes": boxes, "deel": deel}, separators=(",", ":"))
     Path(a.public).write_text(HEAD + fill(tpl, "enc", inhoud) + FOOT, "utf-8")
     print({k: len(v) for k, v in data.items() if isinstance(v, list)})
+
+
+def dag_van(t):
+    try:
+        return datetime.datetime.strptime(t, "%d-%m-%Y").date()
+    except ValueError:
+        return datetime.date(2000, 1, 1)
+
+
+def extern_zaterdag(data, stand):
+    """De eerstvolgende zaterdag in de planning, vanaf vandaag: de externe ploeg ziet hem de hele week."""
+    nu = datetime.datetime.strptime(stand, "%d-%m-%Y").date()
+    dag = lambda z: datetime.datetime.strptime(z["datum"], "%d-%m-%Y").date()
+    l = [z for z in [data.get("zaterdag") or {}] + list(data.get("stops") or []) if z.get("datum") and dag(z) >= nu and dag(z).weekday() == 5]
+    return min(l, key=dag) if l else None
+
+
+def extern_deel(data, stand):
+    """Wat de externe ploeg van die zaterdag ziet: per bon de velden voor de kaart en het venster, de veiligheid en extra instructies,
+    en wat hij al afmeldde (cm[].extern). Geen uitvoerders, opmerkingen of namen van de eigen mensen."""
+    z = extern_zaterdag(data, stand)
+    if not z:
+        return None
+    cm = {r.get("nr"): r for r in data.get("cm", [])}
+    bonnen = []
+    for deel in ("correctief", "preventief"):
+        for r in z.get(deel) or []:
+            c = cm.get(r.get("nr"))
+            if not c or c.get("status") == "Vervallen" or (c.get("status") in GESLOTEN and not c.get("extern")):
+                continue
+            bonnen.append({"nr": c["nr"], "deel": deel, "prio": r.get("prio") or c.get("prio"), "omschrijving": c.get("omschrijving") or r.get("werkzaamheid"),
+                           "lijn": c.get("lijn"), "machine": c.get("machine"), "status": c.get("status"), "veilig": c.get("veilig") or [], "extra": c.get("extra") or [],
+                           "extern": [{k: v for k, v in x.items() if k in ("status", "uitvoerder", "uren", "teamleider", "tijd")} for x in c.get("extern") or []]})
+    # Deels uitgevoerd en Onderdeel bestellen halen de bon van het plan. Wat de ploeg deze week afmeldde, blijft hij zien.
+    al, zd = {b["nr"] for b in bonnen}, dag_van(z["datum"])
+    for c in data.get("cm", []):
+        x = (c.get("extern") or [None])[-1]
+        if x and c["nr"] not in al and zd - datetime.timedelta(days=7) < dag_van(str(x.get("tijd"))[:10]) <= zd:
+            bonnen.append({"nr": c["nr"], "deel": "correctief", "prio": c.get("prio"), "omschrijving": c.get("omschrijving"), "lijn": c.get("lijn"), "machine": c.get("machine"),
+                           "status": c.get("status"), "veilig": c.get("veilig") or [], "extra": c.get("extra") or [],
+                           "extern": [{k: v for k, v in y.items() if k in ("status", "uitvoerder", "uren", "teamleider", "tijd")} for y in c.get("extern") or []]})
+    return {"datum": z["datum"], "lijn": z.get("lijn") or "", "letop": z.get("letop") or "", "bonnen": bonnen}
 
 
 def rooster_deel(data, stand):
@@ -392,7 +444,7 @@ def olbonnen(data, stand):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm", "productie"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm", "productie", "extern"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

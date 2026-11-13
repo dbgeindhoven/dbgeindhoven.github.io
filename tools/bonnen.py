@@ -745,6 +745,71 @@ def rooster_wijzig(data, extra):
         del r["dagen"][dag]
 
 
+def extern_af(data, x, w, opnieuw, wm):
+    """De teamleider van de externe ploeg meldde een bon van de zaterdag af (rij.extern). Uitvoerder en uren komen op de regel van het plan,
+    de afmelding in cm[].extern (voor Te doen en de pagina Externe ploeg) en als registratie in de opmerking en op de Word- en PDF-bon.
+    Uitgevoerd sluit de bon, Deels uitgevoerd maakt hem Te plannen en Onderdeel bestellen zet de onderdelen op de bestellijst (Uitzoeken voor bestelling)."""
+    nr, st = x.get("nr"), x.get("status")
+    rij = next((r for r in data["cm"] if r.get("nr") == nr), None)
+    if rij is None or st not in ("Uitgevoerd", "Onderdeel bestellen", "Deels uitgevoerd"):
+        print(nr, "afmelding externe ploeg overgeslagen")
+        return
+    tekst = lambda k: str(x.get(k) or "").strip()
+    try:
+        uren = round(float(str(x.get("uren")).replace(",", ".")), 2)
+    except ValueError:
+        uren = None
+    ond = [{"onderdeel": str(o.get("onderdeel") or "").strip()[:200], "spec": str(o.get("spec") or "").strip()[:300], "foto": str(o.get("foto") or "")} for o in x.get("onderdelen") or [] if isinstance(o, dict)]
+    af = {"status": st, "uitvoerder": tekst("uitvoerder")[:200], "uren": uren, "teamleider": tekst("teamleider")[:100], "handtekening": tekst("handtekening"),
+          "gedaan": tekst("gedaan")[:1000], "nog": tekst("nog")[:1000], "opmerking": tekst("opmerking")[:1000], "veegschoon": bool(x.get("veegschoon")), "vrij": bool(x.get("vrij")),
+          "onderdelen": ond, "fotos": [f for f in x.get("fotos") or [] if isinstance(f, str)][:2], "tijd": str(x.get("tijd") or w.get("tijd"))[:16]}
+    lijst = rij.setdefault("extern", [])
+    if af in lijst:
+        print(nr, "afmelding externe ploeg al verwerkt")
+        return
+    lijst.append(af)
+    dag = af["tijd"][:10]
+    plan = next((z for z in plannen(data) if any(r.get("nr") == nr for r in zat_rijen(z))), None)
+    if plan:
+        for r in zat_rijen(plan):
+            if r.get("nr") == nr:
+                r["uitvoerder"], r["uren"] = af["uitvoerder"] or None, uren
+    zin = lambda t: t.rstrip() + ("" if t.rstrip()[-1:] in ".!?" else ".")
+    delen = ["Uitvoerder %s, %s uur." % (af["uitvoerder"], str(uren).replace(".", ",").removesuffix(",0"))]
+    if st == "Deels uitgevoerd":
+        delen += ["Gedaan: " + zin(af["gedaan"]), "Nog te doen: " + zin(af["nog"])]
+    if st == "Onderdeel bestellen":
+        delen += ["Bestellen: " + "; ".join(o["onderdeel"] + (" (" + o["spec"] + ")" if o["spec"] else "") for o in ond) + "."]
+    if st == "Uitgevoerd" and (af["veegschoon"] or af["vrij"]):
+        delen += [" en ".join(t for t, v in (("veegschoon opgeleverd", af["veegschoon"]), ("vrijgegeven voor productie", af["vrij"])) if v).capitalize() + "."]
+    if af["opmerking"]:
+        delen.append(zin(af["opmerking"]))
+    delen.append("Afgetekend door %s." % (af["teamleider"] or "teamleider externe ploeg"))
+    regel = "%s, externe ploeg: %s. %s" % (dag, st, " ".join(delen))
+    rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
+    print(nr, regel)
+    if rij.get("status") not in KLAAR and rij.get("status") not in ("Dubbel", "Vervallen"):
+        if st == "Uitgevoerd":
+            rij["status"], rij["uitgevoerd_op"] = "Uitgevoerd", dag
+        else:
+            rij["status"] = "Te plannen" if st == "Deels uitgevoerd" else "Uitzoeken voor bestelling"
+            if plan:
+                zat_weg(data, nr)
+                rij["uitvoeren"] = "In overleg" if st == "Deels uitgevoerd" else "Na levering"
+                opnieuw.append(rij)
+            for o in ond if st == "Onderdeel bestellen" else []:
+                r = bestelregel(nr, o["onderdeel"], "Uit de afmelding van de externe ploeg van " + dag + ".")
+                r["id"] = "B%d" % (max([int(b["id"][1:]) for b in data["bestellijst"] if re.fullmatch(r"B\d+", str(b.get("id") or ""))] + [0]) + 1)
+                r["specificatie"], r["zoekeerst"] = o["spec"] or None, True
+                if o["foto"]:
+                    r["foto"] = o["foto"]
+                data["bestellijst"].append(r)
+    try:
+        bon_registratie(data, rij, regel, wm)
+    except Exception as e:  # De registratie staat dan wel in de opmerking; de bon volgt bij een volgende wijziging.
+        print(nr, "registratie niet op de bon gezet:", e)
+
+
 def wijzig(a):
     """Zet een status uit de site op de bon, of haalt de bon weg. Het nummer wordt daarna niet opnieuw uitgegeven."""
     data = laad(a.site)
@@ -829,6 +894,12 @@ def wijzig(a):
             continue
         if extra.get("opdrachtaf"):
             opdracht_af(data, extra["opdrachtaf"], w, Path(a.map) / "registratie")
+            continue
+        if extra.get("extern"):
+            if w.get("van") not in (None, "", "extern", "wv"):
+                print(nr, "afmelding externe ploeg geweigerd: van", w.get("van"))
+                continue
+            extern_af(data, extra["extern"], w, opnieuw, Path(a.map) / "registratie")
             continue
         if extra.get("extra"):
             bon_extra(data, extra["extra"], Path(a.map) / "extra")
