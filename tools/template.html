@@ -6529,11 +6529,12 @@ function vRooster(){
     }
   };
 }
-/* De monteursapp in het menu van de werkvoorbereider. De app draait in een eigen venster met de gedeelde monteurinlog, zodat alles werkt zoals bij de monteurs. */
+/* De monteursapp in het menu van de werkvoorbereider. De app draait in een eigen venster met de gedeelde monteurinlog, zodat alles werkt zoals bij de monteurs.
+   Het adres krijgt elke keer een nieuwe v=, anders laadt de browser een oude bewaarde versie van de pagina in het venster. */
 function vMapp(){
   const kop='<div class="tdkop"><div><h1>Monteursapp</h1><p>Precies wat de monteurs zien, met al hun tabs: storing melden, dienstrapport, uitvoerbare bonnen, opnamelijsten en het rooster.</p></div></div>';
   if(MODE!=="enc"||!D.appsleutel){$("#view").innerHTML=kop+'<div class="tdleeg">De monteursapp opent alleen op de site zelf.</div>';return}
-  $("#view").innerHTML=kop+'<div class="appvak"><iframe id="appframe" title="Monteursapp" src="'+esc(location.pathname)+'?app=1"></iframe></div>';
+  $("#view").innerHTML=kop+'<div class="appvak"><iframe id="appframe" title="Monteursapp" src="'+esc(location.pathname)+'?app=1&v='+Date.now()+'"></iframe></div>';
 }
 window.addEventListener("message",e=>{
   if(e.origin!==location.origin||!e.data||e.data.tdapp!=="klaar")return;
