@@ -225,9 +225,9 @@ def build(a):
     # Meldingen waarvan de bon is afgesloten, zodat ze uit "Nog open" in het dienstrapport verdwijnen.
     gesloten = [r["melding"] for r in data.get("cm", []) if r.get("melding") and r.get("status") in GESLOTEN]
     data["meta"].setdefault("bonnen", {})["gesloten"] = gesloten
-    # Rooster van de TD: bij de eerste keer staan de monteurs met een eigen inlog er al op, in de storingsdienst.
+    # Rooster van de storingsdienst: bij de eerste keer staan de monteurs met een eigen inlog in de keuzelijst.
     if "rooster" not in data:
-        data["rooster"] = {"mensen": [{"naam": n, "groep": "Storingsdienst"} for n in sorted((data["meta"].get("publiek") or {}).get("monteurs") or {})], "dagen": {}}
+        data["rooster"] = {"mensen": sorted((data["meta"].get("publiek") or {}).get("monteurs") or {}), "dagen": {}}
     tpl = (TOOLS / "template.html").read_text("utf-8")
     Path(a.plain).write_text(fill(tpl, "plain", json.dumps(data, ensure_ascii=False, separators=(",", ":"))), "utf-8")
 
@@ -305,7 +305,7 @@ def rooster_deel(data, stand):
     r = data.get("rooster") or {}
     nu = datetime.datetime.strptime(stand, "%d-%m-%Y")
     van, tot = nu - datetime.timedelta(days=14), nu + datetime.timedelta(days=56)
-    return {"mensen": r.get("mensen") or [], "dagen": {d: v for d, v in (r.get("dagen") or {}).items() if van <= datetime.datetime.strptime(d, "%d-%m-%Y") <= tot}}
+    return {"mensen": r.get("mensen") or [], "diensten": r.get("diensten") or [], "dagen": {d: v for d, v in (r.get("dagen") or {}).items() if van <= datetime.datetime.strptime(d, "%d-%m-%Y") <= tot}}
 
 
 def weekbonnen(data, stand, kopie):

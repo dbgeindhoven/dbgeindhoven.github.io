@@ -711,26 +711,31 @@ def rca_wijzig(data, r):
     print(r["id"], "opgeslagen:", nieuw.get("titel") or "")
 
 
-ROOSTERCODES = ["O", "M", "N", "D", "Z", "V", "VL", "OP", "A"]
-
-
 def rooster_wijzig(data, extra):
-    """Rooster van de TD, alleen door de werkvoorbereider aan te passen: de mensen (naam en groep) en per week de dienst per dag.
-    Een week vervangt alle zeven dagen vanaf zondag (de productieweek). Dagen ouder dan 120 dagen gaan eruit."""
-    r = data.setdefault("rooster", {"mensen": [], "dagen": {}})
+    """Rooster van de storingsdienst, alleen door de werkvoorbereider aan te passen: per dag wie de ochtend-, middag- en nachtdienst heeft
+    (vrije tekst, leeg is open), plus de namen voor de keuzelijst en de diensttijden. Een week vervangt alle zeven dagen vanaf maandag.
+    Dagen ouder dan 120 dagen gaan eruit."""
+    r = data.setdefault("rooster", {})
     r.setdefault("dagen", {})
     m = extra.get("roostermensen")
-    if isinstance(m, list):
-        r["mensen"] = [{"naam": str(x.get("naam")).strip()[:40], "groep": str(x.get("groep") or "")[:30]} for x in m[:40] if isinstance(x, dict) and str(x.get("naam") or "").strip()]
-        print("rooster: mensen", ", ".join(x["naam"] for x in r["mensen"]))
+    if isinstance(m, list):  # oude vorm: alleen de mensen
+        m = {"mensen": m}
+    if isinstance(m, dict):
+        if isinstance(m.get("mensen"), list):
+            r["mensen"] = [str(x if isinstance(x, str) else (x or {}).get("naam") or "").strip()[:40] for x in m["mensen"][:60]]
+            r["mensen"] = [x for x in r["mensen"] if x]
+        d = m.get("diensten")
+        if isinstance(d, list) and len(d) == 3 and all(isinstance(x, dict) for x in d):
+            r["diensten"] = [{"k": k, "naam": str(x.get("naam") or n)[:20], "van": str(x.get("van") or "")[:5], "tot": str(x.get("tot") or "")[:5]} for (k, n), x in zip((("O", "Ochtend"), ("M", "Middag"), ("N", "Nacht")), d)]
+        print("rooster: namen en diensttijden aangepast")
     w = extra.get("rooster")
     if isinstance(w, dict) and re.match(r"^\d{2}-\d{2}-\d{4}$", str(w.get("van") or "")):
         start = datetime.datetime.strptime(w["van"], "%d-%m-%Y")
         for i in range(7):
             dag = (start + datetime.timedelta(days=i)).strftime("%d-%m-%Y")
             v = (w.get("dagen") or {}).get(dag)
-            schoon = {str(k).strip()[:40]: c for k, c in v.items() if c in ROOSTERCODES and str(k).strip()} if isinstance(v, dict) else {}
-            if schoon:
+            schoon = {k: str(v.get(k) or "").strip()[:60] for k in ("O", "M", "N")} if isinstance(v, dict) else {}
+            if any(schoon.values()):
                 r["dagen"][dag] = schoon
             else:
                 r["dagen"].pop(dag, None)

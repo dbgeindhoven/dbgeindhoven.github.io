@@ -280,39 +280,53 @@ html.inapp body{background:#E9E9E9}
 html.inapp #monteurscherm{min-height:0;padding-top:12px}
 html.inapp .mkop{display:none}
 .appnoot{margin:0;padding:9px 14px;border-radius:14px;background:var(--wacht-soft);font-size:.8125rem}
-/* Rooster van de TD: per groep de mensen, per dag van de productieweek (zondag tot en met zaterdag) een dienst. */
-.rstw{overflow-x:auto;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
-.rst{width:100%;min-width:300px;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:.8125rem}
-.rst th,.rst td{padding:0;text-align:center;vertical-align:middle}
-.rst thead th{padding:6px 2px 4px;color:var(--ink2);font-weight:500}
-.rst thead th b{display:block;color:var(--ink);font-weight:600}
-.rst thead th.vandaag b{width:fit-content;margin:0 auto;padding:0 7px;border-radius:999px;background:var(--gold);color:var(--on-gold)}
-.rst thead th:first-child{width:118px}
-.rst .rgr th{padding:10px 6px 2px;text-align:left;font-size:.8125rem;font-weight:600}
-.rst .rnaam{padding:4px 8px;text-align:left;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rst tr.jij .rnaam{font-weight:700}
-.rst tr.jij .rnaam::after{content:" (jij)";color:var(--ink3);font-weight:400}
-.rc{display:flex;align-items:center;justify-content:center;height:34px;border-radius:9px;background:rgba(255,255,255,.7);border:1px solid var(--line);font-weight:600;color:var(--ink3)}
-.rc.c-O{background:var(--info-soft);border-color:color-mix(in srgb,var(--info) 30%,transparent);color:var(--info)}
-.rc.c-M{background:var(--wacht-soft);border-color:color-mix(in srgb,var(--wacht) 35%,transparent);color:var(--wacht)}
-.rc.c-N{background:#2B3038;border-color:#2B3038;color:#fff}
-.rc.c-D{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ok)}
-.rc.c-Z{background:var(--gold-soft);border-color:color-mix(in srgb,var(--gold) 45%,transparent);color:#8A5A00}
-.rc.c-OP{background:#F1ECFB;border-color:#D9CCF3;color:#5B3FA6}
-.rc.c-V,.rc.c-VL,.rc.c-A{background:var(--sunken);color:var(--ink2)}
-.rst select.rc{width:100%;padding:0 2px;font:inherit;font-weight:600;text-align:center;text-align-last:center;cursor:pointer;-webkit-appearance:none;appearance:none}
-.rlegenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 0;padding:0;list-style:none;font-size:.75rem;color:var(--ink2)}
-.rlegenda li{display:flex;align-items:center;gap:6px}
-.rlegenda .rc{width:30px;height:22px;font-size:.6875rem}
+/* Rooster van de TD: per week een tabel zoals het Excel-rooster, op de telefoon per dag onder elkaar. */
+.rwk{margin:0 0 16px}
+.rwkkop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;border-radius:14px 14px 0 0;background:#1E2A44;color:#fff}
+.rwkkop b{font-weight:600}
+.rwkkop span{font-size:.8125rem;opacity:.9}
+.rtblw{overflow-x:auto;border:1px solid var(--line2);border-top:0;border-radius:0 0 14px 14px;background:#fff}
+.rst2{width:100%;min-width:760px;border-collapse:collapse;table-layout:fixed;font-size:.8125rem}
+.rst2 th,.rst2 td{padding:7px 6px;border:1px solid var(--line);text-align:center;vertical-align:middle;line-height:1.25}
+.rst2 thead th{background:#EEF1F6;font-weight:600}
+.rst2 thead th:nth-child(1){width:74px}.rst2 thead th:nth-child(2),.rst2 thead th:nth-child(3){width:52px}
+.rst2 thead th.vandaag{background:var(--gold-soft);box-shadow:inset 0 -3px 0 var(--gold)}
+.rst2 tbody th{text-align:left;font-weight:600}
+.rst2 .rtijd{color:var(--ink2)}
+.rst2 td.open{background:#FBE3DF;color:#B4433A;font-style:italic}
+.rst2 td.nn{color:var(--ink3)}
+.rst2 td.mij{background:var(--gold-soft);font-weight:700}
+.rwk.bewerk .rst2 td{padding:3px 2px}
+.rwk.bewerk .rst2 thead th:nth-child(1){width:62px}.rwk.bewerk .rst2 thead th:nth-child(2),.rwk.bewerk .rst2 thead th:nth-child(3){width:42px}.rwk.bewerk .rst2 .rtijd{font-size:.75rem}
+.rst2 td input{width:100%;padding:5px 1px;font-size:.75rem;border:1px solid transparent;border-radius:6px;background:transparent;font:inherit;text-align:center}
+.rst2 td input:hover,.rst2 td input:focus{border-color:var(--line2);background:#fff}
+.rst2 td.open input::placeholder{color:#B4433A}
+.rdagen{display:none}
+.rdag{padding:8px 12px;border-top:1px solid var(--line)}
+.rdag.vandaag{background:var(--gold-soft)}
+.rdag b{display:block;margin-bottom:3px;font-size:.875rem}
+.rdag ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:2px;font-size:.875rem}
+.rdag li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px}
+.rdag li span{color:var(--ink2);font-size:.8125rem}
+.rdag li.open{color:#B4433A;font-style:italic}
+.rdag li.nn{color:var(--ink3)}
+.rdag li.mij{font-weight:700}
 .rweek{display:flex;align-items:center;gap:8px;margin:0 0 12px}
-.rweek b{min-width:150px;text-align:center;font-size:.875rem}
-.rmensen{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
-.rmensen li{display:grid;grid-template-columns:minmax(0,1fr) 170px auto auto auto;gap:6px;align-items:center}
-.rmensen input,.rmensen select{width:100%;padding:7px 10px;border:1px solid var(--line2);border-radius:999px;background:#fff;font:inherit;font-size:.8125rem}
+.rweek b{min-width:140px;text-align:center;font-size:.875rem}
 .rbalk{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 0}
 .rbalk .rlos{color:var(--wacht);font-size:.8125rem;font-weight:600}
-@media (max-width:640px){.rmensen li{grid-template-columns:minmax(0,1fr) 120px auto auto auto}}
-@media (max-width:520px){.rst{border-spacing:2px;font-size:.75rem}.rst thead th:first-child{width:72px}.rst .rnaam{padding:4px 4px}.rc{height:30px;border-radius:7px}.rst tr.jij .rnaam::after{content:none}.rst tr.jij .rnaam{text-decoration:underline;text-underline-offset:3px}#minhoud .rweek b{min-width:0;font-size:.8125rem}}
+.ruitleg{margin:6px 0 0;color:var(--ink2);font-size:.8125rem}
+.rtijden{display:flex;flex-wrap:wrap;gap:10px 22px}
+.rtijden label{display:flex;flex-direction:column;gap:4px;font-size:.8125rem;font-weight:500}
+.rtijden input{padding:6px 8px;border:1px solid var(--line2);border-radius:999px;font:inherit}
+.rnaaminv{width:100%;margin-top:8px;padding:8px 14px;border:1px solid var(--line2);border-radius:999px;font:inherit}
+.rmijn{margin:0 0 14px;padding:12px 14px;border-radius:16px;background:var(--gold-soft)}
+.rmijn h3{margin:0 0 6px;font-size:.9375rem}
+.rmijn ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:.875rem}
+.rmijn li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:0 10px}
+.rmijn small{grid-column:2;color:var(--ink2);font-size:.8125rem}
+@media (max-width:640px){.rwk:not(.bewerk) .rtblw{display:none}.rwk .rdagen{display:block;border:1px solid var(--line2);border-top:0;border-radius:0 0 14px 14px;background:#fff;overflow:hidden}.rdag:first-child{border-top:0}}
+@media (max-width:380px){.rdag li{grid-template-columns:118px minmax(0,1fr)}}
 .seg.mtabs{flex-wrap:nowrap}
 @media (max-width:520px){.seg.mtabs button{padding:8px 2px;font-size:.75rem}}
 /* Productie-app (pilot): hetzelfde glas als de monteurs-app. Eén lange pagina met per onderdeel een blok en bovenaan de stand van dat blok. */
@@ -6422,42 +6436,56 @@ function prodCel(t,dienst,afd){
   if(tt&&nu>=tt.eind)return'<button type="button" class="pd-cel leeg" data-pdopen="'+esc(prodSleutel(t,dienst,afd))+'"><b>Niet ingevuld</b></button>';
   return'<span class="pd-cel toekomst" aria-hidden="true"></span>';
 }
-/* ---- Rooster van de TD ----
-   Per groep de mensen en per dag van de productieweek (zondag tot en met zaterdag) een dienst. Alleen de werkvoorbereider past het aan (pagina Rooster);
-   de monteurs zien het in hun app bij de tab Rooster. Opslaan gaat via de wachtrij: status-ROOSTER-<jjjjmmdd>.txt per week met rij.rooster (van, dagen)
-   en status-ROOSTERMENS.txt met rij.roostermensen. bonnen.py wijzig (rooster_wijzig) zet het in rooster. */
-const RCODES=[["O","Ochtend"],["M","Middag"],["N","Nacht"],["D","Dagdienst"],["Z","Zaterdag"],["V","Vrij"],["VL","Verlof"],["OP","Opleiding"],["A","Afwezig"]];
-const RGROEP=["Storingsdienst","Dagdienst","Zaterdagploeg","Overig"];
+/* ---- Rooster van de TD (storingsdienst, 3 ploegen) ----
+   Zoals het Excel-rooster: per week (maandag tot en met zondag) de diensten Ochtend, Middag en Nacht met hun tijden, en per dag wie er staat (vrije tekst,
+   bijvoorbeeld "Timothy & Bayram", "Niet nodig" of "Kevin (vanaf 18:00)"). Een leeg vak is open. Een nachtdienst staat bij de dag waarop hij begint.
+   Alleen de werkvoorbereider past het aan (pagina Rooster); de monteurs zien het in hun app bij de tab Rooster. Opslaan gaat via de wachtrij:
+   status-ROOSTER-<jjjjmmdd>.txt per week (maandag) met rij.rooster (van, dagen als {DD-MM-JJJJ: {O, M, N}}) en status-ROOSTERMENS.txt met
+   rij.roostermensen (mensen: namen voor de keuzelijst, diensten: tijden). bonnen.py wijzig (rooster_wijzig) zet het in rooster. */
+const RDIENST0=[{k:"O",naam:"Ochtend",van:"06:30",tot:"14:30"},{k:"M",naam:"Middag",van:"14:30",tot:"22:30"},{k:"N",naam:"Nacht",van:"22:30",tot:"06:30"}];
 let ROOSTERWK=0,RWERK=null,RLOS=new Set(),RMENSLOS=false,roosterTeken=null;
-const roosterData=()=>{const r=D.rooster||(D.rooster={mensen:[],dagen:{}});r.mensen=r.mensen||[];r.dagen=r.dagen||{};return r};
-function roosterDagen(wk){const z=rcaZondag(pmNu());z.setDate(z.getDate()+7*wk);return Array.from({length:7},(_,i)=>{const d=new Date(z);d.setDate(d.getDate()+i);return d})}
-const rcodeNaam=c=>(RCODES.find(x=>x[0]===c)||["",""])[1];
+const roosterData=()=>{const r=D.rooster||(D.rooster={});r.dagen=r.dagen||{};r.mensen=(r.mensen||[]).map(m=>typeof m==="string"?m:m&&m.naam).filter(Boolean);if(!Array.isArray(r.diensten)||r.diensten.length!==3)r.diensten=RDIENST0.map(x=>Object.assign({},x));return r};
+const rMaandag=d=>{const t=new Date(d);t.setHours(0,0,0,0);t.setDate(t.getDate()-((t.getDay()+6)%7));return t};
+function roosterDagen(wk){const z=rMaandag(pmNu());z.setDate(z.getDate()+7*wk);return Array.from({length:7},(_,i)=>{const d=new Date(z);d.setDate(d.getDate()+i);return d})}
+function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const j=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-j)/864e5+1)/7)}
+const rCel=(r,t,k)=>String(((r.dagen||{})[t]||{})[k]||"").trim();
+const rNietNodig=v=>/^niet nodig$/i.test(v);
+const rMij=v=>!!(D.naam&&v&&new RegExp("(^|[^a-zà-ÿ])"+D.naam.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^a-zà-ÿ])").test(v.toLowerCase()));
+const rDagKop=d=>d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+String(d.getDate()).padStart(2,"0")+"-"+String(d.getMonth()+1).padStart(2,"0");
 function pasRoosterToe(e){
-  const r=roosterData();
-  if(Array.isArray(e.roostermensen))r.mensen=e.roostermensen.filter(x=>x&&x.naam).map(x=>({naam:String(x.naam),groep:String(x.groep||"")}));
+  const r=roosterData(),m=e.roostermensen;
+  if(Array.isArray(m))r.mensen=m.map(x=>typeof x==="string"?x:x&&x.naam).filter(Boolean);
+  else if(m&&typeof m==="object"){if(Array.isArray(m.mensen))r.mensen=m.mensen.filter(x=>typeof x==="string");if(Array.isArray(m.diensten)&&m.diensten.length===3)r.diensten=m.diensten}
   const w=e.rooster;
-  if(w&&isDag(w.van)){const v=datum(w.van);for(let i=0;i<7;i++){const d=new Date(v);d.setDate(d.getDate()+i);const t=dagTekst(d),x=(w.dagen||{})[t];if(x&&Object.keys(x).length)r.dagen[t]=x;else delete r.dagen[t]}}
+  if(w&&isDag(w.van)){const v=datum(w.van);for(let i=0;i<7;i++){const d=new Date(v);d.setDate(d.getDate()+i);const t=dagTekst(d),x=(w.dagen||{})[t];if(x&&["O","M","N"].some(k=>x[k]))r.dagen[t]={O:x.O||"",M:x.M||"",N:x.N||""};else delete r.dagen[t]}}
   if(HUIDIG==="rooster"&&!RLOS.size&&!RMENSLOS){RWERK=null;vRooster()}
 }
-function roosterWeekKop(wk,attr){
-  const d=roosterDagen(wk),f=x=>x.getDate()+" "+x.toLocaleDateString("nl-NL",{month:"short"}).replace(".","");
-  return'<div class="rweek"><button type="button" class="knop" '+attr+'="-1" aria-label="Vorige week">‹</button><b>Week '+prodWeek(d[0])+": "+f(d[0])+" – "+f(d[6])+'</b><button type="button" class="knop" '+attr+'="1" aria-label="Volgende week">›</button>'+(wk?'<button type="button" class="tekstknop" '+attr+'="0">Deze week</button>':"")+"</div>";
+/* Eén week zoals in het Excel-rooster. Op de telefoon dezelfde week per dag onder elkaar. */
+function roosterWeek(r,wk,bewerk){
+  const dagen=roosterDagen(wk),vandaag=dagTekst(pmNu()),ds=r.diensten;
+  const open=dagen.slice(5).reduce((n,d)=>n+ds.filter(x=>!rCel(r,dagTekst(d),x.k)).length,0);
+  const klas=v=>!v?"open":rNietNodig(v)?"nn":rMij(v)?"mij":"";
+  const vak=(t,x)=>{const v=rCel(r,t,x.k);
+    if(bewerk)return'<td class="'+klas(v)+'"><input type="text" list="rnamen" value="'+esc(v)+'" data-rcel="'+t+"|"+x.k+'" placeholder="Open" maxlength="60" aria-label="'+esc(x.naam+", "+t)+'"></td>';
+    return'<td class="'+klas(v)+'">'+(v?esc(v):"Open")+"</td>"};
+  let h='<section class="rwk'+(bewerk?" bewerk":"")+'"><div class="rwkkop"><b>Week '+isoWeek(dagen[0])+'</b><span>'+(open?"Weekend nog open: "+open+" van 6":"Weekend rond")+"</span></div>";
+  h+='<div class="rtblw"><table class="rst2"><thead><tr><th>Dienst</th><th>Van</th><th>Tot</th>'+dagen.map(d=>'<th class="'+(dagTekst(d)===vandaag?"vandaag":"")+'">'+esc(rDagKop(d))+"</th>").join("")+"</tr></thead><tbody>"+
+    ds.map(x=>"<tr><th>"+esc(x.naam)+"</th><td class=\"rtijd\">"+esc(x.van)+"</td><td class=\"rtijd\">"+esc(x.tot)+"</td>"+dagen.map(d=>vak(dagTekst(d),x)).join("")+"</tr>").join("")+"</tbody></table></div>";
+  if(!bewerk)h+='<div class="rdagen">'+dagen.map(d=>{const t=dagTekst(d);return'<div class="rdag'+(t===vandaag?" vandaag":"")+'"><b>'+esc(hoofd(rDagKop(d)))+"</b><ul>"+ds.map(x=>{const v=rCel(r,t,x.k);return'<li class="'+klas(v)+'"><span>'+esc(x.naam)+" "+esc(x.van)+"–"+esc(x.tot)+"</span>"+(v?esc(v):"Open")+"</li>"}).join("")+"</ul></div>"}).join("")+"</div>";
+  return h+"</section>";
 }
-function roosterTabel(r,wk,bewerk){
-  const dagen=roosterDagen(wk),vandaag=dagTekst(pmNu()),mensen=r.mensen||[];
-  if(!mensen.length)return'<div class="leegmelding">'+(bewerk?"Zet eerst mensen op het rooster, hieronder bij Mensen.":"Er staat nog niemand op het rooster.")+"</div>";
-  const groepen=uniek(RGROEP.concat(mensen.map(m=>m.groep||"Overig"))).filter(g=>mensen.some(m=>(m.groep||"Overig")===g));
-  const cel=(m,d)=>{const t=dagTekst(d),c=((r.dagen||{})[t]||{})[m.naam]||"";
-    if(bewerk)return'<td><select class="rc'+(c?" c-"+c:"")+'" data-rcel="'+esc(t)+'|'+esc(m.naam)+'" aria-label="'+esc(m.naam+", "+pmDag(d))+'"><option value=""'+(c?"":" selected")+'>–</option>'+RCODES.map(x=>'<option value="'+x[0]+'"'+(x[0]===c?" selected":"")+">"+x[0]+" "+x[1]+"</option>").join("")+"</select></td>";
-    return'<td><span class="rc'+(c?" c-"+c:"")+'" title="'+esc(c?rcodeNaam(c):"Niet ingeroosterd")+'">'+(c||"–")+"</span></td>"};
-  return'<div class="rstw"><table class="rst"><thead><tr><th></th>'+dagen.map(d=>{const t=dagTekst(d);return'<th class="'+(t===vandaag?"vandaag":"")+'">'+esc(hoofd(d.toLocaleDateString("nl-NL",{weekday:"short"})))+"<b>"+d.getDate()+"</b></th>"}).join("")+"</tr></thead><tbody>"+
-    groepen.map(g=>'<tr class="rgr"><th colspan="8">'+esc(g)+"</th></tr>"+mensen.filter(m=>(m.groep||"Overig")===g).map(m=>'<tr class="'+(D.naam&&norm(D.naam)===norm(m.naam)?"jij":"")+'"><th class="rnaam" title="'+esc(m.naam)+'">'+esc(m.naam)+"</th>"+dagen.map(d=>cel(m,d)).join("")+"</tr>").join("")).join("")+
-    '</tbody></table></div><ul class="rlegenda">'+RCODES.map(x=>'<li><span class="rc c-'+x[0]+'">'+x[0]+"</span>"+x[1]+"</li>").join("")+"</ul>";
+/* Mijn diensten: de komende twee weken, voor wie met een eigen naam is ingelogd. */
+function roosterMijn(r){
+  if(!D.naam)return"";
+  const nu=pmNu(),l=[];
+  for(let i=0;i<7;i++){const d=new Date(nu);d.setDate(d.getDate()+i);const t=dagTekst(d);r.diensten.forEach(x=>{const v=rCel(r,t,x.k);if(rMij(v)){const met=v.split(/\s*(?:&|\+|,| en )\s*/i).filter(n=>n&&n.toLowerCase()!==D.naam.toLowerCase());l.push('<li><b>'+esc(i===0?"Vandaag":i===1?"Morgen":hoofd(rDagKop(d)))+"</b><span>"+esc(x.naam+" "+x.van+"–"+x.tot)+"</span>"+(met.length?"<small>met "+esc(met.join(" en "))+"</small>":"")+"</li>")}})}
+  return'<section class="rmijn"><h3>Mijn diensten deze week</h3>'+(l.length?"<ul>"+l.join("")+"</ul>":'<p class="pmgeen">De komende zeven dagen sta je niet op het rooster.</p>')+"</section>";
 }
-/* De tab Rooster in de monteursapp: alleen lezen. */
+const rUitleg='<p class="ruitleg">Een nachtdienst staat bij de dag waarop hij begint. Zondagnacht is het begin van de volgende week. Open betekent: nog niemand ingedeeld.</p>';
+/* De tab Rooster in de monteursapp: alleen lezen, deze week en de drie weken erna. */
 function roosterApp(vak){
   let wk=0;
-  const teken=()=>{vak.innerHTML=roosterWeekKop(wk,"data-rawk")+roosterTabel(roosterData(),wk,false)};
+  const teken=()=>{const r=roosterData();vak.innerHTML=roosterMijn(r)+'<div class="rweek"><button type="button" class="knop" data-rawk="-1" aria-label="Eerder">‹</button><b>'+(wk?"Vanaf week "+isoWeek(roosterDagen(wk)[0]):"Deze week en verder")+'</b><button type="button" class="knop" data-rawk="1" aria-label="Later">›</button>'+(wk?'<button type="button" class="tekstknop" data-rawk="0">Deze week</button>':"")+"</div>"+[0,1,2,3].map(i=>roosterWeek(r,wk+i,false)).join("")+rUitleg};
   roosterTeken=teken;
   vak.onclick=e=>{const b=e.target.closest("[data-rawk]");if(!b)return;const v=+b.dataset.rawk;wk=v?wk+v:0;teken()};
   teken();
@@ -6467,36 +6495,34 @@ function vRooster(){
   const mag=wvMag()&&!alleenKijken();
   if(!RWERK)RWERK=JSON.parse(JSON.stringify(roosterData()));
   const r=mag?RWERK:roosterData(),los=RLOS.size+(RMENSLOS?1:0);
-  let h='<div class="tdkop"><div><h1>Rooster</h1><p>Wie wanneer werkt, per productieweek van zondag tot en met zaterdag. De monteurs zien dit in hun app bij de tab Rooster.'+(mag?" Alleen jij kunt het aanpassen.":"")+"</p></div></div>";
-  h+=roosterWeekKop(ROOSTERWK,"data-rwk")+roosterTabel(r,ROOSTERWK,mag);
+  let h='<div class="tdkop"><div><h1>Rooster</h1><p>Het rooster van de storingsdienst, zoals de monteurs het zien in hun app bij de tab Rooster.'+(mag?" Alleen jij kunt het aanpassen: typ de namen in de vakken, laat een vak leeg als het nog open is.":"")+"</p></div></div>";
+  h+='<div class="rweek"><button type="button" class="knop" data-rwk="-1" aria-label="Vorige week">‹</button><b>'+(()=>{const d=roosterDagen(ROOSTERWK),f=x=>x.getDate()+" "+x.toLocaleDateString("nl-NL",{month:"short"}).replace(".","");return f(d[0])+" – "+f(d[6])})()+'</b><button type="button" class="knop" data-rwk="1" aria-label="Volgende week">›</button>'+(ROOSTERWK?'<button type="button" class="tekstknop" data-rwk="0">Deze week</button>':"")+"</div>";
+  h+=roosterWeek(r,ROOSTERWK,mag)+(mag?"":roosterWeek(r,ROOSTERWK+1,false))+rUitleg;
   if(mag){
+    h+='<datalist id="rnamen">'+r.mensen.concat(["Niet nodig"]).map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>";
     h+='<div class="rbalk"><button type="button" class="knop" data-rkopie>Vorige week overnemen</button><button type="button" class="knop" data-rleeg>Week leegmaken</button><span style="flex:1"></span>'+(los?'<span class="rlos">'+(los===1?"1 wijziging":los+" wijzigingen")+' nog niet opgeslagen</span><button type="button" class="knop" data-rterug>Ongedaan maken</button>':"")+'<button type="button" class="knop hoofd" data-rop'+(los?"":" disabled")+'>Rooster opslaan</button></div><p class="fout" id="r_fout" role="alert" hidden></p>';
-    h+='<section class="deel"><h2>Mensen</h2><ul class="rmensen">'+r.mensen.map((m,i)=>'<li><input type="text" value="'+esc(m.naam)+'" data-rnaam="'+i+'" aria-label="Naam"><select data-rgroep="'+i+'" aria-label="Groep">'+uniek(RGROEP.concat(m.groep?[m.groep]:[])).map(g=>"<option"+(g===(m.groep||"Overig")?" selected":"")+">"+esc(g)+"</option>").join("")+'</select><button type="button" class="knop" data-rop1="'+i+'" aria-label="Hoger"'+(i?"":" disabled")+'>↑</button><button type="button" class="knop" data-rneer="'+i+'" aria-label="Lager"'+(i<r.mensen.length-1?"":" disabled")+'>↓</button><button type="button" class="knop gevaar" data-rweg="'+i+'">Weg</button></li>').join("")+'</ul><div class="rbalk"><button type="button" class="knop" data-rnieuw>'+ico("plus")+"Persoon toevoegen</button></div></section>";
+    h+='<section class="deel"><h2>Diensttijden</h2><div class="rtijden">'+r.diensten.map((x,i)=>'<label>'+esc(x.naam)+'<span><input type="time" value="'+esc(x.van)+'" data-rvan="'+i+'"> tot <input type="time" value="'+esc(x.tot)+'" data-rtot="'+i+'"></span></label>').join("")+'</div></section>';
+    h+='<section class="deel"><h2>Namen in de keuzelijst</h2><p class="ruitleg">Komma tussen de namen. Je mag in een vak ook iets anders typen, zoals "Kevin (vanaf 18:00)".</p><input class="rnaaminv" type="text" value="'+esc(r.mensen.join(", "))+'" data-rmensen aria-label="Namen"></section>';
   }
   $("#view").innerHTML=h;
   if(!mag)return;
-  const v=$("#view");
-  const opnieuw=()=>{const y=window.scrollY;vRooster();window.scrollTo(0,y)};
+  const v=$("#view"),opnieuw=()=>{const y=window.scrollY;vRooster();window.scrollTo(0,y)};
   v.onchange=e=>{
     const t=e.target;
-    if(t.dataset.rcel){const [dag,naam]=t.dataset.rcel.split("|"),x=r.dagen[dag]||(r.dagen[dag]={});if(t.value)x[naam]=t.value;else delete x[naam];if(!Object.keys(x).length)delete r.dagen[dag];RLOS.add(dagTekst(rcaZondag(datum(dag))));t.className="rc"+(t.value?" c-"+t.value:"");opnieuw();return}
-    if(t.dataset.rnaam!==undefined){const i=+t.dataset.rnaam,oud=r.mensen[i].naam,nieuw=t.value.trim();if(!nieuw||r.mensen.some((m,j)=>j!==i&&norm(m.naam)===norm(nieuw))){t.value=oud;melder(nieuw?"Die naam staat er al.":"Vul een naam in.");return}
-      r.mensen[i].naam=nieuw;Object.entries(r.dagen).forEach(([dag,x])=>{if(x[oud]!==undefined){x[nieuw]=x[oud];delete x[oud];RLOS.add(dagTekst(rcaZondag(datum(dag))))}});RMENSLOS=true;opnieuw();return}
-    if(t.dataset.rgroep!==undefined){r.mensen[+t.dataset.rgroep].groep=t.value;RMENSLOS=true;opnieuw()}
+    if(t.dataset.rcel){const [dag,k]=t.dataset.rcel.split("|"),w=t.value.trim().slice(0,60),x=r.dagen[dag]||(r.dagen[dag]={O:"",M:"",N:""});x[k]=w;if(!x.O&&!x.M&&!x.N)delete r.dagen[dag];RLOS.add(dagTekst(rMaandag(datum(dag))));opnieuw();return}
+    if(t.dataset.rvan!==undefined||t.dataset.rtot!==undefined){const i=+(t.dataset.rvan??t.dataset.rtot);r.diensten[i][t.dataset.rvan!==undefined?"van":"tot"]=t.value;RMENSLOS=true;opnieuw();return}
+    if(t.dataset.rmensen!==undefined){r.mensen=uniek(t.value.split(",").map(x=>x.trim()).filter(Boolean));RMENSLOS=true;opnieuw()}
   };
   v.onclick=async e=>{
     const t=e.target.closest("button");if(!t)return;
     if(t.dataset.rwk!==undefined){const x=+t.dataset.rwk;ROOSTERWK=x?ROOSTERWK+x:0;opnieuw();return}
-    if(t.dataset.rkopie!==undefined||t.dataset.rleeg!==undefined){const nu=roosterDagen(ROOSTERWK),vorig=roosterDagen(ROOSTERWK-1);nu.forEach((d,i)=>{const x=t.dataset.rkopie!==undefined?r.dagen[dagTekst(vorig[i])]:null;if(x&&Object.keys(x).length)r.dagen[dagTekst(d)]=Object.assign({},x);else delete r.dagen[dagTekst(d)]});RLOS.add(dagTekst(nu[0]));opnieuw();return}
-    if(t.dataset.rnieuw!==undefined){let n="Nieuwe monteur",k=2;while(r.mensen.some(m=>m.naam===n))n="Nieuwe monteur "+k++;r.mensen.push({naam:n,groep:"Storingsdienst"});RMENSLOS=true;opnieuw();const i=v.querySelectorAll("[data-rnaam]");if(i.length){i[i.length-1].focus();i[i.length-1].select()}return}
-    if(t.dataset.rweg!==undefined){const i=+t.dataset.rweg,m=r.mensen[i];if(t.dataset.zeker!=="1"){t.dataset.zeker="1";t.textContent="Zeker?";return}r.mensen.splice(i,1);RMENSLOS=true;opnieuw();return}
-    if(t.dataset.rop1!==undefined||t.dataset.rneer!==undefined){const i=+(t.dataset.rop1??t.dataset.rneer),j=t.dataset.rop1!==undefined?i-1:i+1;[r.mensen[i],r.mensen[j]]=[r.mensen[j],r.mensen[i]];RMENSLOS=true;opnieuw();return}
+    if(t.dataset.rkopie!==undefined||t.dataset.rleeg!==undefined){const nu=roosterDagen(ROOSTERWK),vorig=roosterDagen(ROOSTERWK-1);nu.forEach((d,i)=>{const x=t.dataset.rkopie!==undefined?r.dagen[dagTekst(vorig[i])]:null;if(x)r.dagen[dagTekst(d)]=Object.assign({},x);else delete r.dagen[dagTekst(d)]});RLOS.add(dagTekst(nu[0]));opnieuw();return}
     if(t.dataset.rterug!==undefined){RWERK=null;RLOS.clear();RMENSLOS=false;opnieuw();return}
     if(t.dataset.rop!==undefined){
       const f=$("#r_fout");f.hidden=true;t.disabled=true;t.textContent="Bezig";
       try{
-        if(RMENSLOS){await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"ROOSTERMENS",status:"Open",rij:{roostermensen:r.mensen},door:wvDoor()});RMENSLOS=false}
-        for(const van of [...RLOS]){const v0=datum(van),dagen={};for(let i=0;i<7;i++){const d=new Date(v0);d.setDate(d.getDate()+i);const x=r.dagen[dagTekst(d)];if(x&&Object.keys(x).length)dagen[dagTekst(d)]=x}
+        if(RMENSLOS){await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"ROOSTERMENS",status:"Open",rij:{roostermensen:{mensen:r.mensen,diensten:r.diensten}},door:wvDoor()});RMENSLOS=false}
+        for(const van of [...RLOS]){const v0=datum(van),dagen={};for(let i=0;i<7;i++){const d=new Date(v0);d.setDate(d.getDate()+i);const x=r.dagen[dagTekst(d)];if(x)dagen[dagTekst(d)]=x}
           await stuur({actie:"bonstatus",k:MELD().sleutel_wv,nr:"ROOSTER-"+van.split("-").reverse().join(""),status:"Open",rij:{rooster:{van,dagen}},door:wvDoor()});RLOS.delete(van)}
         D.rooster=JSON.parse(JSON.stringify(r));RWERK=null;laatste="";melder("Rooster opgeslagen. De monteurs zien het meteen.");opnieuw();
       }catch(_){f.textContent="Opslaan is niet gelukt. Probeer het opnieuw.";f.hidden=false;t.disabled=false;t.textContent="Rooster opslaan"}
