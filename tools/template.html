@@ -508,6 +508,17 @@ textarea.opdracht{min-height:56px;resize:vertical;font-size:.875rem}
 .pmrij .pmtaak,.meldform .pmrij .pmtaak{flex:1;min-width:0;border-top:0;background:none}
 .pmprob{flex:none;align-self:center;display:inline-flex;align-items:center;gap:4px;margin:6px 10px 6px 0;padding:5px 8px;border:1px solid var(--line2);border-radius:6px;background:none;color:var(--ink2);font:inherit;font-size:.75rem;cursor:pointer}
 .pmprob .i{width:13px;height:13px}
+.pmfoto{flex:none;align-self:center;position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;margin:6px 6px 6px 0;border:1px solid var(--line2);border-radius:6px;color:var(--ink2);cursor:pointer}
+.pmfoto .i{width:16px;height:16px}
+.pmfoto input{position:absolute;width:1px;height:1px;opacity:0}
+.pmfoto:hover,.pmfoto:focus-within{border-color:var(--crit);color:var(--crit-ink)}
+.pbfotos{display:flex;flex-direction:column;gap:6px;font-size:.8125rem;font-weight:500}
+.pbvb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.pbvb:empty{display:none}
+.pbvb figure{position:relative;margin:0}
+.pbvb img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.pbvb button{position:absolute;top:6px;right:6px;width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;cursor:pointer}
+.pbvb button .i{width:14px;height:14px}
 .pmprob:hover,.pmprob:focus-visible{border-color:var(--crit);color:var(--crit-ink)}
 .pmrij.afg:has(input){background:none;box-shadow:inset 3px 0 0 var(--crit)}
 .pmrij.afg input{display:none}
@@ -3255,7 +3266,8 @@ function pmVak(vak,tabs,modus){
     const sub=[t.benodigdheden?"Nodig: "+t.benodigdheden:"",t.discipline==="Operator"?"Operatortaak":""].filter(Boolean).join(" · "),heel=gedaan.includes(t.id);
     const rij=(x,p,c)=>{
       const wat=x.o||t.onderdeel||t.taak,bev=pmBevVan(nr,c),naam=wat===p?p:wat+": "+p,afg=bev.length>0;
-      const knop=alleen?(afg?'<span class="pmprob">Afgekeurd</span>':""):'<button type="button" class="pmprob" data-pmprob aria-label="'+esc("Afkeuren: "+naam)+'">'+ico("sluit")+"Afgekeurd</button>";
+      const cam=alleen||afg?"":'<label class="pmfoto" title="Foto van wat niet goed is">'+ico("camera")+'<input type="file" accept="image/*"'+(navigator.maxTouchPoints>0?' capture="environment"':"")+' data-pmfotokies aria-label="'+esc("Foto maken en afkeuren: "+naam)+'"></label>';
+      const knop=alleen?(afg?'<span class="pmprob">Afgekeurd</span>':""):cam+'<button type="button" class="pmprob" data-pmprob aria-label="'+esc("Afkeuren: "+naam)+'">'+ico("sluit")+"Afgekeurd</button>";
       return'<div class="pmrij'+(afg?" afg":"")+'" data-punt="'+c+'" data-naam="'+esc(naam)+'" data-mach="'+esc(wat)+'"><label class="pmtaak"><input type="checkbox" value="'+c+'"'+(heel||gedaan.includes(c)||afg?" checked":"")+(alleen||afg?" disabled":"")+">"+(afg?PMX:"")+"<span>"+esc(p)+"</span></label>"+knop+"</div>"+bev.map(pmBevHtml).join("");
     };
     return'<section class="pmblok"><h3>'+esc(t.onderdeel||t.taak)+"</h3>"+(sub?"<small>"+esc(sub)+"</small>":"")+pmPunten(t).map((x,i)=>'<div class="pmobj">'+(x.o?'<div class="pmokop"><b>'+esc(x.o)+'</b><span class="pmotel"></span>'+(alleen?"":'<button type="button" class="tekstknop" data-pmobj>Alles in orde</button>')+"</div>":"")+'<div class="pmrijen">'+x.p.map((p,j)=>rij(x,p,pmCode(t.id,i,j))).join("")+"</div></div>").join("")+"</section>";
@@ -3264,27 +3276,37 @@ function pmVak(vak,tabs,modus){
     vak.querySelectorAll(".pmobj").forEach(o=>{const c=[...o.querySelectorAll(".pmtaak input")],n=c.filter(x=>x.checked).length,k=o.querySelector(".pmotel"),vol=n===c.length&&!!k&&!o.classList.contains("open")&&!o.querySelector(".pmbev,.pmbevform");o.classList.toggle("vol",vol);if(k)k.textContent=n+" van "+c.length;const b=o.querySelector("[data-pmobj]");if(b)b.textContent=vol?"Openen":"Alles in orde"});
   }
   /* Het formulier hoort bij één punt tegelijk en komt binnen de bon te staan, zodat de vinkjes blijven staan. */
-  let bevRij=null,bevFoto=null;
-  function bevDicht(){const f=$("#pmbevform");if(f)f.remove();bevRij=bevFoto=null;tellen()}
-  function bevOpen(k){
+  /* Per afgekeurd punt mogen twee foto's mee. Ze gaan samen op één afbeelding (fotoSamen), zodat ze op de CM-bon passen. */
+  let bevRij=null,bevFotos=[];
+  const bevFotoUrl=new Map();
+  function bevFotoTeken(){
+    const vb=$("#pb_vb"),kn=$("#pb_kn");if(!vb)return;
+    bevFotoUrl.forEach((u,f)=>{if(!bevFotos.includes(f)){URL.revokeObjectURL(u);bevFotoUrl.delete(f)}});
+    vb.innerHTML=bevFotos.map((f,i)=>{if(!bevFotoUrl.has(f))bevFotoUrl.set(f,URL.createObjectURL(f));return'<figure><img alt="Foto '+(i+1)+'" src="'+bevFotoUrl.get(f)+'"><button type="button" data-pbfweg="'+i+'" aria-label="Foto '+(i+1)+' verwijderen">'+ico("sluit")+"</button></figure>"}).join("");
+    kn.hidden=bevFotos.length>=2;
+    $("#pb_ft").textContent=bevFotos.length?"Foto's ("+bevFotos.length+" van 2)":"Foto's (hooguit 2)";
+  }
+  function bevFotoBij(f){if(f&&bevFotos.length<2){bevFotos.push(f);bevFotoTeken()}}
+  function bevDicht(){const f=$("#pmbevform");if(f)f.remove();bevFotos=[];bevFotoTeken();bevFotoUrl.forEach(u=>URL.revokeObjectURL(u));bevFotoUrl.clear();bevRij=null;tellen()}
+  function bevOpen(k,foto){
     bevDicht();
     bevRij=k.closest(".pmrij");
     let na=bevRij;while(na.nextElementSibling&&na.nextElementSibling.classList.contains("pmbev"))na=na.nextElementSibling;
-    na.insertAdjacentHTML("afterend",'<div class="pmbevform" id="pmbevform"><label>Wat is er niet goed?<textarea id="pb_tekst"></textarea></label>'+fotoVeld("pb_foto","Foto")+'<label class="vink"><input type="checkbox" id="pb_bon" checked> Maak een CM-bon</label><p class="fout" id="pb_fout" role="alert" hidden></p><div class="rfknoppen"><button type="button" class="knop" data-pbweg>Annuleren</button><button type="button" class="knop hoofd" data-pbop>Afkeuren</button></div></div>');
-    bevFoto=koppelFoto("pb_foto");
+    na.insertAdjacentHTML("afterend",'<div class="pmbevform" id="pmbevform"><label>Wat is er niet goed?<textarea id="pb_tekst"></textarea></label><div class="pbfotos"><span id="pb_ft"></span><div class="pbvb" id="pb_vb"></div><div class="fotoknoppen" id="pb_kn">'+(navigator.maxTouchPoints>0?'<label class="knop">'+ico("camera")+'Foto maken<input type="file" accept="image/*" capture="environment" data-pbfoto></label>':"")+'<label class="knop">'+ico("foto")+'Foto kiezen<input type="file" accept="image/*" data-pbfoto></label></div></div><label class="vink"><input type="checkbox" id="pb_bon" checked> Maak een CM-bon</label><p class="fout" id="pb_fout" role="alert" hidden></p><div class="rfknoppen"><button type="button" class="knop" data-pbweg>Annuleren</button><button type="button" class="knop hoofd" data-pbop>Afkeuren</button></div></div>');
+    bevFotoBij(foto);bevFotoTeken();
     tellen();
     $("#pb_tekst").focus();
     $("#pmbevform").scrollIntoView({block:"nearest"});
   }
   async function bevOp(k){
-    const f=$("#pb_fout"),opm=$("#pb_tekst").value.trim(),b=pmPlan().bonnen.find(x=>x.nr===open),gekozen=bevFoto();
+    const f=$("#pb_fout"),opm=$("#pb_tekst").value.trim(),b=pmPlan().bonnen.find(x=>x.nr===open),gekozen=bevFotos.slice();
     const meld=t=>{f.textContent=t;f.hidden=false;k.disabled=false;k.textContent="Afkeuren"};
     f.hidden=true;
     if(!opm){meld("Schrijf wat er niet goed is.");$("#pb_tekst").focus();return}
     if(!pmDoor()){meld("Vul eerst bovenaan je naam in.");return}
     k.disabled=true;k.textContent="Bezig";
     let foto="";
-    if(gekozen){try{foto=await verklein(gekozen)}catch(_){meld("Deze foto kan niet worden gelezen. Kies een andere foto of sla op zonder foto.");return}}
+    if(gekozen.length){try{foto=gekozen.length>1?await fotoSamen(gekozen.map((f,i)=>[f,"Foto "+(i+1)])):await verklein(gekozen[0])}catch(_){meld("Een foto kan niet worden gelezen. Kies een andere foto of sla op zonder foto.");return}}
     const d={actie:"pmbev",nr:open,punt:bevRij.dataset.punt,naam:bevRij.dataset.naam,lijn:b.lijn,machine:b.lijndeel+" – "+bevRij.dataset.mach,opmerking:opm,bon:$("#pb_bon").checked?"Ja":"Nee",door:pmDoor(),foto};
     let tekst="Punt afgekeurd";
     try{pmBevZet(d,await stuur(d))}
@@ -3295,6 +3317,7 @@ function pmVak(vak,tabs,modus){
     }
     const vak1=bevRij.querySelector("input");vak1.checked=true;vak1.disabled=true;
     if(!bevRij.classList.contains("afg")){bevRij.classList.add("afg");vak1.insertAdjacentHTML("afterend",PMX)}
+    const cam=bevRij.querySelector(".pmfoto");if(cam)cam.remove();
     const x=pmBevVan(open,d.punt).pop();
     $("#pmbevform").insertAdjacentHTML("beforebegin",pmBevHtml(x));
     bevDicht();
@@ -3312,11 +3335,16 @@ function pmVak(vak,tabs,modus){
       tellen();
       return;
     }
-    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate>'+pmNaamVeld()+'<div class="pmtaken"><div class="pmtkop"><b>Controlepunten</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div><p class="pmhint">Vink aan wat goed is. Niet goed? Kies Afgekeurd en schrijf wat er mis is. Daar komt een nieuwe bon van en deze bon kan gewoon dicht.</p>'+ts.map(t=>taak(t,gedaan,false,nr)).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
+    vak.innerHTML=kopje+stand+'<form class="meldform" id="pmform" novalidate>'+pmNaamVeld()+'<div class="pmtaken"><div class="pmtkop"><b>Controlepunten</b><button type="button" class="tekstknop" data-pmalles>Alles aanvinken</button></div><p class="pmhint">Vink aan wat goed is. Niet goed? Druk op de camera voor een foto of kies Afgekeurd, en schrijf wat er mis is. Daar komt een nieuwe bon van en deze bon kan gewoon dicht.</p>'+ts.map(t=>taak(t,gedaan,false,nr)).join("")+'</div><label>Opmerking<textarea id="pm_opm" placeholder="Wat is je opgevallen, of wat is niet gelukt?">'+esc(a&&a.opmerking||"")+'</textarea></label><p class="fout" id="pm_fout" role="alert" hidden></p><button class="knop hoofd" id="pm_knop" type="submit">Afmelden</button></form></article>';
     const vinken=()=>[...vak.querySelectorAll(".pmtaak input")],knop=$("#pm_knop");
     const tel=()=>{const n=vinken().filter(x=>x.checked).length,m=vinken().length;knop.textContent=!n||n===m?"Afmelden":"Deels afmelden ("+n+" van "+m+")";tellen()};
     tel();
-    $("#pmform").addEventListener("change",tel);
+    $("#pmform").addEventListener("change",e=>{
+      const t=e.target;
+      if(t.matches("[data-pmfotokies]")){const f=t.files[0];t.value="";if(f)bevOpen(t,f);return}
+      if(t.matches("[data-pbfoto]")){const f=t.files[0];t.value="";bevFotoBij(f);return}
+      tel();
+    });
     $("#pmform").addEventListener("submit",async e=>{
       e.preventDefault();
       const ids=vinken().filter(x=>x.checked).map(x=>x.value),opm=$("#pm_opm").value.trim(),f=$("#pm_fout"),alles=ids.length===vinken().length;
@@ -3364,6 +3392,7 @@ function pmVak(vak,tabs,modus){
     if(e.target.closest("[data-pmterug]")){lijst();window.scrollTo(0,0);return}
     const prob=e.target.closest("[data-pmprob]");if(prob){bevOpen(prob);return}
     if(e.target.closest("[data-pbweg]")){bevDicht();return}
+    const fw=e.target.closest("[data-pbfweg]");if(fw){bevFotos.splice(+fw.dataset.pbfweg,1);bevFotoTeken();return}
     const op=e.target.closest("[data-pbop]");if(op){bevOp(op);return}
     if(e.target.closest("[data-pmaanpas]")){bon(open,true);return}
     if(e.target.closest("[data-pmalles]")){vak.querySelectorAll(".pmtaak input").forEach(x=>{x.checked=true});$("#pmform").dispatchEvent(new Event("change"))}
