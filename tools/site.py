@@ -337,6 +337,9 @@ def weekbonnen(data, stand, kopie):
         x = {k: r.get(k) for k in ("nr", "omschrijving", "lijn", "machine", "onderdelen", "uitvoeren", "prio", "status", "uitgevoerd_op", "opdracht")}
         if plan_dag.get(r["nr"]):
             x["dag"] = plan_dag[r["nr"]]
+        # Eerder in de app dan op de planning (appdag): tot en met die dag staat de bon daar bij de monteurs, daarna weer op de dag van zijn plan.
+        if r.get("appdag") and dag(r["appdag"]) and dag(r["appdag"]) >= datetime.datetime.strptime(stand, "%d-%m-%Y"):
+            x["dag"] = r["appdag"]
         if aan and r.get("weeksoort") == "opname":
             x["soort"] = "opname"
             al = {y.get("onderdeel"): y.get("spec") for y in o.get("regels") or []}  # wat bij Deels uitgevoerd al is ingevuld
