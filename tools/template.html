@@ -1643,7 +1643,10 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
 .ovr-h{text-align:right}
 .ovr.ovl-sleept{opacity:.45}
 .ovr.ovl-hier{box-shadow:inset 0 3px 0 var(--ink)}
-.ovr-pm{cursor:default;background:rgba(255,255,255,.5)}
+.ovr-pm{background:rgba(255,255,255,.55)}
+.ovr-pm.ovl-overslaan{cursor:default}
+.ovz-punten{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}.ovz-punten b{display:block;font-size:.8125rem;font-weight:600}.ovz-punten ul{margin:2px 0 0;padding-left:18px;font-size:.8125rem;color:var(--ink2)}
+.ovz-skip{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ovz-skip input{flex:1 1 200px}
 .ovl-grip{cursor:grab;color:var(--ink3);font-size:.75rem;letter-spacing:-2px}
 .ovl-skip{font-size:.75rem}
 .ovl-skipvak{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 10px 8px}.ovl-skipvak input{flex:1 1 220px}
@@ -1697,6 +1700,7 @@ details.ovz-d>div{padding:8px 0}
 .ovs-tekst{align-self:center;max-width:640px;padding:20px}
 .ovs-tekst h2{margin:0 0 8px;font-size:1.75rem;font-weight:600;line-height:1.25}
 .ovs-tekst p{margin:0 0 8px;font-size:1rem}
+.ovs-tekst .ovz-punten ul{font-size:1.0625rem;color:var(--ink)}.ovs-tekst .ovz-punten b{font-size:1rem}
 .ovs-eind{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto}
 .ovs-eind h2{margin:6px 0 0;font-size:1.375rem;font-weight:600}
 .ovs-eindknop{display:flex;gap:8px;justify-content:space-between}
@@ -2510,7 +2514,7 @@ function cPaneel(){
   if($("#paneel").hidden||!q||!$('#paneel [data-bonstatus="'+q+'"],#paneel [data-bonprio="'+q+'"]'))return;
   const c=zatBon(PANEELBON);if(c){const t=terug;openPaneel(cmDetail(c));terug=t}
 }
-function cHerteken(){laatste="";if(rteken)rteken();planTel();alTel();if(SCHERM[HUIDIG])SCHERM[HUIDIG]();cPaneel();if(BV&&BV.ovl&&$("#bonvenster")&&!$("#bonvenster").hidden){const o=BV.open;BV=bvBegin(BV.nr);if(BV){BV.open=o;bvTeken()}}}
+function cHerteken(){laatste="";if(rteken)rteken();planTel();alTel();if(SCHERM[HUIDIG])SCHERM[HUIDIG]();cPaneel();if(BV&&BV.ovl&&$("#bonvenster")&&!$("#bonvenster").hidden){if(BV.pm){bvTeken();return}const o=BV.open;BV=bvBegin(BV.nr);if(BV){BV.open=o;bvTeken()}}}
 const cFout=e=>e&&/onbekende actie/.test(e.message||"")?"Bezig opslaan kan pas met versie 21 van het script in Apps Script.":e&&e.message==="onbekende status"?"Deze status werkt pas als het nieuwe script (versie 20) in Apps Script staat.":"Probeer het opnieuw.";
 async function cOpslaan(alleen){
   if(C_BEZIG)return false;
@@ -5686,6 +5690,7 @@ function ovlWaarom(c,r){
 /* De lijst blijft stil staan tot Alles opslaan: groep en volgorde komen uit wat is opgeslagen. Wat klaarstaat krijgt een oker ring en een labeltje.
    OVLNRS is de volgorde zoals hij in beeld staat; het bonvenster en de slideshow volgen die. */
 let OVLNRS=[],OVLFILTER="",OVLSHOW=false,OVLEIND=false;
+const OVLPM=new Map();
 const OVLBEELD=new Map();
 const ovlDagKort=t=>{const d=datum(t);return d?d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+t.slice(0,5):t};
 const ovlGroep=x=>{const q=x.r?zatPrio(x.r):x.c.prio;return q===1||q===2||q===3?q:0};
@@ -5718,7 +5723,8 @@ function vOverleg(){
   const zicht=alle.filter(x=>!filt||filt[2](x));
   const corr=zicht.filter(x=>!prevSet.has(x.c.nr)),prev=zicht.filter(x=>prevSet.has(x.c.nr));
   const groepen=[1,2,3,0].map(g=>({g,l:g?"P"+g:"Zonder prio",x:corr.filter(x=>ovlGroep(x)===g)})).filter(x=>x.x.length);
-  OVLNRS=groepen.flatMap(x=>x.x.map(y=>y.c.nr)).concat(prev.map(x=>x.c.nr));
+  OVLPM.clear();pm.forEach(b=>b.taken.forEach(t=>OVLPM.set("PM:"+t,{t,b,dag})));
+  OVLNRS=groepen.flatMap(x=>x.x.map(y=>y.c.nr)).concat(prev.map(x=>x.c.nr),filt?[]:[...OVLPM.keys()]);
   const titel=p?hoofd(langeDatum(datum(p.datum)))+(p.lijn?", "+p.lijn:""):dag==="x:stop"?"Eerstvolgende stop":dag==="x:tp"?"Te plannen":hoofd(langeDatum(datum(dag)))+", nog geen planning";
   if(OVLSHOW){vOvlShow(titel,bespr);return}
   const knopDag=(id,t,n)=>'<button type="button" class="ovl-dag" data-ovldag="'+esc(id)+'" aria-current="'+(id===dag)+'"><b>'+esc(t)+"</b><i>"+esc(n)+"</i></button>";
@@ -5744,7 +5750,7 @@ function vOverleg(){
       '<span class="ovr-h'+("uren" in q?" gewijzigd":"")+'">'+(h!=null&&h!==""?esc(urenTekst(h))+" u":'<span class="ovl-zacht">–</span>')+"</span></div>";
   };
   const skipMag=wv&&!kijk,skips=pmSkips(dag);
-  const pmRijen=pm.flatMap(b=>b.taken.map(t=>{const x=(pmPlan().taken||{})[t]||{},sk=OVLSKIP===dag+"|"+t;return'<div class="ovr ovr-pm"><span></span><span></span><span></span><span class="ovr-p">'+prio(1)+'</span><b class="ovr-nr">'+esc(t)+'</b><span class="ovr-om"><span class="ovr-t" title="'+esc(x.taak||t)+'">'+esc(x.taak||t)+'</span><span class="ovl-w">'+esc(pmFreq({taken:[t]})||x.frequentie||"")+(b.uit?" · uit bedrijf":"")+"</span>"+(skipMag&&!sk?'<button type="button" class="tekstknop ovl-skip" data-ovlskip="'+esc(t)+'" title="Deze taak op deze dag overslaan">Overslaan</button>':"")+'</span><span class="ovr-lm">'+esc(lmKort(b.lijn+" / "+b.lijndeel))+'</span><span></span><span></span></div>'+(sk?'<div class="ovl-skipvak"><input type="text" class="zatinvoer" id="ovl_skipreden" maxlength="200" placeholder="Reden, bijvoorbeeld: lijn draait door"><button type="button" class="knop hoofd" data-ovlskipop="'+esc(t)+'">Overslaan</button><button type="button" class="tekstknop" data-ovlskipnee>Annuleren</button></div>':"")}));
+  const pmRijen=pm.flatMap(b=>b.taken.map(t=>{const x=(pmPlan().taken||{})[t]||{},sk=OVLSKIP===dag+"|"+t;return'<div class="ovr ovr-pm'+(BV&&BV.nr==="PM:"+t?" aan":"")+'" data-ovlbon="PM:'+esc(t)+'"><span></span><span></span><span></span><span class="ovr-p">'+prio(1)+'</span><b class="ovr-nr">'+esc(t)+'</b><span class="ovr-om"><span class="ovr-t" title="'+esc(x.taak||t)+'">'+esc(x.taak||t)+'</span><span class="ovl-w">'+esc(pmFreq({taken:[t]})||x.frequentie||"")+(b.uit?" · uit bedrijf":"")+"</span>"+(skipMag&&!sk?'<button type="button" class="tekstknop ovl-skip" data-ovlskip="'+esc(t)+'" title="Deze taak op deze dag overslaan">Overslaan</button>':"")+'</span><span class="ovr-lm">'+esc(lmKort(b.lijn+" / "+b.lijndeel))+'</span><span></span><span></span></div>'+(sk?'<div class="ovl-skipvak"><input type="text" class="zatinvoer" id="ovl_skipreden" maxlength="200" placeholder="Reden, bijvoorbeeld: lijn draait door"><button type="button" class="knop hoofd" data-ovlskipop="'+esc(t)+'">Overslaan</button><button type="button" class="tekstknop" data-ovlskipnee>Annuleren</button></div>':"")}));
   const skipRijen=skips.map(x=>{const t=(pmPlan().taken||{})[x.taak]||((D.pm||[]).find(y=>y.id===x.taak))||{};return'<div class="ovr ovr-pm ovl-overslaan"><span></span><span></span><span></span><span></span><b class="ovr-nr">'+esc(x.taak)+'</b><span class="ovr-om"><s class="ovr-t">'+esc(t.taak||x.taak)+'</s><span class="ovl-w">Overgeslagen: '+esc(x.reden||"geen reden")+(x.door?" ("+esc(x.door)+")":"")+"</span>"+(skipMag?'<button type="button" class="tekstknop ovl-skip" data-ovlskipterug="'+esc(x.taak)+'">Terugzetten</button>':"")+"</span><span></span><span></span><span></span></div>"});
   const band=(l,n)=>'<div class="ovr-band">'+esc(l)+" · "+n+"</div>";
   const lijst='<div class="ovl-lijst" id="tabel">'+
@@ -5769,7 +5775,14 @@ function vOvlShow(titel,bespr){
       '<div class="ovs-eindknop"><button type="button" class="knop" data-ovlterug>‹ Terug naar de bonnen</button>'+(l.length?'<button type="button" class="knop hoofd" data-ovlopslaan>Alles opslaan</button>':"")+"</div></div>";
     return;
   }
-  const nr=BV&&nrs.includes(BV.nr)?BV.nr:nrs[0],i=nrs.indexOf(nr),c=zatBon(nr);
+  const nr=BV&&nrs.includes(BV.nr)?BV.nr:nrs[0],i=nrs.indexOf(nr),c=zatBon(nr),pmx=OVLPM.get(nr);
+  const dotsPm=()=>nrs.map((n,j)=>'<button type="button" class="ovs-dot'+(j===i?" aan":CONCEPT.has(cSleutel("bon",n))?" gew":bespr.has(n)?" bespr":"")+'" data-ovsga="'+esc(n)+'" title="'+esc(n.replace(/^PM:/,""))+'" aria-label="'+esc(n.replace(/^PM:/,""))+'"></button>').join("");
+  if(pmx){
+    const x=(pmPlan().taken||{})[pmx.t]||{},punten=(x.punten||[]).length?x.punten:[{o:"",p:[x.taak||pmx.t]}];
+    $("#view").innerHTML='<div class="ovs"><div class="ovs-kop"><b>'+esc(titel)+'</b><span class="ovl-zacht">'+(i+1)+" van "+nrs.length+' · preventief</span><div class="ovs-dots">'+dotsPm()+'</div><button type="button" class="knop" data-ovlstop>Stoppen</button></div>'+
+      '<div class="ovs-bon"><div class="ovs-tekst"><p class="ovl-zacht">'+esc([pmx.t,pmFreq({taken:[pmx.t]})||x.frequentie,pmx.b.uit?"uit bedrijf (LOTOTO)":"in bedrijf",pmx.b.lijn+" / "+pmx.b.lijndeel].filter(Boolean).join(" · "))+"</p><h2>"+esc(x.taak||pmx.t)+'</h2><ul class="ovz-punten" style="font-size:1rem">'+punten.map(q=>"<li>"+(q.o?"<b>"+esc(q.o)+"</b>":"")+"<ul>"+(q.p||[]).map(z=>"<li>"+esc(z)+"</li>").join("")+"</ul></li>").join("")+"</ul></div></div></div>";
+    return;
+  }
   if(!c){$("#view").innerHTML='<p class="leegmelding">Geen bonnen om te presenteren.</p><button type="button" class="knop" data-ovlstop>Stoppen met presenteren</button>';return}
   const dots=nrs.map((n,j)=>'<button type="button" class="ovs-dot'+(j===i?" aan":CONCEPT.has(cSleutel("bon",n))?" gew":bespr.has(n)?" bespr":"")+'" data-ovsga="'+esc(n)+'" title="'+esc(n)+'" aria-label="'+esc(n)+'"></button>').join("");
   const u=OVLBEELD.get(nr),kan=c.bon&&c.bon.beeld&&MODE==="enc"&&bonnen().sleutel;
@@ -5924,7 +5937,9 @@ const bvVuil=()=>!!BV&&!BV.ovl&&(bvSig(BV.k)!==BV.start||!!(BV.k.nieuweRegel||""
 function bonVenster(nr){
   if(BV&&BV.ovl&&$("#bonvenster")&&!$("#bonvenster").hidden){bvLees();bvConcept()}
   if(BV&&bvVuil()&&BV.nr!==nr){bvVraag(()=>{BV=null;bonVenster(nr)});return}
-  BV=bvBegin(nr);if(!BV)return;
+  if(nr.startsWith("PM:")){const x=OVLPM.get(nr);if(!x)return;BV={nr,pm:x,ovl:true,k:{},open:BV&&BV.open||new Set()}}
+  else BV=bvBegin(nr);
+  if(!BV)return;
   let v=$("#bonvenster");
   if(!v){v=document.createElement("div");v.id="bonvenster";v.className="bvdim";v.innerHTML='<div class="bvpop" role="dialog" aria-modal="true" aria-labelledby="bv_titel" tabindex="-1"></div>';document.body.appendChild(v)}
   v.hidden=false;v.classList.toggle("ovlbv",!!BV.ovl);document.documentElement.classList.add("bvopen");
@@ -5939,7 +5954,7 @@ function bvDicht(gedwongen){
 }
 /* Zaterdagoverleg: wat in het venster staat, gaat als regel van deze bon in CONCEPT. Gelijk aan opgeslagen haalt de wijziging weer weg. */
 function bvConcept(){
-  if(!BV||!BV.ovl)return;const {c,k,orig,op,r}=BV,nr=c.nr;
+  if(!BV||!BV.ovl||BV.pm)return;const {c,k,orig,op,r}=BV,nr=c.nr;
   if((k.nieuweRegel||"").trim()&&k.extra.length<8){k.extra.push(k.nieuweRegel.trim().slice(0,200));k.nieuweRegel=""}
   if(!(k.uren==null||(k.uren>=0&&k.uren<=100)))k.uren=orig.uren;
   if((k.status==="Gepland"||k.status==="Leverdatum")&&!k.dag)return;
@@ -6003,6 +6018,34 @@ function bvTekenOvl(){
     '<footer class="ovz-voet"><button type="button" class="knop" data-bvga="'+esc(vorige||"")+'"'+(vorige?"":" disabled")+' aria-label="Vorige bon">‹</button>'+(!OVLSHOW&&c.bon&&c.bon.pdf&&MODE==="enc"&&bonnen().sleutel?'<button type="button" class="knop" data-bon="pdf" data-nr="'+esc(nr)+'">Bon openen</button>':"")+'<span class="ovz-tel">'+(i>=0?(i+1)+" van "+lijst.length:"")+'</span><button type="button" class="knop hoofd" data-ovznext>'+volgendeTekst+"</button></footer>";
   ovlVerver();
 }
+/* Een PM-taak in het Zaterdagoverleg: altijd prio 1, alleen om te lezen, met de controlepunten. Overslaan kan hier ook, met een reden. */
+function bvTekenPm(){
+  const v=$("#bonvenster"),{t,b,dag}=BV.pm,x=(pmPlan().taken||{})[t]||{},lijst=bvLijst(),i=lijst.indexOf(BV.nr),vorige=i>0?lijst[i-1]:null,laatste=i<0||i===lijst.length-1;
+  const punten=(x.punten||[]).length?x.punten:[{o:"",p:[x.taak||t]}];
+  const mag=wvMag()&&!alleenKijken();
+  const volgendeTekst=OVLSHOW?(laatste?"Besproken, naar overzicht ›":"Besproken, volgende ›"):(laatste?"Klaar":"Volgende ›");
+  v.querySelector(".bvpop").innerHTML=
+    '<header class="ovz-kop"><div class="ovz-titel"><span class="ovr-p">'+prio(1)+'</span><div><h2 id="bv_titel">'+esc(x.taak||t)+"</h2><small>"+esc([t,b.lijn+" / "+b.lijndeel].join(" · "))+'</small></div></div><button type="button" class="icoonknop" data-bvdicht aria-label="Sluiten">'+ico("sluit")+"</button></header>"+
+    '<div class="ovz-lijf">'+
+      '<div class="ovz-rij"><span class="ovz-l">Soort</span><div class="ovz-w"><span class="ovl-w">'+esc(pmFreq({taken:[t]})||x.frequentie||"PM-taak")+'</span><span class="ovl-w">'+(b.uit?"Uit bedrijf (LOTOTO)":"In bedrijf")+"</span></div></div>"+
+      '<div class="ovz-rij"><span class="ovz-l">PM-bon</span><div class="ovz-w">'+esc(b.nr)+" · "+esc(ovlDagKort(dag))+"</div></div>"+
+      (x.benodigdheden?'<div class="ovz-rij"><span class="ovz-l">Nodig</span><div class="ovz-w">'+esc(x.benodigdheden)+"</div></div>":"")+
+      '<details class="ovz-d" data-ovzdet="punten"'+(BV.open.has("punten")||!OVLSHOW?" open":"")+"><summary>Controlepunten</summary><div>"+
+        '<ul class="ovz-punten">'+punten.map(q=>"<li>"+(q.o?"<b>"+esc(q.o)+"</b>":"")+"<ul>"+(q.p||[]).map(z=>"<li>"+esc(z)+"</li>").join("")+"</ul></li>").join("")+"</ul></div></details>"+
+      (mag?'<div class="ovz-rij"><span class="ovz-l">Overslaan</span><div class="ovz-skip"><input type="text" class="zatinvoer ovz-tekst" id="ovz_pmreden" maxlength="200" placeholder="Reden, bijvoorbeeld: lijn draait door"><button type="button" class="knop" data-ovzskip>Overslaan op '+esc(dag.slice(0,5))+"</button></div></div>":"")+
+    "</div>"+
+    '<footer class="ovz-voet"><button type="button" class="knop" data-bvga="'+esc(vorige||"")+'"'+(vorige?"":" disabled")+' aria-label="Vorige">‹</button><span class="ovz-tel">'+(i>=0?(i+1)+" van "+lijst.length:"")+'</span><button type="button" class="knop hoofd" data-ovznext>'+volgendeTekst+"</button></footer>";
+  ovlVerver();
+}
+async function ovlPmSkip(){
+  const i=$("#ovz_pmreden"),rd=i?i.value.trim():"";
+  if(!rd){melder("Vul eerst de reden in.");if(i)i.focus();return}
+  const {t,dag}=BV.pm,l=bvLijst(),j=l.indexOf(BV.nr),na=j>=0?l[j+1]:null;
+  await pmSkipStuur(dag,t,rd,false);
+  if(na&&OVLNRS.includes(na))bonVenster(na);else bvDicht(true);
+}
+document.addEventListener("click",e=>{if(BV&&BV.pm&&e.target.closest("#bonvenster [data-ovzskip]"))ovlPmSkip()});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="ovz_pmreden"){e.preventDefault();ovlPmSkip()}});
 function ovlVolgende(){
   if(!BV)return;bvLees();
   const lijst=bvLijst(),i=lijst.indexOf(BV.nr);
@@ -6027,6 +6070,7 @@ document.addEventListener("keydown",e=>{
   const k=e.key;
   if(k==="ArrowRight"||k==="PageDown"||(OVLSHOW&&k===" ")){e.preventDefault();ovlVolgende();return}
   if(k==="ArrowLeft"||k==="PageUp"){e.preventDefault();bvLees();const l=bvLijst(),i=l.indexOf(BV.nr);if(i>0)bonVenster(l[i-1]);return}
+  if(BV.pm)return;
   if(["0","1","2","3"].includes(k)){bvLees();BV.k.prio=k==="0"?null:Number(k);bvTeken();return}
   if(k==="b"||k==="B"){const c=BV.c;if(c.bon&&c.bon.beeld&&MODE==="enc"&&bonnen().sleutel)toonBon(c).catch(()=>melder("De bon kan nu niet worden opgehaald."))}
 });
@@ -6034,6 +6078,7 @@ function bvVraag(daarna){BV.vraag=daarna;bvTeken()}
 const bvSeg=(naam,opties,waarde)=>'<span class="bvseg" role="group">'+opties.map(([w,t])=>'<button type="button" data-bvzet="'+naam+'" data-w="'+esc(w)+'" aria-pressed="'+(String(waarde)===String(w))+'">'+esc(t)+"</button>").join("")+"</span>";
 function bvTeken(){
   const v=$("#bonvenster");if(!v||!BV)return;
+  if(BV.pm){bvTekenPm();return}
   if(BV.ovl){bvTekenOvl();return}
   const {c,k,op}=BV,lijst=bvLijst(),i=lijst.indexOf(BV.nr),vorige=i>0?lijst[i-1]:null,volgende=i>=0&&i<lijst.length-1?lijst[i+1]:null;
   const opt=x=>"<option"+(x===k.status?" selected":"")+">"+esc(x)+"</option>";
