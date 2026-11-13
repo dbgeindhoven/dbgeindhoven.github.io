@@ -17,7 +17,7 @@
   --accent:#15181D;--on-accent:#FFFFFF;--accent-soft:#EEF0F3;
   --ok:#13703A;--warn:#B43C0B;--warn2:#E07A4A;--crit:#C81E1E;--info:#1D4ED8;--wacht:#A86F00;--none:#9AA1AC;
   --crit-ink:#B91C1C;--warn-ink:#B43C0B;--white:#FFFFFF;--shadow:rgba(20,22,24,.14);
-  --ok-soft:#E7F5EC;--warn-soft:#FDEEE4;--info-soft:#E8F0FE;--wacht-soft:#FBF0D6;--crit-soft:#FCEBEB;
+  --ok-soft:#E7F5EC;--warn-soft:#F1F2F4;--info-soft:#E8F0FE;--wacht-soft:#FBF0D6;--crit-soft:#F1F2F4;
   --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;
   --font:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
   --kop:var(--font);
@@ -159,7 +159,7 @@ html.present .deelkop .knop{display:none}
 .tbl .titel{font-weight:500}
 .tbl .nowrap{white-space:nowrap}
 .tbl .num{text-align:right}
-.tbl tr.laat td{background:color-mix(in srgb,var(--crit) 9%,transparent)}
+.tbl tr.laat td:first-child{box-shadow:inset 3px 0 0 var(--crit)}
 .st{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .st i{width:8px;height:8px;border-radius:50%;background:var(--none);flex:none}
 .st.info i{background:var(--info)}.st.warn i{background:var(--warn)}.st.warn2 i{background:var(--warn2)}.st.crit i{background:var(--crit)}.st.ok i{background:var(--ok)}.st.wacht i{background:var(--wacht)}.st.hold i{background:var(--ink3)}
@@ -293,7 +293,7 @@ html.inapp .mkop{display:none}
 .rst2 thead th.vandaag{background:var(--gold-soft);box-shadow:inset 0 -3px 0 var(--gold)}
 .rst2 tbody th{text-align:left;font-weight:600}
 .rst2 .rtijd{color:var(--ink2)}
-.rst2 td.open{background:#FBE3DF;color:#B4433A;font-style:italic}
+.rst2 td.open{background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px var(--line2);color:var(--crit-ink);font-style:italic}
 .rst2 td.nn{color:var(--ink3)}
 .rst2 td.mij{background:var(--gold-soft);font-weight:700}
 .rwk.bewerk .rst2 td{padding:3px 2px}
@@ -1028,7 +1028,7 @@ svg.seg7{display:block;overflow:visible}
 .tdr-waarom{display:block;margin-top:4px;color:var(--ink2);font-size:.8125rem}
 .lade[data-g="klopt"] .tdr-waarom{color:var(--warn-ink)}
 .tdr-rechts{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px 10px;color:var(--ink3);font-size:.8125rem;white-space:nowrap}
-.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font-size:.75rem;font-weight:600;white-space:nowrap;background:color-mix(in srgb,var(--c) 14%,transparent);color:color-mix(in srgb,var(--c) 70%,black)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;font-size:.75rem;font-weight:600;white-space:nowrap;background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent);color:color-mix(in srgb,var(--c) 75%,black)}
 .tdr-feit{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 12px;margin:0 0 0 112px;font-size:.8125rem}
 .tdr-feit dt{color:var(--ink3)}
 .tdr-feit dd{margin:0;overflow-wrap:anywhere}
@@ -1602,67 +1602,131 @@ html.present .meldpaneel.al .avtel{margin-top:9px}
 /* Wie op het apparaat minder transparantie vraagt, krijgt vlakke panelen. */
 @media (prefers-reduced-transparency:reduce){.opslaanbalk,.topglas,.rail,.dock,.shell,.paneel,.plusmenu,.kiesblad,.gzlijst,#lockform,.meldkaart,.mkop,#minhoud{background:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none}}
 
-/* Zaterdagoverleg: links de dagen, in het midden de bonnen, het bonvenster op de rechter helft. */
-.ovl-wrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
-.ovl-dagen{position:sticky;top:var(--kopruimte);display:flex;flex-direction:column;gap:4px;padding:10px;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
-.ovl-dagen h3{margin:2px 4px 6px;font-size:.875rem;font-weight:600}
-.ovl-dagen small.ovl-sep{margin:8px 6px 2px;color:var(--ink3);font-size:.6875rem;font-weight:600}
-.ovl-dag{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:8px 10px;border:0;border-radius:12px;background:rgba(255,255,255,.7);color:var(--ink);text-align:left;cursor:pointer}
+/* Zaterdagoverleg: links de dagen, in het midden één regel per bon op prio, rechts het bonvenster. Zelfde glas als de rest; geen roze. */
+.ovl-wrap{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:start}
+.ovl-dagen{position:sticky;top:var(--kopruimte);display:flex;flex-direction:column;gap:3px;padding:8px;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand)}
+.ovl-dagen h3{margin:2px 4px 4px;font-size:.8125rem;font-weight:600}
+.ovl-dag{display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;padding:6px 8px;border:0;border-radius:10px;background:rgba(255,255,255,.7);color:var(--ink);text-align:left;cursor:pointer}
 .ovl-dag:hover{background:#fff}
-.ovl-dag b{display:block;font-size:.8125rem;font-weight:600}
-.ovl-dag span{display:block;color:var(--ink3);font-size:.6875rem}
-.ovl-dag i{flex:none;padding:1px 7px;border-radius:999px;background:var(--sunken);color:var(--ink2);font-size:.6875rem;font-style:normal;font-weight:600}
+.ovl-dag b{font-size:.8125rem;font-weight:600;white-space:nowrap}
+.ovl-dag i{flex:none;color:var(--ink3);font-size:.75rem;font-style:normal;font-weight:600}
 .ovl-dag[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
-.ovl-dag[aria-current="true"] span{color:rgba(255,255,255,.7)}
-.ovl-dag[aria-current="true"] i{background:rgba(255,255,255,.18);color:#fff}
-.ovl-stand{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 12px;color:var(--ink2);font-size:.8125rem}
-.ovl-balk{display:inline-block;width:120px;height:7px;border-radius:99px;background:var(--sunken);overflow:hidden;vertical-align:middle}
+.ovl-dag[aria-current="true"] i{color:rgba(255,255,255,.75)}
+.ovl-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 16px;margin:0 0 8px}
+.ovl-top h2{margin:0;font-size:1.125rem;font-weight:600}
+.ovl-knoppen{display:flex;flex-wrap:wrap;gap:6px}
+.ovl-stand{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;margin:3px 0 0;color:var(--ink2);font-size:.8125rem}
+.ovl-balk{display:inline-block;width:90px;height:6px;border-radius:99px;background:var(--sunken);overflow:hidden;vertical-align:middle}
 .ovl-balk i{display:block;height:100%;background:var(--ok)}
-.ovl-tbl td{vertical-align:middle}
-.ovl-tbl tr.ovl-sec td{padding:6px 12px;background:rgba(238,240,243,.9);color:var(--ink2);font-size:.75rem;font-weight:600}
-.ovl-tbl tr.ovl-rij{cursor:pointer}
-.ovl-tbl tr.ovl-rij:hover td{background:rgba(255,255,255,.75)}
-.ovl-tbl tr.ovl-aan td{background:var(--gold-soft)}
-.ovl-volg{display:inline-flex;align-items:center;gap:1px;margin-right:6px;vertical-align:middle}
-.ovl-grip{cursor:grab;color:var(--ink3);font-size:.75rem;letter-spacing:-2px;padding:0 3px}
-.ovl-pijl{width:20px;height:20px;padding:0;border:0;border-radius:6px;background:none;color:var(--ink3);font-size:.75rem;cursor:pointer;opacity:0}
-.ovl-rij:hover .ovl-pijl,.ovl-pijl:focus-visible{opacity:1}.ovl-pijl:hover{background:var(--sunken);color:var(--ink)}
-.ovl-tbl tr.ovl-sleept td{opacity:.45}
-.ovl-tbl tr.ovl-hier td{box-shadow:inset 0 2px 0 var(--ink)}
+.ovl-filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
+.ovl-f{padding:3px 10px;border:1px solid var(--line2);border-radius:999px;background:rgba(255,255,255,.75);color:var(--ink2);font-size:.75rem;font-weight:500;cursor:pointer}
+.ovl-f b{color:var(--ink);font-weight:600}
+.ovl-f:hover{background:#fff}
+.ovl-f[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}.ovl-f[aria-pressed="true"] b{color:#fff}
+.ovl-lijst{display:flex;flex-direction:column;gap:3px}
+.ovr-band{display:flex;align-items:center;gap:8px;margin:10px 2px 2px;color:var(--ink2);font-size:.75rem;font-weight:600}
+.ovr-band:first-child{margin-top:0}
+.ovr-band::after{content:"";flex:1;height:1px;background:var(--line2)}
+.ovr{display:grid;grid-template-columns:16px 22px 12px 30px 70px minmax(0,1fr) minmax(60px,150px) 84px 44px;gap:8px;align-items:center;min-height:34px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.72);border:1px solid var(--glas-rand);font-size:.8125rem;cursor:pointer}
+.ovr:hover{background:#fff}
+.ovr.aan{background:#fff;box-shadow:inset 3px 0 0 var(--gold),0 2px 10px rgba(20,22,24,.08)}
+.ovr>*{min-width:0}
+.ovr input[type=checkbox]{margin:0;accent-color:var(--ink)}
+.ovr-nr{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovr-p{display:inline-flex;border-radius:5px}
+.ovr-om{display:flex;align-items:center;gap:5px;min-width:0}
+.ovr-t{flex:0 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ovr-om>:not(.ovr-t){flex:none}
+.ovr-tag{padding:1px 7px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1.5px var(--wacht);color:var(--al-goud-tekst);font-size:.6875rem;font-weight:600;white-space:nowrap}
+.ovr-lm,.ovr-u,.ovr-h{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--ink2)}
+.ovr-u.gewijzigd,.ovr-h.gewijzigd{border-radius:6px;padding:0 4px}
+.ovr-h{text-align:right}
+.ovr.ovl-sleept{opacity:.45}
+.ovr.ovl-hier{box-shadow:inset 0 3px 0 var(--ink)}
+.ovr-pm{cursor:default;background:rgba(255,255,255,.5)}
+.ovl-grip{cursor:grab;color:var(--ink3);font-size:.75rem;letter-spacing:-2px}
 .ovl-skip{font-size:.75rem}
-.ovl-skipvak{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.ovl-skipvak input{flex:1 1 220px}
-.ovl-overslaan td{color:var(--ink3)}
-.ovl-tbl tr.ovl-aan td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
-.ovl-tbl tr.ovl-pm td{color:var(--ink2)}
-.ovl-wl{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-.ovl-w{display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6875rem;font-weight:600;background:var(--warn-soft);color:var(--warn-ink)}
-.ovl-w.oker{background:var(--wacht-soft);color:var(--wacht)}
-.ovl-bespr{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:1.5px solid var(--line2);border-radius:6px;background:#fff;cursor:pointer}
+.ovl-skipvak{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 10px 8px}.ovl-skipvak input{flex:1 1 220px}
+.ovl-overslaan{color:var(--ink3)}
+.ovl-w{display:inline-flex;padding:1px 7px;border-radius:999px;font-size:.6875rem;font-weight:600;background:rgba(255,255,255,.9);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink2);white-space:nowrap}
+.ovl-w.oker{box-shadow:inset 0 0 0 1px var(--wacht);color:var(--al-goud-tekst)}
+.ovl-bespr{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:1.5px solid var(--line2);border-radius:6px;background:#fff;cursor:pointer}
 .ovl-bespr[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
-.ovl-bespr .i{width:14px;height:14px;stroke-width:2.4}
+.ovl-bespr .i{width:13px;height:13px;stroke-width:2.4}
 .ovl-zacht{color:var(--ink3)}
+/* Het bonvenster in het overleg: knopjes, de rest ingeklapt. */
+#bonvenster.ovlbv .bvpop{display:flex;flex-direction:column;background:rgba(255,255,255,.94)}
+.ovz-kop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.ovz-titel{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.ovz-titel h2{margin:0;font:600 1rem/1.3 var(--kop)}
+.ovz-titel small{color:var(--ink3);font-size:.75rem;font-weight:600}
+.ovz-lijf{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:10px 16px}
+.ovz-rij{display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;align-items:center;padding:4px 6px;margin:0 -6px;border-radius:12px}
+.ovz-l{color:var(--ink2);font-size:.8125rem}
+.ovz-w{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+.ovz-chip{padding:4px 11px;border:1px solid var(--line2);border-radius:999px;background:#fff;color:var(--ink);font-size:.8125rem;cursor:pointer;white-space:nowrap}
+.ovz-chip:hover{border-color:var(--ink3)}
+.ovz-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ovz-w .bvseg button{padding:4px 11px}
+.ovz-datum{width:140px;padding:4px 10px;font-size:.8125rem}
+.ovz-status{max-width:190px;padding:4px 10px;font-size:.8125rem}
+.ovz-tekst{flex:1 1 110px;min-width:90px;padding:4px 10px;font-size:.8125rem}
+.ovz-opdr{flex-basis:100%}
+.ovz-uren{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:999px;background:#fff}
+.ovz-uren button{width:30px;padding:4px 0;border:0;background:none;color:var(--ink);font-size:.9375rem;cursor:pointer}
+.ovz-uren input{width:44px;padding:4px 0;border:0;background:none;text-align:center;font-weight:600;font-size:.8125rem}
+details.ovz-d{flex:1;border:1px solid var(--line);border-radius:12px;padding:0 10px;background:rgba(255,255,255,.6)}
+.ovz-lijf>details.ovz-d{flex:none}
+details.ovz-d>summary{padding:6px 0;color:var(--ink2);font-size:.8125rem;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+details.ovz-d[open]>summary{border-bottom:1px solid var(--line)}
+details.ovz-d>div{padding:8px 0}
+.ovz-voet{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+.ovz-voet .knop:disabled{opacity:.4;cursor:default}
+.ovz-tel{margin-left:auto;color:var(--ink3);font-size:.75rem}
+/* Presenteren: links de bon groot, rechts het bonvenster. De laatste dia toont wat klaarstaat. */
+.ovs{display:flex;flex-direction:column;gap:10px;height:calc(100vh - 54px)}
+.ovs-kop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.ovs-kop b{font-size:1rem;font-weight:600}
+.ovs-dots{display:flex;flex-wrap:wrap;gap:3px;flex:1;min-width:0}
+.ovs-dot{width:16px;height:7px;padding:0;border:1px solid var(--line2);border-radius:4px;background:#fff;cursor:pointer}
+.ovs-dot.bespr{background:var(--line2)}
+.ovs-dot.gew{background:var(--wacht);border-color:var(--wacht)}
+.ovs-dot.aan{width:26px;background:var(--gold);border-color:var(--gold)}
+.ovs-bon{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;overflow:auto;border-radius:18px;background:var(--glas-binnen);border:1px solid var(--glas-rand);padding:10px}
+.ovs-bon img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 6px 24px rgba(20,22,24,.14);background:#fff}
+.ovs-tekst{align-self:center;max-width:640px;padding:20px}
+.ovs-tekst h2{margin:0 0 8px;font-size:1.75rem;font-weight:600;line-height:1.25}
+.ovs-tekst p{margin:0 0 8px;font-size:1rem}
+.ovs-eind{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto}
+.ovs-eind h2{margin:6px 0 0;font-size:1.375rem;font-weight:600}
+.ovs-eindknop{display:flex;gap:8px;justify-content:space-between}
 @media (min-width:1000px){
-  html.ovl #bonvenster.bvdim{left:50%;align-items:stretch;padding:96px 18px 18px 0;background:transparent;overflow:hidden}
+  html.ovl{--bvbreed:clamp(430px,36vw,600px)}
+  html.ovl #bonvenster.bvdim{left:auto;right:0;width:calc(var(--bvbreed) + 18px);align-items:stretch;padding:96px 18px 18px 0;background:transparent;overflow:hidden}
+  html.ovl.ovlpres #bonvenster.bvdim{padding-top:18px}
   html.ovl #bonvenster .bvpop{width:100%;height:100%;overflow-y:auto;box-shadow:0 18px 50px rgba(20,22,24,.22)}
+  html.ovl #bonvenster.ovlbv .bvpop{overflow:hidden}
   html.ovl #bonvenster .bvlijf{grid-template-columns:1fr}
   html.ovl.bvopen{overflow:auto}
-  html.ovl.bvopen .shell{margin-right:calc(50% + 8px)}
-  html.ovl.bvopen .ovl-wrap{grid-template-columns:110px minmax(0,1fr)}
-  html.ovl.bvopen .ovl-dag span,html.ovl.bvopen .ovl-dag i,html.ovl.bvopen .ovl-kol{display:none}
-  html.ovl.bvopen .bonvak{right:50%;border-right:1px solid var(--line)}
+  html.ovl.bvopen .shell{margin-right:calc(var(--bvbreed) + 30px);margin-left:119px}
+  html.ovl.bvopen .dock{display:none!important}
+  html.ovl.bvopen .page{padding:20px 18px var(--dockruimte) 22px}
+  html.ovl.bvopen .head p{display:none}
+  html.ovl.bvopen .ovl-wrap{grid-template-columns:112px minmax(0,1fr);gap:10px}
+  html.ovl.bvopen .ovr{grid-template-columns:16px 22px 12px 30px 72px minmax(0,1fr) 72px 38px}
+  html.ovl.bvopen .ovr-lm{display:none}
+  html.ovl.bvopen .bonvak{right:calc(var(--bvbreed) + 18px);border-right:1px solid var(--line)}
   html.ovl.bvopen .bonvak .boninhoud img{max-width:100%}
-  html.ovl.bvopen .dock{left:25%;max-width:calc(50% - 90px)}
-  html.ovl.bvopen .page{padding:20px 18px var(--dockruimte) 56px}
-  html.ovl.bvopen .head p,html.ovl.bvopen .head .headknoppen{display:none}
-  html.ovl.bvopen .ovl-wrap{grid-template-columns:92px minmax(0,1fr);gap:10px}
-  html.ovl.bvopen .ovl-dagen small.ovl-sep{font-size:.625rem}
+  html.ovl.bvopen .opslaanbalk{left:calc((100vw - var(--bvbreed) + 100px) / 2);max-width:calc(100vw - var(--bvbreed) - 170px)}
+  html.ovlshow.bvopen .opslaanbalk{left:calc((100vw - var(--bvbreed)) / 2)}
 }
-@media (max-width:760px){.ovl-wrap{grid-template-columns:1fr}.ovl-dagen{position:static;flex-direction:row;overflow-x:auto}.ovl-dag{flex:none;width:auto}.ovl-kol{display:none}}
-/* Presenteren in het overleg: zonder balken, grotere letters. */
+@media (min-width:1000px) and (max-height:820px){.ovz-rij{padding:2px 6px}.ovz-lijf{gap:3px}.ovz-kop{padding:10px 14px 8px}.ovz-voet{padding:8px 14px}}
+@media (max-width:760px){.ovl-wrap{grid-template-columns:1fr}.ovl-dagen{position:static;flex-direction:row;overflow-x:auto}.ovl-dagen h3{display:none}.ovl-dag{flex:none;width:auto}.ovr{grid-template-columns:22px 30px 60px minmax(0,1fr) 40px}.ovr>:first-child,.ovr-lm,.ovr-u,.ovl-grip{display:none}}
+/* Presenteren in het overleg: zonder balken. */
 html.ovlpres .topglas,html.ovlpres .rail,html.ovlpres .dock{display:none!important}
 html.ovlpres .shell{margin-top:18px;margin-left:18px}
-html.ovlpres .page{padding-left:30px}
-html.ovlpres body{font-size:1.15rem}
+html.ovlpres .page{padding:16px 18px}
+html.ovlshow .head,html.ovlshow .opslaanbalk{display:none!important}
 
 .bvextra{margin:0 0 8px;padding:0 0 0 20px;display:flex;flex-direction:column;gap:4px}
 .bvextra li{padding:4px 0}
@@ -2400,13 +2464,16 @@ async function cBonOpslaan(x){
     const w={nr:c.nr,status:c.status,rij:Object.assign({},metZat(c.nr,storingRij(Object.assign({},c,{prio:p.prio}))),{prioset:p.prio?String(p.prio):""})};
     await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w);c.prio=p.prio;zatPrioNaarMelding(c.nr,p.prio);
   }
-  /* De opdracht gaat met het WEEK-bestand mee; staat de bon nog niet bij de monteurs, dan blijft hij daar af. */
-  if("opdracht" in p){
-    const w={nr:"WEEK-"+c.nr,status:"Open",rij:{week:weekVelden(c,!!c.week,c.weeksoort||"")}};
-    await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));c.opdracht=p.opdracht;
-    return;
-  }
-  weekSync(c);
+  /* De opdracht en de keuze voor de monteurs (uit het Zaterdagoverleg) gaan met het WEEK-bestand mee; staat de bon niet bij de monteurs, dan blijft hij daar af. */
+  if("opdracht" in p||"monteur" in p){
+    const aan="monteur" in p?p.monteur!=="niet":!!c.week,soort="monteur" in p?(p.monteur==="opn"?"opname":""):(c.weeksoort||""),opd="opdracht" in p?p.opdracht:(c.opdracht||"");
+    const w={nr:"WEEK-"+c.nr,status:"Open",rij:{week:Object.assign(weekVelden(c,aan,soort),{opdracht:opd})}};
+    await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));
+    c.week=aan;if(soort)c.weeksoort=soort;else delete c.weeksoort;if(opd)c.opdracht=opd;else delete c.opdracht;
+  }else weekSync(c);
+  /* Extra instructies en veiligheid uit het Zaterdagoverleg: de uurronde zet ze op de Word- en PDF-bon. */
+  if("extra" in p){const w={nr:"EXTRA-"+c.nr,status:"Open",rij:{extra:{nr:c.nr,regels:(p.extra||[]).slice(0,8)}}};await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w)}
+  if("veilig" in p){const w={nr:"VEILIG-"+c.nr,status:"Open",rij:{veilig:{nr:c.nr,punten:p.veilig||[]}}};await stuur(Object.assign({actie:"bonstatus",k:MELD().sleutel_wv,door:wvDoor()},w));pasBonToe(w)}
 }
 async function cKopOpslaan(x){
   const s=x.plan?planVan(x.plan):plannen().find(p=>!p.id&&p.datum===x.datum);if(!s||s.datum!==x.datum)return;
@@ -2443,7 +2510,7 @@ function cPaneel(){
   if($("#paneel").hidden||!q||!$('#paneel [data-bonstatus="'+q+'"],#paneel [data-bonprio="'+q+'"]'))return;
   const c=zatBon(PANEELBON);if(c){const t=terug;openPaneel(cmDetail(c));terug=t}
 }
-function cHerteken(){laatste="";if(rteken)rteken();planTel();alTel();if(SCHERM[HUIDIG])SCHERM[HUIDIG]();cPaneel()}
+function cHerteken(){laatste="";if(rteken)rteken();planTel();alTel();if(SCHERM[HUIDIG])SCHERM[HUIDIG]();cPaneel();if(BV&&BV.ovl&&$("#bonvenster")&&!$("#bonvenster").hidden){const o=BV.open;BV=bvBegin(BV.nr);if(BV){BV.open=o;bvTeken()}}}
 const cFout=e=>e&&/onbekende actie/.test(e.message||"")?"Bezig opslaan kan pas met versie 21 van het script in Apps Script.":e&&e.message==="onbekende status"?"Deze status werkt pas als het nieuwe script (versie 20) in Apps Script staat.":"Probeer het opnieuw.";
 async function cOpslaan(alleen){
   if(C_BEZIG)return false;
@@ -2484,6 +2551,9 @@ function cTekst(x){
     if("uren" in p)d.push(p.uren==null?"geen uren":urenTekst(p.uren)+" uur");
     if("uitvoerder" in p)d.push(p.uitvoerder?"uitvoerder "+p.uitvoerder:"geen uitvoerder");
     if("opdracht" in p)d.push(p.opdracht?"opdracht voor de monteur":"geen opdracht voor de monteur");
+    if("monteur" in p)d.push(p.monteur==="niet"?"niet in de monteursapp":p.monteur==="opn"?"opnamebon naar de monteurs":"naar de monteursapp");
+    if("extra" in p)d.push((p.extra||[]).length?(p.extra.length===1?"1 extra instructie":p.extra.length+" extra instructies"):"geen extra instructies");
+    if("veilig" in p)d.push((p.veilig||[]).length?"veiligheid "+p.veilig.join(", "):"geen veiligheid");
   }else if(x.soort==="kop"){
     const n={teamleider:"teamleider",monteurs:"monteurs",letop:"let op",capaciteit:"beschikbare manuren"};
     Object.keys(p).forEach(k=>d.push(n[k]+" "+(p[k]==null||p[k]===""?"leeg":k==="capaciteit"?urenTekst(p[k]):p[k])));
@@ -5613,59 +5683,127 @@ function ovlWaarom(c,r){
   if(c.status==="Uitzoeken voor bestelling")w.push(["oker","Eerst uitzoeken wat er besteld moet worden"]);
   return w;
 }
+/* De lijst blijft stil staan tot Alles opslaan: groep en volgorde komen uit wat is opgeslagen. Wat klaarstaat krijgt een oker ring en een labeltje.
+   OVLNRS is de volgorde zoals hij in beeld staat; het bonvenster en de slideshow volgen die. */
+let OVLNRS=[],OVLFILTER="",OVLSHOW=false,OVLEIND=false;
+const OVLBEELD=new Map();
+const ovlDagKort=t=>{const d=datum(t);return d?d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+t.slice(0,5):t};
+const ovlGroep=x=>{const q=x.r?zatPrio(x.r):x.c.prio;return q===1||q===2||q===3?q:0};
+const lmKort=t=>String(t||"").replace(/\bLijn\s*/g,"L").replace(/\s*\/\s*/," ");
+const ovlCv=(x,f,orig)=>{const p=cv("bon",x.c.nr);return f in p?p[f]:orig};
+const OVLF=[
+  ["prio","zonder prio",x=>!ovlCv(x,"prio",x.r?zatPrio(x.r):x.c.prio)],
+  ["uitv","zonder uitvoerder",x=>!!x.r&&!ovlCv(x,"uitvoerder",x.r.uitvoerder)],
+  ["uren","zonder uren",x=>!!x.r&&!(Number(ovlCv(x,"uren",x.r.uren))>0)],
+  ["ond","wacht op onderdelen",x=>{const w=wachtOpStand(x.c);return!!w&&(w.k==="rood"||w.k==="oker")}],
+  ["uitz","eerst uitzoeken",x=>cStatus(x.c)==="Uitzoeken voor bestelling"],
+  ["veilig","met veiligheid",x=>(ovlCv(x,"veilig",x.c.veilig||[])||[]).length>0]];
+function ovlTags(c){
+  const p=cv("bon",c.nr),t=[];
+  if("status" in p||"dag" in p){const st=p.status||c.status,d="dag" in p?p.dag:stDag(c);t.push(st==="Gepland"&&d?"naar "+ovlDagKort(d):st==="Te plannen"?"van de dag af":st+(d&&STMETDAG.includes(st)?" "+d.slice(0,5):""))}
+  if("prio" in p){const op=planVanBon(c.nr),r=op?planRijen(op).find(x=>x.nr===c.nr):null,o=r?zatPrio(r):c.prio;t.push(o?"was P"+o:"had geen prio")}
+  if("monteur" in p)t.push(p.monteur==="niet"?"uit de app":p.monteur==="opn"?"opnamebon":"naar de app");
+  if("extra" in p)t.push("instructies");
+  return t;
+}
 function vOverleg(){
-  const wv=wvMag(),kijk=alleenKijken(),dag=ovlKeuze(),{komend,geweest}=ovlDagen();
+  const wv=wvMag(),kijk=alleenKijken(),dag=ovlKeuze(),{komend}=ovlDagen();
   const p=dag.startsWith("x:")?null:planOpDatum(dag);
-  const bonnenVan=p?planRijen(p).map(r=>({r,c:zatBon(r.nr)})).filter(x=>x.c&&isOpen(x.c)):dag.startsWith("x:")?ovlZonder(dag.slice(2)).map(c=>({r:null,c})):[];
+  const alle=p?planRijen(p).map(r=>({r,c:zatBon(r.nr)})).filter(x=>x.c&&isOpen(x.c)):dag.startsWith("x:")?ovlZonder(dag.slice(2)).map(c=>({r:null,c})):[];
   const pm=dag.startsWith("x:")?[]:ovlPm(dag);
   const pmTal=pm.reduce((n,b)=>n+b.taken.length,0);
-  const knopDag=(id,t,sub,n)=>'<button type="button" class="ovl-dag" data-ovldag="'+esc(id)+'" aria-current="'+(id===dag)+'"><span style="display:block;min-width:0"><b>'+esc(t)+"</b><span>"+esc(sub)+"</span></span><i>"+esc(n)+"</i></button>";
-  const pnaam=x=>{const d=datum(x.datum);return d.toLocaleDateString("nl-NL",{weekday:"short"}).replace(".","")+" "+x.datum.slice(0,5)};
-  const ptal=x=>{if(x.leeg){const q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return q?q+" PM":"–"}const o=planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length,q=ovlPm(x.datum).reduce((n,b)=>n+b.taken.length,0);return o+(q?" + "+q+" PM":"")};
-  const psub=x=>x.leeg?"Geen planning":x.lijn||(planIsZat(x)?"Zaterdag":"Onderhoud");
-  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,pnaam(x),psub(x),ptal(x))).join("")+"</nav>";
   const bespr=new Set(ovlBespr()[dag]||[]);
-  const nBespr=bonnenVan.filter(x=>bespr.has(x.c.nr)).length;
-  const urenTot=bonnenVan.reduce((n,x)=>{const q=cv("bon",x.c.nr),u="uren" in q?q.uren:x.r&&x.r.uren;return n+(Number(u)||0)},0);
-  const cap=p&&p.capaciteit;
-  const nWaar=bonnenVan.filter(x=>ovlWaarom(x.c,x.r).length).length;
+  const filt=OVLF.find(f=>f[0]===OVLFILTER);
+  const prevSet=new Set(p?(p.preventief||[]).map(y=>y.nr):[]);
+  const zicht=alle.filter(x=>!filt||filt[2](x));
+  const corr=zicht.filter(x=>!prevSet.has(x.c.nr)),prev=zicht.filter(x=>prevSet.has(x.c.nr));
+  const groepen=[1,2,3,0].map(g=>({g,l:g?"P"+g:"Zonder prio",x:corr.filter(x=>ovlGroep(x)===g)})).filter(x=>x.x.length);
+  OVLNRS=groepen.flatMap(x=>x.x.map(y=>y.c.nr)).concat(prev.map(x=>x.c.nr));
   const titel=p?hoofd(langeDatum(datum(p.datum)))+(p.lijn?", "+p.lijn:""):dag==="x:stop"?"Eerstvolgende stop":dag==="x:tp"?"Te plannen":hoofd(langeDatum(datum(dag)))+", nog geen planning";
-  const rij=x=>{
-    const {c,r}=x,w=ovlWaarom(c,r),q=cv("bon",c.nr),pr="prio" in q?q.prio:(r?zatPrio(r):c.prio),u="uitvoerder" in q?q.uitvoerder:r&&r.uitvoerder,h="uren" in q?q.uren:r&&r.uren;
-    const sl=p&&wv&&!kijk;
-    return'<tr class="ovl-rij'+(BV&&BV.nr===c.nr?" ovl-aan":"")+'" data-ovlbon="'+esc(c.nr)+'"'+(sl?' draggable="true" data-ovlsleep="'+esc(c.nr)+'"':"")+'>'+
-      (wv?'<td style="width:34px"><input type="checkbox" data-bonkies="'+esc(c.nr)+'"'+(BONKIES.has(c.nr)?" checked":"")+' aria-label="'+esc(c.nr)+' kiezen"></td>':'<td hidden><input type="checkbox" data-bonkies="'+esc(c.nr)+'" hidden></td>')+
-      '<td style="width:38px"><button type="button" class="ovl-bespr" data-ovlbespr="'+esc(c.nr)+'" aria-pressed="'+bespr.has(c.nr)+'" aria-label="'+esc(c.nr)+' besproken" title="Besproken">'+(bespr.has(c.nr)?ico("afvink"):"")+"</button></td>"+
-      '<td class="nr">'+(sl?'<span class="ovl-volg"><span class="ovl-grip" title="Slepen om de volgorde te wijzigen" aria-hidden="true">⋮⋮</span><button type="button" class="ovl-pijl" data-ovlop="'+esc(c.nr)+'" aria-label="'+esc(c.nr)+' hoger" title="Hoger">↑</button><button type="button" class="ovl-pijl" data-ovlneer="'+esc(c.nr)+'" aria-label="'+esc(c.nr)+' lager" title="Lager">↓</button></span>':"")+esc(c.nr)+"</td>"+
-      '<td><span class="titel">'+esc(c.omschrijving)+"</span>"+((c.veilig||[]).length?'<span class="ovl-wl">'+(c.veilig||[]).map(v=>'<span class="ovl-veilig">'+esc((VEILIG.find(x=>x[0]===v)||[v,v])[1])+"</span>").join("")+"</span>":"")+(w.length?'<span class="ovl-wl">'+w.map(([k,t])=>'<span class="ovl-w '+k+'">'+esc(t)+"</span>").join("")+"</span>":"")+"</td>"+
-      '<td class="ovl-kol">'+esc(r&&r.lijn_machine||[c.lijn,c.machine].filter(Boolean).join(" / "))+"</td>"+
-      "<td>"+prio(pr)+"</td><td>"+stBon(c)+"</td>"+
-      '<td class="ovl-kol">'+wachtOp(c)+"</td>"+
-      '<td class="ovl-kol num">'+(h!=null&&h!==""?esc(urenTekst(h)):'<span class="ovl-zacht">–</span>')+"</td>"+
-      '<td class="ovl-kol">'+(u?esc(u):'<span class="ovl-zacht">–</span>')+"</td></tr>";
+  if(OVLSHOW){vOvlShow(titel,bespr);return}
+  const knopDag=(id,t,n)=>'<button type="button" class="ovl-dag" data-ovldag="'+esc(id)+'" aria-current="'+(id===dag)+'"><b>'+esc(t)+"</b><i>"+esc(n)+"</i></button>";
+  const ptal=x=>x.leeg?"–":String(planRijen(x).filter(r=>{const c=zatBon(r.nr);return c&&isOpen(c)}).length);
+  const links='<nav class="ovl-dagen" aria-label="Dagen"><h3>Dagen</h3>'+komend.map(x=>knopDag(x.datum,ovlDagKort(x.datum),ptal(x))).join("")+"</nav>";
+  const nBespr=alle.filter(x=>bespr.has(x.c.nr)).length;
+  const urenTot=alle.reduce((n,x)=>n+(Number(ovlCv(x,"uren",x.r&&x.r.uren))||0),0);
+  const cap=p&&p.capaciteit,sl=!!p&&wv&&!kijk;
+  const rij=(x,g)=>{
+    const {c,r}=x,q=cv("bon",c.nr),pr=ovlCv(x,"prio",r?zatPrio(r):c.prio),u=ovlCv(x,"uitvoerder",r&&r.uitvoerder),h=ovlCv(x,"uren",r&&r.uren),vl=ovlCv(x,"veilig",c.veilig||[])||[];
+    const w=ovlWaarom(c,r).filter(([,t])=>!/^Geen (prio|uitvoerder)$/.test(t)).slice(0,1).map(([k,t])=>'<span class="ovl-w '+k+'" title="'+esc(t)+'">'+esc(/besteld/.test(t)?"Onderdelen":/uitzoeken/i.test(t)?"Uitzoeken":t)+"</span>").join("");
+    const tags=ovlTags(c).map(t=>'<span class="ovr-tag">'+esc(t)+"</span>").join("");
+    const lm=r&&r.lijn_machine||[c.lijn,c.machine].filter(Boolean).join(" / ");
+    return'<div class="ovr'+(BV&&BV.nr===c.nr?" aan":"")+'" data-ovlbon="'+esc(c.nr)+'" data-ovlgroep="'+g+'"'+(sl?' draggable="true" data-ovlsleep="'+esc(c.nr)+'"':"")+">"+
+      (wv&&!kijk?'<input type="checkbox" data-bonkies="'+esc(c.nr)+'"'+(BONKIES.has(c.nr)?" checked":"")+' aria-label="'+esc(c.nr)+' kiezen">':"<span></span>")+
+      '<button type="button" class="ovl-bespr" data-ovlbespr="'+esc(c.nr)+'" aria-pressed="'+bespr.has(c.nr)+'" aria-label="'+esc(c.nr)+' besproken" title="Besproken">'+(bespr.has(c.nr)?ico("afvink"):"")+"</button>"+
+      (sl?'<span class="ovl-grip" title="Slepen om de volgorde te wijzigen" aria-hidden="true">⋮⋮</span>':"<span></span>")+
+      '<span class="ovr-p'+("prio" in q?" gewijzigd":"")+'">'+prio(pr)+"</span>"+
+      '<b class="ovr-nr">'+esc(c.nr)+"</b>"+
+      '<span class="ovr-om"><span class="ovr-t" title="'+esc(c.omschrijving)+'">'+esc(c.omschrijving)+"</span>"+tags+vl.map(v=>'<span class="ovl-veilig">'+esc(v)+"</span>").join("")+w+"</span>"+
+      '<span class="ovr-lm" title="'+esc(lm)+'">'+esc(lmKort(lm))+"</span>"+
+      '<span class="ovr-u'+("uitvoerder" in q?" gewijzigd":"")+'">'+(u?esc(u):'<span class="ovl-zacht">–</span>')+"</span>"+
+      '<span class="ovr-h'+("uren" in q?" gewijzigd":"")+'">'+(h!=null&&h!==""?esc(urenTekst(h))+" u":'<span class="ovl-zacht">–</span>')+"</span></div>";
   };
   const skipMag=wv&&!kijk,skips=pmSkips(dag);
-  const pmRijen=pm.flatMap(b=>b.taken.map(t=>{const x=(pmPlan().taken||{})[t]||{},sk=OVLSKIP===dag+"|"+t;return'<tr class="ovl-pm"><td'+(wv?"":" hidden")+'></td><td></td><td class="nr">'+esc(t)+'</td><td>'+esc(x.taak||t)+(skipMag&&!sk?' <button type="button" class="tekstknop ovl-skip" data-ovlskip="'+esc(t)+'" title="Deze taak op deze dag overslaan">Overslaan</button>':"")+(sk?'<span class="ovl-skipvak"><input type="text" class="zatinvoer" id="ovl_skipreden" maxlength="200" placeholder="Reden, bijvoorbeeld: lijn draait door"><button type="button" class="knop hoofd" data-ovlskipop="'+esc(t)+'">Overslaan</button><button type="button" class="tekstknop" data-ovlskipnee>Annuleren</button></span>':"")+'<span class="ovl-wl"><span class="ovl-w oker" style="background:var(--sunken);color:var(--ink2)">'+esc(pmFreq({taken:[t]})||x.frequentie||"")+(b.uit?" · uit bedrijf (LOTOTO)":" · in bedrijf")+'</span></span></td><td class="ovl-kol">'+esc(b.lijn+" / "+b.lijndeel)+"</td><td>"+prio(1)+'</td><td><span class="ovl-zacht">'+esc(b.nr)+'</span></td><td class="ovl-kol"></td><td class="ovl-kol"></td><td class="ovl-kol"></td></tr>'}));
-  const skipRijen=skips.map(x=>{const t=(pmPlan().taken||{})[x.taak]||((D.pm||[]).find(y=>y.id===x.taak))||{};return'<tr class="ovl-pm ovl-overslaan"><td'+(wv?"":" hidden")+'></td><td></td><td class="nr">'+esc(x.taak)+'</td><td><s>'+esc(t.taak||x.taak)+'</s>'+(skipMag?' <button type="button" class="tekstknop ovl-skip" data-ovlskipterug="'+esc(x.taak)+'">Terugzetten</button>':"")+'<span class="ovl-wl"><span class="ovl-w">Overgeslagen: '+esc(x.reden||"geen reden")+(x.door?" ("+esc(x.door)+")":"")+'</span></span></td><td class="ovl-kol"></td><td></td><td></td><td class="ovl-kol"></td><td class="ovl-kol"></td><td class="ovl-kol"></td></tr>'});
-  const kol=(wv?'<th style="width:34px"></th>':'<th hidden></th>')+'<th title="Besproken">✓</th><th>Bon</th><th>Werkzaamheid</th><th class="ovl-kol">Lijn / machine</th><th>Prio</th><th>Status</th><th class="ovl-kol">Wacht op</th><th class="ovl-kol num">Uren</th><th class="ovl-kol">Uitvoerder</th>';
-  const ncol=10;
-  const corr=p?bonnenVan.filter(x=>!(p.preventief||[]).some(y=>y.nr===x.c.nr)):bonnenVan,prev=p?bonnenVan.filter(x=>(p.preventief||[]).some(y=>y.nr===x.c.nr)):[];
-  const tabel='<div class="tblwrap"><table class="tbl ovl-tbl" id="tabel"><thead><tr>'+kol+"</tr></thead><tbody>"+
-    (corr.length?'<tr class="ovl-sec"><td colspan="'+ncol+'">'+(p?"Correctief":"Bonnen")+" ("+corr.length+")</td></tr>"+corr.map(rij).join(""):'<tr><td colspan="'+ncol+'" class="leegmelding">Geen open bonnen op deze dag.</td></tr>')+
-    (prev.length||pmRijen.length||skipRijen.length?'<tr class="ovl-sec"><td colspan="'+ncol+'">Preventief, altijd prio 1 ('+(prev.length+pmTal)+")</td></tr>"+prev.map(rij).join("")+pmRijen.join("")+skipRijen.join(""):"")+
-    "</tbody></table></div>";
-  const knoppen=(p&&wv&&!kijk?'<button class="knop" type="button" data-ovlapp>'+ico("sleutel")+"Hele dag naar monteursapp</button>":"")+(p?'<a class="knop" href="#stop" data-ovlplan="'+esc(p.datum)+'">'+ico("agenda")+"Openen in planning</a>":"")+'<button class="knop" type="button" data-ovlpres>'+(document.documentElement.classList.contains("ovlpres")?"Stoppen met presenteren":"Presenteren")+"</button>";
-  const stand='<p class="ovl-stand"><span>Besproken <b>'+nBespr+" van "+bonnenVan.length+'</b> <span class="ovl-balk"><i style="width:'+(bonnenVan.length?Math.round(100*nBespr/bonnenVan.length):0)+'%"></i></span></span>'+(p?"<span>Ingepland <b>"+urenTekst(urenTot)+" uur</b>"+(cap?" van "+urenTekst(cap)+" manuren":"")+"</span>":"")+(nWaar?'<span><b>'+nWaar+"</b> "+(nWaar===1?"bon kan":"bonnen kunnen")+" misschien niet door</span>":'<span>Alle bonnen kunnen door</span>')+(p&&(p.teamleider||p.monteurs)?"<span>"+esc([p.teamleider&&"Teamleider "+p.teamleider,p.monteurs&&"Monteurs "+p.monteurs].filter(Boolean).join(" · "))+"</span>":"")+"</p>";
-  const bulk=wv?'<div class="zatbulk bonbulk" id="bon_bulk" hidden><span id="bon_bulktal"></span><select class="statuskeuze" id="bon_bstatus" aria-label="Status voor de gekozen bonnen"><option value="">Status kiezen</option>'+BONSTATUS.concat(BONSLOT).map(x=>"<option>"+x+"</option>").join("")+'</select><input type="date" class="zatinvoer" id="bon_bdatum" aria-label="Dag voor de gekozen bonnen"><button class="knop" type="button" id="bon_bstat">Status zetten</button><button class="knop" type="button" id="bon_bdat">Verplaatsen naar deze dag</button><button class="tekstknop" type="button" id="bon_balles">Alles kiezen</button><button class="tekstknop" type="button" id="bon_bwis">Wissen</button></div>':"";
-  $("#view").innerHTML=kop("Zaterdagoverleg","Kies links een dag. Een klik op een bon opent hem rechts, daar pas je dag, status, prio, uitvoerder en uren aan.",false,knoppen)+
-    '<div class="ovl-wrap">'+links+'<div style="min-width:0"><h2 style="margin:0 0 6px;font-size:1.125rem;font-weight:600">'+esc(titel)+"</h2>"+stand+bulk+tabel+"</div></div>";
+  const pmRijen=pm.flatMap(b=>b.taken.map(t=>{const x=(pmPlan().taken||{})[t]||{},sk=OVLSKIP===dag+"|"+t;return'<div class="ovr ovr-pm"><span></span><span></span><span></span><span class="ovr-p">'+prio(1)+'</span><b class="ovr-nr">'+esc(t)+'</b><span class="ovr-om"><span class="ovr-t" title="'+esc(x.taak||t)+'">'+esc(x.taak||t)+'</span><span class="ovl-w">'+esc(pmFreq({taken:[t]})||x.frequentie||"")+(b.uit?" · uit bedrijf":"")+"</span>"+(skipMag&&!sk?'<button type="button" class="tekstknop ovl-skip" data-ovlskip="'+esc(t)+'" title="Deze taak op deze dag overslaan">Overslaan</button>':"")+'</span><span class="ovr-lm">'+esc(lmKort(b.lijn+" / "+b.lijndeel))+'</span><span></span><span></span></div>'+(sk?'<div class="ovl-skipvak"><input type="text" class="zatinvoer" id="ovl_skipreden" maxlength="200" placeholder="Reden, bijvoorbeeld: lijn draait door"><button type="button" class="knop hoofd" data-ovlskipop="'+esc(t)+'">Overslaan</button><button type="button" class="tekstknop" data-ovlskipnee>Annuleren</button></div>':"")}));
+  const skipRijen=skips.map(x=>{const t=(pmPlan().taken||{})[x.taak]||((D.pm||[]).find(y=>y.id===x.taak))||{};return'<div class="ovr ovr-pm ovl-overslaan"><span></span><span></span><span></span><span></span><b class="ovr-nr">'+esc(x.taak)+'</b><span class="ovr-om"><s class="ovr-t">'+esc(t.taak||x.taak)+'</s><span class="ovl-w">Overgeslagen: '+esc(x.reden||"geen reden")+(x.door?" ("+esc(x.door)+")":"")+"</span>"+(skipMag?'<button type="button" class="tekstknop ovl-skip" data-ovlskipterug="'+esc(x.taak)+'">Terugzetten</button>':"")+"</span><span></span><span></span><span></span></div>"});
+  const band=(l,n)=>'<div class="ovr-band">'+esc(l)+" · "+n+"</div>";
+  const lijst='<div class="ovl-lijst" id="tabel">'+
+    (groepen.length?groepen.map(x=>band(x.l,x.x.length)+x.x.map(y=>rij(y,x.g)).join("")).join(""):'<p class="leegmelding">'+(filt?"Geen bonnen met dit filter.":"Geen open bonnen op deze dag.")+"</p>")+
+    (prev.length||pmRijen.length||skipRijen.length?band("Preventief, altijd prio 1",prev.length+pmTal)+prev.map(y=>rij(y,"prev")).join("")+pmRijen.join("")+skipRijen.join(""):"")+"</div>";
+  const filters=OVLF.map(f=>[f,alle.filter(f[2]).length]).filter(([f,n])=>n||OVLFILTER===f[0]).map(([f,n])=>'<button type="button" class="ovl-f" data-ovlfilter="'+f[0]+'" aria-pressed="'+(OVLFILTER===f[0])+'"><b>'+n+"</b> "+esc(f[1])+"</button>").join("")+(OVLFILTER?'<button type="button" class="tekstknop" data-ovlfilter="">Alles tonen</button>':"");
+  const knoppen=(p&&wv&&!kijk?'<button class="knop" type="button" data-ovlapp>'+ico("sleutel")+"Hele dag naar monteursapp</button>":"")+(p?'<a class="knop" href="#stop" data-ovlplan="'+esc(p.datum)+'">'+ico("agenda")+"Openen in planning</a>":"")+(OVLNRS.length?'<button class="knop hoofd" type="button" data-ovlpres>Presenteren</button>':"");
+  const stand='<p class="ovl-stand"><span>Besproken <b>'+nBespr+" van "+alle.length+'</b> <span class="ovl-balk"><i style="width:'+(alle.length?Math.round(100*nBespr/alle.length):0)+'%"></i></span></span>'+(p?"<span>Ingepland <b>"+urenTekst(urenTot)+" uur</b>"+(cap?" van "+urenTekst(cap)+" manuren":"")+"</span>":"")+(p&&(p.teamleider||p.monteurs)?"<span>"+esc([p.teamleider&&"Teamleider "+p.teamleider,p.monteurs&&"Monteurs "+p.monteurs].filter(Boolean).join(" · "))+"</span>":"")+"</p>";
+  const bulk=wv&&!kijk?'<div class="zatbulk bonbulk" id="bon_bulk" hidden><span id="bon_bulktal"></span><select class="statuskeuze" id="bon_bstatus" aria-label="Status voor de gekozen bonnen"><option value="">Status kiezen</option>'+BONSTATUS.concat(BONSLOT).map(x=>"<option>"+x+"</option>").join("")+'</select><input type="date" class="zatinvoer" id="bon_bdatum" aria-label="Dag voor de gekozen bonnen"><button class="knop" type="button" id="bon_bstat">Status zetten</button><button class="knop" type="button" id="bon_bdat">Verplaatsen naar deze dag</button><button class="tekstknop" type="button" id="bon_balles">Alles kiezen</button><button class="tekstknop" type="button" id="bon_bwis">Wissen</button></div>':"";
+  $("#view").innerHTML=kop("Zaterdagoverleg","Kies links een dag en klik op een bon. Wat je verandert staat klaar tot Alles opslaan; de lijst verspringt pas daarna.",false,"")+
+    '<div class="ovl-wrap">'+links+'<div style="min-width:0"><div class="ovl-top"><div><h2>'+esc(titel)+"</h2>"+stand+'</div><div class="ovl-knoppen">'+knoppen+"</div></div>"+(filters?'<div class="ovl-filters">'+filters+"</div>":"")+bulk+lijst+"</div></div>";
   if(wv)bonBulkTeken();
+}
+/* Presenteren: per bon de echte bon groot links, het bonvenster rechts. De laatste dia toont alles wat klaarstaat, met Alles opslaan. */
+function vOvlShow(titel,bespr){
+  const nrs=OVLNRS;
+  if(OVLEIND){
+    const l=[...CONCEPT.entries()];
+    $("#view").innerHTML='<div class="ovs-eind"><div class="ovs-kop"><b>'+esc(titel)+'</b><span class="ovl-zacht">'+nrs.filter(n=>bespr.has(n)).length+" van "+nrs.length+' besproken</span><button type="button" class="knop" data-ovlstop style="margin-left:auto">Stoppen met presenteren</button></div>'+
+      '<h2>'+(l.length?l.length+(l.length===1?" wijziging staat":" wijzigingen staan")+" klaar":"Er staat niets klaar om op te slaan")+"</h2>"+
+      (l.length?'<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:120px">Bon</th><th>Wat er verandert</th><th style="width:44px"></th></tr></thead><tbody>'+l.map(([k,x])=>"<tr><td><b>"+esc(cNaam(x))+"</b></td><td>"+esc(cTekst(x))+'</td><td><button type="button" class="icoonknop" data-ovlweg="'+esc(k)+'" aria-label="'+esc("Wijziging bij "+cNaam(x)+" weghalen")+'">'+ico("sluit")+"</button></td></tr>").join("")+"</tbody></table></div>":'<p class="ovl-zacht">Alles is opgeslagen of er is niets veranderd.</p>')+
+      '<div class="ovs-eindknop"><button type="button" class="knop" data-ovlterug>‹ Terug naar de bonnen</button>'+(l.length?'<button type="button" class="knop hoofd" data-ovlopslaan>Alles opslaan</button>':"")+"</div></div>";
+    return;
+  }
+  const nr=BV&&nrs.includes(BV.nr)?BV.nr:nrs[0],i=nrs.indexOf(nr),c=zatBon(nr);
+  if(!c){$("#view").innerHTML='<p class="leegmelding">Geen bonnen om te presenteren.</p><button type="button" class="knop" data-ovlstop>Stoppen met presenteren</button>';return}
+  const dots=nrs.map((n,j)=>'<button type="button" class="ovs-dot'+(j===i?" aan":CONCEPT.has(cSleutel("bon",n))?" gew":bespr.has(n)?" bespr":"")+'" data-ovsga="'+esc(n)+'" title="'+esc(n)+'" aria-label="'+esc(n)+'"></button>').join("");
+  const u=OVLBEELD.get(nr),kan=c.bon&&c.bon.beeld&&MODE==="enc"&&bonnen().sleutel;
+  const tekst='<div class="ovs-tekst"><h2>'+esc(c.omschrijving)+"</h2><p>"+esc([c.nr,c.lijn,c.machine].filter(Boolean).join(" · "))+"</p>"+(c.opmerking?'<p class="ovl-zacht">'+esc(c.opmerking)+"</p>":"")+(kan?'<p class="ovl-zacht">De bon wordt geladen…</p>':"")+"</div>";
+  $("#view").innerHTML='<div class="ovs"><div class="ovs-kop"><b>'+esc(titel)+'</b><span class="ovl-zacht">Bon '+(i+1)+" van "+nrs.length+'</span><div class="ovs-dots">'+dots+'</div><button type="button" class="knop" data-ovlstop>Stoppen</button></div>'+
+    '<div class="ovs-bon" id="ovs_bon" data-nr="'+esc(nr)+'">'+(u?'<img src="'+u+'" alt="Bon '+esc(nr)+'">':tekst)+"</div></div>";
+  if(kan&&!u)ovsBeeld(nr);
+  if(nrs[i+1])ovsBeeld(nrs[i+1]);
+}
+async function ovsBeeld(nr){
+  const c=zatBon(nr);if(!c||!c.bon||!c.bon.beeld||MODE!=="enc"||!bonnen().sleutel)return;
+  let u=OVLBEELD.get(nr);
+  if(!u){try{u=URL.createObjectURL(await bonBestand(c,"beeld"));OVLBEELD.set(nr,u)}catch(_){return}}
+  const e=$("#ovs_bon");if(e&&e.dataset.nr===nr)e.innerHTML='<img src="'+u+'" alt="Bon '+esc(nr)+'">';
+}
+function ovlVerver(){if(HUIDIG!=="overleg")return;const y=scrollY;vOverleg();if(Math.abs(scrollY-y)>2)scrollTo(0,y)}
+function ovlShow(aan){
+  OVLSHOW=aan;OVLEIND=false;
+  document.documentElement.classList.toggle("ovlpres",aan);document.documentElement.classList.toggle("ovlshow",aan);
+  if(aan){vOverleg();const nr=BV&&OVLNRS.includes(BV.nr)?BV.nr:OVLNRS[0];if(nr)bonVenster(nr)}
+  else vOverleg();
+  scrollTo(0,0);
 }
 document.addEventListener("click",e=>{
   if(HUIDIG!=="overleg")return;
   const d=e.target.closest("[data-ovldag]");if(d){const open=BV&&$("#bonvenster")&&!$("#bonvenster").hidden;OVLDAG=d.dataset.ovldag;BONKIES.clear();vOverleg();if(open)ovlEersteBon();return}
   const b=e.target.closest("[data-ovlbespr]");if(b){const aan=b.getAttribute("aria-pressed")!=="true";ovlBesprZet(ovlKeuze(),b.dataset.ovlbespr,aan);vOverleg();return}
-  if(e.target.closest("[data-ovlpres]")){document.documentElement.classList.toggle("ovlpres");vOverleg();return}
+  if(e.target.closest("[data-ovlpres]")){ovlShow(true);return}
+  if(e.target.closest("[data-ovlstop]")){ovlShow(false);return}
+  const fi=e.target.closest("[data-ovlfilter]");if(fi){OVLFILTER=OVLFILTER===fi.dataset.ovlfilter?"":fi.dataset.ovlfilter;vOverleg();return}
+  const sg=e.target.closest("[data-ovsga]");if(sg){OVLEIND=false;bonVenster(sg.dataset.ovsga);return}
+  const ow=e.target.closest("[data-ovlweg]");if(ow){cWegEen(ow.dataset.ovlweg);return}
+  if(e.target.closest("[data-ovlterug]")){OVLEIND=false;const n=OVLNRS[OVLNRS.length-1];if(n)bonVenster(n);else vOverleg();return}
+  if(e.target.closest("[data-ovlopslaan]")){cOpslaan().then(()=>vOverleg());return}
   const pl=e.target.closest("[data-ovlplan]");if(pl){DAGKEUZE=pl.dataset.ovlplan;const d=datum(DAGKEUZE);MAAND={j:d.getFullYear(),m:d.getMonth()};return}
   if(e.target.closest("[data-ovlapp]")){ovlApp();return}
   const vo=e.target.closest("[data-ovlop],[data-ovlneer]");if(vo){ovlVerschuif(vo.dataset.ovlop||vo.dataset.ovlneer,vo.dataset.ovlop?-1:1);return}
@@ -5674,7 +5812,7 @@ document.addEventListener("click",e=>{
   const so=e.target.closest("[data-ovlskipop]");if(so){const i=$("#ovl_skipreden"),rd=i?i.value.trim():"";if(!rd){melder("Vul eerst de reden in.");if(i)i.focus();return}pmSkipStuur(ovlKeuze(),so.dataset.ovlskipop,rd,false);return}
   const st=e.target.closest("[data-ovlskipterug]");if(st){pmSkipStuur(ovlKeuze(),st.dataset.ovlskipterug,"",true);return}
   const r=e.target.closest("[data-ovlbon]");
-  if(r&&!e.target.closest("input,button,a,select,label")){bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovl-rij").forEach(x=>x.classList.toggle("ovl-aan",x===r))}
+  if(r&&!e.target.closest("input,button,a,select,label")){bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovr").forEach(x=>x.classList.toggle("aan",x===r))}
 });
 /* Volgorde van de bonnen op een dag: slepen of de pijltjes in het Zaterdagoverleg. Die volgorde geldt in de planning, de daglijst en de PDF
    (rij.volgorde via de wachtrij, bonnen.py volgorde_wijzig). Een bon blijft in zijn eigen deel: correctief of preventief. */
@@ -5706,7 +5844,9 @@ function ovlVerschuif(nr,stap,naar){
 }
 document.addEventListener("dragstart",e=>{const t=e.target.closest&&e.target.closest("[data-ovlsleep]");if(!t)return;OVLSLEEP=t.dataset.ovlsleep;t.classList.add("ovl-sleept");try{e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",OVLSLEEP)}catch(_){}});
 document.addEventListener("dragover",e=>{if(!OVLSLEEP)return;const t=e.target.closest&&e.target.closest("[data-ovlsleep]");document.querySelectorAll(".ovl-hier").forEach(x=>x.classList.remove("ovl-hier"));if(t&&t.dataset.ovlsleep!==OVLSLEEP){e.preventDefault();t.classList.add("ovl-hier")}});
-document.addEventListener("drop",e=>{if(!OVLSLEEP)return;const t=e.target.closest&&e.target.closest("[data-ovlsleep]");e.preventDefault();const van=OVLSLEEP;OVLSLEEP=null;if(t&&t.dataset.ovlsleep!==van)ovlVerschuif(van,0,t.dataset.ovlsleep);else vOverleg()});
+document.addEventListener("drop",e=>{if(!OVLSLEEP)return;const t=e.target.closest&&e.target.closest("[data-ovlsleep]");e.preventDefault();const van=OVLSLEEP;OVLSLEEP=null;
+  const g=x=>{const el=document.querySelector('[data-ovlsleep="'+CSS.escape(x)+'"]');return el&&el.dataset.ovlgroep};
+  if(t&&t.dataset.ovlsleep!==van){if(g(van)!==t.dataset.ovlgroep){melder("Slepen kan binnen dezelfde prio. Verander de prio in het bonvenster.");vOverleg();return}ovlVerschuif(van,0,t.dataset.ovlsleep)}else vOverleg()});
 document.addEventListener("dragend",()=>{if(OVLSLEEP){OVLSLEEP=null;document.querySelectorAll(".ovl-sleept,.ovl-hier").forEach(x=>x.classList.remove("ovl-sleept","ovl-hier"))}});
 /* PM-taken voor één dag overslaan, met een reden. pmplan.overslaan bewaart het; pm.py haalt de taak van die dag weg (lijst, PDF en de app). */
 const pmSkips=t=>((pmPlan().overslaan)||[]).filter(x=>x.datum===t);
@@ -5728,13 +5868,10 @@ async function pmSkipStuur(dag,taak,reden,terug){
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="ovl_skipreden"){e.preventDefault();const b=document.querySelector("[data-ovlskipop]");if(b)b.click()}});
 /* Bij het openen van het Zaterdagoverleg staat het meteen klaar voor het overleg: zonder balken en met de eerste bon van de dag rechts.
    Alleen voor de werkvoorbereider op een breed scherm; Stoppen met presenteren zet de balken terug. */
-function ovlEersteBon(){
-  const r=document.querySelector(".ovl-rij[data-ovlbon]");if(!r)return;
-  bonVenster(r.dataset.ovlbon);document.querySelectorAll(".ovl-rij").forEach(x=>x.classList.toggle("ovl-aan",x===r));
-}
+function ovlEersteBon(){if(OVLNRS[0])bonVenster(OVLNRS[0])}
+/* Bij het openen staat de werkstand klaar: menu blijft, de eerste bon van de dag staat rechts. Presenteren is een eigen knop. */
 function ovlStart(){
   if(HUIDIG!=="overleg"||!wvMag()||alleenKijken()||window.innerWidth<1000)return;
-  if(!document.documentElement.classList.contains("ovlpres")){document.documentElement.classList.add("ovlpres");vOverleg()}
   if(!BV||!$("#bonvenster")||$("#bonvenster").hidden)ovlEersteBon();
 }
 /* Alle open bonnen van de dag in één keer in de monteursapp, zoals Plannen voor monteurs. */
@@ -5768,7 +5905,7 @@ const monteurLabel=c=>{
   return'<span class="bvchip blauw">'+(c.weeksoort==="opname"||c.opdracht?"Opname bij monteurs":"Bij monteurs")+"</span>";
 };
 let BV=null;
-const bvLijst=()=>[...document.querySelectorAll("#tabel [data-bonkies]")].map(x=>x.dataset.bonkies);
+const bvLijst=()=>HUIDIG==="overleg"?OVLNRS.slice():[...document.querySelectorAll("#tabel [data-bonkies]")].map(x=>x.dataset.bonkies);
 /* Veiligheid per bon: wat er op de bon bij Let op komt (rij.veilig, bonnen.py bon_veilig). */
 const VEILIG=[["LOTOTO","LOTOTO"],["Hoogte","Werken op hoogte"],["Heet werk","Heet werk"]];
 function bvBegin(nr){
@@ -5777,28 +5914,127 @@ function bvBegin(nr){
   const orig={prio:op&&r?zatPrio(r):c.prio||null,uitvoerder:r?r.uitvoerder||"":"",uren:r&&r.uren!=null?r.uren:null};
   const monteur=c.week?(c.weeksoort==="opname"?"opn":"uit"):"niet";
   const best={};tdRegels(nr).forEach(x=>{if(x.id){const q=cv("bestel",x.id);best[x.id]="groep" in q?q.groep:x.groep}});
-  const k={status:cStatus(c),dag:cDag(c),prio:"prio" in pv?pv.prio:orig.prio,uitvoerder:"uitvoerder" in pv?pv.uitvoerder:orig.uitvoerder,uren:"uren" in pv?pv.uren:orig.uren,monteur,opdracht:cOpdracht(c),best,extra:(c.extra||[]).slice(),veilig:(c.veilig||[]).slice(),nieuweRegel:""};
-  return{nr,c,op,r,orig,monteur,k,start:bvSig(k),fout:"",vraag:null};
+  const k={status:cStatus(c),dag:cDag(c),prio:"prio" in pv?pv.prio:orig.prio,uitvoerder:"uitvoerder" in pv?pv.uitvoerder:orig.uitvoerder,uren:"uren" in pv?pv.uren:orig.uren,monteur:"monteur" in pv?pv.monteur:monteur,opdracht:cOpdracht(c),best,extra:("extra" in pv?pv.extra:c.extra||[]).slice(),veilig:("veilig" in pv?pv.veilig:c.veilig||[]).slice(),nieuweRegel:""};
+  /* In het Zaterdagoverleg gaat elke keuze meteen in CONCEPT: opslaan gebeurt aan het eind met Alles opslaan. */
+  const ovl=HUIDIG==="overleg"&&wvMag()&&!alleenKijken();
+  return{nr,c,op,r,orig,monteur,k,start:bvSig(k),fout:"",vraag:null,ovl,open:BV&&BV.open||new Set()};
 }
 const bvSig=k=>JSON.stringify(Object.assign({},k,{nieuweRegel:""}));
-const bvVuil=()=>!!BV&&(bvSig(BV.k)!==BV.start||!!(BV.k.nieuweRegel||"").trim());
+const bvVuil=()=>!!BV&&!BV.ovl&&(bvSig(BV.k)!==BV.start||!!(BV.k.nieuweRegel||"").trim());
 function bonVenster(nr){
+  if(BV&&BV.ovl&&$("#bonvenster")&&!$("#bonvenster").hidden){bvLees();bvConcept()}
   if(BV&&bvVuil()&&BV.nr!==nr){bvVraag(()=>{BV=null;bonVenster(nr)});return}
   BV=bvBegin(nr);if(!BV)return;
   let v=$("#bonvenster");
   if(!v){v=document.createElement("div");v.id="bonvenster";v.className="bvdim";v.innerHTML='<div class="bvpop" role="dialog" aria-modal="true" aria-labelledby="bv_titel" tabindex="-1"></div>';document.body.appendChild(v)}
-  v.hidden=false;document.documentElement.classList.add("bvopen");
-  bvTeken();v.querySelector(".bvpop").focus();
+  v.hidden=false;v.classList.toggle("ovlbv",!!BV.ovl);document.documentElement.classList.add("bvopen");
+  bvTeken();v.querySelector(".bvpop").focus({preventScroll:true});
 }
 function bvDicht(gedwongen){
   if(!gedwongen&&bvVuil()){bvVraag(()=>bvDicht(true));return}
+  const ovl=BV&&BV.ovl;if(ovl)bvConcept();
   BV=null;const v=$("#bonvenster");if(v){v.hidden=true;v.querySelector(".bvpop").innerHTML=""}
   document.documentElement.classList.remove("bvopen");
+  if(ovl)ovlVerver();
 }
+/* Zaterdagoverleg: wat in het venster staat, gaat als regel van deze bon in CONCEPT. Gelijk aan opgeslagen haalt de wijziging weer weg. */
+function bvConcept(){
+  if(!BV||!BV.ovl)return;const {c,k,orig,op,r}=BV,nr=c.nr;
+  if((k.nieuweRegel||"").trim()&&k.extra.length<8){k.extra.push(k.nieuweRegel.trim().slice(0,200));k.nieuweRegel=""}
+  if(!(k.uren==null||(k.uren>=0&&k.uren<=100)))k.uren=orig.uren;
+  if((k.status==="Gepland"||k.status==="Leverdatum")&&!k.dag)return;
+  cBonSt(c,k.status,STMETDAG.includes(k.status)?k.dag:undefined);
+  cZet("bon",nr,{prio:k.prio===""||k.prio==null?null:Number(k.prio)},{prio:orig.prio});
+  if(op&&r)cZet("bon",nr,{uitvoerder:k.uitvoerder,uren:k.uren},{uitvoerder:orig.uitvoerder,uren:orig.uren});
+  cZet("bon",nr,{monteur:k.monteur,opdracht:k.opdracht||"",extra:k.extra.slice(),veilig:k.veilig.slice()},{monteur:BV.monteur,opdracht:c.opdracht||"",extra:c.extra||[],veilig:c.veilig||[]});
+  tdRegels(nr).forEach(x=>{if(x.id&&k.best[x.id]!==undefined)cZet("bestel",x.id,{groep:k.best[x.id]},{groep:x.groep})});
+  BV.start=bvSig(k);
+}
+/* Namen voor de knopjes bij Uitvoerder: wie die dag in het rooster of op de planning staat, anders iedereen uit het rooster. */
+function ovlNamen(dag){
+  const r=roosterData(),m=r.mensen.slice(),d=(r.dagen||{})[dag]||{},p=planOpDatum(dag);
+  const t=[d.O,d.M,d.N,p&&p.monteurs,p&&p.teamleider].filter(Boolean).join(" ");
+  const op=m.filter(n=>new RegExp("(^|[^\\p{L}])"+n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"($|[^\\p{L}])","iu").test(t));
+  return(op.length>=2?op:m).slice(0,8);
+}
+function ovlDagKeuzes(c,k){
+  const nu=pmNu(),van=new Date(nu.getFullYear(),nu.getMonth(),nu.getDate()),op=planVanBon(c.nr),uit=[];
+  if(op)uit.push(op.datum);
+  plannen().filter(p=>datum(p.datum)>=van).sort((a,b)=>datum(a.datum)-datum(b.datum)).forEach(p=>{if(!uit.includes(p.datum)&&uit.length<4)uit.push(p.datum)});
+  if(k.status==="Gepland"&&k.dag&&!uit.includes(k.dag))uit.push(k.dag);
+  return uit.sort((a,b)=>datum(a)-datum(b));
+}
+/* Het bonvenster in het Zaterdagoverleg: keuzes als knopjes, de rest ingeklapt, zodat het zonder scrollen past. Geen Opslaan per bon. */
+function bvTekenOvl(){
+  const v=$("#bonvenster");const {c,k,op}=BV,nr=c.nr;
+  bvConcept();
+  const p=cv("bon",nr),lijst=bvLijst(),i=lijst.indexOf(nr),vorige=i>0?lijst[i-1]:null,laatste=i<0||i===lijst.length-1;
+  const g=f=>f.some(x=>x in p)?" gewijzigd":"";
+  const rij=(l,inh,f)=>'<div class="ovz-rij'+(f?g(f):"")+'"><span class="ovz-l">'+l+'</span><div class="ovz-w">'+inh+"</div></div>";
+  const chip=(at,w,t,aan,titel)=>'<button type="button" class="ovz-chip" '+at+'="'+esc(w)+'" aria-pressed="'+!!aan+'"'+(titel?' title="'+esc(titel)+'"':"")+">"+esc(t)+"</button>";
+  const opt=x=>"<option"+(x===k.status?" selected":"")+">"+esc(x)+"</option>";
+  const dagHtml=ovlDagKeuzes(c,k).map(t=>chip("data-ovzdag",t,ovlDagKort(t),k.status==="Gepland"&&k.dag===t)).join("")+chip("data-ovzdag","","Van de dag af",k.status==="Te plannen","Status Te plannen, de bon gaat van de planning af")+
+    '<input type="date" class="zatinvoer ovz-datum" id="bv_dag" value="'+(k.dag?isoTekst(k.dag):"")+'" aria-label="Andere dag" title="Andere dag">'+
+    '<select class="statuskeuze ovz-status" id="bv_status" aria-label="Status">'+BONSTATUS.map(opt).join("")+'<optgroup label="Afsluiten zonder uitvoeren">'+BONSLOT.map(opt).join("")+"</optgroup></select>";
+  const namen=op?ovlNamen(op.datum):[];
+  const uitvHtml=namen.map(n=>chip("data-ovzuitv",n,n,k.uitvoerder===n)).join("")+'<input type="text" class="zatinvoer ovz-tekst" id="bv_uitv" list="ovz_namen" autocomplete="off" placeholder="Andere" value="'+esc(namen.includes(k.uitvoerder)?"":k.uitvoerder||"")+'"'+(namen.includes(k.uitvoerder)?' data-chip="1"':"")+' aria-label="Uitvoerder"><datalist id="ovz_namen">'+roosterData().mensen.map(n=>'<option value="'+esc(n)+'">').join("")+"</datalist>";
+  const urenHtml='<span class="ovz-uren"><button type="button" data-ovzuren="-0.5" aria-label="Half uur minder">−</button><input type="text" inputmode="decimal" id="bv_uren" value="'+esc(k.uren==null?"":urenTekst(k.uren))+'" aria-label="Uren"><button type="button" data-ovzuren="0.5" aria-label="Half uur meer">+</button></span>';
+  const veiligHtml=VEILIG.map(([w,t])=>chip("data-ovzveilig",w,t,k.veilig.includes(w))).join("");
+  const regels=tdRegels(nr),nietB=regels.filter(x=>WACHTGROEP.includes(k.best[x.id]||x.groep)).length,binnen=regels.filter(x=>(k.best[x.id]||x.groep)==="Binnen").length;
+  const ondHtml=regels.map(x=>{const gg=x.id?k.best[x.id]:x.groep,lev=[zoekNaam(x),x.specificatie].filter(Boolean).join(" · ");
+    return'<div class="bvond"><b>'+esc(x.onderdeel||"Onderdeel")+(x.aantal?' <span class="zacht">('+esc(x.aantal)+"x)</span>":"")+"</b>"+(lev?"<small>"+esc(lev)+"</small>":"")+(x.id?bvSeg("best:"+x.id,[["Nog niet besteld","Nog niet"],["Opgevraagd","Opgevraagd"],["Besteld","Besteld"],["Binnen","Binnen"]],gg==="Eerst opmeten of checken"?"Nog niet besteld":gg):"<small>"+esc(gg||"")+"</small>")+"</div>"}).join("");
+  const det=(id,kop,inh,f)=>'<details class="ovz-d'+(f?g(f):"")+'" data-ovzdet="'+id+'"'+(BV.open.has(id)?" open":"")+"><summary>"+kop+"</summary><div>"+inh+"</div></details>";
+  const extraHtml=(k.extra.length?'<ol class="bvextra">'+k.extra.map((t,j)=>'<li><span>'+esc(t)+"</span>"+(j?'<button type="button" class="icoonknop" data-bvextraop="'+j+'" aria-label="Regel omhoog" title="Omhoog">↑</button>':"")+'<button type="button" class="icoonknop" data-bvextraweg="'+j+'" aria-label="Regel weghalen">'+ico("sluit")+"</button></li>").join("")+"</ol>":"")+
+    (k.extra.length<8?'<div class="bvrij bvextrarij"><input type="text" class="zatinvoer" id="bv_extranieuw" maxlength="200" placeholder="Bijvoorbeeld: eerst kettingspanning nalopen" value="'+esc(k.nieuweRegel||"")+'"><button type="button" class="knop" data-bvextraplus>Toevoegen</button></div>':"");
+  const lm=[c.lijn,c.machine].filter(Boolean).join(" / ");
+  const volgendeTekst=OVLSHOW?(laatste?"Besproken, naar overzicht ›":"Besproken, volgende ›"):(laatste?"Klaar":"Volgende ›");
+  v.querySelector(".bvpop").innerHTML=
+    '<header class="ovz-kop"><div class="ovz-titel"><span class="ovr-p'+g(["prio"])+'">'+prio(k.prio)+'</span><div><h2 id="bv_titel">'+esc(c.omschrijving||nr)+"</h2><small>"+esc([nr,lm].filter(Boolean).join(" · "))+'</small></div></div><button type="button" class="icoonknop" data-bvdicht aria-label="Sluiten">'+ico("sluit")+"</button></header>"+
+    '<div class="ovz-lijf">'+
+      rij("Prio",bvSeg("prio",[[1,"P1"],[2,"P2"],[3,"P3"],["","Geen"]],k.prio==null?"":k.prio),["prio"])+
+      rij("Dag",dagHtml,["status","dag"])+
+      (op?rij("Uitvoerder",uitvHtml,["uitvoerder"])+rij("Uren",urenHtml,["uren"]):"")+
+      rij("Veiligheid",veiligHtml,["veilig"])+
+      rij("Monteurs",bvSeg("monteur",[["niet","Niet in app"],["uit","Uitvoeren"],["opn","Opnemen"]],k.monteur)+(k.monteur!=="niet"||k.opdracht?'<input type="text" class="zatinvoer ovz-tekst ovz-opdr" id="bv_opdr" maxlength="1000" placeholder="Opdracht voor de monteur, bijvoorbeeld: maat koppeling opnemen" value="'+esc(k.opdracht||"")+'">':""),["monteur","opdracht"])+
+      rij("Onderdelen",regels.length?det("ond",esc(nietB?nietB+" niet besteld":binnen===regels.length?"Alles binnen":binnen+" van "+regels.length+" binnen"),ondHtml):'<span class="ovl-zacht">Geen bestelregels</span>')+
+      det("extra","Extra instructies ("+k.extra.length+")",extraHtml,["extra"])+
+      det("opm",c.opmerking?"Opmerking: "+esc(c.opmerking.slice(0,70))+(c.opmerking.length>70?"…":""):"Geen opmerking",'<p class="bvopm">'+esc(c.opmerking||"")+"</p>")+
+    "</div>"+
+    '<footer class="ovz-voet"><button type="button" class="knop" data-bvga="'+esc(vorige||"")+'"'+(vorige?"":" disabled")+' aria-label="Vorige bon">‹</button>'+(!OVLSHOW&&c.bon&&c.bon.pdf&&MODE==="enc"&&bonnen().sleutel?'<button type="button" class="knop" data-bon="pdf" data-nr="'+esc(nr)+'">Bon openen</button>':"")+'<span class="ovz-tel">'+(i>=0?(i+1)+" van "+lijst.length:"")+'</span><button type="button" class="knop hoofd" data-ovznext>'+volgendeTekst+"</button></footer>";
+  ovlVerver();
+}
+function ovlVolgende(){
+  if(!BV)return;bvLees();
+  const lijst=bvLijst(),i=lijst.indexOf(BV.nr);
+  if(OVLSHOW)ovlBesprZet(ovlKeuze(),BV.nr,true);
+  if(i>=0&&i<lijst.length-1){bonVenster(lijst[i+1]);return}
+  if(OVLSHOW){OVLEIND=true;bvDicht(true);scrollTo(0,0)}else bvDicht(true);
+}
+document.addEventListener("click",e=>{
+  if(!BV||!BV.ovl||!e.target.closest("#bonvenster"))return;
+  const d=e.target.closest("[data-ovzdag]");if(d){bvLees();const t=d.dataset.ovzdag;if(t){BV.k.status="Gepland";BV.k.dag=t}else{BV.k.status="Te plannen";BV.k.dag=""}bvTeken();return}
+  const u=e.target.closest("[data-ovzuitv]");if(u){bvLees();const n=u.dataset.ovzuitv;BV.k.uitvoerder=BV.k.uitvoerder===n?"":n;bvTeken();return}
+  const h=e.target.closest("[data-ovzuren]");if(h){bvLees();const n=Math.max(0,Math.min(100,(Number(BV.k.uren)||0)+Number(h.dataset.ovzuren)));BV.k.uren=n||null;bvTeken();return}
+  const vg=e.target.closest("[data-ovzveilig]");if(vg){bvLees();const w=vg.dataset.ovzveilig,a=new Set(BV.k.veilig);if(a.has(w))a.delete(w);else a.add(w);BV.k.veilig=VEILIG.map(x=>x[0]).filter(x=>a.has(x));bvTeken();return}
+  if(e.target.closest("[data-ovznext]")){ovlVolgende();return}
+});
+document.addEventListener("toggle",e=>{const d=e.target;if(!BV||!d.matches||!d.matches("[data-ovzdet]"))return;if(d.open)BV.open.add(d.dataset.ovzdet);else BV.open.delete(d.dataset.ovzdet)},true);
+/* Sneltoetsen in het Zaterdagoverleg: pijltjes vorige en volgende, 1, 2 en 3 de prio, 0 geen prio, B de bon groot. Niet tijdens het typen. */
+document.addEventListener("keydown",e=>{
+  if(HUIDIG!=="overleg"||e.ctrlKey||e.metaKey||e.altKey||(e.target.matches&&e.target.matches("input,textarea,select")))return;
+  if(OVLEIND&&OVLSHOW&&e.key==="ArrowLeft"){OVLEIND=false;const n=OVLNRS[OVLNRS.length-1];if(n)bonVenster(n);return}
+  if(!BV||!BV.ovl||$("#bonvenster").hidden||!$("#bonvak").hidden)return;
+  const k=e.key;
+  if(k==="ArrowRight"||k==="PageDown"||(OVLSHOW&&k===" ")){e.preventDefault();ovlVolgende();return}
+  if(k==="ArrowLeft"||k==="PageUp"){e.preventDefault();bvLees();const l=bvLijst(),i=l.indexOf(BV.nr);if(i>0)bonVenster(l[i-1]);return}
+  if(["0","1","2","3"].includes(k)){bvLees();BV.k.prio=k==="0"?null:Number(k);bvTeken();return}
+  if(k==="b"||k==="B"){const c=BV.c;if(c.bon&&c.bon.beeld&&MODE==="enc"&&bonnen().sleutel)toonBon(c).catch(()=>melder("De bon kan nu niet worden opgehaald."))}
+});
 function bvVraag(daarna){BV.vraag=daarna;bvTeken()}
 const bvSeg=(naam,opties,waarde)=>'<span class="bvseg" role="group">'+opties.map(([w,t])=>'<button type="button" data-bvzet="'+naam+'" data-w="'+esc(w)+'" aria-pressed="'+(String(waarde)===String(w))+'">'+esc(t)+"</button>").join("")+"</span>";
 function bvTeken(){
   const v=$("#bonvenster");if(!v||!BV)return;
+  if(BV.ovl){bvTekenOvl();return}
   const {c,k,op}=BV,lijst=bvLijst(),i=lijst.indexOf(BV.nr),vorige=i>0?lijst[i-1]:null,volgende=i>=0&&i<lijst.length-1?lijst[i+1]:null;
   const opt=x=>"<option"+(x===k.status?" selected":"")+">"+esc(x)+"</option>";
   const metDag=STMETDAG.includes(k.status);
@@ -5845,7 +6081,7 @@ function bvLees(){
   if(!BV)return;const k=BV.k,s=$("#bv_status"),d=$("#bv_dag"),u=$("#bv_uitv"),h=$("#bv_uren"),o=$("#bv_opdr"),xn=$("#bv_extranieuw");
   if(xn)k.nieuweRegel=xn.value;
   if(o)k.opdracht=o.value.trim();
-  if(u)k.uitvoerder=u.value.trim();
+  if(u&&!(u.dataset.chip&&!u.value.trim()))k.uitvoerder=u.value.trim();
   if(h){const t=h.value.trim().replace(",",".");k.uren=t===""?null:Number(t)}
   if(d)k.dag=d.value&&d.value>="2000"?isoTekst(d.value):"";
   if(s&&s.value!==k.status){
@@ -5913,9 +6149,18 @@ document.addEventListener("click",e=>{
   const vg=e.target.closest("[data-bvveilig]");if(vg){bvLees();const w=vg.dataset.bvveilig,a=new Set(BV.k.veilig);if(vg.checked)a.add(w);else a.delete(w);BV.k.veilig=VEILIG.map(x=>x[0]).filter(x=>a.has(x));bvTeken();return}
   const xo=e.target.closest("[data-bvextraop]");if(xo){bvLees();const i=+xo.dataset.bvextraop,a=BV.k.extra;if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]]}bvTeken();return}
 });
-document.addEventListener("change",e=>{if(BV&&e.target.closest("#bonvenster")&&e.target.id==="bv_status"){bvLees();BV.fout="";bvTeken()}});
+document.addEventListener("change",e=>{
+  if(!BV||!e.target.closest("#bonvenster"))return;
+  if(e.target.id==="bv_status"){bvLees();BV.fout="";bvTeken();return}
+  if(BV.ovl&&["bv_dag","bv_uitv","bv_uren","bv_opdr"].includes(e.target.id)){
+    bvLees();
+    if(e.target.id==="bv_dag"&&BV.k.dag&&!STMETDAG.includes(BV.k.status))BV.k.status="Gepland";
+    if(BV.k.uren!=null&&!(BV.k.uren>=0&&BV.k.uren<=100)){BV.k.uren=BV.orig.uren;melder("Vul de uren in als getal, bijvoorbeeld 1,5.")}
+    bvTeken();
+  }
+});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="bv_extranieuw"){e.preventDefault();const b=document.querySelector("[data-bvextraplus]");if(b)b.click()}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&BV&&!$("#bonvenster").hidden){e.stopPropagation();bvLees();bvDicht()}},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&BV&&!$("#bonvenster").hidden){e.stopPropagation();bvLees();if(OVLSHOW&&HUIDIG==="overleg")ovlShow(false);else bvDicht()}},true);
 /* Wat de uurronde op internet vond. Contactgegevens staan per leverancier één keer in D.leveranciers. */
 const levVan=n=>(D.leveranciers||[]).find(x=>norm(x.naam)===norm(n));
 const zoekNaam=x=>x.zoek&&x.zoek.bij||x.leverancier;
@@ -6851,7 +7096,7 @@ function route(){
   if(HUIDIG==="overleg"&&wasHier!=="overleg")setTimeout(ovlStart,0);
   markeerMenu();groetTeken();
   document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca","prod"].includes(HUIDIG));
-  document.documentElement.classList.toggle("ovl",HUIDIG==="overleg");if(HUIDIG!=="overleg")document.documentElement.classList.remove("ovlpres");
+  document.documentElement.classList.toggle("ovl",HUIDIG==="overleg");if(HUIDIG!=="overleg"){document.documentElement.classList.remove("ovlpres","ovlshow");OVLSHOW=OVLEIND=false;if(BV&&BV.ovl){bvConcept();bvDicht(true)}}
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
     if(!$("#paneel").hidden)sluitPaneel();
