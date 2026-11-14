@@ -389,6 +389,14 @@ html.inapp .mkop{display:none}
 .ex-fotos{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .ex-fotov{display:flex;flex-direction:column;align-items:center;gap:2px}
 .ex-fotov img{width:96px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--sunken)}
+.ex-alles{width:100%;justify-content:center;margin:0 0 12px}
+.ex-allesrij{display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.ex-allesrij>:first-child{flex:none;width:auto}
+.ex-allesrij>span{flex:1;min-width:0}
+.ex-allesrij b{display:block;font-weight:500;line-height:1.3}
+.ex-allesrij small{display:block;margin-top:2px;color:var(--ink2);font-size:.75rem}
+.ex-allesrij.mist{box-shadow:inset 3px 0 0 var(--warn)}
+.ex-allesrij .ex-mistekst{color:var(--warn-ink)}
 .ex-terug{display:flex;flex-direction:column;gap:10px;padding-top:6px;border-top:1px solid var(--line)}
 .ex-terug>div{display:flex;flex-direction:column;gap:8px}
 .ex-terug>div[hidden]{display:none}
@@ -5415,7 +5423,7 @@ function tdItems(alles){
   (D.opnamelijsten||[]).forEach(r=>{const x=olStandWv(r),g=r.digitaal?r.digitaal.gegevens:x.g;if((x.s==="klaar"||x.s==="af")&&g&&tdRecent(x.tijd))zet("opname","ol:"+r.ol+":"+x.tijd,{ol:r,g,tijd:x.tijd,door:x.door,tekst:"Opnamelijst "+r.machine})});
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
   /* De externe ploeg op zaterdag: per bon of PM-taak de laatste afmelding, meteen uit het tabblad Extern. Uitgevoerd verwerkt hem (tdExternOk). */
-  const exl=(EXTLIVE||[]).map(x=>Object.assign({},x,{pmbon:extPmBon(x)})),exLaatst={};
+  const exl=(EXTLIVE||[]).map(x=>Object.assign({},x,{pmbon:extPmBon(x)})),exLaatst={},exBulk={};
   (D.cm||[]).forEach(c=>(c.extern||[]).forEach(e=>{if(e.verwerkt===false&&!exl.some(y=>y.nr===c.nr&&y.tijd===e.tijd))exl.push(Object.assign({nr:c.nr},e))}));
   exl.forEach(e=>{const k=e.nr+"|"+(e.pmbon||"");if(!exLaatst[k]||tijdSleutel(e.tijd)>tijdSleutel(exLaatst[k].tijd))exLaatst[k]=e});
   Object.values(exLaatst).forEach(e=>{
@@ -5423,8 +5431,15 @@ function tdItems(alles){
     const c=e.pmbon?null:(D.cm||[]).find(y=>y.nr===e.nr)||null;
     if(!e.pmbon&&!c)return;
     if(c&&(c.extern||[]).some(y=>y.tijd===e.tijd&&y.verwerkt!==false))return;
-    const b=e.pmbon?tdPm(e.pmbon):null,t=((D.pmplan||{}).taken||{})[e.nr]||{};
-    zet("extern","ext:"+e.nr+":"+e.tijd,{c,b,ext:e,tijd:e.tijd,door:e.teamleider,tekst:e.pmbon?t.taak||e.nr:""});
+    const b=e.pmbon?tdPm(e.pmbon):null,t=((D.pmplan||{}).taken||{})[e.nr]||{},y={groep:"extern",key:"ext:"+e.nr+":"+e.tijd,c,b,ext:e,tijd:e.tijd,door:e.teamleider,tekst:e.pmbon?t.taak||e.nr:""};
+    const bulk=(e.gegevens||e).bulk;
+    if(bulk){(exBulk[bulk]=exBulk[bulk]||[]).push(y);return}
+    zet("extern",y.key,y);
+  });
+  /* Alles in één keer afgetekend door de teamleider: één melding voor de werkvoorbereider, met de bonnen eronder. */
+  Object.entries(exBulk).forEach(([id,l])=>{
+    const g=l.every(y=>tdGezien(y.key))||!!GEZIEN_LIVE["extb:"+id],e=l[0].ext;l.sort((a,b)=>nummer(a.ext.nr)-nummer(b.ext.nr));
+    if(!g||alles)uit.push({groep:"extern",key:"extb:"+id,gezien:g,lijst:l,tijd:l.map(y=>y.tijd).sort((a,b)=>tijdSleutel(b).localeCompare(tijdSleutel(a)))[0],door:e.teamleider,tekst:l.length+" bonnen in één keer afgetekend"});
   });
   bev.forEach(x=>{const nr=bonVan(x.id),c=nr?(D.cm||[]).find(y=>y.nr===nr)||null:null;if(c?zonderPrio(c):tdRecent(x.tijd))zet("afgekeurd","bev:"+x.id,{c,bev:x,b:tdPm(x.nr),tijd:x.tijd,door:x.door,tekst:x.opmerking})});
   (PMAF||[]).forEach(a=>{if(/\(externe ploeg\)$/.test(a.door||""))return;const b=tdPm(a.nr);if(a.status==="Deels uitgevoerd")zet("deels","pmd:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking});else if(a.opmerking&&tdRecent(a.tijd))zet("pmopm","pmo:"+a.nr+":"+a.tijd,{a,b,tijd:a.tijd,door:a.door,tekst:a.opmerking})});
@@ -5512,6 +5527,11 @@ function tdRegel(x,g){
     if(bij.length)feit.push(["Hoort bij",esc(bij.map(t=>t.id+" "+t.taak).join("; "))]);
     feit.push(["PM-bon",esc(b?pmTitel(b)+", "+b.datum:x.a.nr)]);
   }else if(id==="deels"||id==="afgemeld"||id==="opdracht"){if(x.tekst)waarom="“"+x.tekst+"”"}
+  else if(id==="extern"&&x.lijst){
+    nr=x.lijst.length+" bonnen";titel="Alles in één keer afgetekend door "+(x.door||"de teamleider");plek="";
+    waarom="De teamleider keurde alles wat de monteurs klaarzetten in één keer goed. Controleer de lijst en klik Alles uitgevoerd.";
+    feit.push(["Bonnen","<ul>"+x.lijst.map(y=>{const e=y.ext,g=e.gegevens||e;return"<li><b>"+esc(e.nr)+"</b> "+esc(y.c?y.c.omschrijving:y.tekst)+'<span class="zacht"> · '+esc([e.status,e.uitvoerder,e.uren?urenTekst(e.uren)+" uur":"",(g.fotos||[]).length?(g.fotos.length===1?"1 foto":g.fotos.length+" foto's"):""].filter(Boolean).join(", "))+"</span></li>"}).join("")+"</ul>"]);
+  }
   else if(id==="extern"){
     const e=x.ext,g=e.gegevens||e,ond=g.onderdelen||[];
     if(!c){nr=e.nr;titel=x.tekst||e.nr;feit.push(["PM-bon",esc(b?pmTitel(b)+", "+b.datum:e.pmbon)])}
@@ -5534,7 +5554,7 @@ function tdRegel(x,g){
     (feit.length?'<dl class="tdr-feit">'+feit.map(f=>"<dt>"+esc(f[0])+"</dt><dd>"+f[1]+"</dd>").join("")+"</dl>":"")+
     (best?'<div class="tdbest">'+best+"</div>":"")+
     (fotos.length?'<div class="fotos">'+fotos.map(f=>'<button type="button" class="tdfoto" data-tdfoto="'+esc(f)+'" aria-label="Foto vergroten">Foto laden</button>').join("")+"</div>":"")+
-    '<div class="tdr-bedien">'+(c&&id!=="extern"?bonBediening(c,g):"")+'<div class="acties">'+knop.map(k=>'<button type="button" class="knop" '+k[1]+'="'+esc(k[2])+'">'+esc(k[0])+"</button>").join("")+(id==="extern"?'<button type="button" class="knop hoofd" data-tdextok="'+esc(x.key)+'">Uitgevoerd</button>':'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">'+esc(g.gz||"Klaar")+"</button>")+"</div></div></article>";
+    '<div class="tdr-bedien">'+(c&&id!=="extern"?bonBediening(c,g):"")+'<div class="acties">'+knop.map(k=>'<button type="button" class="knop" '+k[1]+'="'+esc(k[2])+'">'+esc(k[0])+"</button>").join("")+(id==="extern"?'<button type="button" class="knop hoofd" data-tdextok="'+esc(x.key)+'">'+(x.lijst?"Alles uitgevoerd":"Uitgevoerd")+'</button>':'<button type="button" class="knop" data-tdgezien="'+esc(x.key)+'">'+esc(g.gz||"Klaar")+"</button>")+"</div></div></article>";
 }
 const TDPER=8;
 function ladeHtml(g,l,open){
@@ -5592,27 +5612,37 @@ async function tdZet(key,terug){
 const EXTWORDT={"Uitgevoerd":"Uitgevoerd","Deels uitgevoerd":"Te plannen","Onderdeel bestellen":"Uitzoeken voor bestelling"};
 async function tdExternOk(key,knop){
   const x=tdItems(true).find(y=>y.key===key);if(!x)return;
-  const e=x.ext,g=e.gegevens||e,m=MELD(),t=v=>String(v==null?"":v);
   if(knop){knop.disabled=true;knop.textContent="Bezig met verwerken"}
   try{
+    if(x.lijst){
+      /* In één keer afgetekend: elke bon apart verwerken, daarna de melding zelf weg. */
+      let n=0;for(const y of x.lijst){if(tdGezien(y.key))continue;await extVerwerk(y,true);n++}
+      GEZIEN_LIVE[key]=true;melder(n===1?"1 afmelding verwerkt.":n+" afmeldingen verwerkt. De bonnen en de bestellijst volgen bij de volgende ronde.");
+    }else await extVerwerk(x);
+    laatste="";tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]();
+  }catch(err){
+    if(knop){knop.disabled=false;knop.textContent=x.lijst?"Alles uitgevoerd":"Uitgevoerd"}
+    melder(err&&err.message==="geen toegang"?"Apps Script kent dit nog niet. Zet de nieuwste versie van het script erin.":"Verwerken is niet gelukt. Wat al verwerkt is blijft verwerkt; probeer het opnieuw.");
+    laatste="";tdTel();if(HUIDIG==="tedoen")vTeDoen();
+  }
+}
+async function extVerwerk(x,stil){
+  const key=x.key,e=x.ext,g=e.gegevens||e,m=MELD(),t=v=>String(v==null?"":v);
+  {
     if(e.pmbon){
       const b=x.b||{};
       await stuur({actie:"externpm",k:m.sleutel_wv,pmbon:e.pmbon,taak:e.nr,status:e.status,datum:b.datum||"",alle:(b.taken&&b.taken.length?b.taken:[e.nr]).join(","),uitvoerder:t(e.uitvoerder),uren:e.uren,teamleider:t(e.teamleider),
         opmerking:[g.gedaan&&"gedaan: "+g.gedaan,g.nog&&"nog te doen: "+g.nog,g.opmerking].filter(Boolean).join("; "),onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),lijn:t(b.lijn),machine:t(b.lijndeel),door:wvDoor()});
       await stuur({actie:"bonstatus",k:m.sleutel_wv,nr:tdCode(key),status:"Open",rij:{gezien:key,terug:false},door:wvDoor()});
-      GEZIEN_LIVE[key]=true;melder(e.nr+" verwerkt in de PM-registratie"+(e.status==="Onderdeel bestellen"?". De CM-bon voor het onderdeel komt bij de volgende ronde.":"."));
+      GEZIEN_LIVE[key]=true;if(!stil)melder(e.nr+" verwerkt in de PM-registratie"+(e.status==="Onderdeel bestellen"?". De CM-bon voor het onderdeel komt bij de volgende ronde.":"."));
     }else{
       await stuur({actie:"bonstatus",k:m.sleutel_wv,nr:tdCode(key),status:"Open",door:wvDoor(),rij:{gezien:key,terug:false,extern:{nr:e.nr,status:e.status,uitvoerder:t(e.uitvoerder),uren:e.uren,teamleider:t(e.teamleider),handtekening:t(e.handtekening),tijd:t(e.tijd),
         gedaan:t(g.gedaan),nog:t(g.nog),opmerking:t(g.opmerking),veegschoon:!!g.veegschoon,vrij:!!g.vrij,checks:g.checks||{},onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),fotos:fotoIds(g.fotos)}}});
       GEZIEN_LIVE[key]=true;
       const c=x.c,st=EXTWORDT[e.status];
       if(c&&isOpen(c)&&st){c.status=st;if(st==="Uitgevoerd")c.uitgevoerd_op=t(e.tijd).slice(0,10);else if(planVanBon(c.nr)){zatWeg(c.nr);c.uitvoeren=st==="Te plannen"?"In overleg":"Na levering"}}
-      melder(e.nr+" verwerkt: "+(st||e.status).toLowerCase()+". De bon en de bestellijst volgen bij de volgende ronde.");
+      if(!stil)melder(e.nr+" verwerkt: "+(st||e.status).toLowerCase()+". De bon en de bestellijst volgen bij de volgende ronde.");
     }
-    laatste="";tdTel();if(HUIDIG==="tedoen")vTeDoen();else SCHERM[HUIDIG]();
-  }catch(err){
-    if(knop){knop.disabled=false;knop.textContent="Uitgevoerd"}
-    melder(err&&err.message==="geen toegang"?"Apps Script kent dit nog niet. Zet versie 27 van het script erin.":"Verwerken is niet gelukt. Probeer het opnieuw.");
   }
 }
 /* Bon maken vult Nieuwe bon met de lijn, het lijndeel en de opmerking. Na het versturen staat de regel op Gezien. */
@@ -7415,7 +7445,7 @@ function externScherm(){
     let h=tabs();
     if(EXT.tab==="tedoen"){
       const l=teControleren();
-      h+=l.length?'<p class="ex-noot">De monteurs zetten dit klaar. Controleer per bon en teken af, of stuur hem terug.</p>'+l.map(kaartKnop).join(""):'<p class="pa-staat ok">'+ico("afvink")+"<span>Er staat niets klaar om te controleren.</span></p>";
+      h+=l.length?(l.length>1?'<button type="button" class="knop hoofd ex-alles" data-exalles>'+ico("afvink")+"Alles goedkeuren en aftekenen ("+l.length+")</button>":"")+'<p class="ex-noot">De monteurs zetten dit klaar. Controleer per bon en teken af, of stuur hem terug'+(l.length>1?". Of keur alles in één keer goed met één handtekening.":".")+"</p>"+l.map(kaartKnop).join(""):'<p class="pa-staat ok">'+ico("afvink")+"<span>Er staat niets klaar om te controleren.</span></p>";
       vak.innerHTML=h;return;
     }
     const l=alle(),open=l.filter(b=>!getekend(b)),klaar=l.filter(getekend),uren=klaar.reduce((n,b)=>n+(Number(af(b.nr).uren)||0),0);
@@ -7551,6 +7581,48 @@ function externScherm(){
     catch(e){melder(e.message==="geen toegang"?"De Sheet kent dit nog niet. Vraag de werkvoorbereider het script bij te werken (versie 29).":"Opslaan is niet gelukt. Probeer het opnieuw.")}
     k.disabled=false;
   }
+  /* Alles in één keer: wat de monteur invulde gaat zo mee, met één naam en één handtekening. Een bon waar iets mist, opent de teamleider eerst los. */
+  function mistWerk(b){
+    const g=(werk(b)||{}).gegevens||{},ck=g.checks||{};
+    if(!EXTSTATUS.some(x=>x[0]===g.status))return"geen status";
+    if(!String(g.uitvoerder||"").trim()||!(Number(g.uren)>0))return"uitvoerder of uren ontbreekt";
+    const open=extChecks(g.status,b).filter(c=>c[2]&&!ck[c[0]]);if(open.length)return"niet afgevinkt: "+open.map(c=>c[1].toLowerCase()).join(", ");
+    if(g.status==="Uitgevoerd"&&!(g.fotos||[]).length)return"geen foto van het werk";
+    if(g.status==="Onderdeel bestellen"&&(!(g.onderdelen||[]).length||g.onderdelen.some(o=>!o.onderdeel||!o.foto)))return"onderdeel zonder naam of foto";
+    if(g.status==="Deels uitgevoerd"&&(!g.gedaan||!g.nog))return"gedaan of nog te doen ontbreekt";
+    return"";
+  }
+  function allesScherm(){
+    EXT.open="__alles";
+    const l=teControleren(),ok=l.filter(b=>!mistWerk(b)),nee=l.filter(mistWerk),f=EXT.alles||(EXT.alles={tl:lees_("td-hub-exttl"),hand:null});
+    const rij=b=>{const w=werk(b),g=w.gegevens||{},m=mistWerk(b);return'<div class="ex-allesrij'+(m?" mist":"")+'">'+prio(b.prio)+'<span><b>'+esc(b.omschrijving)+"</b><small>"+esc([b.nr,monLabel(w.monteur),g.status,g.uren?urenTekst(g.uren)+" uur":"",(g.fotos||[]).length?(g.fotos.length===1?"1 foto":g.fotos.length+" foto's"):""].filter(Boolean).join(" · "))+"</small>"+(m?'<small class="ex-mistekst">Eerst los openen: '+esc(m)+"</small>":"")+"</span>"+(m?'<button type="button" class="knop" data-extopen="'+esc(b.nr)+'">Openen</button>':"")+"</div>"};
+    vak.innerHTML='<button type="button" class="tekstknop pmterug" data-extterug>‹ Te doen</button><div class="pmbon"><h2 class="ex-h">Alles goedkeuren en aftekenen</h2>'+
+      '<p class="ex-noot">Je tekent '+ok.length+(ok.length===1?" bon":" bonnen")+" in één keer af, zoals de monteurs ze klaarzetten. De werkvoorbereider krijgt één melding dat alles in één keer is afgetekend.</p>"+
+      ok.map(rij).join("")+(nee.length?'<div class="ex-band">Niet compleet · '+nee.length+"</div>"+nee.map(rij).join(""):"")+
+      (ok.length?'<form class="meldform ex-form" id="exalles" novalidate><div class="ex-blok"><b>Aftekening teamleider</b><label id="ex_tl_v"><span>Naam teamleider <b class="verpl">*</b></span><input type="text" id="ex_tl" maxlength="100" autocomplete="name" value="'+esc(f.tl)+'"></label>'+
+        '<div class="pa-keus" id="ex_hand_v"><span>Handtekening <b class="verpl">*</b></span><div class="ex-hand"><canvas id="ex_hand" aria-label="Zet hier je handtekening"></canvas><span>Teken hier met je vinger</span></div><button type="button" class="tekstknop" data-exhandweg style="align-self:flex-start">Handtekening wissen</button></div></div>'+
+        '<p class="fout" id="ex_fout" hidden></p><button class="knop hoofd pa-stuur" type="submit" id="ex_knop">'+ok.length+(ok.length===1?" bon":" bonnen")+" aftekenen</button></form>":'<p class="pa-staat warn">'+ico("pijl")+"<span>Geen enkele bon is compleet. Open ze los.</span></p>")+"</div>";
+    handtekening(f);window.scrollTo(0,0);
+  }
+  async function allesAftekenen(){
+    const f=EXT.alles;f.tl=($("#ex_tl").value||"").trim();
+    document.querySelectorAll(".ex-mis").forEach(x=>x.classList.remove("ex-mis"));$("#ex_fout").hidden=true;
+    if(!f.tl){mis("ex_tl","Vul de naam van de teamleider in.");return}
+    if(!f.hand){mis("ex_hand","Teken af met je handtekening.");return}
+    bewaar_("td-hub-exttl",f.tl);
+    const l=teControleren().filter(b=>!mistWerk(b)),id="A"+Date.now().toString(36),k=$("#ex_knop");k.disabled=true;
+    let n=0,wacht=0;const fout=[];
+    for(const b of l){
+      const g=werk(b).gegevens||{};k.textContent="Bezig: "+(n+wacht+fout.length+1)+" van "+l.length;
+      const d={actie:"extern",nr:b.nr,pmbon:b.pm?b.pmbon:"",datum:z.datum,teamleider:f.tl,door:f.tl,handtekening:f.hand.split(",")[1],status:g.status,uitvoerder:g.uitvoerder,uren:Number(g.uren),opmerking:g.opmerking||"",gedaan:g.gedaan||"",nog:g.nog||"",veegschoon:!!g.veegschoon,vrij:!!g.vrij,checks:g.checks||{},fotos:g.fotos||[],onderdelen:g.onderdelen||[],bulk:id,bulkn:l.length};
+      try{const j=await stuur(d);EXTLIVE=EXTLIVE.concat([{nr:b.nr,pmbon:d.pmbon,status:d.status,uitvoerder:d.uitvoerder,uren:d.uren,teamleider:f.tl,tijd:j.tijd,gegevens:{bulk:id}}]);const r=EXTWERK.find(y=>y.sleutel===extSl(b)&&y.datum===z.datum);if(r)r.status="Afgetekend";n++}
+      catch(e){if(prodNetwerk(e)){try{await UITBAK.zet({d,tijd:nuTekst()});wacht++;continue}catch(_){}}fout.push(b.nr)}
+    }
+    if(wacht)await leesUitbak();
+    EXT.alles=null;EXT.tab="tedoen";
+    melder((n?n+(n===1?" bon":" bonnen")+" afgetekend":"")+(wacht?(n?", ":"")+wacht+" gaan zodra er bereik is":"")+(fout.length?". Niet gelukt: "+fout.join(", ")+". Probeer die los.":"."));
+    lijst();window.scrollTo(0,0);
+  }
   async function terugsturen(){
     const nr=EXT.open,b=vind(nr),reden=($("#ex_reden").value||"").trim();
     if(!reden){$("#ex_reden").focus();melder("Schrijf erbij wat de monteur nog moet doen.");return}
@@ -7565,12 +7637,13 @@ function externScherm(){
     if(e.target.closest("[data-exselweg]")){EXT.sel.clear();lijst();return}
     if(e.target.closest("[data-exterugopen]")){const v=$("#ex_terugvak");v.hidden=!v.hidden;if(!v.hidden)$("#ex_reden").focus();return}
     if(e.target.closest("[data-exterug]")){terugsturen();return}
+    if(e.target.closest("[data-exalles]")){allesScherm();return}
     if(e.target.closest("[data-exinstr]")){instructieOpslaan();return}
     const u=e.target.closest("[data-exuren]");if(u){const i=$("#ex_uren"),n=Math.max(0,Math.min(200,(Number(String(i.value).replace(",","."))||0)+Number(u.dataset.exuren)));i.value=n?urenTekst(n):"";lees();return}
     if(e.target.closest("[data-exondplus]")){const f=lees();f.ond.push({onderdeel:"",spec:"",file:null,fotoId:""});bon(EXT.open);const l=document.querySelectorAll("[data-exond]");l[l.length-1].scrollIntoView({block:"center"});return}
     const fw=e.target.closest("[data-exfotoweg]");if(fw){const f=lees();f.fotos.splice(+fw.dataset.exfotoweg,1);const y=window.scrollY;bon(EXT.open);window.scrollTo(0,y);return}
     const ow=e.target.closest("[data-exondweg]");if(ow){const f=lees();f.ond.splice(+ow.dataset.exondweg,1);bon(EXT.open);return}
-    if(e.target.closest("[data-exhandweg]")){const f=lees();f.hand=null;handtekening(f);const c=$("#ex_hand");c.getContext("2d").clearRect(0,0,c.width,c.height);return}
+    if(e.target.closest("[data-exhandweg]")){const f=EXT.open==="__alles"?EXT.alles:lees();f.hand=null;handtekening(f);const c=$("#ex_hand");c.getContext("2d").clearRect(0,0,c.width,c.height);return}
     if(e.target.closest("[data-exbon]")){const b=vind(EXT.open),kk=b&&b.kopie,k=e.target.closest("[data-exbon]");if(!kk)return;k.disabled=true;
       const bestand=s=>ontsleutelBestand(kk[s],kk.sleutel).then(x=>new File([x],kk.naam+"."+(s==="beeld"?"jpg":s),{type:BONTYPE[s]}));
       try{if(kk.beeld)await toonBon(b,bestand);else await geefBestand(await bestand("pdf"))}catch(_){melder("De bon kan nu niet worden geopend. Probeer het zo opnieuw.")}k.disabled=false}
@@ -7583,8 +7656,8 @@ function externScherm(){
     const fo=e.target.closest("[data-exfoto]");if(fo&&fo.files[0]){const f=lees();const o=f.ond[+fo.dataset.exfoto];o.file=fo.files[0];o.fotoId="";bon(EXT.open);return}
     if(EXT.open)lees();
   });
-  vak.addEventListener("input",e=>{if(e.target.id==="ex_instr"&&EXT.open)EXT.instr[EXT.open]=e.target.value;const v=e.target.closest(".ex-mis");if(v)v.classList.remove("ex-mis");if(EXT.open)lees()});
-  vak.addEventListener("submit",e=>{e.preventDefault();if(e.target.id==="exnaam"){const n=$("#ex_naam").value.trim();if(!n)return;NAAM=n;bewaar_(NKEY,n);kop();lijst();return}versturen()});
+  vak.addEventListener("input",e=>{if(e.target.id==="ex_tl"&&EXT.open==="__alles"&&EXT.alles)EXT.alles.tl=e.target.value;if(e.target.id==="ex_instr"&&EXT.open)EXT.instr[EXT.open]=e.target.value;const v=e.target.closest(".ex-mis");if(v)v.classList.remove("ex-mis");if(EXT.open)lees()});
+  vak.addEventListener("submit",e=>{e.preventDefault();if(e.target.id==="exnaam"){const n=$("#ex_naam").value.trim();if(!n)return;NAAM=n;bewaar_(NKEY,n);kop();lijst();return}if(e.target.id==="exalles"){allesAftekenen();return}versturen()});
   $("#externscherm").addEventListener("click",e=>{if(e.target.closest("[data-exnaamweg]")){NAAM="";bewaar_(NKEY,"");kop();lijst()}});
   extTeken=()=>{if(!EXT.open)lijst()};
   lijst();leesUitbak();uitbakAan();haalExtern();setInterval(()=>{if(!document.hidden)haalExtern()},60000);

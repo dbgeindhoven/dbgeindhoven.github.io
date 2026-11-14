@@ -804,7 +804,7 @@ def extern_af(data, x, w, opnieuw, wm, toepassen=True):
         delen += ["%d foto's van het werk." % len(af["fotos"]) if len(af["fotos"]) > 1 else "1 foto van het werk."]
     if af["opmerking"]:
         delen.append(zin(af["opmerking"]))
-    delen.append("Afgetekend door %s." % (af["teamleider"] or "teamleider externe ploeg"))
+    delen.append("Afgetekend door %s%s." % (af["teamleider"] or "teamleider externe ploeg", ", in één keer met de andere bonnen van die dag" if x.get("bulk") else ""))
     regel = "%s, externe ploeg: %s. %s" % (dag, st, " ".join(delen))
     rij["opmerking"] = " ".join(filter(None, (rij.get("opmerking"), regel)))
     print(nr, regel)

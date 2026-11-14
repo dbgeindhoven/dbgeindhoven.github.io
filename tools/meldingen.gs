@@ -1,4 +1,4 @@
-// TD Hub meldingen, versie 30: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 31: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // Versie 26: de externe ploeg op zaterdag meldt bonnen af met een eigen sleutel (actie extern, tabblad Extern), met handtekening en foto's.
 // Versie 25: meer foto's per storing en per afgekeurd PM-punt (veld fotos). In de kolom foto staan de Drive-id's met een komma ertussen;
 // de eerste foto komt op de CM-bon, de rest als bijlage achter de bon. De monteursapp leest ook het rooster uit de wachtrij (rij.rooster, rij.roostermensen).
@@ -381,6 +381,8 @@ function zetExtern_(d) {
   ond.forEach((x, i) => { if (isId(x.foto)) return; x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
   const extra = werkFotos_(d.fotos, 'extern-' + d.nr + '-' + nu);
   const g = { pmbon: pm ? d.pmbon : '', gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, checks: extChecks_(d.checks), onderdelen: ond, fotos: extra };
+  // In één keer afgetekend (vanaf versie 31): alle bonnen van die ronde hebben hetzelfde kenmerk, zodat de werkvoorbereider één melding krijgt.
+  if (/^A[a-z0-9]{4,20}$/.test(String(d.bulk || ''))) { g.bulk = d.bulk; g.bulkn = Math.max(0, Math.min(200, Number(d.bulkn) || 0)); }
   const fotos = ond.map(x => x.foto).concat(extra).join(',');
   const s = SpreadsheetApp.openById(SHEET_ID);
   const b = s.getSheetByName('Extern') || s.insertSheet('Extern', s.getNumSheets());
