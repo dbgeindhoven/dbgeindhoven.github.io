@@ -397,6 +397,8 @@ html.inapp .mkop{display:none}
 .ex-allesrij small{display:block;margin-top:2px;color:var(--ink2);font-size:.75rem}
 .ex-allesrij.mist{box-shadow:inset 3px 0 0 var(--warn)}
 .ex-allesrij .ex-mistekst{color:var(--warn-ink)}
+.ex-wacht{margin:0 0 12px;padding:10px 14px;border-radius:14px;background:#fff;box-shadow:inset 3px 0 0 var(--ok);font-size:.875rem}
+.ex-wacht a{color:var(--ink);font-weight:600}
 .ex-terug{display:flex;flex-direction:column;gap:10px;padding-top:6px;border-top:1px solid var(--line)}
 .ex-terug>div{display:flex;flex-direction:column;gap:8px}
 .ex-terug>div[hidden]{display:none}
@@ -5455,7 +5457,7 @@ function tdTel(){
   if(tdMag()){
     const r=tdItems(),n=r.filter(x=>x.groep!=="prio").length;
     TDMAP={};r.forEach(x=>{if(x.c&&!TDMAP[x.c.nr])TDMAP[x.c.nr]=x.groep});
-    TEL.tedoen=n;document.title=(CONCEPT.size?"• ":"")+(n?"("+n+") ":"")+TITEL;
+    TEL.tedoen=n;TEL.extdoen=r.filter(x=>x.groep==="extern").length;document.title=(CONCEPT.size?"• ":"")+(n?"("+n+") ":"")+TITEL;
   }
   telMenu();
 }
@@ -6585,7 +6587,7 @@ function vDocs(){
       {k:"s",l:"Soort",w:"170px",c:"m-sub",ml:"Soort",r:x=>esc(x.soort),s:x=>DOCSOORT.indexOf(x.soort)+norm(x.titel)},
       {k:"b",l:"Downloaden",w:"130px",c:"m-sub",r:knoppen}]});
 }
-const SCHERM={mapp:vMapp,extern:vExtern,rooster:vRooster,overleg:vOverleg,tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
+const SCHERM={mapp:vMapp,extern:vExtern,extdoen:vExtDoen,rooster:vRooster,overleg:vOverleg,tedoen:vTeDoen,rca:vRca,prod:vProd,acties:vActies,docs:vDocs,leveranciers:vLeveranciers,lijn1:()=>vOutput("Lijn 1"),lijn2:()=>vOutput("Lijn 2"),lijn3:()=>vOutput("Lijn 3"),inpak:()=>vOutput("Inpak"),ompak:()=>vOutput("Ompak"),actielijst:vActielijst,pmbonnen:vPmBonnen,sqdbonnen:vSqdBonnen,rapport:vRapport,sqd:vSqd,meldingen:vMeldingen,storingen:vStoringen,output:vOutput,stop:vStop,start:vStart,cm:vCmBonnen,bestel:vBestel,prio:vPrio,opname:vOpname,pm:vPm};
 
 /* ---- Productie (pilot) ----
    De teamleider productie vult per dienst in op de telefoon: inlog productie, voorlopig één testaccount waarin hij zijn naam invult.
@@ -7004,6 +7006,16 @@ function externPmTaken(dag){
 }
 let EXTMONKIES="1";
 document.addEventListener("change",e=>{const k=e.target.closest("[data-extmonkies]");if(k){EXTMONKIES=k.value;vExtern()}});
+/* Te doen in het kopje Externe ploeg: alleen wat de teamleider aftekende en nog verwerkt moet worden, met Uitgevoerd. Dezelfde regels als de groep Externe ploeg op Te doen. */
+function vExtDoen(){
+  const g=TDGROEP.find(x=>x.id==="extern"),r=tdItems(true).filter(x=>x.groep==="extern"),open=r.filter(x=>!x.gezien),weg=r.filter(x=>x.gezien);
+  let h='<div class="tdkop"><div><h1>Te doen externe ploeg</h1><p>'+esc(open.length?(open.length===1?"1 afmelding wacht":open.length+" afmeldingen wachten")+" op je. Klopt het, klik dan Uitgevoerd: dan wordt de afmelding verwerkt op de bon, het plan en de bestellijst.":"Er wacht niets op je. Wat de teamleider aftekent, komt hier meteen.")+"</p></div></div>";
+  if(MELDFOUT)h+='<p class="tdlet">De gegevens uit de Sheet konden niet worden opgehaald. Afmeldingen van vandaag kunnen ontbreken.</p>';
+  h+=open.length?'<div class="laden"><section class="lade open" style="--c:'+TDKLEUR[g.c]+'"><div class="ladeinhoud">'+open.map(x=>tdRegel(x,g)).join("")+"</div></section></div>":'<div class="tdleeg">Er staat niets open.</div>';
+  if(weg.length)h+='<section class="tdweg" id="tdweg"><h2>Klaar <span>'+weg.length+'</span></h2><ul class="tdweglijst">'+weg.map(x=>"<li><span>"+esc(tdKopTekst(x))+'</span><button type="button" class="tekstknop" data-tdterug="'+esc(x.key)+'">Terugzetten</button></li>').join("")+"</ul></section>";
+  $("#view").innerHTML=h;
+  tdFotos();
+}
 function vExtern(){
   const z=externZat(),kop='<div class="tdkop"><div><h1>Externe ploeg</h1><p>De bonnen van de eerstvolgende zaterdag: welke monteur van de externe ploeg ze doet, wat hij klaarzette en wat de teamleider aftekende, met handtekening per bon.</p></div></div>';
   if(!z){$("#view").innerHTML=kop+'<div class="tdleeg">Er staat nog geen zaterdag in de planning.</div>';return}
@@ -7014,7 +7026,8 @@ function vExtern(){
   const wk=c=>EXTWERK.find(x=>x.sleutel===(c.pm?c.nr+"|"+c.pmbon:c.nr)&&x.datum===z.datum),mon=c=>{const w=wk(c);return w&&w.monteur?'<span class="titel">Monteur '+esc(w.monteur)+(w.naam?", "+esc(w.naam):"")+'</span><span class="bonlos">'+esc(w.status+(w.status==="Teruggestuurd"&&w.reden?": "+w.reden:""))+"</span>"+(w.instructie?'<span class="bonlos">Instructie: '+esc(w.instructie)+"</span>":""):w&&w.instructie?'<span class="zacht">Geen monteur</span><span class="bonlos">Instructie: '+esc(w.instructie)+"</span>":'<span class="zacht">Geen monteur</span>'};
   const rij=c=>{const a=af(c),g=a&&(a.gegevens||a)||{},ids=a?[a.handtekening].concat((g.onderdelen||[]).map(o=>o.foto),fotoIds(a.fotos)).filter(Boolean).filter((v,i,l)=>l.indexOf(v)===i):[];
     return"<tr><td class=\"nr\">"+esc(c.nr)+'</td><td><span class="titel">'+esc(c.omschrijving)+'</span><span class="bonplek">'+esc([c.lijn,c.machine].filter(Boolean).join(", "))+"</span></td><td>"+(c.pm?'<span class="bonlos">PM-taak, '+esc(c.pmbon)+"</span>":stBon(c))+"</td><td>"+mon(c)+"</td><td>"+(a?extStChip(a.status)+'<span class="bonlos">'+esc([a.uitvoerder,a.uren?urenTekst(a.uren)+" uur":"",a.teamleider?"afgetekend door "+a.teamleider:"",a.tijd].filter(Boolean).join(" · "))+"</span>"+(g.gedaan||g.nog?'<span class="bonlos">'+esc([g.gedaan&&"Gedaan: "+g.gedaan,g.nog&&"Nog: "+g.nog].filter(Boolean).join(" "))+"</span>":"")+((g.onderdelen||[]).length?'<span class="bonlos">'+esc("Bestellen: "+g.onderdelen.map(o=>o.onderdeel).join("; "))+"</span>":""):'<span class="zacht">Nog niet afgemeld</span>')+'</td><td class="exfoto">'+(ids.length&&!alleenKijken()?'<button type="button" class="tekstknop" data-rfoto="'+esc(ids.join(","))+'">'+(ids.length>1?"Handtekening en foto's":"Handtekening")+"</button>":"")+"</td></tr>"};
-  $("#view").innerHTML=kop+'<p class="tellen"><b>'+esc(hoofd(langeDatum(datum(z.datum))))+"</b>: "+n+" van "+alle.length+" bonnen afgemeld, "+urenTekst(Math.round(uren*10)/10)+" uur ingevuld"+(z.capaciteit?" van "+urenTekst(z.capaciteit)+" manuren":"")+".</p>"+
+  const wacht=tdMag()?tdItems().filter(x=>x.groep==="extern").length:0;
+  $("#view").innerHTML=kop+(wacht?'<p class="ex-wacht"><b>'+(wacht===1?"1 afmelding wacht":wacht+" afmeldingen wachten")+' op verwerking.</b> <a href="#extdoen">Naar Te doen externe ploeg</a></p>':"")+'<p class="tellen"><b>'+esc(hoofd(langeDatum(datum(z.datum))))+"</b>: "+n+" van "+alle.length+" bonnen afgemeld, "+urenTekst(Math.round(uren*10)/10)+" uur ingevuld"+(z.capaciteit?" van "+urenTekst(z.capaciteit)+" manuren":"")+".</p>"+
     '<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:90px">Bon</th><th>Werkzaamheid</th><th style="width:150px">Status bon</th><th style="width:170px">Monteur</th><th>Afgetekend door de teamleider</th><th style="width:150px"></th></tr></thead><tbody>'+alle.map(rij).join("")+"</tbody></table></div>"+
     (MODE==="enc"&&D.appextern&&!alleenKijken()?'<h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van de teamleider</h2><div class="appvak"><iframe id="externframe" title="App externe ploeg" src="'+esc(location.pathname)+'?app=1&v='+Date.now()+'"></iframe></div>':"")+
     (MODE==="enc"&&D.appextmon&&!alleenKijken()?'<div class="ex-wvmon"><h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van een monteur</h2><select data-extmonkies aria-label="Welke monteur">'+Object.keys(D.appextmon).sort((x,y)=>x-y).map(n=>'<option value="'+esc(n)+'"'+(n===EXTMONKIES?" selected":"")+">Monteur "+esc(n)+"</option>").join("")+'</select></div><div class="appvak"><iframe id="extmonframe" title="App monteur externe ploeg" src="'+esc(location.pathname)+'?app=1&m='+esc(EXTMONKIES)+'&v='+Date.now()+'"></iframe></div>':"");
@@ -7109,7 +7122,7 @@ function prodPaneelVelden(){
    RCA analyse heeft een eigen kopje RCA, tussen Werkvoorbereiding en Ultimo voorbereiding.
    Een pagina die in de indeling ontbreekt en niet is weggehaald, komt onder zijn kopje uit MENU_STANDAARD. TD en dagstart hebben een vast menu. */
 const P_ULTIMO=["opname","pm","pmbonnen","prio","docs"];
-const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","storingen","output","stop"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","meldingen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Monteursapp",p:["mapp","rooster"]},{t:"Externe ploeg",p:["extern"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
+const MENU_STANDAARD={kopjes:[{t:"Dagstart",p:["sqd","acties","storingen","output","stop"]},{t:"Werkvoorbereiding",p:["tedoen","stop","overleg","cm","sqdbonnen","meldingen","bestel","rapport","leveranciers","actielijst"]},{t:"RCA",p:["rca"]},{t:"Productie",p:["prod"]},{t:"Monteursapp",p:["mapp","rooster"]},{t:"Externe ploeg",p:["extdoen","extern"]},{t:"Ultimo voorbereiding",p:P_ULTIMO}],weg:[]};
 /* Een kopje dat er later bij kwam, komt ook in een eigen indeling als eigen kopje, niet onder het laatste kopje. */
 const MENU_NIEUW=["Monteursapp","Externe ploeg"];
 let MENU_LIVE,MENU_TD=false,MENU_WV=false;
@@ -7135,7 +7148,7 @@ function menuKopjes(m){
 /* De kopjes staan links als ronde knoppen (rail), de pagina's van het kopje onderin (dock), zoals in het voorbeeld met het glas.
    Een klik op een kopje opent de pagina waar je in dat kopje het laatst was (td-hub-kopjes). Onderin staat ook de + voor iets nieuws.
    Op de telefoon kies je het kopje bovenin (kiezer) en staan alle pagina's per kopje in de kiezer. De getallen staan bij de pagina en opgeteld bij het kopje. */
-const KORT={overleg:"Overleg",sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht",mapp:"App",extern:"Extern",rooster:"Rooster"};
+const KORT={extdoen:"Te doen",overleg:"Overleg",sqd:"SQD",acties:"Acties",meldingen:"Meldingen",storingen:"Storingen",output:"Output",stop:"Planning",tedoen:"Te doen",rca:"RCA",prod:"Diensten",cm:"CM-bonnen",sqdbonnen:"SQD-bonnen",bestel:"Bestellijst",rapport:"Rapport",leveranciers:"Leveranciers",actielijst:"Ochtendoverleg",opname:"Opnames",pm:"PM-taken",pmbonnen:"PM-bonnen",prio:"Priolijst",docs:"Documenten",start:"Overzicht",mapp:"App",extern:"Extern",rooster:"Rooster"};
 const KOPICO={"Dagstart":"bord","Werkvoorbereiding":"bon","RCA":"zoek","Productie":"output","Monteursapp":"scherm","Externe ploeg":"klembord","Technische dienst":"sleutel","Ultimo voorbereiding":"lijst","Overzicht":"start"};
 const TEL={},KOPLAATST="td-hub-kopjes";
 let KOPJE=null,MODEL=[];
@@ -7328,7 +7341,7 @@ function route(){
   const wasHier=HUIDIG;HUIDIG=PAGINAS.some(p=>p.id===h)?h:"sqd";
   if(HUIDIG==="overleg"&&wasHier!=="overleg")setTimeout(ovlStart,0);
   markeerMenu();groetTeken();
-  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","acties","sqd","rca","prod"].includes(HUIDIG));
+  document.querySelector(".shell").classList.toggle("kastmodus",["tedoen","extdoen","acties","sqd","rca","prod"].includes(HUIDIG));
   document.documentElement.classList.toggle("ovl",HUIDIG==="overleg");if(HUIDIG!=="overleg"){document.documentElement.classList.remove("ovlpres","ovlshow");OVLSHOW=OVLEIND=false;if(BV&&BV.ovl){bvConcept();bvDicht(true)}}
   tdTel();
   document.querySelectorAll("#stappen button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.v===HUIDIG)));
@@ -7678,7 +7691,7 @@ function start(data){
   if(D.niveau==="extern"){externScherm();return}
   const td=!!D.cm,wv=MODE==="enc"&&!!bonnen().sleutel;
   /* Productie (pilot): alleen de werkvoorbereider, nog niet de kijkinlog. */
-  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[],!alleenKijken()?[{id:"prod",t:"Diensten",i:"output"}]:[],D.appsleutel&&!alleenKijken()?[{id:"mapp",t:"Monteursapp",i:"scherm"}]:[],D.appextern&&!alleenKijken()?[{id:"extern",t:"Externe ploeg",i:"scherm"}]:[],[{id:"rooster",t:"Rooster",i:"kalender"}]);
+  const pWv=P_WV.concat(alRegels().length&&!alleenKijken()?[{id:"actielijst",t:"Actielijst ochtendoverleg",i:"lijst"}]:[],!alleenKijken()?[{id:"prod",t:"Diensten",i:"output"}]:[],D.appsleutel&&!alleenKijken()?[{id:"mapp",t:"Monteursapp",i:"scherm"}]:[],D.appextern&&!alleenKijken()?[{id:"extdoen",t:"Te doen",i:"afvink"},{id:"extern",t:"Externe ploeg",i:"scherm"}]:[],[{id:"rooster",t:"Rooster",i:"kalender"}]);
   PAGINAS=(tdMag()?[P_TEDOEN]:[]).concat(P_DAG,P_LIJN,td?P_TD.filter(p=>!(tdMag()&&p.id==="start")):[P_RAPPORT],wv?pWv:[]);
   D.cm=D.cm||[];D.bestellijst=D.bestellijst||[];D.priolijst=D.priolijst||[];D.opnamelijsten=D.opnamelijsten||[];D.pm=D.pm||[];D.rca=(D.rca||[]).map(rcaVolledig);
   MENU_TD=td;MENU_WV=wv;bouwMenu();
