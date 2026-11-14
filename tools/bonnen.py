@@ -773,6 +773,11 @@ def extern_af(data, x, w, opnieuw, wm, toepassen=True):
             lijst.append(af)
             print(nr, "afmelding externe ploeg klaargezet voor de werkvoorbereider")
         return
+    if oud is not None and oud.get("nakijken"):
+        # Al verwerkt vóór de controle op Te doen bestond; Uitgevoerd haalt hem alleen van Te doen.
+        oud.pop("nakijken", None)
+        print(nr, "afmelding externe ploeg was al verwerkt, nagekeken")
+        return
     if oud is not None and oud.get("verwerkt") is not False:
         print(nr, "afmelding externe ploeg al verwerkt")
         return

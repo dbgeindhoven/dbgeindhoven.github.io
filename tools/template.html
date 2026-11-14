@@ -5424,13 +5424,13 @@ function tdItems(alles){
   /* Een afgekeurd punt blijft staan tot zijn CM-bon is opgepakt. Zonder bon staat hij er twee weken. */
   /* De externe ploeg op zaterdag: per bon of PM-taak de laatste afmelding, meteen uit het tabblad Extern. Uitgevoerd verwerkt hem (tdExternOk). */
   const exl=(EXTLIVE||[]).map(x=>Object.assign({},x,{pmbon:extPmBon(x)})),exLaatst={},exBulk={};
-  (D.cm||[]).forEach(c=>(c.extern||[]).forEach(e=>{if(e.verwerkt===false&&!exl.some(y=>y.nr===c.nr&&y.tijd===e.tijd))exl.push(Object.assign({nr:c.nr},e))}));
+  (D.cm||[]).forEach(c=>(c.extern||[]).forEach(e=>{if((e.verwerkt===false||e.nakijken)&&!exl.some(y=>y.nr===c.nr&&y.tijd===e.tijd))exl.push(Object.assign({nr:c.nr},e))}));
   exl.forEach(e=>{const k=e.nr+"|"+(e.pmbon||"");if(!exLaatst[k]||tijdSleutel(e.tijd)>tijdSleutel(exLaatst[k].tijd))exLaatst[k]=e});
   Object.values(exLaatst).forEach(e=>{
     if(!e.tijd||!tdRecent(e.tijd))return;
     const c=e.pmbon?null:(D.cm||[]).find(y=>y.nr===e.nr)||null;
     if(!e.pmbon&&!c)return;
-    if(c&&(c.extern||[]).some(y=>y.tijd===e.tijd&&y.verwerkt!==false))return;
+    if(c&&(c.extern||[]).some(y=>y.tijd===e.tijd&&y.verwerkt!==false&&!y.nakijken))return;
     const b=e.pmbon?tdPm(e.pmbon):null,t=((D.pmplan||{}).taken||{})[e.nr]||{},y={groep:"extern",key:"ext:"+e.nr+":"+e.tijd,c,b,ext:e,tijd:e.tijd,door:e.teamleider,tekst:e.pmbon?t.taak||e.nr:""};
     const bulk=(e.gegevens||e).bulk;
     if(bulk){(exBulk[bulk]=exBulk[bulk]||[]).push(y);return}
