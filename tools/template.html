@@ -379,6 +379,10 @@ html.inapp .mkop{display:none}
 .ex-h{margin:0;font-size:1.375rem;font-weight:600}
 .ex-wvmon{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .ex-wvmon select{font-size:15px;padding:7px 12px;border:1px solid var(--line2);border-radius:999px;background:#fff}
+.ex-instr textarea{width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line2);border-radius:10px;background:#fff;resize:vertical}
+.ex-instrk{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ex-instrk small{color:var(--ink2);font-size:.75rem}
+.ex-instrm ul{margin:4px 0 0;padding-left:18px;font-size:.9375rem;line-height:1.45}
 .ex-terug{display:flex;flex-direction:column;gap:10px;padding-top:6px;border-top:1px solid var(--line)}
 .ex-terug>div{display:flex;flex-direction:column;gap:8px}
 .ex-terug>div[hidden]{display:none}
@@ -6969,13 +6973,13 @@ function vExtern(){
   const ook=(D.cm||[]).filter(c=>!rijen.includes(c)&&(c.extern||[]).length&&(datum(z.datum)-datum(String(c.extern.slice(-1)[0].tijd).slice(0,10)))/864e5<7&&datum(String(c.extern.slice(-1)[0].tijd).slice(0,10))<=datum(z.datum));
   const alle=rijen.concat(ook,externPmTaken(z.datum)),af=c=>extAf(c.nr,alle.map(x=>x.pm?x:{nr:x.nr,extern:x.extern||[]})),n=alle.filter(af).length;
   const uren=alle.reduce((t,c)=>t+(Number((af(c)||{}).uren)||0),0);
-  const wk=c=>EXTWERK.find(x=>x.sleutel===(c.pm?c.nr+"|"+c.pmbon:c.nr)&&x.datum===z.datum),mon=c=>{const w=wk(c);return w&&w.monteur?'<span class="titel">Monteur '+esc(w.monteur)+(w.naam?", "+esc(w.naam):"")+'</span><span class="bonlos">'+esc(w.status+(w.status==="Teruggestuurd"&&w.reden?": "+w.reden:""))+"</span>":'<span class="zacht">Geen monteur</span>'};
+  const wk=c=>EXTWERK.find(x=>x.sleutel===(c.pm?c.nr+"|"+c.pmbon:c.nr)&&x.datum===z.datum),mon=c=>{const w=wk(c);return w&&w.monteur?'<span class="titel">Monteur '+esc(w.monteur)+(w.naam?", "+esc(w.naam):"")+'</span><span class="bonlos">'+esc(w.status+(w.status==="Teruggestuurd"&&w.reden?": "+w.reden:""))+"</span>"+(w.instructie?'<span class="bonlos">Instructie: '+esc(w.instructie)+"</span>":""):w&&w.instructie?'<span class="zacht">Geen monteur</span><span class="bonlos">Instructie: '+esc(w.instructie)+"</span>":'<span class="zacht">Geen monteur</span>'};
   const rij=c=>{const a=af(c),g=a&&(a.gegevens||a)||{},ids=a?[a.handtekening].concat((g.onderdelen||[]).map(o=>o.foto),fotoIds(a.fotos)).filter(Boolean).filter((v,i,l)=>l.indexOf(v)===i):[];
     return"<tr><td class=\"nr\">"+esc(c.nr)+'</td><td><span class="titel">'+esc(c.omschrijving)+'</span><span class="bonplek">'+esc([c.lijn,c.machine].filter(Boolean).join(", "))+"</span></td><td>"+(c.pm?'<span class="bonlos">PM-taak, '+esc(c.pmbon)+"</span>":stBon(c))+"</td><td>"+mon(c)+"</td><td>"+(a?extStChip(a.status)+'<span class="bonlos">'+esc([a.uitvoerder,a.uren?urenTekst(a.uren)+" uur":"",a.teamleider?"afgetekend door "+a.teamleider:"",a.tijd].filter(Boolean).join(" · "))+"</span>"+(g.gedaan||g.nog?'<span class="bonlos">'+esc([g.gedaan&&"Gedaan: "+g.gedaan,g.nog&&"Nog: "+g.nog].filter(Boolean).join(" "))+"</span>":"")+((g.onderdelen||[]).length?'<span class="bonlos">'+esc("Bestellen: "+g.onderdelen.map(o=>o.onderdeel).join("; "))+"</span>":""):'<span class="zacht">Nog niet afgemeld</span>')+'</td><td class="exfoto">'+(ids.length&&!alleenKijken()?'<button type="button" class="tekstknop" data-rfoto="'+esc(ids.join(","))+'">'+(ids.length>1?"Handtekening en foto's":"Handtekening")+"</button>":"")+"</td></tr>"};
   $("#view").innerHTML=kop+'<p class="tellen"><b>'+esc(hoofd(langeDatum(datum(z.datum))))+"</b>: "+n+" van "+alle.length+" bonnen afgemeld, "+urenTekst(Math.round(uren*10)/10)+" uur ingevuld"+(z.capaciteit?" van "+urenTekst(z.capaciteit)+" manuren":"")+".</p>"+
     '<div class="tblwrap"><table class="tbl"><thead><tr><th style="width:90px">Bon</th><th>Werkzaamheid</th><th style="width:150px">Status bon</th><th style="width:170px">Monteur</th><th>Afgetekend door de teamleider</th><th style="width:150px"></th></tr></thead><tbody>'+alle.map(rij).join("")+"</tbody></table></div>"+
     (MODE==="enc"&&D.appextern&&!alleenKijken()?'<h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van de teamleider</h2><div class="appvak"><iframe id="externframe" title="App externe ploeg" src="'+esc(location.pathname)+'?app=1&v='+Date.now()+'"></iframe></div>':"")+
-    (MODE==="enc"&&D.appextmon&&!alleenKijken()?'<div class="ex-wvmon"><h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van een monteur</h2><select data-extmonkies aria-label="Welke monteur">'+Object.keys(D.appextmon).sort().map(n=>'<option value="'+esc(n)+'"'+(n===EXTMONKIES?" selected":"")+">Monteur "+esc(n)+"</option>").join("")+'</select></div><div class="appvak"><iframe id="extmonframe" title="App monteur externe ploeg" src="'+esc(location.pathname)+'?app=1&m='+esc(EXTMONKIES)+'&v='+Date.now()+'"></iframe></div>':"");
+    (MODE==="enc"&&D.appextmon&&!alleenKijken()?'<div class="ex-wvmon"><h2 style="margin:22px 0 10px;font-size:1rem;font-weight:600">De app van een monteur</h2><select data-extmonkies aria-label="Welke monteur">'+Object.keys(D.appextmon).sort((x,y)=>x-y).map(n=>'<option value="'+esc(n)+'"'+(n===EXTMONKIES?" selected":"")+">Monteur "+esc(n)+"</option>").join("")+'</select></div><div class="appvak"><iframe id="extmonframe" title="App monteur externe ploeg" src="'+esc(location.pathname)+'?app=1&m='+esc(EXTMONKIES)+'&v='+Date.now()+'"></iframe></div>':"");
 }
 window.addEventListener("beforeunload",e=>{if(RLOS.size||RMENSLOS){e.preventDefault();e.returnValue=""}});
 function vProd(){
@@ -7332,7 +7336,7 @@ function presLabel(){
    Per bon verplicht: uitvoerder, uren, status van het werk en de handtekening van de teamleider. Actie extern in Apps Script (versie 26),
    een regel op het tabblad Extern en een wachtrijbestand EXT-; bonnen.py wijzig (extern_af) zet het op de bon, het plan en de bestellijst. ---- */
 const EXTSTATUS=[["Uitgevoerd","ok"],["Onderdeel bestellen","wacht"],["Deels uitgevoerd","warn2"]];
-let EXTLIVE=[],extTeken=null,EXT={open:null,form:{},tab:"bonnen",sel:new Set()};
+let EXTLIVE=[],extTeken=null,EXT={open:null,form:{},tab:"bonnen",sel:new Set(),instr:{}};
 const tijdSleutel=t=>{const m=String(t||"").match(/(\d\d)-(\d\d)-(\d{4})(?:\s+(\d\d):(\d\d))?/);return m?m[3]+m[2]+m[1]+(m[4]||"00")+(m[5]||"00"):"0"};
 const extStChip=st=>{const k=(EXTSTATUS.find(x=>x[0]===st)||[st,""])[1];return'<span class="st '+k+'"><i></i>'+esc(st)+"</span>"};
 /* De laatste afmelding van een bon: wachtend op deze telefoon, live uit de Sheet, of al verwerkt door de uurronde. */
@@ -7349,6 +7353,7 @@ async function haalExtern(){
 }
 /* De werkverdeling (tabblad ExternWerk, vanaf versie 28): per bon of PM-taak van de zaterdag de monteur, de stand en wat hij klaarzette. */
 let EXTWERK=[];
+const EXTMONS=[1,2,3,4,5,6,7,8,9,10,11,12];
 const extSl=b=>b.nr+(b.pm?"|"+b.pmbon:"");
 const EXTWST={"Toegewezen":"leeg","Klaar voor controle":"wacht","Teruggestuurd":"warn2","Afgetekend":"ok"};
 function externScherm(){
@@ -7376,7 +7381,7 @@ function externScherm(){
     if(w&&w.status&&w.status!=="Niet toegewezen")return'<span class="st '+(EXTWST[w.status]||"leeg")+'"><i></i>'+esc(w.wacht?"Wacht op bereik":w.status)+"</span>";
     return'<span class="st leeg"><i></i>Open</span>'};
   const sub=b=>{const a=af(b.nr),w=werk(b);return[b.nr,[b.lijn,b.machine].filter(Boolean).join(" / "),b.pm?"PM-taak, "+(b.frequentie||"preventief").toLowerCase():b.deel==="preventief"?"preventief":"",
-    getekend(b)?(a.uitvoerder||"")+(a.uren?", "+urenTekst(a.uren)+" uur":""):!MON&&w&&w.monteur?monLabel(w.monteur):""].filter(Boolean).join(" · ")};
+    getekend(b)?(a.uitvoerder||"")+(a.uren?", "+urenTekst(a.uren)+" uur":""):!MON&&w&&w.monteur?monLabel(w.monteur):"",w&&w.instructie&&!getekend(b)?"met instructie":""].filter(Boolean).join(" · ")};
   const kaartKnop=b=>'<button type="button" class="pmkaart ex-kaart" data-extopen="'+esc(b.nr)+'">'+prio(b.prio)+'<span><b>'+esc(b.omschrijving)+"</b><small>"+esc(sub(b))+"</small></span>"+stChip(b)+"</button>";
   const band=(t,l,f)=>l.length?'<div class="ex-band">'+esc(t)+" · "+l.length+"</div>"+l.map(f).join(""):"";
   EXT.tab=EXT.tab||"bonnen";EXT.sel=EXT.sel||new Set();
@@ -7399,11 +7404,11 @@ function externScherm(){
       vak.innerHTML=h;return;
     }
     const l=alle(),open=l.filter(b=>!getekend(b)),klaar=l.filter(getekend),uren=klaar.reduce((n,b)=>n+(Number(af(b.nr).uren)||0),0);
-    const keus=(b)=>{const w=werk(b),m=w?w.monteur:"",dicht=getekend(b);return'<select class="ex-mon" data-exmon="'+esc(extSl(b))+'" aria-label="Monteur voor '+esc(b.nr)+'"'+(dicht?" disabled":"")+'><option value="">Geen monteur</option>'+[1,2,3,4,5,6,7,8].map(n=>'<option value="'+n+'"'+(m===String(n)?" selected":"")+">"+esc(monLabel(n))+"</option>").join("")+"</select>"};
+    const keus=(b)=>{const w=werk(b),m=w?w.monteur:"",dicht=getekend(b);return'<select class="ex-mon" data-exmon="'+esc(extSl(b))+'" aria-label="Monteur voor '+esc(b.nr)+'"'+(dicht?" disabled":"")+'><option value="">Geen monteur</option>'+EXTMONS.map(n=>'<option value="'+n+'"'+(m===String(n)?" selected":"")+">"+esc(monLabel(n))+"</option>").join("")+"</select>"};
     const rij=b=>'<div class="ex-rij">'+(getekend(b)?'<span class="ex-vink"></span>':'<label class="ex-vink"><input type="checkbox" data-exsel="'+esc(extSl(b))+'"'+(EXT.sel.has(extSl(b))?" checked":"")+' aria-label="Kies '+esc(b.nr)+'"></label>')+kaartKnop(b)+keus(b)+"</div>";
     h+='<div class="ex-stand"><div><b>'+klaar.length+" van "+l.length+" afgetekend</b><span>Ingevuld "+urenTekst(Math.round(uren*10)/10)+' uur</span></div><div class="ex-balk"><i style="width:'+(l.length?Math.round(100*klaar.length/l.length):0)+'%"></i></div></div>'+
       (z.letop?'<p class="ex-let"><b>Let op:</b> '+esc(z.letop)+"</p>":"")+
-      (EXT.sel.size?'<div class="ex-selbalk"><b>'+EXT.sel.size+" gekozen</b><select id=\"ex_bulk\" aria-label=\"Monteur\"><option value=\"\">Geen monteur</option>"+[1,2,3,4,5,6,7,8].map(n=>'<option value="'+n+'">'+esc(monLabel(n))+"</option>").join("")+'</select><button type="button" class="knop hoofd" data-exbulk>Toewijzen</button><button type="button" class="tekstknop" data-exselweg>Wissen</button></div>':'<p class="ex-noot">Kies bij elke bon een monteur, of vink er meer aan en wijs ze in één keer toe. Een bon zonder monteur meld je zelf af.</p>')+
+      (EXT.sel.size?'<div class="ex-selbalk"><b>'+EXT.sel.size+" gekozen</b><select id=\"ex_bulk\" aria-label=\"Monteur\"><option value=\"\">Geen monteur</option>"+EXTMONS.map(n=>'<option value="'+n+'">'+esc(monLabel(n))+"</option>").join("")+'</select><button type="button" class="knop hoofd" data-exbulk>Toewijzen</button><button type="button" class="tekstknop" data-exselweg>Wissen</button></div>':'<p class="ex-noot">Kies bij elke bon een monteur, of vink er meer aan en wijs ze in één keer toe. Een bon zonder monteur meld je zelf af.</p>')+
       (open.length?'<div class="ex-band">Nog te doen · '+open.length+"</div>"+open.map(rij).join(""):'<p class="pa-staat ok">'+ico("afvink")+"<span>Alle bonnen zijn afgetekend.</span></p>")+band("Afgetekend",klaar,rij);
     vak.innerHTML=h;
   }
@@ -7434,6 +7439,10 @@ function externScherm(){
     const f=EXT.form[nr],l=MON?alle().filter(mijn):EXT.tab==="tedoen"?teControleren():alle(),i=l.findIndex(x=>x.nr===nr);
     const r=(id,lab,inh,ver)=>'<label id="'+id+'_v"><span>'+lab+(ver?' <b class="verpl">*</b>':"")+"</span>"+inh+"</label>";
     const ond=f.ond.map((o,j)=>'<div class="ex-ond" data-exond="'+j+'"><div class="ex-ondkop"><span>Onderdeel '+(j+1)+"</span>"+(f.ond.length>1?'<button type="button" class="tekstknop" data-exondweg="'+j+'">Weghalen</button>':"")+'</div><label><span>Welk onderdeel <b class="verpl">*</b></span><input type="text" class="ex_onam" maxlength="200" value="'+esc(o.onderdeel)+'" placeholder="Bijvoorbeeld: lager 6205-2RS, 2 stuks"></label><label><span>Specificatie of typeplaat</span><input type="text" class="ex_ospec" maxlength="300" value="'+esc(o.spec)+'" placeholder="Merk, type, maat"></label><div class="ex-fotorij" id="ex_of'+j+'_v"><label class="knop ex-fknop">'+ico("camera")+(o.file||o.fotoId?"Andere foto":"Foto maken")+' <b class="verpl">*</b><input type="file" accept="image/*" capture="environment" data-exfoto="'+j+'" hidden></label>'+(o.file?'<img alt="Foto onderdeel '+(j+1)+'" src="'+URL.createObjectURL(o.file)+'">':o.fotoId?'<img alt="Foto van de monteur" data-exfotoid="'+esc(o.fotoId)+'">':"")+"</div></div>").join("");
+    const regels=t=>String(t||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    const instr=MON?(w&&w.instructie?'<div class="pmlet ex-instrm"><b>Instructies van de teamleider</b><ul>'+regels(w.instructie).map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul></div>":""):
+      dicht?(w&&w.instructie?'<div class="pmlet ex-instrm"><b>Instructies voor de monteur</b><ul>'+regels(w.instructie).map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul></div>":""):
+      '<div class="ex-blok ex-instr"><label for="ex_instr"><b>Extra instructies voor de monteur</b></label><textarea id="ex_instr" maxlength="1000" rows="3" placeholder="Bijvoorbeeld: eerst LOTOTO aanvragen bij de teamleider, onderdelen liggen bij de werkplaats">'+esc(EXT.instr[nr]!=null?EXT.instr[nr]:(w&&w.instructie)||"")+'</textarea><div class="ex-instrk"><small>Elke regel wordt een punt. De monteur ziet ze bovenaan zijn bon.</small><button type="button" class="knop" data-exinstr>Instructies opslaan</button></div></div>';
     let staat="";
     if(MON&&w&&w.status==="Teruggestuurd")staat='<p class="pa-staat warn">'+ico("pijl")+"<span><b>Teruggestuurd door de teamleider:</b> "+esc(w.reden||"zonder reden")+"</span></p>";
     else if(MON&&w&&w.status==="Klaar voor controle"&&!dicht)staat='<p class="pa-staat wacht">'+ico("klok")+"<span>"+(w.wacht?"Staat op deze telefoon en gaat vanzelf zodra er bereik is.":"Klaargezet voor de teamleider. Aanpassen mag tot hij aftekent.")+"</span></p>";
@@ -7458,7 +7467,7 @@ function externScherm(){
       ((b.extra||[]).length?'<div class="pmlet"><b>Extra instructies</b><ol class="ex-extra">'+b.extra.map(t=>"<li>"+esc(t)+"</li>").join("")+"</ol></div>":"")+
       (b.pm?'<div class="pmlet"><b>PM-taak'+(b.uit?", lijn staat stil (LOTOTO)":", machine in bedrijf")+"</b>"+(b.onderdeel?'<span style="display:block">'+esc(b.onderdeel)+"</span>":"")+'</div><div class="ex-punten">'+(b.punten||[]).map(g=>(g.o?"<h3>"+esc(g.o)+"</h3>":"")+"<ul>"+(g.p||[]).map(t=>"<li>"+esc(t)+"</li>").join("")+"</ul>").join("")+"</div>":
         b.kopie?'<button type="button" class="knop" data-exbon>'+ico("bon")+"Bon openen (PDF)</button>":'<p class="pmaf">De bon als PDF komt binnen een uur.</p>')+
-      staat+formulier+"</div>";
+      instr+staat+formulier+"</div>";
     handtekening(f);fotoIds();window.scrollTo(0,0);
   }
   /* Foto's die de monteur al stuurde staan in Drive: de teamleider ziet ze met zijn eigen sleutel. */
@@ -7513,6 +7522,15 @@ function externScherm(){
       k.disabled=false;k.textContent=knoptekst;const fo=$("#ex_fout");fo.textContent=e.message==="geen toegang"?"De Sheet kent dit nog niet. Vraag de werkvoorbereider het script bij te werken (versie 28).":e.message==="foto te groot"?"Een foto is te groot. Maak hem opnieuw.":e.message==="niet toegewezen"?"Deze bon is niet meer aan jou toegewezen.":"Versturen is niet gelukt. Probeer het opnieuw.";fo.hidden=false;
     }
   }
+  async function instructieOpslaan(){
+    const nr=EXT.open,b=vind(nr),tekst=($("#ex_instr").value||"").trim(),k=$("[data-exinstr]");
+    k.disabled=true;
+    try{await stuur({actie:"extinstructie",sleutel:extSl(b),datum:z.datum,tekst,door:"Teamleider"});
+      let r=EXTWERK.find(y=>y.sleutel===extSl(b)&&y.datum===z.datum);if(!r){r={sleutel:extSl(b),datum:z.datum,monteur:"",status:"Niet toegewezen",naam:"",gegevens:{}};EXTWERK.push(r)}r.instructie=tekst;delete EXT.instr[nr];
+      melder(tekst?"Instructies opgeslagen"+(r.monteur?", "+monLabel(r.monteur)+" ziet ze meteen":""):"Instructies weggehaald")}
+    catch(e){melder(e.message==="geen toegang"?"De Sheet kent dit nog niet. Vraag de werkvoorbereider het script bij te werken (versie 29).":"Opslaan is niet gelukt. Probeer het opnieuw.")}
+    k.disabled=false;
+  }
   async function terugsturen(){
     const nr=EXT.open,b=vind(nr),reden=($("#ex_reden").value||"").trim();
     if(!reden){$("#ex_reden").focus();melder("Schrijf erbij wat de monteur nog moet doen.");return}
@@ -7527,6 +7545,7 @@ function externScherm(){
     if(e.target.closest("[data-exselweg]")){EXT.sel.clear();lijst();return}
     if(e.target.closest("[data-exterugopen]")){const v=$("#ex_terugvak");v.hidden=!v.hidden;if(!v.hidden)$("#ex_reden").focus();return}
     if(e.target.closest("[data-exterug]")){terugsturen();return}
+    if(e.target.closest("[data-exinstr]")){instructieOpslaan();return}
     const u=e.target.closest("[data-exuren]");if(u){const i=$("#ex_uren"),n=Math.max(0,Math.min(200,(Number(String(i.value).replace(",","."))||0)+Number(u.dataset.exuren)));i.value=n?urenTekst(n):"";lees();return}
     if(e.target.closest("[data-exondplus]")){const f=lees();f.ond.push({onderdeel:"",spec:"",file:null,fotoId:""});bon(EXT.open);const l=document.querySelectorAll("[data-exond]");l[l.length-1].scrollIntoView({block:"center"});return}
     const ow=e.target.closest("[data-exondweg]");if(ow){const f=lees();f.ond.splice(+ow.dataset.exondweg,1);bon(EXT.open);return}
@@ -7542,7 +7561,7 @@ function externScherm(){
     const fo=e.target.closest("[data-exfoto]");if(fo&&fo.files[0]){const f=lees();const o=f.ond[+fo.dataset.exfoto];o.file=fo.files[0];o.fotoId="";bon(EXT.open);return}
     if(EXT.open)lees();
   });
-  vak.addEventListener("input",e=>{const v=e.target.closest(".ex-mis");if(v)v.classList.remove("ex-mis");if(EXT.open)lees()});
+  vak.addEventListener("input",e=>{if(e.target.id==="ex_instr"&&EXT.open)EXT.instr[EXT.open]=e.target.value;const v=e.target.closest(".ex-mis");if(v)v.classList.remove("ex-mis");if(EXT.open)lees()});
   vak.addEventListener("submit",e=>{e.preventDefault();if(e.target.id==="exnaam"){const n=$("#ex_naam").value.trim();if(!n)return;NAAM=n;bewaar_(NKEY,n);kop();lijst();return}versturen()});
   $("#externscherm").addEventListener("click",e=>{if(e.target.closest("[data-exnaamweg]")){NAAM="";bewaar_(NKEY,"");kop();lijst()}});
   extTeken=()=>{if(!EXT.open)lijst()};

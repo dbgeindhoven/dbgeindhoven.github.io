@@ -72,9 +72,9 @@ def setkey(a):
     if a.naam:
         # Een eigen inlog per monteur: zelfde deel als de gedeelde monteurinlog, met zijn naam erbij.
         if a.niveau == "externmonteur":
-            # Monteur 1 tot en met 8 van de externe ploeg: de monteur typt in de app zelf zijn naam.
-            if a.naam not in [str(i) for i in range(1, 9)]:
-                raise SystemExit("--naam is het nummer van de monteur, 1 tot en met 8")
+            # Monteur 1 tot en met 12 van de externe ploeg: de monteur typt in de app zelf zijn naam.
+            if a.naam not in [str(i) for i in range(1, 13)]:
+                raise SystemExit("--naam is het nummer van de monteur, 1 tot en met 12")
             pub.setdefault("extern_monteurs", {})[a.naam] = b64(key)
             p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
             return
@@ -310,7 +310,7 @@ def build(a):
             if b["nr"] in kopie:
                 b["kopie"] = kopie[b["nr"]]
         boxes.append(box({"niveau": "extern", "zat": ext, "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": extern_sleutel}}}, pub["sleutel_extern"]))
-        # Monteur 1 tot en met 8: dezelfde zaterdag, de app toont alleen wat de teamleider hem toewees. Hun sleutel kan alleen eigen werk klaarzetten.
+        # Monteur 1 tot en met 12: dezelfde zaterdag, de app toont alleen wat de teamleider hem toewees. Hun sleutel kan alleen eigen werk klaarzetten.
         for nr, sleutel in sorted((pub.get("extern_monteurs") or {}).items()) if extmon_sleutel else []:
             boxes.append(box({"niveau": "extern", "rol": "monteur", "mnr": nr, "zat": ext, "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": extmon_sleutel}}}, sleutel))
     if pub.get("sleutel_productie") and productie_sleutel:
