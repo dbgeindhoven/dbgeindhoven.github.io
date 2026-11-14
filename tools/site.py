@@ -71,8 +71,15 @@ def setkey(a):
     key = PBKDF2HMAC(algorithm=SHA256(), length=32, salt=salt, iterations=pub["iter"]).derive(a.password.encode("utf-8"))
     if a.naam:
         # Een eigen inlog per monteur: zelfde deel als de gedeelde monteurinlog, met zijn naam erbij.
+        if a.niveau == "externmonteur":
+            # Monteur 1 tot en met 8 van de externe ploeg: de monteur typt in de app zelf zijn naam.
+            if a.naam not in [str(i) for i in range(1, 9)]:
+                raise SystemExit("--naam is het nummer van de monteur, 1 tot en met 8")
+            pub.setdefault("extern_monteurs", {})[a.naam] = b64(key)
+            p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
+            return
         if a.niveau != "monteur":
-            raise SystemExit("--naam hoort bij --niveau monteur")
+            raise SystemExit("--naam hoort bij --niveau monteur of externmonteur")
         pub.setdefault("monteurs", {})[a.naam] = b64(key)
         p.write_text(json.dumps(data, ensure_ascii=False, indent=1), "utf-8")
         return
@@ -242,6 +249,7 @@ def build(a):
     pm_sleutel = mld.pop("sleutel_pm", None)
     productie_sleutel = mld.pop("sleutel_productie", None)
     extern_sleutel = mld.pop("sleutel_extern", None)
+    extmon_sleutel = mld.pop("sleutel_extmonteur", None)
     kijk_sleutel = mld.pop("sleutel_kijk", None)
     mld.pop("sheet", None)
     mld.pop("wachtrij", None)
@@ -272,7 +280,7 @@ def build(a):
     deel = box(wv, deel_sleutel)
     if pub.get("sleutel_wv"):
         # Met de sleutel van de gedeelde monteurinlog opent de werkvoorbereider de monteursapp in zijn eigen menu (pagina Monteursapp).
-        boxes.append(box(dict({"deel": deel_sleutel, "meldingen": wv_meld}, **({"app": pub["sleutel_monteur"]} if pub.get("sleutel_monteur") else {}), **({"appextern": pub["sleutel_extern"]} if pub.get("sleutel_extern") and extern_sleutel else {})), pub["sleutel_wv"]))
+        boxes.append(box(dict({"deel": deel_sleutel, "meldingen": wv_meld}, **({"app": pub["sleutel_monteur"]} if pub.get("sleutel_monteur") else {}), **({"appextern": pub["sleutel_extern"]} if pub.get("sleutel_extern") and extern_sleutel else {}), **({"appextmon": pub["extern_monteurs"]} if pub.get("extern_monteurs") and extmon_sleutel else {})), pub["sleutel_wv"]))
     if pub.get("sleutel_kijk"):
         boxes.append(box({"deel": deel_sleutel, "niveau": "kijk", "meldingen": {"url": mld.get("url"), "sleutel": kijk_sleutel}}, pub["sleutel_kijk"]))
     if pub.get("sleutel_dagstart"):
@@ -302,6 +310,9 @@ def build(a):
             if b["nr"] in kopie:
                 b["kopie"] = kopie[b["nr"]]
         boxes.append(box({"niveau": "extern", "zat": ext, "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": extern_sleutel}}}, pub["sleutel_extern"]))
+        # Monteur 1 tot en met 8: dezelfde zaterdag, de app toont alleen wat de teamleider hem toewees. Hun sleutel kan alleen eigen werk klaarzetten.
+        for nr, sleutel in sorted((pub.get("extern_monteurs") or {}).items()) if extmon_sleutel else []:
+            boxes.append(box({"niveau": "extern", "rol": "monteur", "mnr": nr, "zat": ext, "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": extmon_sleutel}}}, sleutel))
     if pub.get("sleutel_productie") and productie_sleutel:
         # Productie-app (pilot): de machines uit het dienstrapport en de planning. Geen andere lijsten; de sleutel kan alleen het tabblad Productie lezen en schrijven.
         boxes.append(box({"niveau": "productie", "machines": prod_machines(data), "plan": prod_plan(data, a.stand), "meta": {"stand": a.stand, "meldingen": {"url": mld.get("url"), "sleutel": productie_sleutel}}}, pub["sleutel_productie"]))
@@ -454,7 +465,7 @@ def olbonnen(data, stand):
 ap = argparse.ArgumentParser()
 sub = ap.add_subparsers(dest="cmd", required=True)
 x = sub.add_parser("extract"); x.add_argument("html"); x.add_argument("site"); x.set_defaults(fn=extract)
-x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm", "productie", "extern"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
+x = sub.add_parser("setkey"); x.add_argument("site"); x.add_argument("--password", required=True); x.add_argument("--niveau", choices=["td", "dagstart", "melden", "monteur", "wv", "kijk", "output", "pm", "productie", "extern", "externmonteur"], default="td"); x.add_argument("--naam"); x.set_defaults(fn=setkey)
 x = sub.add_parser("build"); x.add_argument("site"); x.add_argument("--stand", required=True); x.add_argument("--plain", required=True); x.add_argument("--public", required=True); x.set_defaults(fn=build)
 a = ap.parse_args()
 a.fn(a)

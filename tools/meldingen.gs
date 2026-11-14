@@ -1,4 +1,4 @@
-// TD Hub meldingen, versie 27: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 28: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // Versie 26: de externe ploeg op zaterdag meldt bonnen af met een eigen sleutel (actie extern, tabblad Extern), met handtekening en foto's.
 // Versie 25: meer foto's per storing en per afgekeurd PM-punt (veld fotos). In de kolom foto staan de Drive-id's met een komma ertussen;
 // de eerste foto komt op de CM-bon, de rest als bijlage achter de bon. De monteursapp leest ook het rooster uit de wachtrij (rij.rooster, rij.roostermensen).
@@ -15,6 +15,7 @@ const OUTPUTSLEUTEL = '__OUTPUTSLEUTEL__';
 const PMSLEUTEL = '__PMSLEUTEL__';
 const PRODUCTIESLEUTEL = '__PRODUCTIESLEUTEL__';
 const EXTERNSLEUTEL = '__EXTERNSLEUTEL__';
+const EXTMONTEURSLEUTEL = '__EXTMONTEURSLEUTEL__';
 const WACHTRIJ = '__WACHTRIJ__';
 // voortgang (kolom 21, vanaf versie 21): Bezig of leeg, voor een actie op het SQD-bord en in de actielijst.
 const KOP = ['id', 'tijd', 'letter', 'melding', 'lijn', 'machine', 'melder', 'actiehouder', 'datum', 'bon_nodig', 'status', 'gereed_op', 'gereed_door', 'oplossing', 'foto', 'risico', 'vervolg', 'code', 'wachtrij', 'prio', 'voortgang'];
@@ -35,6 +36,10 @@ const OPNAMEKOP = ['nr', 'status', 'regels', 'opmerking', 'foto', 'door', 'tijd'
 const OPNAMESTATUS = ['Bestellen', 'Deels uitgevoerd'];
 // Externe ploeg op zaterdag: per afmelding één regel. Handtekening en foto's staan in Drive, de rest als JSON in gegevens.
 const EXTERNKOP = ['nr', 'status', 'uitvoerder', 'uren', 'teamleider', 'handtekening', 'fotos', 'gegevens', 'tijd'];
+// Werkverdeling van de externe ploeg (vanaf versie 28): per bon of PM-taak van een zaterdag welke monteur hem doet en hoe ver hij is.
+const EXTWERKKOP = ['sleutel', 'datum', 'monteur', 'naam', 'status', 'gegevens', 'reden', 'tijd', 'log'];
+const EXTWERKSTATUS = ['Niet toegewezen', 'Toegewezen', 'Klaar voor controle', 'Teruggestuurd', 'Afgetekend'];
+const EXTSLEUTEL_RE = /^(CM\d+|SQDM-\d+|PM-\d+\|PM-\d{6}-\d{1,2})$/;
 const EXTERNSTATUS = ['Uitgevoerd', 'Onderdeel bestellen', 'Deels uitgevoerd'];
 // Opnamelijst in de monteursapp: per opnamelijst één regel. Alles wat de monteur invulde staat als JSON in de kolom gegevens.
 const OLKOP = ['ol', 'status', 'gegevens', 'door', 'tijd'];
@@ -361,11 +366,12 @@ function zetExtern_(d) {
   if (!(pm || /^(CM\d+|SQDM-\d+)$/.test(d.nr)) || !EXTERNSTATUS.includes(d.status) || !t(d.uitvoerder) || !(uren > 0 && uren <= 200) || !t(d.teamleider) || !d.handtekening) return { fout: 'onjuiste invoer' };
   if (d.status === 'Onderdeel bestellen' && (!ond.length || ond.some(x => !x.onderdeel || !x.foto))) return { fout: 'onjuiste invoer' };
   if (d.status === 'Deels uitgevoerd' && (!t(d.gedaan) || !t(d.nog))) return { fout: 'onjuiste invoer' };
+  const isId = f => /^[\w-]{20,80}$/.test(String(f));
   if (String(d.handtekening).length > 600000 || ond.some(x => String(x.foto).length > MAX_FOTO) || [].concat(d.fotos || []).some(f => String(f).length > MAX_FOTO)) return { fout: 'foto te groot' };
   const nu = Date.now();
   const tijd = nu_();
   const hand = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.handtekening), 'image/png', 'handtekening-' + d.nr + '-' + nu + '.png')).getId();
-  ond.forEach((x, i) => { x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
+  ond.forEach((x, i) => { if (isId(x.foto)) return; x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
   const extra = [].concat(d.fotos || []).filter(Boolean).slice(0, 2).map((f, i) => map_().createFile(Utilities.newBlob(Utilities.base64Decode(f), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-f' + (i + 1) + '.jpg')).getId());
   const g = { pmbon: pm ? d.pmbon : '', gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, onderdelen: ond, fotos: extra };
   const fotos = ond.map(x => x.foto).concat(extra).join(',');
@@ -374,12 +380,92 @@ function zetExtern_(d) {
   b.getRange('A:I').setNumberFormat('@');
   b.getRange(1, 1, 1, EXTERNKOP.length).setValues([EXTERNKOP]);
   b.appendRow([d.nr, d.status, schoon_(d.uitvoerder).slice(0, 200), String(uren), schoon_(d.teamleider).slice(0, 100), hand, fotos, JSON.stringify(g), tijd]);
+  if (/^\d{2}-\d{2}-\d{4}$/.test(String(d.datum || ''))) zetExtWerk_(d.nr + (pm ? '|' + d.pmbon : ''), d.datum, x => { x.status = 'Afgetekend'; x.reden = ''; }, 'afgetekend door ' + t(d.teamleider));
   zetBonstatus_('EXT-' + d.nr + '-' + nu, 'Open', { extern: Object.assign({ nr: d.nr, status: d.status, uitvoerder: t(d.uitvoerder).slice(0, 200), uren: uren, teamleider: t(d.teamleider).slice(0, 100), handtekening: hand, tijd: tijd }, g) }, d.teamleider);
   return { ok: true, tijd: tijd, handtekening: hand, fotos: fotos };
 }
 
 // De werkvoorbereider keurt een afgemelde PM-taak van de externe ploeg goed (vanaf versie 27). De taak komt bij de taken van de PM-bon;
 // zijn alle taken van de bon gedaan, dan krijgt hij zijn registratienummer. Onderdeel bestellen zet een storing in het dienstrapport, waar de geplande taak een CM-bon van maakt.
+function extWerkBlad_() {
+  const s = SpreadsheetApp.openById(SHEET_ID);
+  const b = s.getSheetByName('ExternWerk') || s.insertSheet('ExternWerk', s.getNumSheets());
+  b.getRange('A:I').setNumberFormat('@');
+  b.getRange(1, 1, 1, EXTWERKKOP.length).setValues([EXTWERKKOP]);
+  return b;
+}
+// Alle regels, of alleen die van één monteur (1 tot en met 8): een monteur leest alleen zijn eigen bonnen.
+function extWerkRijen_(monteur) {
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('ExternWerk');
+  if (!b || b.getLastRow() < 2) return [];
+  return b.getRange(2, 1, b.getLastRow() - 1, EXTWERKKOP.length).getDisplayValues().slice(-800).map(r => {
+    const o = {};
+    EXTWERKKOP.forEach((k, i) => { o[k] = r[i]; });
+    try { o.gegevens = JSON.parse(o.gegevens || '{}'); } catch (f) { o.gegevens = {}; }
+    delete o.log;
+    return o;
+  }).filter(o => !monteur || o.monteur === String(monteur));
+}
+// Past de regel van een bon op een zaterdag aan, of maakt hem. pas(x) zet de velden; het logboek in de regel vult alleen aan.
+function zetExtWerk_(sleutel, datum, pas, logtekst) {
+  const b = extWerkBlad_();
+  const n = b.getLastRow();
+  const rijen = n > 1 ? b.getRange(2, 1, n - 1, EXTWERKKOP.length).getValues() : [];
+  const i = rijen.findIndex(r => r[0] === sleutel && r[1] === datum);
+  const x = {};
+  EXTWERKKOP.forEach((k, j) => { x[k] = i >= 0 ? String(rijen[i][j]) : ''; });
+  x.sleutel = sleutel; x.datum = datum;
+  if (!x.status) x.status = 'Niet toegewezen';
+  if (pas(x) === false) return null;
+  x.tijd = nu_();
+  x.log = (x.log ? x.log + '\n' : '') + x.tijd + ' ' + schoon_(logtekst).slice(0, 200);
+  const rij = EXTWERKKOP.map(k => k === 'gegevens' && typeof x[k] !== 'string' ? JSON.stringify(x[k]) : String(x[k] == null ? '' : x[k]));
+  if (i >= 0) b.getRange(i + 2, 1, 1, rij.length).setValues([rij]);
+  else b.appendRow(rij);
+  return x;
+}
+// De teamleider wijst bonnen toe aan monteur 1 tot en met 8, of haalt de monteur eraf. Een afgetekende bon blijft zoals hij is.
+function zetExtToewijs_(d) {
+  if (!/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !Array.isArray(d.lijst) || !d.lijst.length) return { fout: 'onjuiste invoer' };
+  const uit = [];
+  d.lijst.slice(0, 80).forEach(y => {
+    const m = String(y.monteur || '');
+    if (!EXTSLEUTEL_RE.test(String(y.sleutel)) || !/^[1-8]?$/.test(m)) return;
+    const x = zetExtWerk_(String(y.sleutel), d.datum, x => {
+      if (x.status === 'Afgetekend') return false;
+      if (x.monteur !== m) { x.monteur = m; x.status = m ? 'Toegewezen' : 'Niet toegewezen'; x.reden = ''; }
+    }, m ? 'toegewezen aan monteur ' + m : 'monteur eraf gehaald');
+    if (x) uit.push({ sleutel: x.sleutel, monteur: x.monteur, status: x.status, tijd: x.tijd });
+  });
+  return { ok: true, werk: uit };
+}
+// De teamleider stuurt een bon terug naar de monteur, met een reden.
+function zetExtTerug_(d) {
+  const reden = String(d.reden == null ? '' : d.reden).trim();
+  if (!EXTSLEUTEL_RE.test(String(d.sleutel)) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !reden) return { fout: 'onjuiste invoer' };
+  const x = zetExtWerk_(d.sleutel, d.datum, x => { if (x.status === 'Afgetekend' || !x.monteur) return false; x.status = 'Teruggestuurd'; x.reden = reden.slice(0, 500); }, 'teruggestuurd: ' + reden);
+  return x ? { ok: true, status: x.status, tijd: x.tijd } : { fout: 'kan niet terug' };
+}
+// De monteur zet zijn werk klaar voor controle. Hij tekent niet: dat doet de teamleider. Foto's van onderdelen gaan meteen naar Drive.
+function zetExtKlaar_(d) {
+  const t = x => String(x == null ? '' : x).trim();
+  const m = String(d.monteur || ''), uren = Number(String(d.uren).replace(',', '.'));
+  const ond = (Array.isArray(d.onderdelen) ? d.onderdelen : []).slice(0, 6).map(x => ({ onderdeel: t(x.onderdeel).slice(0, 200), spec: t(x.spec).slice(0, 300), foto: x.foto || '' }));
+  if (!EXTSLEUTEL_RE.test(String(d.sleutel)) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !/^[1-8]$/.test(m) || !t(d.naam) || !EXTERNSTATUS.includes(d.status) || !t(d.uitvoerder) || !(uren > 0 && uren <= 200)) return { fout: 'onjuiste invoer' };
+  if (d.status === 'Onderdeel bestellen' && (!ond.length || ond.some(x => !x.onderdeel || !x.foto))) return { fout: 'onjuiste invoer' };
+  if (d.status === 'Deels uitgevoerd' && (!t(d.gedaan) || !t(d.nog))) return { fout: 'onjuiste invoer' };
+  if (ond.some(x => String(x.foto).length > MAX_FOTO)) return { fout: 'foto te groot' };
+  const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('ExternWerk');
+  const n = b ? b.getLastRow() : 0;
+  const rij = n > 1 ? b.getRange(2, 1, n - 1, EXTWERKKOP.length).getValues().find(r => r[0] === d.sleutel && r[1] === d.datum) : null;
+  if (!rij || String(rij[2]) !== m || rij[4] === 'Afgetekend') return { fout: 'niet toegewezen' };
+  const nu = Date.now();
+  ond.forEach((x, i) => { if (/^[\w-]{20,80}$/.test(String(x.foto))) return; x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.sleutel.replace('|', '-') + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
+  const g = { status: d.status, uitvoerder: t(d.uitvoerder).slice(0, 200), uren: uren, gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, onderdelen: ond };
+  const x = zetExtWerk_(d.sleutel, d.datum, x => { x.naam = t(d.naam).slice(0, 100); x.status = 'Klaar voor controle'; x.reden = ''; x.gegevens = g; }, 'klaar voor controle door ' + t(d.naam));
+  return { ok: true, tijd: x.tijd, gegevens: g };
+}
+
 function zetExternPm_(b, d) {
   const t = x => String(x == null ? '' : x).trim();
   const s = SpreadsheetApp.openById(SHEET_ID);
@@ -527,7 +613,16 @@ function doGet(e) {
   // Productie-app: de diensten van de laatste drie weken. De werkvoorbereider leest ze los van de rest, met zijn eigen sleutel.
   if (p.k === PRODUCTIESLEUTEL) return uit_({ productie: prodRijen_(21) });
   // De externe ploeg leest alleen zijn eigen afmeldingen, verder niets.
-  if (p.k === EXTERNSLEUTEL && !p.foto) return uit_({ extern: externRijen_() });
+  if (p.k === EXTERNSLEUTEL && !p.foto) return uit_({ extern: externRijen_(), werk: extWerkRijen_() });
+  // Een monteur van de externe ploeg leest alleen zijn eigen bonnen (vanaf versie 28).
+  if (p.k === EXTMONTEURSLEUTEL && EXTMONTEURSLEUTEL.length > 20 && !p.foto) return uit_({ werk: extWerkRijen_(/^[1-8]$/.test(String(p.m)) ? p.m : '0') });
+  if ((p.k === EXTERNSLEUTEL || (p.k === EXTMONTEURSLEUTEL && EXTMONTEURSLEUTEL.length > 20)) && p.foto) {
+    const ploeg = p.k === EXTERNSLEUTEL;
+    const werk = extWerkRijen_(ploeg ? '' : (/^[1-8]$/.test(String(p.m)) ? p.m : '0')).some(x => (x.gegevens.onderdelen || []).some(o => o.foto === p.foto));
+    const af = ploeg && externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto));
+    if (!werk && !af) return uit_({ fout: 'foto niet gevonden' });
+    return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
+  }
   if (p.k === WVSLEUTEL && p.productie) return uit_({ productie: prodRijen_(70) });
   const pm = p.k === PMSLEUTEL;
   if (pm && !p.foto) return uit_({ pm: pmRijen_(), bevindingen: bevRijen_() });
@@ -539,7 +634,7 @@ function doGet(e) {
     const bevinding = !monteur && bevRijen_().some(x => heeftFoto_(x.foto, p.foto));
     const opname = !pm && opnameRijen_().some(x => x.foto === p.foto);
     const ol = !pm && !opname && String(p.foto).length > 15 && olRijen_().some(x => x.gegevens.indexOf('"' + p.foto + '"') >= 0);
-    const ext = !pm && !monteur && externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto));
+    const ext = !pm && !monteur && (externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto)) || extWerkRijen_().some(x => (x.gegevens.onderdelen || []).some(o => o.foto === p.foto)));
     if (!bevinding && !opname && !ol && !ext && (pm || !rijen.some(r => heeftFoto_(r[14], p.foto) && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }
@@ -549,7 +644,7 @@ function doGet(e) {
     if (monteur) return uit_({ rapport: rapport, olopname: olRijen_(), bonstatus: bonstatus_().filter(x => x.rij && (x.rij.week || x.rij.weekaf || x.rij.opname || x.rij.opdrachtaf || x.rij.olplan || x.rij.olopname || x.rij.rooster || x.rij.roostermensen)).map(x => ({ nr: x.nr, status: x.status, tijd: x.tijd, door: x.door, rij: { week: x.rij.week, weekaf: x.rij.weekaf, opname: x.rij.opname, opdrachtaf: x.rij.opdrachtaf, olplan: x.rij.olplan, rooster: x.rij.rooster, roostermensen: x.rij.roostermensen, olopname: x.rij.olopname && { ol: x.rij.olopname.ol, status: x.rij.olopname.status, door: x.rij.olopname.door, tijd: x.rij.olopname.tijd } } })) });
     return uit_({ rapport: rapport });
   }
-  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_(), olopname: olRijen_(), extern: externRijen_() });
+  return uit_({ meldingen: rijen.filter(r => r[10] === 'Open').map(object_), bonstatus: bonstatus_(), output: outputRijen_(), pm: pmRijen_(), bevindingen: bevRijen_(), olopname: olRijen_(), extern: externRijen_(), werk: extWerkRijen_() });
 }
 
 function doPost(e) {
@@ -576,9 +671,12 @@ function doPost(e) {
   // De monteur vult een opnamelijst in en slaat hem op of meldt hem af (vanaf versie 24). Meer kan deze actie niet.
   const ol = d.k === MONTEURSLEUTEL && (d.actie === 'olopname' || d.actie === 'olfoto');
   // De externe ploeg meldt alleen bonnen van de zaterdag af (vanaf versie 26). Meer kan deze sleutel niet.
-  const extern = d.k === EXTERNSLEUTEL && EXTERNSLEUTEL.length > 20 && d.actie === 'extern';
-  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !opdracht && !productie && !ol && !extern) return uit_({ fout: 'geen toegang' });
-  VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : d.k === PRODUCTIESLEUTEL ? 'productie' : d.k === EXTERNSLEUTEL ? 'extern' : 'melden';
+  // Vanaf versie 28 wijst de teamleider ook bonnen toe en stuurt hij een bon terug naar de monteur.
+  const extern = d.k === EXTERNSLEUTEL && EXTERNSLEUTEL.length > 20 && ['extern', 'exttoewijs', 'extterug'].includes(d.actie);
+  // Een monteur van de externe ploeg zet alleen zijn eigen werk klaar voor controle (vanaf versie 28).
+  const extmonteur = d.k === EXTMONTEURSLEUTEL && EXTMONTEURSLEUTEL.length > 20 && d.actie === 'extklaar';
+  if (wvActie ? d.k !== WVSLEUTEL : d.k !== SLEUTEL && !melder && !monteur && !ploeg && !pm && !rapport && !weekbon && !opname && !opdracht && !productie && !ol && !extern && !extmonteur) return uit_({ fout: 'geen toegang' });
+  VAN_ = d.k === WVSLEUTEL ? 'wv' : d.k === SLEUTEL ? 'td' : d.k === MONTEURSLEUTEL ? 'monteur' : d.k === PMSLEUTEL ? 'pm' : d.k === OUTPUTSLEUTEL ? 'output' : d.k === PRODUCTIESLEUTEL ? 'productie' : d.k === EXTERNSLEUTEL ? 'extern' : d.k === EXTMONTEURSLEUTEL ? 'extmonteur' : 'melden';
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -627,6 +725,9 @@ function doPost(e) {
       return uit_({ ok: true, tijd: tijd });
     }
     if (d.actie === 'extern') return uit_(zetExtern_(d));
+    if (d.actie === 'exttoewijs') return uit_(zetExtToewijs_(d));
+    if (d.actie === 'extterug') return uit_(zetExtTerug_(d));
+    if (d.actie === 'extklaar') return uit_(zetExtKlaar_(d));
     if (d.actie === 'externpm') {
       if (!/^PM-\d{6}-\d{1,2}$/.test(d.pmbon) || !/^PM-\d+$/.test(d.taak) || !EXTERNSTATUS.includes(d.status)) return uit_({ fout: 'onjuiste invoer' });
       return uit_(zetExternPm_(b, d));
