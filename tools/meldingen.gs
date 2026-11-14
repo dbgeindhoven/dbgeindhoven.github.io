@@ -1,4 +1,4 @@
-// TD Hub meldingen, versie 29: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
+// TD Hub meldingen, versie 30: ontvangt meldingen van de site en bewaart ze in de Google Sheet.
 // Versie 26: de externe ploeg op zaterdag meldt bonnen af met een eigen sleutel (actie extern, tabblad Extern), met handtekening en foto's.
 // Versie 25: meer foto's per storing en per afgekeurd PM-punt (veld fotos). In de kolom foto staan de Drive-id's met een komma ertussen;
 // de eerste foto komt op de CM-bon, de rest als bijlage achter de bon. De monteursapp leest ook het rooster uit de wachtrij (rij.rooster, rij.roostermensen).
@@ -39,6 +39,13 @@ const EXTERNKOP = ['nr', 'status', 'uitvoerder', 'uren', 'teamleider', 'handteke
 // Werkverdeling van de externe ploeg (vanaf versie 28): per bon of PM-taak van een zaterdag welke monteur hem doet en hoe ver hij is.
 const EXTWERKKOP = ['sleutel', 'datum', 'monteur', 'naam', 'status', 'gegevens', 'reden', 'tijd', 'log', 'instructie'];
 const EXTWERKSTATUS = ['Niet toegewezen', 'Toegewezen', 'Klaar voor controle', 'Teruggestuurd', 'Afgetekend'];
+// De checks van de afmelding (blok 5 van de werkbon), vanaf versie 30.
+const EXTCHECKS = ['gereed', 'schoon', 'opgeruimd', 'lototo', 'reiniging', 'vrij'];
+const extChecks_ = c => { const o = {}; EXTCHECKS.forEach(k => { if (c && typeof c === 'object' && k in c) o[k] = !!c[k]; }); return o; };
+// Foto's van het werk: een Drive-id blijft staan, een nieuwe foto gaat naar Drive. Hooguit 3.
+function werkFotos_(lijst, naam) {
+  return [].concat(lijst || []).filter(Boolean).slice(0, 3).map((f, i) => /^[\w-]{20,80}$/.test(String(f)) ? String(f) : map_().createFile(Utilities.newBlob(Utilities.base64Decode(f), 'image/jpeg', naam + '-f' + (i + 1) + '.jpg')).getId());
+}
 const EXTSLEUTEL_RE = /^(CM\d+|SQDM-\d+|PM-\d+\|PM-\d{6}-\d{1,2})$/;
 const EXTERNSTATUS = ['Uitgevoerd', 'Onderdeel bestellen', 'Deels uitgevoerd'];
 // Opnamelijst in de monteursapp: per opnamelijst één regel. Alles wat de monteur invulde staat als JSON in de kolom gegevens.
@@ -372,8 +379,8 @@ function zetExtern_(d) {
   const tijd = nu_();
   const hand = map_().createFile(Utilities.newBlob(Utilities.base64Decode(d.handtekening), 'image/png', 'handtekening-' + d.nr + '-' + nu + '.png')).getId();
   ond.forEach((x, i) => { if (isId(x.foto)) return; x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
-  const extra = [].concat(d.fotos || []).filter(Boolean).slice(0, 2).map((f, i) => map_().createFile(Utilities.newBlob(Utilities.base64Decode(f), 'image/jpeg', 'extern-' + d.nr + '-' + nu + '-f' + (i + 1) + '.jpg')).getId());
-  const g = { pmbon: pm ? d.pmbon : '', gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, onderdelen: ond, fotos: extra };
+  const extra = werkFotos_(d.fotos, 'extern-' + d.nr + '-' + nu);
+  const g = { pmbon: pm ? d.pmbon : '', gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, checks: extChecks_(d.checks), onderdelen: ond, fotos: extra };
   const fotos = ond.map(x => x.foto).concat(extra).join(',');
   const s = SpreadsheetApp.openById(SHEET_ID);
   const b = s.getSheetByName('Extern') || s.insertSheet('Extern', s.getNumSheets());
@@ -461,14 +468,14 @@ function zetExtKlaar_(d) {
   if (!EXTSLEUTEL_RE.test(String(d.sleutel)) || !/^\d{2}-\d{2}-\d{4}$/.test(d.datum) || !/^([1-9]|1[0-2])$/.test(m) || !t(d.naam) || !EXTERNSTATUS.includes(d.status) || !t(d.uitvoerder) || !(uren > 0 && uren <= 200)) return { fout: 'onjuiste invoer' };
   if (d.status === 'Onderdeel bestellen' && (!ond.length || ond.some(x => !x.onderdeel || !x.foto))) return { fout: 'onjuiste invoer' };
   if (d.status === 'Deels uitgevoerd' && (!t(d.gedaan) || !t(d.nog))) return { fout: 'onjuiste invoer' };
-  if (ond.some(x => String(x.foto).length > MAX_FOTO)) return { fout: 'foto te groot' };
+  if (ond.some(x => String(x.foto).length > MAX_FOTO) || [].concat(d.fotos || []).some(f => String(f).length > MAX_FOTO)) return { fout: 'foto te groot' };
   const b = SpreadsheetApp.openById(SHEET_ID).getSheetByName('ExternWerk');
   const n = b ? b.getLastRow() : 0;
   const rij = n > 1 ? b.getRange(2, 1, n - 1, EXTWERKKOP.length).getValues().find(r => r[0] === d.sleutel && r[1] === d.datum) : null;
   if (!rij || String(rij[2]) !== m || rij[4] === 'Afgetekend') return { fout: 'niet toegewezen' };
   const nu = Date.now();
   ond.forEach((x, i) => { if (/^[\w-]{20,80}$/.test(String(x.foto))) return; x.foto = map_().createFile(Utilities.newBlob(Utilities.base64Decode(x.foto), 'image/jpeg', 'extern-' + d.sleutel.replace('|', '-') + '-' + nu + '-' + (i + 1) + '.jpg')).getId(); });
-  const g = { status: d.status, uitvoerder: t(d.uitvoerder).slice(0, 200), uren: uren, gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, onderdelen: ond };
+  const g = { status: d.status, uitvoerder: t(d.uitvoerder).slice(0, 200), uren: uren, gedaan: t(d.gedaan).slice(0, 1000), nog: t(d.nog).slice(0, 1000), opmerking: t(d.opmerking).slice(0, 1000), veegschoon: !!d.veegschoon, vrij: !!d.vrij, checks: extChecks_(d.checks), onderdelen: ond, fotos: werkFotos_(d.fotos, 'extern-' + d.sleutel.replace('|', '-') + '-' + nu) };
   const x = zetExtWerk_(d.sleutel, d.datum, x => { x.naam = t(d.naam).slice(0, 100); x.status = 'Klaar voor controle'; x.reden = ''; x.gegevens = g; }, 'klaar voor controle door ' + t(d.naam));
   return { ok: true, tijd: x.tijd, gegevens: g };
 }
@@ -625,7 +632,7 @@ function doGet(e) {
   if (p.k === EXTMONTEURSLEUTEL && EXTMONTEURSLEUTEL.length > 20 && !p.foto) return uit_({ werk: extWerkRijen_(/^([1-9]|1[0-2])$/.test(String(p.m)) ? p.m : '0') });
   if ((p.k === EXTERNSLEUTEL || (p.k === EXTMONTEURSLEUTEL && EXTMONTEURSLEUTEL.length > 20)) && p.foto) {
     const ploeg = p.k === EXTERNSLEUTEL;
-    const werk = extWerkRijen_(ploeg ? '' : (/^([1-9]|1[0-2])$/.test(String(p.m)) ? p.m : '0')).some(x => (x.gegevens.onderdelen || []).some(o => o.foto === p.foto));
+    const werk = extWerkRijen_(ploeg ? '' : (/^([1-9]|1[0-2])$/.test(String(p.m)) ? p.m : '0')).some(x => ((x.gegevens.onderdelen || []).some(o => o.foto === p.foto) || (x.gegevens.fotos || []).indexOf(p.foto) >= 0));
     const af = ploeg && externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto));
     if (!werk && !af) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
@@ -641,7 +648,7 @@ function doGet(e) {
     const bevinding = !monteur && bevRijen_().some(x => heeftFoto_(x.foto, p.foto));
     const opname = !pm && opnameRijen_().some(x => x.foto === p.foto);
     const ol = !pm && !opname && String(p.foto).length > 15 && olRijen_().some(x => x.gegevens.indexOf('"' + p.foto + '"') >= 0);
-    const ext = !pm && !monteur && (externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto)) || extWerkRijen_().some(x => (x.gegevens.onderdelen || []).some(o => o.foto === p.foto)));
+    const ext = !pm && !monteur && (externRijen_().some(x => x.handtekening === p.foto || heeftFoto_(x.fotos, p.foto)) || extWerkRijen_().some(x => ((x.gegevens.onderdelen || []).some(o => o.foto === p.foto) || (x.gegevens.fotos || []).indexOf(p.foto) >= 0)));
     if (!bevinding && !opname && !ol && !ext && (pm || !rijen.some(r => heeftFoto_(r[14], p.foto) && (!monteur || r[2] === 'TD')))) return uit_({ fout: 'foto niet gevonden' });
     return uit_({ foto: Utilities.base64Encode(DriveApp.getFileById(p.foto).getBlob().getBytes()) });
   }

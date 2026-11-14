@@ -383,6 +383,12 @@ html.inapp .mkop{display:none}
 .ex-instrk{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .ex-instrk small{color:var(--ink2);font-size:.75rem}
 .ex-instrm ul{margin:4px 0 0;padding-left:18px;font-size:.9375rem;line-height:1.45}
+.ex-checks .vink{display:flex;align-items:flex-start;gap:8px;font-size:.9375rem;line-height:1.35}
+.ex-checks .vink input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.ex-checks small,.ex-fuit{color:var(--ink2);font-size:.75rem;font-weight:400}
+.ex-fotos{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.ex-fotov{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ex-fotov img{width:96px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:var(--sunken)}
 .ex-terug{display:flex;flex-direction:column;gap:10px;padding-top:6px;border-top:1px solid var(--line)}
 .ex-terug>div{display:flex;flex-direction:column;gap:8px}
 .ex-terug>div[hidden]{display:none}
@@ -5513,6 +5519,8 @@ function tdRegel(x,g){
     if(g.gedaan)feit.push(["Gedaan",esc(g.gedaan)]);if(g.nog)feit.push(["Nog te doen",esc(g.nog)]);
     if(ond.length)feit.push(["Bestellen",esc(ond.map(o=>o.onderdeel+(o.spec?" ("+o.spec+")":"")).join("; "))]);
     if(g.opmerking)feit.push(["Opmerking",esc(g.opmerking)]);
+    const ck=Object.entries(g.checks||{}).filter(([,v])=>v).map(([k])=>({gereed:"werk gereed",schoon:"werkplek schoon",opgeruimd:"opgeruimd",lototo:"LOTOTO opgeheven",reiniging:"extra reiniging",vrij:"vrijgegeven voor productie"})[k]).filter(Boolean);
+    if(ck.length)feit.push(["Afmelding",esc(ck.join(", "))]);
     feit.push(["Afgetekend",esc((e.teamleider||"Teamleider")+(e.tijd?", "+e.tijd:""))]);
     fotos=[e.handtekening].concat(ond.map(o=>o.foto),fotoIds(e.fotos)).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
   }
@@ -5595,7 +5603,7 @@ async function tdExternOk(key,knop){
       GEZIEN_LIVE[key]=true;melder(e.nr+" verwerkt in de PM-registratie"+(e.status==="Onderdeel bestellen"?". De CM-bon voor het onderdeel komt bij de volgende ronde.":"."));
     }else{
       await stuur({actie:"bonstatus",k:m.sleutel_wv,nr:tdCode(key),status:"Open",door:wvDoor(),rij:{gezien:key,terug:false,extern:{nr:e.nr,status:e.status,uitvoerder:t(e.uitvoerder),uren:e.uren,teamleider:t(e.teamleider),handtekening:t(e.handtekening),tijd:t(e.tijd),
-        gedaan:t(g.gedaan),nog:t(g.nog),opmerking:t(g.opmerking),veegschoon:!!g.veegschoon,vrij:!!g.vrij,onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),fotos:fotoIds(g.fotos)}}});
+        gedaan:t(g.gedaan),nog:t(g.nog),opmerking:t(g.opmerking),veegschoon:!!g.veegschoon,vrij:!!g.vrij,checks:g.checks||{},onderdelen:(g.onderdelen||[]).map(o=>({onderdeel:t(o.onderdeel),spec:t(o.spec),foto:t(o.foto)})),fotos:fotoIds(g.fotos)}}});
       GEZIEN_LIVE[key]=true;
       const c=x.c,st=EXTWORDT[e.status];
       if(c&&isOpen(c)&&st){c.status=st;if(st==="Uitgevoerd")c.uitgevoerd_op=t(e.tijd).slice(0,10);else if(planVanBon(c.nr)){zatWeg(c.nr);c.uitvoeren=st==="Te plannen"?"In overleg":"Na levering"}}
@@ -7353,6 +7361,13 @@ async function haalExtern(){
 }
 /* De werkverdeling (tabblad ExternWerk, vanaf versie 28): per bon of PM-taak van de zaterdag de monteur, de stand en wat hij klaarzette. */
 let EXTWERK=[];
+/* De checks van de afmelding, zoals blok 5 van de werkbon F.95.602. v: verplicht. LOTOTO alleen bij een bon met LOTOTO of een PM-taak uit bedrijf. */
+const EXTCHECK={
+  "Uitgevoerd":[["gereed","Werk gereed",1],["schoon","Werkplek schoon (veegschoon)",1],["opgeruimd","Gereedschap en materiaal opgeruimd",1],["lototo","LOTOTO opgeheven",1,"lototo"],["reiniging","Extra reiniging uitgevoerd",0],["vrij","Vrijgegeven voor productie",1]],
+  "Deels uitgevoerd":[["schoon","Werkplek veilig en schoon achtergelaten",1],["opgeruimd","Gereedschap en materiaal opgeruimd",1],["lototo","LOTOTO opgeheven of overgedragen",1,"lototo"]],
+  "Onderdeel bestellen":[["schoon","Werkplek veilig en schoon achtergelaten",1],["opgeruimd","Gereedschap en materiaal opgeruimd",1],["lototo","LOTOTO opgeheven of overgedragen",1,"lototo"]]};
+const extLototo=b=>!!b&&((b.veilig||[]).includes("LOTOTO")||!!b.uit);
+const extChecks=(st,b)=>(EXTCHECK[st]||[]).filter(c=>c[3]!=="lototo"||extLototo(b));
 const EXTMONS=[1,2,3,4,5,6,7,8,9,10,11,12];
 const extSl=b=>b.nr+(b.pm?"|"+b.pmbon:"");
 const EXTWST={"Toegewezen":"leeg","Klaar voor controle":"wacht","Teruggestuurd":"warn2","Afgetekend":"ok"};
@@ -7419,14 +7434,15 @@ function externScherm(){
     try{const j=await stuur({actie:"exttoewijs",datum:z.datum,lijst:lijstje,door:"Teamleider"});(j.werk||[]).forEach(x=>{const r=EXTWERK.find(y=>y.sleutel===x.sleutel&&y.datum===z.datum);if(r)Object.assign(r,x)});melder(lijstje.length===1?(lijstje[0].monteur?"Toegewezen aan "+monLabel(lijstje[0].monteur):"Monteur eraf gehaald"):lijstje.length+" bonnen toegewezen");haalExtern()}
     catch(e){melder(e.message==="geen toegang"?"De Sheet kent dit nog niet. Vraag de werkvoorbereider het script bij te werken (versie 28).":"Toewijzen is niet gelukt. Probeer het opnieuw.");haalExtern()}
   }
-  const leeg=()=>({uitv:MON?NAAM:"",uren:"",st:"",opm:"",gedaan:"",nog:"",veeg:false,vrij:false,ond:[{onderdeel:"",spec:"",file:null,fotoId:""}],tl:lees_("td-hub-exttl"),hand:null});
-  const vanWerk=g=>Object.assign(leeg(),{uitv:g.uitvoerder||"",uren:g.uren?urenTekst(g.uren):"",st:g.status||"",opm:g.opmerking||"",gedaan:g.gedaan||"",nog:g.nog||"",veeg:!!g.veegschoon,vrij:!!g.vrij,ond:(g.onderdelen||[]).length?g.onderdelen.map(o=>({onderdeel:o.onderdeel||"",spec:o.spec||"",file:null,fotoId:/^[\w-]{20,80}$/.test(String(o.foto||""))?o.foto:""})):[{onderdeel:"",spec:"",file:null,fotoId:""}]});
+  const leeg=()=>({uitv:MON?NAAM:"",uren:"",st:"",opm:"",gedaan:"",nog:"",veeg:false,vrij:false,checks:{},fotos:[],ond:[{onderdeel:"",spec:"",file:null,fotoId:""}],tl:lees_("td-hub-exttl"),hand:null});
+  const vanWerk=g=>Object.assign(leeg(),{uitv:g.uitvoerder||"",uren:g.uren?urenTekst(g.uren):"",st:g.status||"",opm:g.opmerking||"",gedaan:g.gedaan||"",nog:g.nog||"",veeg:!!g.veegschoon,vrij:!!g.vrij,checks:Object.assign({},g.checks||{},g.checks?{}:{schoon:!!g.veegschoon,vrij:!!g.vrij}),fotos:(g.fotos||[]).filter(x=>/^[\w-]{20,80}$/.test(String(x))).map(x=>({file:null,fotoId:x})),ond:(g.onderdelen||[]).length?g.onderdelen.map(o=>({onderdeel:o.onderdeel||"",spec:o.spec||"",file:null,fotoId:/^[\w-]{20,80}$/.test(String(o.foto||""))?o.foto:""})):[{onderdeel:"",spec:"",file:null,fotoId:""}]});
   function lees(){
     const f=EXT.form[EXT.open];if(!f||!$("#extform"))return f;
     const v=id=>{const x=$("#"+id);return x?x.value:""};
     f.uitv=v("ex_uitv");f.uren=v("ex_uren");f.opm=v("ex_opm");f.gedaan=v("ex_gedaan");f.nog=v("ex_nog");if($("#ex_tl"))f.tl=v("ex_tl");
     const r=document.querySelector('input[name="ex_st"]:checked');f.st=r?r.value:"";
-    f.veeg=!!($("#ex_veeg")||{}).checked;f.vrij=!!($("#ex_vrij")||{}).checked;
+    document.querySelectorAll("[data-excheck]").forEach(x=>{f.checks[x.dataset.excheck]=x.checked});
+    f.veeg=!!f.checks.schoon;f.vrij=!!f.checks.vrij;
     document.querySelectorAll("[data-exond]").forEach(x=>{const o=f.ond[+x.dataset.exond];if(!o)return;o.onderdeel=x.querySelector(".ex_onam").value;o.spec=x.querySelector(".ex_ospec").value});
     return f;
   }
@@ -7452,7 +7468,8 @@ function externScherm(){
         r("ex_uitv",MON?"Uitvoerder (wie deed het)":"Uitvoerder",'<input type="text" id="ex_uitv" maxlength="200" autocomplete="off" placeholder="Naam van de monteur of monteurs" value="'+esc(f.uitv)+'">',1)+
         '<div class="pa-keus" id="ex_uren_v"><span>Uren <b class="verpl">*</b></span><div class="ex-uren"><button type="button" data-exuren="-0.5" aria-label="Half uur minder">−</button><input type="text" inputmode="decimal" id="ex_uren" value="'+esc(f.uren)+'" aria-label="Uren"><button type="button" data-exuren="0.5" aria-label="Half uur meer">+</button><small>manuren, alle monteurs samen</small></div></div>'+
         '<fieldset class="keuzes" id="ex_st_v"><legend>Status van het werk <b class="verpl">*</b></legend>'+EXTSTATUS.map(([st])=>'<label><input type="radio" name="ex_st" value="'+esc(st)+'"'+(f.st===st?" checked":"")+"><span>"+esc(st)+"</span></label>").join("")+"</fieldset>"+
-        '<div class="ex-blok" data-exblok="Uitgevoerd"'+(f.st==="Uitgevoerd"?"":" hidden")+'><label class="vink"><input type="checkbox" id="ex_veeg"'+(f.veeg?" checked":"")+'> Veegschoon opgeleverd</label><label class="vink"><input type="checkbox" id="ex_vrij"'+(f.vrij?" checked":"")+"> Vrijgegeven voor productie</label></div>"+
+        '<div class="ex-blok ex-checks" id="ex_checks_v"'+(f.st?"":" hidden")+'><b>Afmelding</b>'+extChecks(f.st,b).map(c=>'<label class="vink"><input type="checkbox" data-excheck="'+c[0]+'"'+(f.checks[c[0]]?" checked":"")+"><span>"+esc(c[1])+(c[2]?' <b class="verpl">*</b>':' <small>(als het nodig was)</small>')+"</span></label>").join("")+"</div>"+
+        '<div class="ex-blok" id="ex_fotos_v"'+(f.st?"":" hidden")+'><b>Foto\'s van het werk'+(f.st==="Uitgevoerd"?' <b class="verpl">*</b>':"")+'</b><small class="ex-fuit">'+(f.st==="Uitgevoerd"?"Maak minstens één foto van het afgeronde werk.":"Een foto van de situatie helpt de werkvoorbereider.")+'</small><div class="ex-fotos">'+f.fotos.map((x,j)=>'<span class="ex-fotov">'+(x.file?'<img alt="Foto '+(j+1)+'" src="'+URL.createObjectURL(x.file)+'">':'<img alt="Foto '+(j+1)+'" data-exfotoid="'+esc(x.fotoId)+'">')+'<button type="button" class="tekstknop" data-exfotoweg="'+j+'">Weghalen</button></span>').join("")+(f.fotos.length<3?'<label class="knop ex-fknop">'+ico("camera")+(f.fotos.length?"Nog een foto":"Foto maken")+'<input type="file" accept="image/*" capture="environment" data-exwerkfoto hidden></label>':"")+"</div></div>"+
         '<div class="ex-blok" data-exblok="Onderdeel bestellen"'+(f.st==="Onderdeel bestellen"?"":" hidden")+">"+ond+(f.ond.length<6?'<button type="button" class="knop" data-exondplus>Nog een onderdeel</button>':"")+"</div>"+
         '<div class="ex-blok" data-exblok="Deels uitgevoerd"'+(f.st==="Deels uitgevoerd"?"":" hidden")+">"+r("ex_gedaan","Wat is er gedaan",'<textarea id="ex_gedaan" maxlength="1000">'+esc(f.gedaan)+"</textarea>",1)+r("ex_nog","Wat moet er nog",'<textarea id="ex_nog" maxlength="1000">'+esc(f.nog)+"</textarea>",1)+"</div>"+
         r("ex_opm","Opmerking",'<textarea id="ex_opm" maxlength="1000" placeholder="Wat is er gedaan of gevonden">'+esc(f.opm)+"</textarea>")+
@@ -7496,6 +7513,9 @@ function externScherm(){
     if(!f.st)return mis("ex_st","Kies de status van het werk.");
     if(f.st==="Onderdeel bestellen"){for(let j=0;j<f.ond.length;j++){const o=f.ond[j];if(!o.onderdeel.trim()){const x=document.querySelector('[data-exond="'+j+'"] .ex_onam');x.id="ex_on"+j;return mis("ex_on"+j,"Vul bij onderdeel "+(j+1)+" in welk onderdeel het is.")}if(!o.file&&!o.fotoId)return mis("ex_of"+j,"Maak een foto van onderdeel "+(j+1)+".")}}
     if(f.st==="Deels uitgevoerd"){if(!f.gedaan.trim())return mis("ex_gedaan","Vul in wat er gedaan is.");if(!f.nog.trim())return mis("ex_nog","Vul in wat er nog moet.")}
+    const open=extChecks(f.st,vind(EXT.open)).filter(c=>c[2]&&!f.checks[c[0]]);
+    if(open.length)return mis("ex_checks","Vink af: "+open.map(c=>c[1].toLowerCase()).join(", ")+".");
+    if(f.st==="Uitgevoerd"&&!f.fotos.length)return mis("ex_fotos","Maak een foto van het afgeronde werk.");
     if(MON)return true;
     if(!f.tl.trim())return mis("ex_tl","Vul de naam van de teamleider in.");
     if(!f.hand)return mis("ex_hand","De teamleider moet de bon aftekenen met zijn handtekening.");
@@ -7510,10 +7530,10 @@ function externScherm(){
     const nr=EXT.open,f=lees();if(!controleer(f))return;
     const b=vind(nr),k=$("#ex_knop"),knoptekst=k.textContent;k.disabled=true;k.textContent="Bezig met versturen";
     if(!MON)bewaar_("td-hub-exttl",f.tl.trim());
-    let ond=[];
-    try{if(f.st==="Onderdeel bestellen")ond=await Promise.all(f.ond.map(async o=>({onderdeel:o.onderdeel.trim(),spec:o.spec.trim(),foto:o.file?await verklein(o.file):o.fotoId})))}
-    catch(_){k.disabled=false;k.textContent=knoptekst;mis("ex_of0","Een foto kan niet worden gelezen. Maak de foto opnieuw.");return}
-    const veld={status:f.st,uitvoerder:f.uitv.trim(),uren:Number(String(f.uren).replace(",",".")),opmerking:f.opm.trim(),gedaan:f.st==="Deels uitgevoerd"?f.gedaan.trim():"",nog:f.st==="Deels uitgevoerd"?f.nog.trim():"",veegschoon:f.st==="Uitgevoerd"&&f.veeg,vrij:f.st==="Uitgevoerd"&&f.vrij,onderdelen:ond};
+    let ond=[],fotos=[];
+    try{if(f.st==="Onderdeel bestellen")ond=await Promise.all(f.ond.map(async o=>({onderdeel:o.onderdeel.trim(),spec:o.spec.trim(),foto:o.file?await verklein(o.file):o.fotoId})));fotos=await Promise.all(f.fotos.map(async x=>x.file?await verklein(x.file):x.fotoId))}
+    catch(_){k.disabled=false;k.textContent=knoptekst;mis(f.st==="Onderdeel bestellen"?"ex_of0":"ex_fotos","Een foto kan niet worden gelezen. Maak de foto opnieuw.");return}
+    const veld={status:f.st,uitvoerder:f.uitv.trim(),uren:Number(String(f.uren).replace(",",".")),opmerking:f.opm.trim(),gedaan:f.st==="Deels uitgevoerd"?f.gedaan.trim():"",nog:f.st==="Deels uitgevoerd"?f.nog.trim():"",veegschoon:!!f.checks.schoon,vrij:f.st==="Uitgevoerd"&&!!f.checks.vrij,checks:Object.fromEntries(extChecks(f.st,b).map(c=>[c[0],!!f.checks[c[0]]])),fotos,onderdelen:ond};
     const d=MON?Object.assign({actie:"extklaar",sleutel:extSl(b),datum:z.datum,monteur:MNR,naam:NAAM,door:NAAM},veld):Object.assign({actie:"extern",nr,pmbon:b.pm?b.pmbon:"",datum:z.datum,teamleider:f.tl.trim(),door:f.tl.trim(),handtekening:f.hand.split(",")[1]},veld);
     const lokaal=j=>{if(MON)extWerkZet(d,j);else{EXTLIVE=EXTLIVE.concat([{nr,pmbon:d.pmbon||"",status:d.status,uitvoerder:d.uitvoerder,uren:d.uren,teamleider:d.teamleider,tijd:j.tijd}]);const r=EXTWERK.find(y=>y.sleutel===extSl(b)&&y.datum===z.datum);if(r)r.status="Afgetekend"}};
     try{const j=await stuur(d);lokaal(j);delete EXT.form[nr];melder(MON?nr+" staat klaar voor de teamleider":nr+" afgetekend als "+d.status.toLowerCase());volgende(nr)}
@@ -7548,6 +7568,7 @@ function externScherm(){
     if(e.target.closest("[data-exinstr]")){instructieOpslaan();return}
     const u=e.target.closest("[data-exuren]");if(u){const i=$("#ex_uren"),n=Math.max(0,Math.min(200,(Number(String(i.value).replace(",","."))||0)+Number(u.dataset.exuren)));i.value=n?urenTekst(n):"";lees();return}
     if(e.target.closest("[data-exondplus]")){const f=lees();f.ond.push({onderdeel:"",spec:"",file:null,fotoId:""});bon(EXT.open);const l=document.querySelectorAll("[data-exond]");l[l.length-1].scrollIntoView({block:"center"});return}
+    const fw=e.target.closest("[data-exfotoweg]");if(fw){const f=lees();f.fotos.splice(+fw.dataset.exfotoweg,1);const y=window.scrollY;bon(EXT.open);window.scrollTo(0,y);return}
     const ow=e.target.closest("[data-exondweg]");if(ow){const f=lees();f.ond.splice(+ow.dataset.exondweg,1);bon(EXT.open);return}
     if(e.target.closest("[data-exhandweg]")){const f=lees();f.hand=null;handtekening(f);const c=$("#ex_hand");c.getContext("2d").clearRect(0,0,c.width,c.height);return}
     if(e.target.closest("[data-exbon]")){const b=vind(EXT.open),kk=b&&b.kopie,k=e.target.closest("[data-exbon]");if(!kk)return;k.disabled=true;
@@ -7557,7 +7578,8 @@ function externScherm(){
   vak.addEventListener("change",e=>{
     const sm=e.target.closest("[data-exmon]");if(sm){toewijs([{sleutel:sm.dataset.exmon,monteur:sm.value}]);return}
     const sv=e.target.closest("[data-exsel]");if(sv){if(sv.checked)EXT.sel.add(sv.dataset.exsel);else EXT.sel.delete(sv.dataset.exsel);lijst();return}
-    if(e.target.name==="ex_st"){const f=lees();document.querySelectorAll("[data-exblok]").forEach(x=>{x.hidden=x.dataset.exblok!==f.st});$("#ex_st_v").classList.remove("ex-mis");return}
+    if(e.target.name==="ex_st"){lees();const y=window.scrollY;bon(EXT.open);window.scrollTo(0,y);return}
+    const wf=e.target.closest("[data-exwerkfoto]");if(wf&&wf.files[0]){const f=lees();f.fotos.push({file:wf.files[0],fotoId:""});const y=window.scrollY;bon(EXT.open);window.scrollTo(0,y);return}
     const fo=e.target.closest("[data-exfoto]");if(fo&&fo.files[0]){const f=lees();const o=f.ond[+fo.dataset.exfoto];o.file=fo.files[0];o.fotoId="";bon(EXT.open);return}
     if(EXT.open)lees();
   });

@@ -763,7 +763,8 @@ def extern_af(data, x, w, opnieuw, wm, toepassen=True):
     ond = [{"onderdeel": str(o.get("onderdeel") or "").strip()[:200], "spec": str(o.get("spec") or "").strip()[:300], "foto": str(o.get("foto") or "")} for o in x.get("onderdelen") or [] if isinstance(o, dict)]
     af = {"status": st, "uitvoerder": tekst("uitvoerder")[:200], "uren": uren, "teamleider": tekst("teamleider")[:100], "handtekening": tekst("handtekening"),
           "gedaan": tekst("gedaan")[:1000], "nog": tekst("nog")[:1000], "opmerking": tekst("opmerking")[:1000], "veegschoon": bool(x.get("veegschoon")), "vrij": bool(x.get("vrij")),
-          "onderdelen": ond, "fotos": [f for f in x.get("fotos") or [] if isinstance(f, str)][:2], "tijd": str(x.get("tijd") or w.get("tijd"))[:16]}
+          "checks": {k: bool(v) for k, v in (x.get("checks") or {}).items() if k in ("gereed", "schoon", "opgeruimd", "lototo", "reiniging", "vrij")},
+          "onderdelen": ond, "fotos": [f for f in x.get("fotos") or [] if isinstance(f, str)][:3], "tijd": str(x.get("tijd") or w.get("tijd"))[:16]}
     lijst = rij.setdefault("extern", [])
     oud = next((e for e in lijst if e.get("tijd") == af["tijd"]), None)
     if not toepassen:
@@ -793,8 +794,14 @@ def extern_af(data, x, w, opnieuw, wm, toepassen=True):
         delen += ["Gedaan: " + zin(af["gedaan"]), "Nog te doen: " + zin(af["nog"])]
     if st == "Onderdeel bestellen":
         delen += ["Bestellen: " + "; ".join(o["onderdeel"] + (" (" + o["spec"] + ")" if o["spec"] else "") for o in ond) + "."]
-    if st == "Uitgevoerd" and (af["veegschoon"] or af["vrij"]):
+    namen = {"gereed": "werk gereed", "schoon": "werkplek schoon", "opgeruimd": "gereedschap en materiaal opgeruimd", "lototo": "LOTOTO opgeheven", "reiniging": "extra reiniging uitgevoerd", "vrij": "vrijgegeven voor productie"}
+    gevinkt = [namen[k] for k in namen if af["checks"].get(k)]
+    if gevinkt:
+        delen += ["Afgevinkt: " + ", ".join(gevinkt) + "."]
+    elif st == "Uitgevoerd" and (af["veegschoon"] or af["vrij"]):
         delen += [" en ".join(t for t, v in (("veegschoon opgeleverd", af["veegschoon"]), ("vrijgegeven voor productie", af["vrij"])) if v).capitalize() + "."]
+    if af["fotos"]:
+        delen += ["%d foto's van het werk." % len(af["fotos"]) if len(af["fotos"]) > 1 else "1 foto van het werk."]
     if af["opmerking"]:
         delen.append(zin(af["opmerking"]))
     delen.append("Afgetekend door %s." % (af["teamleider"] or "teamleider externe ploeg"))
